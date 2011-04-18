@@ -1,0 +1,95 @@
+# unix.mak - Makefile Executive for GMRS_VF on Unix
+
+# Copy this file to simwulf/worku/makefile then edit it to uncomment the
+# appropriate lines
+
+# make                 Builds production program
+# make clean           Deletes work files
+
+########################## Unix/Dos Controls #########################
+
+# Define the slash for file names
+S=/
+
+# Define the target file name
+EXENAM=GMRS_VF
+
+# Define the object file extension
+O=.o
+
+# Define the copy instruction
+COPY=cp
+
+############################## Misc ##################################
+
+default:$(EXENAM)
+
+SIZE=..$(S)size$(S)sizeux64
+SIZDAT=simwulf.siz
+SETSIZE=echo $(SIZDAT) $@ > ech
+SETSIZE1=echo $(SIZDAT) $< $@ > ech
+SIZEIT=$(SIZE) < ech
+
+MAKDIR=..$(S)make$(S)
+
+WORK=.
+
+COPYIT=$(COPY) $? $(WORK)
+
+.SUFFIXES:
+.SUFFIXES: .o .f .c .C .h .df .dc .dh .dC .in .obj
+
+####################### Module Files ######################
+
+include $(MAKDIR)module.mak
+
+####################### Framework Include Files ######################
+
+include $(MAKDIR)parall.mak
+include $(MAKDIR)frame.mak
+
+################### Physical Model Include Files #####################
+
+include $(MAKDIR)blkoil.mak           
+include $(MAKDIR)kvalue.mak         
+include $(MAKDIR)comp.mak 
+include $(MAKDIR)geomech.mak 
+include $(MAKDIR)thermal.mak 
+include $(MAKDIR)deposit.mak 
+include $(MAKDIR)GMRS_VF.mak 
+
+##################### Combine Object/Lib Files #######################
+
+MODELOBJ = $(KVALOBJ) $(COMPOBJ) $(BLKOILOBJ) $(GEOMOBJ)  $(THRMOBJ) \
+           $(DEPOBJ) $(VARFRACOBJ)
+
+GMRSOBJS = $(MODULEOBJ) $(BLOCKSMOD) $(FRAMEOBJ) $(MODELOBJ) $(PARALOBJ) \
+       $(GRAPHOBJ) $(BLOCKSOBJ)
+
+########### Machine and Compiler Include File (one only) #############
+# This include file must be the last one
+
+# include $(MAKDIR)sp2.mak
+# include $(MAKDIR)lnx.mak
+# include $(MAKDIR)beo.mak
+# include $(MAKDIR)x2.mak
+# include $(MAKDIR)t3e.mak               
+# include $(MAKDIR)rs6k.mak   
+# include $(MAKDIR)lnx64.mak
+# include $(MAKDIR)pgi64.mak
+# include $(MAKDIR)pgi64p.mak
+# include $(MAKDIR)pgi64s.mak
+include $(MAKDIR)petsc.mak
+
+debug:
+	@echo "LINK   " ${LINK}
+	@echo "NAN    " ${NAN}
+	@echo "LFLAGS " ${LFLAGS}
+	@echo "SYSLIB " ${SYSLIB}
+	@echo "LIBS   " ${LIBS}
+	@echo "PETSC_LIB" ${PETSC_LIB}
+	@echo "PETSC_FLIB" ${PETSC_FLIB}
+	@echo "FLINKER"    ${FLINKER}
+	@echo "OBJST"	   ${OBJST}
+	@echo "OBJS"       ${OBJS}
+	@echo "MODELOBJ"   ${MODELOBJ}
