@@ -94,7 +94,7 @@ C     DO SOME BOGUS INIT:
    	   WRITE(*,*) '                  ', X(1), X(NX)
    	   WRITE(*,*) '                  ', Y(1), Y(NY)
    	   WRITE(*,*) '                  ', Z(1), Z(NZ)
-   	   WRITE(*,*) 'Revervoir volume: ', SUM(DX) * SUM(DY) * SUM(DZ)
+   	   WRITE(*,*) 'Reservoir volume: ', SUM(DX) * SUM(DY) * SUM(DZ)
       END IF
       
       NFOUT = 6

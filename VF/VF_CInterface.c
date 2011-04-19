@@ -24,6 +24,20 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
   
   PetscFunctionBegin;
   ierr = PetscPrintf(PETSC_COMM_WORLD,banner);CHKERRQ(ierr);
+#if defined(PETSC_USE_DEBUG)
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      ##########################################################\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                                                        #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                          WARNING!!!                    #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                                                        #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   This code was compiled with a debugging option,      #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   For production runs, use a petsc compiled with       #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   optimization, the performance will be generally      #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   two or three times faster.                           #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                                                        #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      ##########################################################\n\n\n");CHKERRQ(ierr);
+#endif
+  
 
   ierr = PetscOptionsHasName(PETSC_NULL,"-help",&printhelp);CHKERRQ(ierr);
 
@@ -60,7 +74,7 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
 
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.ener",ctx.prefix);CHKERRQ(ierr);
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx.energyviewer);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"#i, Elastic Energy, OverbdnWork, Surface Energy, Total Energy\n");CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"#i, Elastic Energy, InsituWork, Surface Energy, Total Energy\n");CHKERRQ(ierr);
   ierr = PetscViewerFlush(ctx.energyviewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -190,7 +204,7 @@ extern PetscErrorCode vstdout(PetscInt rank,PetscReal tim,PetscInt nstep,PetscIn
    
   PetscFunctionBegin;
   ierr = PetscPrintf(PETSC_COMM_WORLD, "Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD, "Work of insitu forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD, "Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD, "Total energy:              %e\n",ctx.TotalEnergy);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i \t%e \t%e \t%e \t%e \t%e\n", nstep, tim, ctx.ElasticEnergy, ctx.InsituWork, ctx.SurfaceEnergy, 
