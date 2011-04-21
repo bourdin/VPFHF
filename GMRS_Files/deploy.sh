@@ -26,6 +26,6 @@ for srcdir in make sample workscali
 do 
   cd $GMRSDIR/$srcdir
   echo "Creating symlinks in $GMRSDIR/$srcdir" 
-  ln -sf $VFDIR/GMRS_Files/$srcdir/* .
+  cp -pf $VFDIR/GMRS_Files/$srcdir/* .
 done
 

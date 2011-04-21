@@ -17,10 +17,6 @@ FakeVF: ${FAKEVFOBJ}
 	@echo Making all in ${VFDIR}/FakeVF
 	@make -C FakeVF
 	
-FakeVFBLAS: ${FAKEVFBLASOBJ}
-	@echo Making all in ${VFDIR}/FakeVFBLAS
-	@make -C FakeVFBLAS
-
 VF: ${VFOBJ}
 	@echo Making all in ${VFDIR}/VF
 	@make -C VF
@@ -38,8 +34,7 @@ FakeGMRS_VF: Utils VF FakeGMRS chkopts
 clean::
 	@make -C Utils clean
 	@make -C FakeVF clean
-	@make -C FakeVFBLAS clean
 	@make -C FakeGMRS clean
 	@make -C VF clean
-	@${RM} bin/FakeGMRS_FakeVF bin/FakeGMRS_FakeVFBLAS bin/FakeGMRS_VF bin/h5export
+	@${RM} bin/FakeGMRS_FakeVF bin/FakeGMRS_VF bin/h5export
 
