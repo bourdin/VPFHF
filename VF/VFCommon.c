@@ -363,11 +363,11 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *d
       ierr = PetscViewerDestroy(viewer);CHKERRQ(ierr);
       ierr = PetscLogStagePop();CHKERRQ(ierr);
       break;
+#ifdef PETSC_HAVE_HDF5
     case FILEFORMAT_HDF5:
       /*
         Write headers in multistep XDMF file
       */
-#ifdef PETSC_HAVE_HDF5
       ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
       ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.xmf",ctx->prefix);CHKERRQ(ierr);
       ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->XDMFviewer);
