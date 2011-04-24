@@ -99,12 +99,21 @@ int main(int argc,char **argv)
     ierr = VecLoadIntoVector(viewer,pmult);CHKERRQ(ierr);
     ierr = VecView(pmult,vtkviewer);CHKERRQ(ierr);
 
-    ierr = VecLoadIntoVector(viewer,temp);CHKERRQ(ierr);
-    ierr = VecView(temp,vtkviewer);CHKERRQ(ierr);
-
+<<<<<<< local
+=======
     ierr = VecLoadIntoVector(viewer,pres);CHKERRQ(ierr);
     ierr = VecView(pres,vtkviewer);CHKERRQ(ierr);
 
+>>>>>>> other
+    ierr = VecLoadIntoVector(viewer,temp);CHKERRQ(ierr);
+    ierr = VecView(temp,vtkviewer);CHKERRQ(ierr);
+
+<<<<<<< local
+    ierr = VecLoadIntoVector(viewer,pres);CHKERRQ(ierr);
+    ierr = VecView(pres,vtkviewer);CHKERRQ(ierr);
+
+=======
+>>>>>>> other
     ierr = PetscViewerDestroy(viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(vtkviewer);CHKERRQ(ierr);
   }
