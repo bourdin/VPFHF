@@ -12,17 +12,11 @@ CXTC     = $(FLEXDIR)/cxtc.o
 #NAN     = ../memman/linux.o
 LIBS     = -L $(FLEXDIR) -lpthread
 
-#LFLAGS   =  -tp k8-64 -mcmodel=medium
-# LFLAGS   =  -tp k8-64 -mcmodel=medium -g 
-
-#FFLAGS   = -c -tp k8-64 -mcmodel=medium -fast 
-# FFLAGS   = -c -tp k8-64 -mcmodel=medium -g -Mbounds
-
-#CFLAGS   = -c -B -tp k8-64 -fast -mcmodel=medium
-# CFLAGS   = -c -B -tp k8-64 -mcmodel=medium -g -Mbounds
+###
+### LFLAGS, CFLAGS, FFLAGS are set in petsc makefiles
+###
 
 SYSLIB   =
-#OBJST    = $(OBJS) $(CXTC)
 OBJST    = $(GMRSOBJS) $(CXTC)
 
 
