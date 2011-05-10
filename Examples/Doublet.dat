@@ -143,5 +143,5 @@ BeginTime    0.0     $ Time for reading transient data
    DELTIM = .1       $ Initial step size
    DTIMMIN = 1.0E-5  $ Minimum step size
    DTIMMAX = 365.     $ Maximum step size
-   DTIMOUT = 1.      $ Interval for printout 
+   DTIMOUT = 100.      $ Interval for printout 
 EndTime                   $ End of block of transient data

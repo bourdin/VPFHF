@@ -31,10 +31,9 @@ def Dictwritetxt(D,filename):
 def main():
 	import os
 	import os.path
-	import numpy as np
-	import hashlib
-	import shutil
-	import json
+	#import hashlib
+	#import shutil
+	#import json
 	
 	Param = {}
 	mygetenv(Param,'NX',10)
@@ -56,7 +55,7 @@ def main():
 	mygetenv(Param,'VFDIR')
 	mygetenv(Param,'GMRSDIR')
 	mygetenv(Param,'GMRSARCH')
-	mygetenv(Param,'GMRSBIN')
+	mygetenv(Param,'GMRSBIN','GMRS_FakeVF')
 	 
 	
 	print 'Param:    \n', Param
@@ -70,10 +69,10 @@ def main():
 	### Save computation parameters to a txt and a json fil
 	Dictwritetxt(Param,'00_INFO.txt')
 	
-	jsonfile = open('00_INFO.json','w')
-	jsonfile.write(json.encoder.JSONEncoder().encode(Param))
-	jsonfile.flush()
-	jsonfile.close()
+	#jsonfile = open('00_INFO.json','w')
+	#jsonfile.write(json.encoder.JSONEncoder().encode(Param))
+	#jsonfile.flush()
+	#jsonfile.close()
 	
 	### Generate GMRS data file
 	filenamein  = os.path.join(Param['PBS_O_WORKDIR'],Param['PREFIX']+'.dat')
@@ -82,10 +81,10 @@ def main():
 	open(filenameout,'w').write( open(filenamein,'r').read()%Param ) 
 	
 	open('temp.txt','w').write('%s\n%s.out\n'%(filenameout,Param['PBS_JOBID']))
-	
-	cmd = 'mpirun %s < temp.txt'%os.path.join(Param['GMRSDIR'],Param['GMRSARCH'],Param['GMRSBIN'])
-	print cmd
-	#os.system(cmd)
+
+        cmd = 'mpirun %s -p %s< temp.txt'%(os.path.join(Param['GMRSDIR'],Param['GMRSARCH'],Param['GMRSBIN']), Param['PREFIX'])
+        print cmd
+        os.system(cmd)
 	
 import sys  
 if __name__ == "__main__":
