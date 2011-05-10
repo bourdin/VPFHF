@@ -22,7 +22,7 @@ then
 	exit
 fi
 
-for srcdir in make sample workscali
+for srcdir in make sample workscali dbgworkscali workpgi dbgworkpgi
 do 
   cd $GMRSDIR/$srcdir
   echo "Creating symlinks in $GMRSDIR/$srcdir" 
