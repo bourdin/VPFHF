@@ -33,11 +33,11 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   
-	ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",user.prefix);CHKERRQ(ierr);
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",user.prefix);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n log file is %s\n\n",filename);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD, filename,&user.logviewer);CHKERRQ(ierr);	
-	ierr = PetscViewerASCIIPrintf(user.logviewer,"This is %s\n",__FUNCT__);CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD, "This is the PETSc / C implementation of %s\n", __FUNCT__);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD, filename,&user.logviewer);CHKERRQ(ierr);  
+  ierr = PetscViewerASCIIPrintf(user.logviewer,"This is %s\n",__FUNCT__);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD, "This is the PETSc / C implementation of %s\n", __FUNCT__);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD, "nx      = %i\n", nx);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD, "ny      = %i\n", ny);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD, "nz      = %i\n", nz);CHKERRQ(ierr);
@@ -152,7 +152,7 @@ extern PetscErrorCode vendit(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
- 	ierr = PetscViewerASCIIPrintf(user.logviewer,"This is %s\n",__FUNCT__);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(user.logviewer,"This is %s\n",__FUNCT__);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(user.logviewer,"\tTime=%g\tnstep=%i\n",tim,nstep);CHKERRQ(ierr);
 
   /*
@@ -185,7 +185,7 @@ extern PetscErrorCode vtdata(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt
   PetscFunctionBegin;
   ierr = PetscViewerASCIIPrintf(user.logviewer,"\nThis is %s\n",__FUNCT__);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(user.logviewer,"\tTime=\t%g\n\tnstep=\t%i\n",tim,nstep);CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nThis is the PETSc / C implementation of %s\n", __FUNCT__);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nThis is the PETSc / C implementation of %s\n", __FUNCT__);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   TIME = %15.5E\n",tim);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   NSTEP = %10i\n",nstep);CHKERRQ(ierr);
   
@@ -232,13 +232,6 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
   /* 
     Compute Displacement and Fracture, then derive permeability multipliers
   */
-  CHKMEMQ
-  ierr = VecDuplicate(user.pres,&tmpVec);CHKERRQ(ierr);
-  CHKMEMQ
-  ierr = VecCopy(user.pres,tmpVec);CHKERRQ(ierr);
-  ierr = VecAXPY(tmpVec,2.0,user.pres);CHKERRQ(ierr);
-  ierr = VecView(tmpVec,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-  ierr = VecDestroy(tmpVec);CHKERRQ(ierr);
   /*
     Send permeability multiplier back to GMRS
   */
@@ -274,7 +267,7 @@ extern PetscErrorCode vstdout(PetscInt rank,PetscReal tim,PetscInt nstep,PetscIn
    
   PetscFunctionBegin;
   ierr = PetscViewerASCIIPrintf(user.logviewer,"\nThis is %s\n",__FUNCT__);CHKERRQ(ierr);
-	ierr = PetscViewerASCIIPrintf(user.logviewer,"\tTime=%g\tnstep=%i\n",tim,nstep);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(user.logviewer,"\tTime=%g\tnstep=%i\n",tim,nstep);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nThis is the PETSc / C implementation of %s\n", __FUNCT__);CHKERRQ(ierr);
 
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   TIME  = %15.5g\n",tim);CHKERRQ(ierr);
