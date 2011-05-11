@@ -69,7 +69,8 @@ def main():
 	mygetenv(Param,'E',5e+3)
 	mygetenv(Param,'NU',.25)
 	mygetenv(Param,'GC',5e-2)
-	
+	mygetenv(Param,'ALPHA',1e-5)
+
 	print 'Param:    \n',Param
 
 	workdir = os.path.join(Param['PBS_O_WORKDIR'],Param['PREFIX']+'-'+Param['PBS_JOBID'])
