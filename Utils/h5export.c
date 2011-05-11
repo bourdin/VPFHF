@@ -17,14 +17,15 @@ int main(int argc,char **argv)
   PetscViewer         viewer,h5viewer,XDMFviewer,XDMFviewer2;
   DA                  daVect,daScal;
   Vec                 coordinates,U,V,temp,pres,pmult;
-  PetscInt            nx,ny,nz,step,nstep;
+  PetscInt            nx,ny,nz,step,maxstep;
   PetscErrorCode      ierr;
+  FILE                *file;
   
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\nh5xfer: ","");CHKERRQ(ierr);
   {
-    nstep = 1;
-    ierr = PetscOptionsInt("-n","number of time steps to convert\t","",nstep,&nstep,PETSC_NULL);CHKERRQ(ierr);
+    maxstep = 1000;
+    ierr = PetscOptionsInt("-n","maximum number of time steps to convert\t","",maxstep,&maxstep,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscSNPrintf(prefix,FILENAME_MAX,"TEST");CHKERRQ(ierr);
     ierr = PetscOptionsString("-p","file prefix","",prefix,prefix,PETSC_MAX_PATH_LEN-1,PETSC_NULL);CHKERRQ(ierr);
   }
@@ -85,60 +86,67 @@ int main(int argc,char **argv)
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,XDMFfilename,&XDMFviewer2);CHKERRQ(ierr);
   ierr = XDMFmultistepInitialize(XDMFviewer2);CHKERRQ(ierr);
   
-  for (step = 1; step < nstep+1; step++) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Processing scalar fields for time step %i\n",step);CHKERRQ(ierr);
+  for (step = 1; step < maxstep+1; step++) {
     /*
-      Open h5 viewer
-    */
-    ierr = PetscSNPrintf(h5filename,FILENAME_MAX,"%s.%.5i.h5",prefix,step);CHKERRQ(ierr);
-    ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,h5filename,FILE_MODE_WRITE,&h5viewer);
-
-    /* 
-      Read and save fields.
-      Fields NEED to be read in th eorder they were saved in.
+      Tests if file exists
     */
     ierr = PetscSNPrintf(petscfilename,FILENAME_MAX,"%s.%.5i.bin",prefix,step);CHKERRQ(ierr);
-    ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,petscfilename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-
-    ierr = VecLoadIntoVector(viewer,U);CHKERRQ(ierr);
-    ierr = VecView(U,h5viewer);CHKERRQ(ierr);
-
-    ierr = VecLoadIntoVector(viewer,V);CHKERRQ(ierr);
-    ierr = VecView(V,h5viewer);CHKERRQ(ierr);
-
-    ierr = VecLoadIntoVector(viewer,pmult);CHKERRQ(ierr);
-    ierr = VecView(pmult,h5viewer);CHKERRQ(ierr);
-
-    ierr = VecLoadIntoVector(viewer,temp);CHKERRQ(ierr);
-    ierr = VecView(temp,h5viewer);CHKERRQ(ierr);
-
-    ierr = VecLoadIntoVector(viewer,pres);CHKERRQ(ierr);
-    ierr = VecView(pres,h5viewer);CHKERRQ(ierr);
-
-    ierr = PetscViewerDestroy(viewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(h5viewer);CHKERRQ(ierr);
-    /*
-      Write the XDMF Description
-    */
-    ierr = PetscSNPrintf(XDMFfilename,FILENAME_MAX,"%s.%.5i.xmf",prefix,step);CHKERRQ(ierr);
-    ierr = PetscSNPrintf(h5coordfilename,FILENAME_MAX,"%s.h5",prefix);CHKERRQ(ierr);
-
-    ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,XDMFfilename,&XDMFviewer);CHKERRQ(ierr);
-    ierr = XDMFuniformgridInitialize(XDMFviewer,(PetscReal) step,h5filename);CHKERRQ(ierr); 
-    ierr = XDMFtopologyAdd (XDMFviewer,nx,ny,nz,h5coordfilename,"Coordinates");CHKERRQ(ierr);
-    ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,3,"Vector","Node",h5filename,"Displacement");CHKERRQ(ierr);
-    ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Fracture");CHKERRQ(ierr);
-    ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Permeability");CHKERRQ(ierr);
-    ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Temperature");CHKERRQ(ierr);
-    ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Pressure");CHKERRQ(ierr);
-    ierr = XDMFuniformgridFinalize(XDMFviewer);CHKERRQ(ierr); 
-    ierr = PetscViewerDestroy(XDMFviewer);CHKERRQ(ierr);
-    
-    ierr = XDMFmultistepAddstep(XDMFviewer2,XDMFfilename);CHKERRQ(ierr);
-  }
-  ierr = XDMFuniformgridFinalize(XDMFviewer2);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(XDMFviewer2);CHKERRQ(ierr);
+    if ( (file = fopen(petscfilename,"r")) ) {
+      fclose(file);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Processing fields for time step %i\n",step);CHKERRQ(ierr);
+      /* 
+        Read and save fields.
+        Fields NEED to be read in the order they were saved in.
+      */
+      ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,petscfilename,FILE_MODE_READ,&viewer);
   
+      /*
+        Open h5 viewer
+      */
+      ierr = PetscSNPrintf(h5filename,FILENAME_MAX,"%s.%.5i.h5",prefix,step);CHKERRQ(ierr);
+      ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,h5filename,FILE_MODE_WRITE,&h5viewer);
+  
+      ierr = VecLoadIntoVector(viewer,U);CHKERRQ(ierr);
+      ierr = VecView(U,h5viewer);CHKERRQ(ierr);
+  
+      ierr = VecLoadIntoVector(viewer,V);CHKERRQ(ierr);
+      ierr = VecView(V,h5viewer);CHKERRQ(ierr);
+  
+      ierr = VecLoadIntoVector(viewer,pmult);CHKERRQ(ierr);
+      ierr = VecView(pmult,h5viewer);CHKERRQ(ierr);
+  
+      ierr = VecLoadIntoVector(viewer,temp);CHKERRQ(ierr);
+      ierr = VecView(temp,h5viewer);CHKERRQ(ierr);
+  
+      ierr = VecLoadIntoVector(viewer,pres);CHKERRQ(ierr);
+      ierr = VecView(pres,h5viewer);CHKERRQ(ierr);
+  
+      ierr = PetscViewerDestroy(viewer);CHKERRQ(ierr);
+      ierr = PetscViewerDestroy(h5viewer);CHKERRQ(ierr);
+      /*
+        Write the XDMF Description
+      */
+      ierr = PetscSNPrintf(XDMFfilename,FILENAME_MAX,"%s.%.5i.xmf",prefix,step);CHKERRQ(ierr);
+      ierr = PetscSNPrintf(h5coordfilename,FILENAME_MAX,"%s.h5",prefix);CHKERRQ(ierr);
+  
+      ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,XDMFfilename,&XDMFviewer);CHKERRQ(ierr);
+      ierr = XDMFuniformgridInitialize(XDMFviewer,(PetscReal) step,h5filename);CHKERRQ(ierr); 
+      ierr = XDMFtopologyAdd (XDMFviewer,nx,ny,nz,h5coordfilename,"Coordinates");CHKERRQ(ierr);
+      ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,3,"Vector","Node",h5filename,"Displacement");CHKERRQ(ierr);
+      ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Fracture");CHKERRQ(ierr);
+      ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Permeability");CHKERRQ(ierr);
+      ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Temperature");CHKERRQ(ierr);
+      ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Pressure");CHKERRQ(ierr);
+      ierr = XDMFuniformgridFinalize(XDMFviewer);CHKERRQ(ierr); 
+      ierr = PetscViewerDestroy(XDMFviewer);CHKERRQ(ierr);
+      
+      ierr = XDMFmultistepAddstep(XDMFviewer2,XDMFfilename);CHKERRQ(ierr);
+    }
+  }  
+
+  ierr = XDMFmultistepFinalize(XDMFviewer2);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(XDMFviewer2);CHKERRQ(ierr);
+
   ierr = VecDestroy(pres);CHKERRQ(ierr);
   ierr = VecDestroy(pmult);CHKERRQ(ierr);
   ierr = VecDestroy(temp);CHKERRQ(ierr);
