@@ -5,35 +5,42 @@
 #PBS -m ae
 #PBS -M bnvk@chevron.com
 #PBS -j oe
+#PBS -q gmrs
 
 def mygetenv(Dict,key,defaultvalue=None):
-  ### I could do better 
-  import os
-  tmp = os.getenv(key)
-  if tmp == None:
-    Dict[key] = defaultvalue
-  else:
-    try:
-      Dict[key] = float(tmp)
-    except ValueError:
-      Dict[key] = tmp
+	### I could do better 
+	import os
+	tmp = os.getenv(key)
+	if tmp == None:
+		Dict[key] = defaultvalue
+	else:
+		try:
+			Dict[key] = float(tmp)
+		except ValueError:
+			Dict[key] = tmp
 
 def Dictwritetxt(D,filename):
-  f = open(filename,'a')
-  K = D.keys()
-  K.sort()
-  for key in K:
-    f.write('%s \t\t %s\n'%(key, str(D[key])))
-  f.close()
+	f = open(filename,'a')
+	K = D.keys()
+	K.sort()
+	for key in K:
+		f.write('%s \t\t %s\n'%(key,str(D[key])))
+	f.close()
   
-
+def DictJSONwrite(D,filename):
+	try:
+		import json
+	
+		jsonfile = open(filename,'w')
+		jsonfile.write(json.encoder.JSONEncoder().encode(D))
+		jsonfile.flush()
+		jsonfile.close()
+	except ImportError:
+		print 'JSON module not available, skipping DictJSONwrite'
 
 def main():
 	import os
 	import os.path
-	#import hashlib
-	#import shutil
-	#import json
 	
 	Param = {}
 	mygetenv(Param,'NX',10)
@@ -50,15 +57,20 @@ def main():
 	mygetenv(Param,'PBS_JOBID','00000')
 	mygetenv(Param,'PBS_JOBNAME','JOBNAME')
 	mygetenv(Param,'PBS_O_WORKDIR',os.getenv('PWD'))
-	mygetenv(Param,'MODE','GMRS_FakeVF')
 
 	mygetenv(Param,'VFDIR')
 	mygetenv(Param,'GMRSDIR')
 	mygetenv(Param,'GMRSARCH')
-	mygetenv(Param,'GMRSBIN','GMRS_FakeVF')
-	 
+	mygetenv(Param,'GMRSBIN','GMRS_VF')
 	
-	print 'Param:    \n', Param
+	mygetenv(Param,'MODE','ELASTICITY')
+	mygetenv(Param,'PRESET','SIMXY')
+
+	mygetenv(Param,'E',5e+3)
+	mygetenv(Param,'NU',.25)
+	mygetenv(Param,'GC',5e-2)
+	
+	print 'Param:    \n',Param
 
 	workdir = os.path.join(Param['PBS_O_WORKDIR'],Param['PREFIX']+'-'+Param['PBS_JOBID'])
 	print 'Work dir is %s'%workdir
@@ -66,25 +78,31 @@ def main():
 		os.makedirs(workdir)
 	os.chdir(workdir)
 
-	### Save computation parameters to a txt and a json fil
+	### Save computation parameters to a txt and a json file
 	Dictwritetxt(Param,'00_INFO.txt')
-	
-	#jsonfile = open('00_INFO.json','w')
-	#jsonfile.write(json.encoder.JSONEncoder().encode(Param))
-	#jsonfile.flush()
-	#jsonfile.close()
+	DictwriteJSON(Param,'0_INFO.json')
 	
 	### Generate GMRS data file
 	filenamein  = os.path.join(Param['PBS_O_WORKDIR'],Param['PREFIX']+'.dat')
 	filenameout = '%s.dat'%Param['PBS_JOBID']
-	print filenamein, filenameout
+	print filenamein,filenameout
 	open(filenameout,'w').write( open(filenamein,'r').read()%Param ) 
 	
 	open('temp.txt','w').write('%s\n%s.out\n'%(filenameout,Param['PBS_JOBID']))
 
-        cmd = 'mpirun %s -p %s< temp.txt'%(os.path.join(Param['GMRSDIR'],Param['GMRSARCH'],Param['GMRSBIN']), Param['PREFIX'])
-        print cmd
-        os.system(cmd)
+	###
+	### Run the computation
+	###
+	cmd = 'mpirun %s -p %s< temp.txt'%(os.path.join(Param['GMRSDIR'],Param['GMRSARCH'],Param['GMRSBIN']),Param['PREFIX'])
+	os.system(cmd)
+	
+	###
+	### Convert petsc binary files to hdf5 format
+	### This needs to be done separately as parallel hdf5 
+	### does not work with scali mpi and pgi compilers
+	###
+	cmd = 'mpirun -np 1 %s -p %s'%(os.path.join(Param['VFDIR'],'bin','h5export'),Param['PREFIX'])
+	os.system(cmd)
 	
 import sys  
 if __name__ == "__main__":
