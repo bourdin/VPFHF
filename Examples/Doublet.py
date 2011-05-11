@@ -27,7 +27,7 @@ def Dictwritetxt(D,filename):
 		f.write('%s \t\t %s\n'%(key,str(D[key])))
 	f.close()
   
-def DictJSONwrite(D,filename):
+def DictwriteJSON(D,filename):
 	try:
 		import json
 	
