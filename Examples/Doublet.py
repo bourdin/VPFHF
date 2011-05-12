@@ -100,7 +100,7 @@ def main():
 	
 	cmd = 'mpirun %(GMRSDIR)s/%(GMRSARCH)s/%(GMRSBIN)s -p %(PREFIX)s -E %(E)f -nu %(NU)f -alpha %(ALPHA)f -gc %(GC)f -mode %(MODE)s -preset %(PRESET)s %(VFOPTS)s < temp.txt'%Param
 	print cmd
-	#os.system(cmd)
+	os.system(cmd)
 	
 	###
 	### Convert petsc binary files to hdf5 format
@@ -108,7 +108,8 @@ def main():
 	### does not work with scali mpi and pgi compilers
 	###
 	cmd = 'mpirun -np 1 %s -p %s'%(os.path.join(Param['VFDIR'],'bin','h5export'),Param['PREFIX'])
-	#os.system(cmd)
+	print cmd
+	os.system(cmd)
 	
 import sys  
 if __name__ == "__main__":
