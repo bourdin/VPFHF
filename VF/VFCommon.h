@@ -110,6 +110,7 @@ typedef struct {
   PetscReal        eta;
   PetscReal        atCv;
   PetscReal        irrevtol;
+  PetscReal        permVcutoff;
 } VFProp;
 
 typedef struct {
