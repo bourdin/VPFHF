@@ -98,7 +98,7 @@ def main():
 	### Run the computation
 	###
 	
-	cmd = 'mpirun %(GMRSDIR)s/%(GMRSARCH)s/%(GMRSBIN)s -p %(PREFIX)s -E %(E)f -nu %(NU)f -alpha %(ALPHA)f -gc %(GC)f %(VFOPTS)s < temp.txt'%Param
+	cmd = 'mpirun %(GMRSDIR)s/%(GMRSARCH)s/%(GMRSBIN)s -p %(PREFIX)s -E %(E)f -nu %(NU)f -alpha %(ALPHA)f -gc %(GC)f -mode %(MODE)s -preset %(PRESET)s %(VFOPTS)s < temp.txt'%Param
 	print cmd
 	#os.system(cmd)
 	
