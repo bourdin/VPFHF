@@ -61,6 +61,8 @@ def main():
 	mygetenv(Param,'VFDIR')
 	mygetenv(Param,'GMRSDIR')
 	mygetenv(Param,'GMRSARCH')
+	mygetenv(Param,'PETSC_DIR')
+	mygetenv(Param,'PETSC_ARCH')
 	mygetenv(Param,'GMRSBIN','GMRS_VF')
 	
 	mygetenv(Param,'MODE','ELASTICITY')
