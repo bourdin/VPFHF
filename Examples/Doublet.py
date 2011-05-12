@@ -72,6 +72,7 @@ def main():
 	mygetenv(Param,'NU',.25)
 	mygetenv(Param,'GC',5e-2)
 	mygetenv(Param,'ALPHA',1e-5)
+	mygetenv(Param,'VFOPTS','-U_ksp_monitor -V_ksp_monitor -verbose 1 -U_ksp_view -V_ksp_view')
 
 	print 'Param:    \n',Param
 
@@ -96,8 +97,10 @@ def main():
 	###
 	### Run the computation
 	###
-	cmd = 'mpirun %s -p %s< temp.txt'%(os.path.join(Param['GMRSDIR'],Param['GMRSARCH'],Param['GMRSBIN']),Param['PREFIX'])
-	os.system(cmd)
+	
+	cmd = 'mpirun %(GMRSDIR)s/%(GMRSARCH)s/%(GMRSBIN)s -p %(PREFIX)s -E %(E)f -nu %(NU)f -alpha %(ALPHA)f -gc %(GC)f %(VFOPTS)s < temp.txt'%Param
+	print cmd
+	#os.system(cmd)
 	
 	###
 	### Convert petsc binary files to hdf5 format
@@ -105,7 +108,7 @@ def main():
 	### does not work with scali mpi and pgi compilers
 	###
 	cmd = 'mpirun -np 1 %s -p %s'%(os.path.join(Param['VFDIR'],'bin','h5export'),Param['PREFIX'])
-	os.system(cmd)
+	#os.system(cmd)
 	
 import sys  
 if __name__ == "__main__":
