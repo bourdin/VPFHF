@@ -620,16 +620,6 @@ extern PetscErrorCode VFElasticityTimeStep(VFCtx *ctx,VFFields *fields)
 
   PetscFunctionBegin;
 
-  /*
-  if (ctx->timestep>1) {
-    ierr = MatZeroEntries(ctx->KU);CHKERRQ(ierr);
-    ierr = VecSet(ctx->RHSU,0.);CHKERRQ(ierr);
-  }
-  ierr = VecSet(fields->V, 1.0);CHKERRQ(ierr);
-  ierr = VecSet(fields->U,0.);CHKERRQ(ierr);
-  ierr = VecSet(fields->theta,0.);CHKERRQ(ierr);
-  ierr = VecSet(fields->thetaRef,0.);CHKERRQ(ierr);
-  */
   ierr = VF_StepU(fields,ctx);CHKERRQ(ierr);
   ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
   ctx->TotalEnergy = ctx->ElasticEnergy - ctx->InsituWork;
@@ -709,7 +699,8 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
 extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 {
   PetscErrorCode ierr;
-
+  char           filename[FILENAME_MAX];
+  
   PetscFunctionBegin;
   ierr = PetscFree(ctx->matprop);CHKERRQ(ierr);
   ierr = PetscFree(ctx->layer);CHKERRQ(ierr);
@@ -740,12 +731,15 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   /*
     Close the xdmf multi-step file
   */
-  if (ctx->fileformat == FILEFORMAT_HDF5) {
 #ifdef PETSC_HAVE_HDF5
+  if (ctx->fileformat == FILEFORMAT_HDF5) {
     ierr = XDMFuniformgridFinalize(ctx->XDMFviewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(ctx->XDMFviewer);CHKERRQ(ierr);
-#endif
   }
+#endif
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx->prefix);CHKERRQ(ierr);
+  ierr = PetscLogPrintSummary(PETSC_COMM_WORLD, filename);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
 
