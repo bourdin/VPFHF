@@ -134,61 +134,53 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
   ctx.timestep  = nstep;
   ctx.timevalue = tim;
 
-  /*
-    Get Pressure and temperature from GMRS
-  */
-  ierr = VecGMRSToPetsc(pres,fields.pressure);CHKERRQ(ierr);  
-  ierr = VecGMRSToPetsc(tempr,fields.theta);CHKERRQ(ierr);  
-  
-  if (ctx.verbose > 0) {
-    ierr = VecMin(fields.theta,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
-    ierr = VecMax(fields.theta,PETSC_NULL,&fieldmax);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "Temperature range: %g - %g\n", fieldmin, fieldmax);CHKERRQ(ierr);
-    ierr = VecMin(fields.pressure,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
-    ierr = VecMax(fields.pressure,PETSC_NULL,&fieldmax);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "Pressure range:    %g - %g\n", fieldmin, fieldmax);CHKERRQ(ierr);
-  }
-  /*
-    If this is the first Newton iteration of the first time step, set the reference temperature:
-  */
-  if (nstep == 1 && newt == 1) {
-    ierr = VecCopy(fields.theta,fields.thetaRef);CHKERRQ(ierr);
-  }
-  /* 
-    Minimize the fracture energy in order to get Displacement and Fracture
-  */
-  if (newt == 1) {
+  if (ctx.coupling != COUPLING_NONE) {
     /*
-      We are starting a new time step
+      Get Pressure and temperature from GMRS
     */
-    ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VecGMRSToPetsc(pres,fields.pressure);CHKERRQ(ierr);  
+    ierr = VecGMRSToPetsc(tempr,fields.theta);CHKERRQ(ierr);  
+    
+    if (ctx.verbose > 0) {
+      ierr = VecMin(fields.theta,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
+      ierr = VecMax(fields.theta,PETSC_NULL,&fieldmax);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD, "Temperature range: %g - %g\n", fieldmin, fieldmax);CHKERRQ(ierr);
+      ierr = VecMin(fields.pressure,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
+      ierr = VecMax(fields.pressure,PETSC_NULL,&fieldmax);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD, "Pressure range:    %g - %g\n", fieldmin, fieldmax);CHKERRQ(ierr);
+    }
+    /*
+      If this is the first Newton iteration of the first time step, set the reference temperature:
+    */
+    if (nstep == 1 && newt == 1) {
+      ierr = VecCopy(fields.theta,fields.thetaRef);CHKERRQ(ierr);
+    }
+    /* 
+      Minimize the fracture energy in order to get Displacement and Fracture
+    */
+    if (newt == 1) {
+      /*
+        We are starting a new time step
+      */
+      ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
+    }
+    switch (ctx.mode) {
+      case ELASTICITY:
+        ierr = VFElasticityTimeStep(&ctx,&fields);CHKERRQ(ierr);
+      break;
+      case FRACTURE:
+        ierr = VFFractureTimeStep(&ctx,&fields);CHKERRQ(ierr);
+      break;
+    }
+    
+    if (ctx.coupling == COUPLING_FULL) {
+    /*
+      Send permeability multiplier back to GMRS
+    */
+    
+    }
   }
-  switch (ctx.mode) {
-    case ELASTICITY:
-      ierr = VFElasticityTimeStep(&ctx,&fields);CHKERRQ(ierr);
-    break;
-    case FRACTURE:
-      ierr = VFFractureTimeStep(&ctx,&fields);CHKERRQ(ierr);
-    break;
-  }
-  
-  /*
-    Send permeability multiplier back to GMRS
-  */
-  /*
-  p1 = .5;
-  p2 = .75;
-  ierr = VecCopy(user.tempr,user.pmult);CHKERRQ(ierr);
-  ierr = VecScale(user.pmult,-1.0*(p2-p1)/(tempmin-tempmax));CHKERRQ(ierr);
-  ierr = VecShift(user.pmult,(p2*tempmin-p1*tempmax)/(tempmin-tempmax));CHKERRQ(ierr);
-  ierr = VecPetscToGMRS(user.pmult,pmult);CHKERRQ(ierr); 
-  */
-  /*
-    Calling my vstdout since this is where I write fields
-  */
-  /*
-  ierr = vstdout(rank,tim,nstep,nfout,nfbug);CHKERRQ(ierr);
-  */
+
   ierr = PetscPrintf(PETSC_COMM_WORLD, "Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD, "Work of insitu forces:     %e\n",ctx.InsituWork);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD, "Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
