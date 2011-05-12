@@ -41,6 +41,8 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
 
   ierr = PetscOptionsHasName(PETSC_NULL,"-help",&printhelp);CHKERRQ(ierr);
 
+  ierr = VFLogInitialize(&ctx.vflog);CHKERRQ(ierr);
+  
   ctx.ncellx = nx-1;
   ctx.ncelly = ny-1;
   ctx.ncellz = nz-1;
@@ -204,7 +206,7 @@ extern PetscErrorCode vstdout(PetscInt rank,PetscReal tim,PetscInt nstep,PetscIn
    
   PetscFunctionBegin;
   ierr = PetscPrintf(PETSC_COMM_WORLD, "Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "Work of insitu forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD, "Work of insitu forces:     %e\n",ctx.InsituWork);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD, "Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD, "Total energy:              %e\n",ctx.TotalEnergy);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i \t%e \t%e \t%e \t%e \t%e\n", nstep, tim, ctx.ElasticEnergy, ctx.InsituWork, ctx.SurfaceEnergy, 
@@ -218,8 +220,8 @@ extern PetscErrorCode vstdout(PetscInt rank,PetscReal tim,PetscInt nstep,PetscIn
       ierr = FieldsBinaryWrite(&ctx,&fields);
     break; 
   } 
-  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
   ierr = PetscLogStagePop();CHKERRQ(ierr);
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
   ierr = PetscLogPrintSummary(PETSC_COMM_WORLD, filename);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
