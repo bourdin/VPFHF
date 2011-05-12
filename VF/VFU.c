@@ -691,7 +691,6 @@ extern PetscErrorCode VF_RHSUInSituStresses3D_local(PetscReal *RHS_local,PetscRe
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,l,c,g;
-  PetscInt       dim=3;
   PetscReal      *f_elem[3];
 
   PetscFunctionBegin;
@@ -1446,7 +1445,6 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   PetscReal      ****f_array;
   Vec            f_localVec;
   FACE           face;
-  PetscInt       dim=3;
   PetscReal      z;
   int            stresscomp[3];
   PetscReal      stressdir[3];
