@@ -3,7 +3,6 @@
 #include "VFCommon.h"
 #include "VFV.h"
 #include "VFU.h"
-#include "VFPerm.h"
 #include "../Utils/xdmf.h"
 
 #undef __FUNCT__

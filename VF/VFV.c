@@ -470,6 +470,7 @@ extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFC
       }
     }
   }
+  *SurfaceEnergy = 0.;
   ierr = MPI_Reduce(&mySurfaceEnergy,SurfaceEnergy,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
 
   ierr = DAVecRestoreArray(ctx->daScal,v_localVec,&v_array);CHKERRQ(ierr);
