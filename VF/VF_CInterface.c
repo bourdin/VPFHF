@@ -42,7 +42,7 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
   ierr = PetscOptionsHasName(PETSC_NULL,"-help",&printhelp);CHKERRQ(ierr);
 
   ierr = VFLogInitialize(&ctx.vflog);CHKERRQ(ierr);
-  
+
   ctx.ncellx = nx-1;
   ctx.ncelly = ny-1;
   ctx.ncellz = nz-1;
@@ -206,10 +206,6 @@ extern PetscErrorCode vstdout(PetscInt rank,PetscReal tim,PetscInt nstep,PetscIn
   char           filename[FILENAME_MAX];
    
   PetscFunctionBegin;
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "Work of insitu forces:     %e\n",ctx.InsituWork);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "Total energy:              %e\n",ctx.TotalEnergy);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i \t%e \t%e \t%e \t%e \t%e\n", nstep, tim, ctx.ElasticEnergy, ctx.InsituWork, ctx.SurfaceEnergy, 
                                 ctx.TotalEnergy);CHKERRQ(ierr); 
   ierr = PetscViewerFlush(ctx.energyviewer);CHKERRQ(ierr);

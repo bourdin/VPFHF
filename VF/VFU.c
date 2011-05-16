@@ -333,85 +333,6 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal 
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "ModifiedElasticEnergyDensity3D_local"
-/*
-  ModifiedElasticEnergyDensity3D_local
-
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
-*/
-extern PetscErrorCode ModifiedElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensity_local,PetscReal ****u_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,MatProp *matprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
-{
-  PetscErrorCode ierr;
-  PetscReal      *epsilon11_elem,*epsilon22_elem,*epsilon33_elem,*epsilon12_elem,*epsilon23_elem,*epsilon13_elem;
-  PetscReal      *sigma11_elem,*sigma22_elem,*sigma33_elem,*sigma12_elem,*sigma23_elem,*sigma13_elem;
-  PetscInt       i,j,k,g;
-  PetscReal      lambda,mu;
-
-  PetscFunctionBegin;
-  lambda = matprop->lambda;
-  mu     = matprop->mu;
-  ierr = PetscMalloc3(e->ng,PetscReal,&sigma11_elem,e->ng,PetscReal,&sigma22_elem,e->ng,PetscReal,&sigma33_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&sigma12_elem,e->ng,PetscReal,&sigma23_elem,e->ng,PetscReal,&sigma13_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&epsilon11_elem,e->ng,PetscReal,&epsilon22_elem,e->ng,PetscReal,&epsilon33_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&epsilon12_elem,e->ng,PetscReal,&epsilon23_elem,e->ng,PetscReal,&epsilon13_elem);CHKERRQ(ierr);
-   
-  for (g = 0; g < e->ng; g++) {
-    epsilon11_elem[g] = 0;
-    epsilon22_elem[g] = 0;
-    epsilon33_elem[g] = 0;
-    epsilon12_elem[g] = 0;
-    epsilon23_elem[g] = 0;
-    epsilon13_elem[g] = 0;
-    ElasticEnergyDensity_local[g] = 0.;
-  }
-  for (k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++) {
-        for (g = 0; g < e->ng; g++) {
-          epsilon11_elem[g] +=  e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] - matprop->alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i]);
-          epsilon22_elem[g] +=  e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] - matprop->alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i]);
-          epsilon33_elem[g] +=  e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2] - matprop->alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i]);
-
-          epsilon12_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][1] 
-                              + e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
-          epsilon23_elem[g] += (e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][2] 
-                              + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][1]) * .5;
-          epsilon13_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][2] 
-                              + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
-
-        }
-      }
-    }  
-  }
-  ierr = PetscLogFlops(30 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
-  
-  for (g = 0; g < e->ng; g++) {
-    if (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g] > 0.) {
-    sigma11_elem[g] = (lambda + 2.*mu) * epsilon11_elem[g] + lambda * epsilon22_elem[g] + lambda * epsilon33_elem[g];
-    sigma22_elem[g] = lambda * epsilon11_elem[g] + (lambda + 2.*mu) * epsilon22_elem[g] + lambda * epsilon33_elem[g];
-    sigma33_elem[g] = lambda * epsilon11_elem[g] + lambda * epsilon22_elem[g] + (lambda + 2.*mu) * epsilon33_elem[g];
-    sigma12_elem[g] = 2.*mu * epsilon12_elem[g];
-    sigma23_elem[g] = 2.*mu * epsilon23_elem[g];
-    sigma13_elem[g] = 2.*mu * epsilon13_elem[g];
-    ElasticEnergyDensity_local[g] += (sigma11_elem[g] * epsilon11_elem[g] 
-                        + sigma22_elem[g] * epsilon22_elem[g] 
-                        + sigma33_elem[g] * epsilon33_elem[g]) * .5 
-                        + sigma12_elem[g] * epsilon12_elem[g]
-                        + sigma23_elem[g] * epsilon23_elem[g]
-                        + sigma13_elem[g] * epsilon13_elem[g];
-    } else {
-      ElasticEnergyDensity_local[g] = 0;
-    }
-  }
-  ierr = PetscLogFlops(39 * e->ng);CHKERRQ(ierr);
-  
-  ierr = PetscFree3(sigma11_elem,sigma22_elem,sigma33_elem);CHKERRQ(ierr);
-  ierr = PetscFree3(sigma12_elem,sigma23_elem,sigma13_elem);CHKERRQ(ierr);
-  ierr = PetscFree3(epsilon11_elem,epsilon22_elem,epsilon33_elem);CHKERRQ(ierr);
-  ierr = PetscFree3(epsilon12_elem,epsilon23_elem,epsilon13_elem);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatU3D_local"
@@ -1214,12 +1135,12 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
 
   (c) 2010 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,PetscReal ****u_array,PetscReal ***v_array,PetscReal ***theta_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,PetscReal ****u_array,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscInt       g,i,j,k;
   PetscReal      *epsilon11_elem,*epsilon22_elem,*epsilon33_elem,*epsilon12_elem,*epsilon23_elem,*epsilon13_elem;
   PetscReal      *sigma11_elem,*sigma22_elem,*sigma33_elem,*sigma12_elem,*sigma23_elem,*sigma13_elem;
-  PetscReal      lambda,mu;
+  PetscReal      lambda,mu,alpha;
   PetscReal      *v_elem;
   PetscErrorCode ierr;
 
@@ -1232,6 +1153,7 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
   ierr = PetscMalloc(e->ng * sizeof(PetscReal), &v_elem);CHKERRQ(ierr);
   lambda = matprop->lambda;
   mu     = matprop->mu;
+  alpha  = matprop->alpha;
   
   for (g = 0; g < e->ng; g++) v_elem[g] = 0.;
   for (k = 0; k < e->nphiz; k++) {
@@ -1256,9 +1178,9 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
         for (g = 0; g < e->ng; g++) {
-          epsilon11_elem[g] +=  e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] - matprop->alpha * e->phi[k][j][i][g] * theta_array[ek+k][ej+j][ei+i];
-          epsilon22_elem[g] +=  e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] - matprop->alpha * e->phi[k][j][i][g] * theta_array[ek+k][ej+j][ei+i];
-          epsilon33_elem[g] +=  e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2] - matprop->alpha * e->phi[k][j][i][g] * theta_array[ek+k][ej+j][ei+i];
+          epsilon11_elem[g] +=  e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] - alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
+          epsilon22_elem[g] +=  e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] - alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
+          epsilon33_elem[g] +=  e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2] - alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
 
           epsilon12_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][1] 
                               + e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
@@ -1271,6 +1193,7 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
       }
     }  
   }
+  *ElasticEnergy_local = 0;
   for (g = 0; g < e->ng; g++) {
     sigma11_elem[g] = (lambda + 2.*mu) * epsilon11_elem[g] + lambda * epsilon22_elem[g] + lambda * epsilon33_elem[g];
     sigma22_elem[g] = lambda * epsilon11_elem[g] + (lambda + 2.*mu) * epsilon22_elem[g] + lambda * epsilon33_elem[g];
@@ -1436,10 +1359,10 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   PetscInt       zs,zm,nz;
   PetscInt       ei,ej,ek;
   PetscInt       i,j,k,c;
-  Vec            u_localVec,v_localVec,theta_localVec;
-  PetscReal      ****u_array,***v_array,***theta_array;
-  PetscReal      myInsituWork=0.;
-  PetscReal      myElasticEnergy=0.;
+  Vec            u_localVec,v_localVec,theta_localVec,thetaRef_localVec;
+  PetscReal      ****u_array,***v_array,***theta_array,***thetaRef_array;
+  PetscReal      myInsituWork=0.,myInsituWorkLocal=0.;
+  PetscReal      myElasticEnergy=0.,myElasticEnergyLocal=0.;
   PetscReal      hx,hy,hz;
   PetscReal      ****coords_array;
   PetscReal      ****f_array;
@@ -1476,12 +1399,16 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   ierr = DAGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_localVec);CHKERRQ(ierr);
   ierr = DAVecGetArray(ctx->daScal,v_localVec,&v_array);CHKERRQ(ierr);    
   /*
-    get theta_array
+    get theta_array, thetaRef_array
   */
   ierr = DAGetLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
   ierr = DAGlobalToLocalBegin(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
   ierr = DAGlobalToLocalEnd(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
   ierr = DAVecGetArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);    
+  ierr = DAGetLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DAVecGetArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);    
   /*
     Allocating multi-dimensional vectors in C is a pain, so for the in-situ stresses / surface stresses, I get a 3 component Vec for the external forces, 
     then get a full array. This is a bit wastefull since we never use the internal values...
@@ -1489,6 +1416,8 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   */
   ierr = DAGetLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
   ierr = DAVecGetArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr); 
+  
+  *ElasticEnergy = 0;
   
   for (ek = zs; ek < zs + zm; ek++) {
     for (ej = ys; ej < ys+ym; ej++) {
@@ -1501,12 +1430,13 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
           Elastic Energy is trivial
         */
         ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-        ierr = VF_ElasticEnergy3D_local(&myElasticEnergy,u_array,v_array,theta_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr); 
+        ierr = VF_ElasticEnergy3D_local(&myElasticEnergyLocal,u_array,v_array,theta_array,thetaRef_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr); 
+        myElasticEnergy += myElasticEnergyLocal;
         ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
         /*
           We need to reconstruct the external forces before computing their work. This take a bit more effort
         */
-     if (ek == 0) {
+        if (ek == 0) {
           /* 
             Face Z0
             sigma.(0,0,1) = (s_13,s_23,s_33) = (S4,S3,S2)
@@ -1528,12 +1458,11 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
             }
           }
           ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-         ierr = 
-          VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
+          ierr = VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
           ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-      }
+        }
       
-     if (ek == nz-2) {
+        if (ek == nz-2) {
           /* 
             Face Z1
             sigma.(0,0,-1) = (s_13,s_23,-s_33) = (S4,S3,-S2)
@@ -1555,12 +1484,11 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
             }
           }
           ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-         ierr = 
-          VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
+          ierr = VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
           ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-      }
+        }
       
-      if (ej == 0) {
+        if (ej == 0) {
           /* 
             Face Y0
             sigma.(0,1,0) = (s_12,s_22,s_23) = (S5,S1,S3)
@@ -1582,11 +1510,10 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
             }
           }
           ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-         ierr = 
-          VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
+          ierr = VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
           ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-      }
-
+        }
+        
         if (ej == ny-2) {
           /* 
             Face Y1
@@ -1609,10 +1536,9 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
             }
           }
           ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-          ierr = 
-          VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
+          ierr = VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
           ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-      }
+        }
 
         if (ei == 0) {
           /* 
@@ -1636,10 +1562,9 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
             }
           }
           ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-          ierr = 
-          VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
+          ierr = VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
           ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-      }
+        }
 
         if (ei == nx-2) {
           /* 
@@ -1663,11 +1588,9 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
             }
           }
           ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-          ierr = 
-          VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
+          ierr = VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
           ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-      }
-
+        }
       }
     }
   }
@@ -1679,9 +1602,11 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   ierr = DAVecRestoreArray(ctx->daScal,v_localVec,&v_array);CHKERRQ(ierr);
   ierr = DARestoreLocalVector(ctx->daScal,&v_localVec);CHKERRQ(ierr);
   ierr = DAVecRestoreArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
+  ierr = DAVecRestoreArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
   ierr = DAVecRestoreArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr);
   ierr = DARestoreLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
   ierr = DARestoreLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
+  ierr = DARestoreLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
   ierr = PetscLogStagePop();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -1715,7 +1640,7 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   if (ctx->verbose > 1) {
     ierr = VecView(fields->U,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
-  if (ctx->verbose >0) {
+  if (ctx->verbose > 0) {
     ierr = VecMin(fields->U,PETSC_NULL,&Umin);CHKERRQ(ierr);
     ierr = VecMax(fields->U,PETSC_NULL,&Umax);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD, "Umin = %g, Umax = %g\n", Umin,Umax);CHKERRQ(ierr);
