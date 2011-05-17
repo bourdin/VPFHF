@@ -2,7 +2,7 @@
 
 #PBS -l nodes=2:ppn=2
 #PBS -V
-#PBS -m ae
+#PBS -m a
 #PBS -M bnvk@chevron.com
 #PBS -j oe
 #PBS -q gmrs
@@ -49,7 +49,7 @@ def main():
 	Param = {}
 	mygetenv(Param,'NX',10)
 	mygetenv(Param,'NY',10)
-	mygetenv(Param,'NZ',5)
+	mygetenv(Param,'NZ',10)
 	mygetenv(Param,'DX',1000/Param['NX'])
 	mygetenv(Param,'DY',1000/Param['NX'])
 	mygetenv(Param,'DZ',200/Param['NX'])
@@ -62,25 +62,11 @@ def main():
 	mygetenv(Param,'PBS_JOBNAME','JOBNAME')
 	mygetenv(Param,'PBS_O_WORKDIR',os.getenv('PWD'))
 
-	mygetenv(Param,'VFDIR')
-	mygetenv(Param,'GMRSDIR')
-	mygetenv(Param,'GMRSARCH')
-	mygetenv(Param,'PETSC_DIR')
-	mygetenv(Param,'PETSC_ARCH')
-	mygetenv(Param,'GMRSBIN','GMRS_VF')
+	mygetenv(Param,'GMRSBIN','/chap/gmrs/v030311/bin/gmrsp')
 	
-	mygetenv(Param,'MODE','ELASTICITY')
-	mygetenv(Param,'PRESET','SYMXY')
-
-	mygetenv(Param,'E',5e+3)
-	mygetenv(Param,'NU',.25)
-	mygetenv(Param,'GC',5e-2)
-	mygetenv(Param,'ALPHA',1e-5)
-	mygetenv(Param,'VFOPTS','-U_ksp_atol 1e-12 -U_ksp_rtol 1e-12 -V_ksp_atol 1e-12 -V_ksp_rtol 1e-12')
-
 	print 'Param:    \n',Param
 
-	workdir = os.path.join(Param['PBS_O_WORKDIR'],Param['PREFIX']+'-'+Param['PBS_JOBID'])
+	workdir = os.path.join(Param['PBS_O_WORKDIR'],'GMRS-Scaling',Param['PBS_JOBID'])
 	print 'Work dir is %s'%workdir
 	if not os.path.exists(workdir):
 		os.makedirs(workdir)
@@ -103,19 +89,11 @@ def main():
 	###
 	
 	t1 = time.time()
-	cmd = 'mpirun %(GMRSDIR)s/%(GMRSARCH)s/%(GMRSBIN)s -p %(PREFIX)s -E %(E)f -nu %(NU)f -alpha %(ALPHA)f -gc %(GC)f -mode %(MODE)s -preset %(PRESET)s %(VFOPTS)s < temp.txt'%Param
+	cmd = 'mpirun %(GMRSBIN)s < temp.txt'%Param
 	print cmd
 	os.system(cmd)
 	t2 = time.time()
 	print '###\n### Computation took %fs\n###\n'%(t2-t1)
-	###
-	### Convert petsc binary files to hdf5 format
-	### This needs to be done separately as parallel hdf5 
-	### does not work with scali mpi and pgi compilers
-	###
-	cmd = 'mpirun -np 1 %s -p %s'%(os.path.join(Param['VFDIR'],'bin','h5export'),Param['PREFIX'])
-	print cmd
-	os.system(cmd)
 	print '###\n### Script finished at %s\n###\n'%time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 
 import sys  
