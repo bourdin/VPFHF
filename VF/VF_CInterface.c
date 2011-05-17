@@ -177,7 +177,7 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
     /*
       Send permeability multiplier back to GMRS
     */
-    
+    ierr = PermUpdateTruncate(fields.V,fields.pmult,&ctx.vfprop,&ctx);
     }
   }
 

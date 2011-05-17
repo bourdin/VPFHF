@@ -222,15 +222,15 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
       }
     }  
   }
-  ierr = PetscLogFlops(30 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  ierr = PetscLogFlops(33 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
   
   for (g = 0; g < e->ng; g++) {
     sigma11_elem[g] = (lambda + 2.*mu) * epsilon11_elem[g] + lambda * epsilon22_elem[g] + lambda * epsilon33_elem[g];
     sigma22_elem[g] = lambda * epsilon11_elem[g] + (lambda + 2.*mu) * epsilon22_elem[g] + lambda * epsilon33_elem[g];
     sigma33_elem[g] = lambda * epsilon11_elem[g] + lambda * epsilon22_elem[g] + (lambda + 2.*mu) * epsilon33_elem[g];
-    sigma12_elem[g] = 2.*mu * epsilon12_elem[g];
-    sigma23_elem[g] = 2.*mu * epsilon23_elem[g];
-    sigma13_elem[g] = 2.*mu * epsilon13_elem[g];
+    sigma12_elem[g] = 2. * mu * epsilon12_elem[g];
+    sigma23_elem[g] = 2. * mu * epsilon23_elem[g];
+    sigma13_elem[g] = 2. * mu * epsilon13_elem[g];
     ElasticEnergyDensity_local[g] += (sigma11_elem[g] * epsilon11_elem[g] 
                                     + sigma22_elem[g] * epsilon22_elem[g] 
                                     + sigma33_elem[g] * epsilon33_elem[g]) * .5 
@@ -333,7 +333,6 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal 
   PetscFunctionReturn(0);
 }
 
-
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatU3D_local"
 /*
@@ -384,6 +383,7 @@ extern PetscErrorCode VF_MatU3D_local(PetscReal *Mat_local,PetscReal ***V_array,
                       
                       ierr = PetscLogFlops(15);CHKERRQ(ierr);
                     } else {
+// switched c1 and c2
                       Mat_local[l] += e->weight[g] * (lambda * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] 
                                                         + mu * e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g])
                                                    * (v_elem[g] * v_elem[g] + vfprop->eta);
@@ -505,7 +505,7 @@ extern PetscErrorCode VF_RHSUCoupling3D_local(PetscReal *RHS_local,PetscReal ***
   /*
     Compute theta_elem
   */
-  for (l=0,k = 0; k < e->nphiz; k++) {
+  for (k = 0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
         for (g = 0; g < e->ng; g++) {
@@ -567,7 +567,7 @@ extern PetscErrorCode VF_RHSUCouplingShearOnly3D_local(PetscReal *RHS_local,Pets
   /*
     Compute theta_elem
   */
-  for (l=0,k = 0; k < e->nphiz; k++) {
+  for (k = 0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
         for (g = 0; g < e->ng; g++) {
@@ -721,13 +721,6 @@ extern PetscErrorCode VF_RHSUInSituStresses3D_local(PetscReal *RHS_local,PetscRe
       }
     }
   }
-  /*
-  printf ("face: %i: ",face);
-  for (l=0; l < e->nphiz*e->nphiy*e->nphix*e->dim; l++) {
-    printf ("%g ",RHS_local[l]);
-  }
-  printf ("\n");
-  */
   /*
     Clean up
   */
@@ -1166,6 +1159,9 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
     }
   }
   
+  /*
+    epsilon is the inelastic strain
+  */
   for (g = 0; g < e->ng; g++) {
     epsilon11_elem[g] = 0;
     epsilon22_elem[g] = 0;
@@ -1198,9 +1194,9 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
     sigma11_elem[g] = (lambda + 2.*mu) * epsilon11_elem[g] + lambda * epsilon22_elem[g] + lambda * epsilon33_elem[g];
     sigma22_elem[g] = lambda * epsilon11_elem[g] + (lambda + 2.*mu) * epsilon22_elem[g] + lambda * epsilon33_elem[g];
     sigma33_elem[g] = lambda * epsilon11_elem[g] + lambda * epsilon22_elem[g] + (lambda + 2.*mu) * epsilon33_elem[g];
-    sigma12_elem[g] = 2.*mu * epsilon12_elem[g];
-    sigma23_elem[g] = 2.*mu * epsilon23_elem[g];
-    sigma13_elem[g] = 2.*mu * epsilon13_elem[g];
+    sigma12_elem[g] = 2. * mu * epsilon12_elem[g];
+    sigma23_elem[g] = 2. * mu * epsilon23_elem[g];
+    sigma13_elem[g] = 2. * mu * epsilon13_elem[g];
     *ElasticEnergy_local += ( (sigma11_elem[g] * epsilon11_elem[g] 
                                       + sigma22_elem[g] * epsilon22_elem[g] 
                                       + sigma33_elem[g] * epsilon33_elem[g]) * .5 
