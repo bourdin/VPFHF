@@ -127,6 +127,7 @@ extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ***
   
   PetscFunctionBegin;
   ierr = PetscMalloc(e->ng * sizeof(PetscReal), &ElasticEnergyDensity_local);CHKERRQ(ierr);
+  for (g = 0; g < e->ng; g++) ElasticEnergyDensity_local[g] = 0;
   ierr = ElasticEnergyDensity3D_local(ElasticEnergyDensity_local,U_array,theta_array,thetaRef_array,matprop,ek,ej,ei,e);CHKERRQ(ierr);
   for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {

@@ -116,7 +116,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
       }
       ierr = PetscFree(numcell);CHKERRQ(ierr);
     */
-    ctx->altmintol  = 1.e-8;
+    ctx->altmintol  = 1.e-6;
     ierr = PetscOptionsReal("-altmintol","\n\tTolerance for alternate minimizations algorithm","",ctx->altmintol,&ctx->altmintol,PETSC_NULL);CHKERRQ(ierr);
     ctx->altminmaxit= 10000;
     ierr = PetscOptionsInt("-altminmaxit","\n\tMaximum number of altername minimizations iterations","",ctx->altminmaxit,&ctx->altminmaxit,PETSC_NULL);CHKERRQ(ierr);
@@ -161,7 +161,9 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
     vfprop->irrevtol = 5e-2;
     ierr = PetscOptionsReal("-epsilon","\n\tVariational fracture regularization length (start from 4x cell size)","",vfprop->epsilon,&vfprop->epsilon,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsReal("-eta","\n\tArtificial stiffness of cracks ","",vfprop->eta,&vfprop->eta,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-irrevtol","\n\tThreshold below which fracture irreversibility is enforced","",vfprop->irrevtol,&vfprop->irrevtol,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-irrevtol","\n\tThreshold on v below which fracture irreversibility is enforced","",vfprop->irrevtol,&vfprop->irrevtol,PETSC_NULL);CHKERRQ(ierr);
+    vfprop->permVcutoff = vfprop->irrevtol;
+    ierr = PetscOptionsReal("-permcutoff","\n\tThreshold on v below which permeability multipliers are set to 0.","",vfprop->permVcutoff,&vfprop->permVcutoff,PETSC_NULL);CHKERRQ(ierr);
     vfprop->atCv = .5;
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
@@ -501,7 +503,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 
   ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspU);CHKERRQ(ierr);
   
-  ierr = KSPSetTolerances(ctx->kspU,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSetTolerances(ctx->kspU,1.e-12,1.e-12,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSetOperators(ctx->kspU,ctx->KU,ctx->KU,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   ierr = KSPSetInitialGuessNonzero(ctx->kspU,PETSC_TRUE);CHKERRQ(ierr);
   ierr = KSPAppendOptionsPrefix(ctx->kspU,"U_");CHKERRQ(ierr);
@@ -518,7 +520,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 
   ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspV);CHKERRQ(ierr);
   
-  ierr = KSPSetTolerances(ctx->kspV,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSetTolerances(ctx->kspV,1.e-12,1.e-12,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSetOperators(ctx->kspV,ctx->KV,ctx->KV,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   ierr = KSPSetInitialGuessNonzero(ctx->kspV,PETSC_TRUE);CHKERRQ(ierr);
   ierr = KSPAppendOptionsPrefix(ctx->kspV,"V_");CHKERRQ(ierr);
@@ -643,11 +645,24 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
   PetscFunctionBegin;
   ierr = VecDuplicate(fields->V,&Vold);CHKERRQ(ierr);
   do {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Alt min step %i/%i:\n",altminit,ctx->timestep);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, alt min step %i\n",ctx->timestep,altminit);CHKERRQ(ierr);
     ierr = VF_StepU(fields,ctx);CHKERRQ(ierr);
+      ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
+      ierr = VF_VEnergy3D(&ctx->SurfaceEnergy,fields,ctx);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD, "   ***Elastic Energy:         %e\n",ctx->ElasticEnergy);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD, "   ***Work of surface forces: %e\n",ctx->InsituWork);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD, "   ***Surface energy:         %e\n",ctx->SurfaceEnergy);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD, "   ***Total energy:           %e\n",ctx->ElasticEnergy+ctx->SurfaceEnergy-ctx->InsituWork);CHKERRQ(ierr);
     
     ierr = VecCopy(fields->V,Vold);CHKERRQ(ierr);
     ierr = VF_StepV(fields,ctx);CHKERRQ(ierr);
+      ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
+      ierr = VF_VEnergy3D(&ctx->SurfaceEnergy,fields,ctx);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD, "   +++Elastic Energy:         %e\n",ctx->ElasticEnergy);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD, "   +++Work of surface forces: %e\n",ctx->InsituWork);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD, "   +++Surface energy:         %e\n",ctx->SurfaceEnergy);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD, "   +++Total energy:           %e\n",ctx->ElasticEnergy+ctx->SurfaceEnergy-ctx->InsituWork);CHKERRQ(ierr);
+
     /* 
       Compute max V change
     */
@@ -683,7 +698,7 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
   } while (errV > ctx->altmintol && altminit <= ctx->altminmaxit);
   ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
   ierr = VF_VEnergy3D(&ctx->SurfaceEnergy,fields,ctx);CHKERRQ(ierr);
-  ctx->TotalEnergy = ctx->ElasticEnergy - ctx->InsituWork;
+  ctx->TotalEnergy = ctx->ElasticEnergy + ctx->SurfaceEnergy - ctx->InsituWork;
   ierr = VecDestroy(Vold);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -818,5 +833,41 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
   ierr = VecView(fields->pmult,viewer);CHKERRQ(ierr);
   ierr = VecView(fields->theta,viewer);CHKERRQ(ierr);
   ierr = VecView(fields->pressure,viewer);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "PermUpdateTruncate"
+/*
+  PermUpdateTruncate
+
+  (c) 2011 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode PermUpdateTruncate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx)
+{
+  PetscErrorCode ierr;
+  PetscInt       xs,xm;
+  PetscInt       ys,ym;
+  PetscInt       zs,zm;
+  PetscInt       i,j,k;
+  PetscReal      ***v_array,***pmult_array;
+
+  PetscFunctionBegin;
+  ierr = DAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = DAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);        
+  ierr = DAVecGetArray(ctx->daScal,Pmult,&pmult_array);CHKERRQ(ierr);        
+
+  for (k = zs; k < zs + zm; k++) {
+    for (j = ys; j < ys + ym; j++) {
+      for (i = xs; i < xs + xm; i++) {    
+        if (v_array[k][j][i] <= vfprop->permVcutoff) {
+          pmult_array[k][j][i] = 0.;
+        }
+      }
+    }
+  }
+
+  ierr = DAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);        
+  ierr = DAVecGetArray(ctx->daScal,Pmult,&pmult_array);CHKERRQ(ierr);        
   PetscFunctionReturn(0);
 }
