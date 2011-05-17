@@ -22,7 +22,7 @@ THERM_PROP = 2     $ Include temperatures in phase package
 
 TIMEEND = 3650.    $ Final simulation time in days
 BUGKEY(6) = TRUE   $ Print nonlinear iteration info
-
+METHOD_DIVIDE = 1
 
 $ **************************************************
 $     PLOT INFORMATION
