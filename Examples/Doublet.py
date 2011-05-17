@@ -2,7 +2,7 @@
 
 #PBS -l nodes=2:ppn=2
 #PBS -V
-#PBS -m ae
+#PBS -m a
 #PBS -M bnvk@chevron.com
 #PBS -j oe
 #PBS -q gmrs
@@ -113,7 +113,7 @@ def main():
 	### This needs to be done separately as parallel hdf5 
 	### does not work with scali mpi and pgi compilers
 	###
-	cmd = 'mpirun -np 1 %s -p %s'%(os.path.join(Param['VFDIR'],'bin','h5export'),Param['PREFIX'])
+	cmd = 'mpirun -np 1 %(VFDIR)s/bin/%(PETSC_ARCH)s/h5export -p %(PREFIX)s'%Param
 	print cmd
 	os.system(cmd)
 	print '###\n### Script finished at %s\n###\n'%time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
