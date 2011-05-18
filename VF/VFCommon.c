@@ -503,7 +503,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 
   ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspU);CHKERRQ(ierr);
   
-  ierr = KSPSetTolerances(ctx->kspU,1.e-12,1.e-12,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSetTolerances(ctx->kspU,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSetOperators(ctx->kspU,ctx->KU,ctx->KU,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   ierr = KSPSetInitialGuessNonzero(ctx->kspU,PETSC_TRUE);CHKERRQ(ierr);
   ierr = KSPAppendOptionsPrefix(ctx->kspU,"U_");CHKERRQ(ierr);
@@ -520,7 +520,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 
   ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspV);CHKERRQ(ierr);
   
-  ierr = KSPSetTolerances(ctx->kspV,1.e-12,1.e-12,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSetTolerances(ctx->kspV,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSetOperators(ctx->kspV,ctx->KV,ctx->KV,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   ierr = KSPSetInitialGuessNonzero(ctx->kspV,PETSC_TRUE);CHKERRQ(ierr);
   ierr = KSPAppendOptionsPrefix(ctx->kspV,"V_");CHKERRQ(ierr);
