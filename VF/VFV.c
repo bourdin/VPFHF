@@ -53,18 +53,18 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
     case TEST_CLAMPEDX0:
     case TEST_CLAMPEDX1:
     case TEST_CLAMPEDX0X1:
+      BC[0].face[X0] = FIXED; 
+      BC[0].face[X1] = FIXED; 
+	  break;
     case TEST_CLAMPEDY0:
     case TEST_CLAMPEDY1:
     case TEST_CLAMPEDY0Y1:
+      BC[0].face[Y0] = FIXED; 
+      BC[0].face[Y1] = FIXED; 
+	  break;
     case TEST_CLAMPEDZ0:
     case TEST_CLAMPEDZ1:
     case TEST_CLAMPEDZ0Z1:
-      /*
-      BC[0].face[X0] = FIXED; 
-      BC[0].face[X1] = FIXED; 
-      BC[0].face[Y0] = FIXED; 
-      BC[0].face[Y1] = FIXED; 
-      */
       BC[0].face[Z0] = FIXED; 
       BC[0].face[Z1] = FIXED; 
       break;
@@ -136,7 +136,7 @@ extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ***
           for (j2 = 0; j2 < e->nphiy; j2++) {
             for (i2 = 0; i2 < e->nphix; i2++,l++) {
               for (g = 0; g < e->ng; g++) {
-                Mat_local[l] += e->weight[g] * e->phi[k1][j1][i1][g] * e->phi[k2][j2][i2][g] * ElasticEnergyDensity_local[g];
+                Mat_local[l] += e->weight[g] * e->phi[k1][j1][i1][g] * e->phi[k2][j2][i2][g] * ElasticEnergyDensity_local[g] * 2.;
               }
             }
           }
@@ -172,7 +172,7 @@ extern PetscErrorCode VF_MatVCouplingShearOnly3D_local(PetscReal *Mat_local,Pets
           for (j2 = 0; j2 < e->nphiy; j2++) {
             for (i2 = 0; i2 < e->nphix; i2++,l++) {
               for (g = 0; g < e->ng; g++) {
-                Mat_local[l] += e->weight[g] * e->phi[k1][j1][i1][g] * e->phi[k2][j2][i2][g] * ElasticEnergyDensityD_local[g];
+                Mat_local[l] += e->weight[g] * e->phi[k1][j1][i1][g] * e->phi[k2][j2][i2][g] * ElasticEnergyDensityD_local[g] * 2.;
               }
             }
           }
