@@ -3,7 +3,7 @@
          DOUBLE PRECISION FUNCTION TEMP(THETAF,THETAR,R,L,X)
           IMPLICIT NONE
           DOUBLE PRECISION, INTENT(IN)  :: THETAF,THETAR,R,L,X
-          TEMP=MIN(THETAR,MAX(THETAF,THETAF+(THETAR-THETAF)*(X-R+L)/L))
+          TEMP=MIN(THETAR,MAX(THETAF,THETAF+(THETAR-THETAF)*(X-R)/L))
 C          TEMP = THETAF
          END FUNCTION TEMP 
          
@@ -25,9 +25,9 @@ C          PRESSURE = PF
       
 C     SAMPLE PARAMETERS SIMILAR TO THE BOUND EXAMPLE KEITA ONCE GAVE ME      
       INTEGER, PARAMETER          :: NDAYS = 88
-      DOUBLE PRECISION, PARAMETER :: LX = 1000
-      DOUBLE PRECISION, PARAMETER :: LY = 100!1000
-      DOUBLE PRECISION, PARAMETER :: LZ = 200
+      DOUBLE PRECISION, PARAMETER :: LX = 10
+      DOUBLE PRECISION, PARAMETER :: LY = 10!1000
+      DOUBLE PRECISION, PARAMETER :: LZ = 50
       DOUBLE PRECISION, PARAMETER :: FLOWRATE = 20000000.0
       DOUBLE PRECISION, PARAMETER :: TEMP_W = 80.0
       DOUBLE PRECISION, PARAMETER :: TEMP_R = 180.0
@@ -35,10 +35,10 @@ C     SAMPLE PARAMETERS SIMILAR TO THE BOUND EXAMPLE KEITA ONCE GAVE ME
       DOUBLE PRECISION, PARAMETER :: PRES_R = 2400.0
       DOUBLE PRECISION, PARAMETER :: LDIFF = 300
 
-      INTEGER, PARAMETER          :: NX = 101!51!75
-      INTEGER, PARAMETER          :: NY = 11!51!40
-      INTEGER, PARAMETER          :: NZ = 26!51!72
-      INTEGER, PARAMETER          :: NSTEP = 10
+      INTEGER, PARAMETER          :: NX = 21!51!75
+      INTEGER, PARAMETER          :: NY = 21!51!40
+      INTEGER, PARAMETER          :: NZ = 201!51!72
+      INTEGER, PARAMETER          :: NSTEP = 11
 
       INTEGER                     :: IERR, RANK, NUMPROC
       DOUBLE PRECISION            :: DX(NX-1)
@@ -50,10 +50,10 @@ C     SAMPLE PARAMETERS SIMILAR TO THE BOUND EXAMPLE KEITA ONCE GAVE ME
       INTEGER                     :: N
       
       DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: PRES,TEMPR,PMULT
-      DOUBLE PRECISION                            :: TMPVAL
+      DOUBLE PRECISION                            :: TMPTEMO,TMPPRES
             
       INTEGER                     :: I,J,K,STEP
-      DOUBLE PRECISION            :: FLUIDVOL, FLUIDRAD, R
+      DOUBLE PRECISION            :: D
       DOUBLE PRECISION            :: X(NX)
       DOUBLE PRECISION            :: Y(NY)
       DOUBLE PRECISION            :: Z(NZ)
@@ -120,18 +120,23 @@ C      DZ(3*NZ/4:NZ) = 4 * LZ / NZ / 3.
       PRES=0.
       DO STEP = 1, NSTEP
          TIM   = NDAYS * (STEP - 1.) / (NSTEP - 1.)
-         FLUIDVOL = TIM * FLOWRATE
-         FLUIDRAD = (FLUIDVOL * 3. / 4. / 3.14159) ** (1./3.)
+C         FLUIDVOL = TIM * FLOWRATE
+C         FLUIDRAD = (FLUIDVOL * 3. / 4. / 3.14159) ** (1./3.)
          IF (RANK .EQ. 0) THEN
-            WRITE(*,*) 'FLUIDRAD = ', FLUIDRAD
-            DO I = 1, NX
+            D = LZ * (STEP - 1.) / (NSTEP - 1.) / 2.
+            WRITE(*,*) 'DEPTH = ', D
+            DO K = 1, NZ
+               IF (Z(K) .LT. D) THEN
+                  TMPTEMP = TEMP_W
+                  TMPPRES = PRES_W
+               ELSE
+                  TMPTEMP = TEMP_R
+                  TMPPRES = PRES_R
+               END IF
                DO J = 1, NY
-                  DO K = 1, NZ
-                     R = SQRT(X(I)**2 + Y(J)**2 + 16.0*(Z(K)-LZ/2)**2)
-                     TMPVAL = TEMP(TEMP_W,TEMP_R,FLUIDRAD,LDIFF,R)
-                     TEMPR(K+(J-1)*NZ+(I-1)*NY*NZ)=TMPVAL
-                     TMPVAL=PRESSURE(PRES_W,PRES_R,FLUIDRAD,LDIFF,R)
-                     PRES(K+(J-1)*NZ+(I-1)*NY*NZ)=TMPVAL
+                  DO I = 1, NX
+                     TEMPR(K+(J-1)*NZ+(I-1)*NY*NZ)=TMPTEMP
+                     PRES(K+(J-1)*NZ+(I-1)*NY*NZ)=TMPPRES
                   END DO
                END DO
             END DO
