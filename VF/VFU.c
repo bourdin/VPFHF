@@ -184,11 +184,14 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
   PetscReal      *epsilon11_elem,*epsilon22_elem,*epsilon33_elem,*epsilon12_elem,*epsilon23_elem,*epsilon13_elem;
   PetscReal      *sigma11_elem,*sigma22_elem,*sigma33_elem,*sigma12_elem,*sigma23_elem,*sigma13_elem;
   PetscInt       i,j,k,g;
-  PetscReal      lambda,mu;
+  PetscReal      lambda,mu,alpha;
+  PetscReal      myElasticEnergyDensity = 0;
 
   PetscFunctionBegin;
   lambda = matprop->lambda;
   mu     = matprop->mu;
+  alpha  = matprop->alpha;
+    
   ierr = PetscMalloc3(e->ng,PetscReal,&sigma11_elem,e->ng,PetscReal,&sigma22_elem,e->ng,PetscReal,&sigma33_elem);CHKERRQ(ierr);
   ierr = PetscMalloc3(e->ng,PetscReal,&sigma12_elem,e->ng,PetscReal,&sigma23_elem,e->ng,PetscReal,&sigma13_elem);CHKERRQ(ierr);
   ierr = PetscMalloc3(e->ng,PetscReal,&epsilon11_elem,e->ng,PetscReal,&epsilon22_elem,e->ng,PetscReal,&epsilon33_elem);CHKERRQ(ierr);
@@ -207,9 +210,9 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
         for (g = 0; g < e->ng; g++) {
-          epsilon11_elem[g] +=  e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] - matprop->alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i]);
-          epsilon22_elem[g] +=  e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] - matprop->alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i]);
-          epsilon33_elem[g] +=  e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2] - matprop->alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i]);
+          epsilon11_elem[g] +=  e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] - alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i]);
+          epsilon22_elem[g] +=  e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] - alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i]);
+          epsilon33_elem[g] +=  e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2] - alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i]);
 
           epsilon12_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][1] 
                               + e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
@@ -217,7 +220,6 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
                               + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][1]) * .5;
           epsilon13_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][2] 
                               + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
-
         }
       }
     }  
@@ -231,7 +233,7 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
     sigma12_elem[g] = 2. * mu * epsilon12_elem[g];
     sigma23_elem[g] = 2. * mu * epsilon23_elem[g];
     sigma13_elem[g] = 2. * mu * epsilon13_elem[g];
-    ElasticEnergyDensity_local[g] += (sigma11_elem[g] * epsilon11_elem[g] 
+    ElasticEnergyDensity_local[g] = (sigma11_elem[g] * epsilon11_elem[g] 
                                     + sigma22_elem[g] * epsilon22_elem[g] 
                                     + sigma33_elem[g] * epsilon33_elem[g]) * .5 
                                     + sigma12_elem[g] * epsilon12_elem[g]
@@ -239,7 +241,26 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
                                     + sigma13_elem[g] * epsilon13_elem[g];
   }
   ierr = PetscLogFlops(39 * e->ng);CHKERRQ(ierr);
-  
+  /*
+  PetscReal e11=0.,e22=0.,e33=0.,e13=0.,e23=0.,e12=0.;
+  PetscReal s11=0.,s22=0.,s33=0.,s13=0.,s23=0.,s12=0.;
+  for (g = 0; g < e->ng; g++) {
+    e11 += epsilon11_elem[g];
+    e22 += epsilon22_elem[g];
+    e33 += epsilon33_elem[g];
+    e13 += epsilon13_elem[g];
+    e23 += epsilon23_elem[g];
+    e12 += epsilon12_elem[g];
+    s11 += sigma11_elem[g];
+    s22 += sigma22_elem[g];
+    s33 += sigma33_elem[g];
+    s13 += sigma13_elem[g];
+    s23 += sigma23_elem[g];
+    s12 += sigma12_elem[g];
+  }
+  ierr = PetscPrintf(PETSC_COMM_SELF,"%s,%i,%i,%i Strain: %e %e %e %e %e %e\n",__FUNCT__,ei,ej,ek,e11,e22,e33,e13,e23,e12);
+  ierr = PetscPrintf(PETSC_COMM_SELF,"%s,%i,%i,%i Stress: %e %e %e %e %e %e\n",__FUNCT__,ei,ej,ek,s11,s22,s33,s13,s23,s12);
+  */
   ierr = PetscFree3(sigma11_elem,sigma22_elem,sigma33_elem);CHKERRQ(ierr);
   ierr = PetscFree3(sigma12_elem,sigma23_elem,sigma13_elem);CHKERRQ(ierr);
   ierr = PetscFree3(epsilon11_elem,epsilon22_elem,epsilon33_elem);CHKERRQ(ierr);
@@ -1158,7 +1179,6 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
       }
     }
   }
-  
   /*
     epsilon is the inelastic strain
   */
@@ -1189,7 +1209,7 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
       }
     }  
   }
-  *ElasticEnergy_local = 0;
+  *ElasticEnergy_local = 0.;
   for (g = 0; g < e->ng; g++) {
     sigma11_elem[g] = (lambda + 2.*mu) * epsilon11_elem[g] + lambda * epsilon22_elem[g] + lambda * epsilon33_elem[g];
     sigma22_elem[g] = lambda * epsilon11_elem[g] + (lambda + 2.*mu) * epsilon22_elem[g] + lambda * epsilon33_elem[g];
@@ -1204,6 +1224,10 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
                                       + sigma23_elem[g] * epsilon23_elem[g]
                                       + sigma13_elem[g] * epsilon13_elem[g] ) * (v_elem[g] * v_elem[g] + vfprop->eta) * e->weight[g];
   }
+  
+  /*
+  ierr = PetscPrintf(PETSC_COMM_SELF, "%s Elast E[%i,%i,%i]: %e\n",__FUNCT__,ei,ej,ek,*ElasticEnergy_local);
+  */
   ierr = PetscFree3(sigma11_elem,sigma22_elem,sigma33_elem);CHKERRQ(ierr);
   ierr = PetscFree3(sigma12_elem,sigma23_elem,sigma13_elem);CHKERRQ(ierr);
   ierr = PetscFree3(epsilon11_elem,epsilon22_elem,epsilon33_elem);CHKERRQ(ierr);

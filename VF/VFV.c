@@ -133,6 +133,14 @@ extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ***
   ierr = PetscMalloc(e->ng * sizeof(PetscReal), &ElasticEnergyDensity_local);CHKERRQ(ierr);
   for (g = 0; g < e->ng; g++) ElasticEnergyDensity_local[g] = 0;
   ierr = ElasticEnergyDensity3D_local(ElasticEnergyDensity_local,U_array,theta_array,thetaRef_array,matprop,ek,ej,ei,e);CHKERRQ(ierr);
+
+  /*
+  PetscReal ElasticEnergyDensity = 0;
+  for (g = 0; g < e->ng; g++) {
+    ElasticEnergyDensity += ElasticEnergyDensity_local[g] * e->weight[g];
+  }
+  ierr = PetscPrintf(PETSC_COMM_SELF,"%sE[%i,%i,%i]=%e\n",__FUNCT__,ei,ej,ek,ElasticEnergyDensity);
+  */
   for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {
       for (i1 = 0; i1 < e->nphix; i1++) {
@@ -278,7 +286,7 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = DAGetLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
   ierr = DAGlobalToLocalBegin(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
   ierr = DAGlobalToLocalEnd(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DAVecGetArray(ctx->daScal,theta_localVec,&thetaRef_array);CHKERRQ(ierr);    
+  ierr = DAVecGetArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);    
   /*
     get local mat and RHS
   */

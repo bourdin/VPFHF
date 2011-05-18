@@ -120,8 +120,6 @@ C      DZ(3*NZ/4:NZ) = 4 * LZ / NZ / 3.
       PRES=0.
       DO STEP = 1, NSTEP
          TIM   = NDAYS * (STEP - 1.) / (NSTEP - 1.)
-C         FLUIDVOL = TIM * FLOWRATE
-C         FLUIDRAD = (FLUIDVOL * 3. / 4. / 3.14159) ** (1./3.)
          IF (RANK .EQ. 0) THEN
             D = LZ * (STEP - 1.) / (NSTEP - 1.) / 2.
             WRITE(*,*) 'DEPTH = ', D
