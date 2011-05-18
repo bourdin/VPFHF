@@ -20,28 +20,32 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
   ierr = BCInit(BC,1);CHKERRQ(ierr);
   switch (preset) {
       /*
-        Preventing fracture through the lower, upper, and non-symmetry planes, because of BC and overburden
+        Preventing fracture through the lower, upper, and non-symmetry planes, when BC are imposed
       */
     case SYMXY:
+    case SYMX:
+    case SYMY:
+    case NOSYM:
+      break;
     case SYMXY_DISP:
       BC[0].face[X1] = ONE; 
       BC[0].face[Y1] = ONE; 
       BC[0].face[Z0] = ONE; 
       BC[0].face[Z1] = ONE; 
       break;
-    case SYMX:
     case SYMX_DISP:
       BC[0].face[X1] = ONE; 
-      BC[0].face[Z0] = ONE; 
-      BC[0].face[Z1] = ONE; 
-      break;
-    case SYMY:
-    case SYMY_DISP:
+      BC[0].face[Y0] = ONE; 
       BC[0].face[Y1] = ONE; 
       BC[0].face[Z0] = ONE; 
       BC[0].face[Z1] = ONE; 
       break;
-    case NOSYM:
+    case SYMY_DISP:
+      BC[0].face[X0] = ONE; 
+      BC[0].face[Y0] = ONE; 
+      BC[0].face[Z0] = ONE; 
+      BC[0].face[Z1] = ONE; 
+      break;
     case NOSYM_DISP:
       BC[0].face[X0] = ONE; 
       BC[0].face[X1] = ONE; 
@@ -53,20 +57,20 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
     case TEST_CLAMPEDX0:
     case TEST_CLAMPEDX1:
     case TEST_CLAMPEDX0X1:
-      BC[0].face[X0] = FIXED; 
-      BC[0].face[X1] = FIXED; 
+      BC[0].face[X0] = ONE; 
+      BC[0].face[X1] = ONE; 
 	  break;
     case TEST_CLAMPEDY0:
     case TEST_CLAMPEDY1:
     case TEST_CLAMPEDY0Y1:
-      BC[0].face[Y0] = FIXED; 
-      BC[0].face[Y1] = FIXED; 
+      BC[0].face[Y0] = ONE; 
+      BC[0].face[Y1] = ONE; 
 	  break;
     case TEST_CLAMPEDZ0:
     case TEST_CLAMPEDZ1:
     case TEST_CLAMPEDZ0Z1:
-      BC[0].face[Z0] = FIXED; 
-      BC[0].face[Z1] = FIXED; 
+      BC[0].face[Z0] = ONE; 
+      BC[0].face[Z1] = ONE; 
       break;
     case TEST_MANUAL:
       ierr = BCGet(BC, "V", 1);
