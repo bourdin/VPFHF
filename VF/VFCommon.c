@@ -116,7 +116,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
       }
       ierr = PetscFree(numcell);CHKERRQ(ierr);
     */
-    ctx->altmintol  = 1.e-6;
+    ctx->altmintol  = 1.e-4;
     ierr = PetscOptionsReal("-altmintol","\n\tTolerance for alternate minimizations algorithm","",ctx->altmintol,&ctx->altmintol,PETSC_NULL);CHKERRQ(ierr);
     ctx->altminmaxit= 10000;
     ierr = PetscOptionsInt("-altminmaxit","\n\tMaximum number of altername minimizations iterations","",ctx->altminmaxit,&ctx->altminmaxit,PETSC_NULL);CHKERRQ(ierr);
@@ -647,21 +647,9 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
   do {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, alt min step %i\n",ctx->timestep,altminit);CHKERRQ(ierr);
     ierr = VF_StepU(fields,ctx);CHKERRQ(ierr);
-      ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
-      ierr = VF_VEnergy3D(&ctx->SurfaceEnergy,fields,ctx);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD, "   ***Elastic Energy:         %e\n",ctx->ElasticEnergy);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD, "   ***Work of surface forces: %e\n",ctx->InsituWork);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD, "   ***Surface energy:         %e\n",ctx->SurfaceEnergy);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD, "   ***Total energy:           %e\n",ctx->ElasticEnergy+ctx->SurfaceEnergy-ctx->InsituWork);CHKERRQ(ierr);
     
     ierr = VecCopy(fields->V,Vold);CHKERRQ(ierr);
     ierr = VF_StepV(fields,ctx);CHKERRQ(ierr);
-      ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
-      ierr = VF_VEnergy3D(&ctx->SurfaceEnergy,fields,ctx);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD, "   +++Elastic Energy:         %e\n",ctx->ElasticEnergy);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD, "   +++Work of surface forces: %e\n",ctx->InsituWork);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD, "   +++Surface energy:         %e\n",ctx->SurfaceEnergy);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD, "   +++Total energy:           %e\n",ctx->ElasticEnergy+ctx->SurfaceEnergy-ctx->InsituWork);CHKERRQ(ierr);
 
     /* 
       Compute max V change
