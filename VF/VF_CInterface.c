@@ -166,12 +166,19 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
     /* 
       Minimize the fracture energy in order to get Displacement and Fracture
     */
+    /*
+      Compute boundary displacements if necessary
+    */
+    if (nstep == 1 && newt == 1 && ctx.hasInsitu) {
+      ierr = VF_ComputeBCU(&fields,&ctx);CHKERRQ(ierr);
+    }
     if (newt == 1) {
       /*
         We are starting a new time step
       */
       ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
     }
+
     switch (ctx.mode) {
       case ELASTICITY:
         ierr = VFElasticityTimeStep(&ctx,&fields);CHKERRQ(ierr);
