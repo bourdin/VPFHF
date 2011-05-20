@@ -5,7 +5,7 @@
 #PBS -m a
 #PBS -M bnvk@chevron.com
 #PBS -j oe
-#PBS -q gmrs
+#PBS -o Doublet
 
 def mygetenv(Dict,key,defaultvalue=None):
 	### I could do better 
