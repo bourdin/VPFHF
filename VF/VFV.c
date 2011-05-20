@@ -27,33 +27,33 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
     case SYMY:
     case NOSYM:
       break;
-    case SYMXY_DISP:
-      BC[0].face[X1] = ONE; 
-      BC[0].face[Y1] = ONE; 
-      BC[0].face[Z0] = ONE; 
-      BC[0].face[Z1] = ONE; 
-      break;
-    case SYMX_DISP:
-      BC[0].face[X1] = ONE; 
-      BC[0].face[Y0] = ONE; 
-      BC[0].face[Y1] = ONE; 
-      BC[0].face[Z0] = ONE; 
-      BC[0].face[Z1] = ONE; 
-      break;
-    case SYMY_DISP:
-      BC[0].face[X0] = ONE; 
-      BC[0].face[Y0] = ONE; 
-      BC[0].face[Z0] = ONE; 
-      BC[0].face[Z1] = ONE; 
-      break;
-    case NOSYM_DISP:
-      BC[0].face[X0] = ONE; 
-      BC[0].face[X1] = ONE; 
-      BC[0].face[Y0] = ONE; 
-      BC[0].face[Y1] = ONE; 
-      BC[0].face[Z0] = ONE; 
-      BC[0].face[Z1] = ONE; 
-      break;
+//     case SYMXY_DISP:
+//       BC[0].face[X1] = ONE; 
+//       BC[0].face[Y1] = ONE; 
+//       BC[0].face[Z0] = ONE; 
+//       BC[0].face[Z1] = ONE; 
+//       break;
+//     case SYMX_DISP:
+//       BC[0].face[X1] = ONE; 
+//       BC[0].face[Y0] = ONE; 
+//       BC[0].face[Y1] = ONE; 
+//       BC[0].face[Z0] = ONE; 
+//       BC[0].face[Z1] = ONE; 
+//       break;
+//     case SYMY_DISP:
+//       BC[0].face[X0] = ONE; 
+//       BC[0].face[Y0] = ONE; 
+//       BC[0].face[Z0] = ONE; 
+//       BC[0].face[Z1] = ONE; 
+//       break;
+//     case NOSYM_DISP:
+//       BC[0].face[X0] = ONE; 
+//       BC[0].face[X1] = ONE; 
+//       BC[0].face[Y0] = ONE; 
+//       BC[0].face[Y1] = ONE; 
+//       BC[0].face[Z0] = ONE; 
+//       BC[0].face[Z1] = ONE; 
+//       break;
     case TEST_CLAMPEDX0:
     case TEST_CLAMPEDX1:
     case TEST_CLAMPEDX0X1:
@@ -74,6 +74,67 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
       break;
     case TEST_MANUAL:
       ierr = BCGet(BC, "V", 1);
+      break;
+    default:
+      SETERRQ2(PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
+      break;
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "BCVUpdate"
+/*
+  BCVUpdate
+
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset)
+{
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  switch (preset) {
+      /*
+        Preventing fracture through the lower, upper, and non-symmetry planes, when BC are imposed
+      */
+    case SYMXY:
+       BC[0].face[X1] = ONE; 
+       BC[0].face[Y1] = ONE; 
+       BC[0].face[Z0] = ONE; 
+       BC[0].face[Z1] = ONE; 
+       break;
+     case SYMX:
+       BC[0].face[X1] = ONE; 
+       BC[0].face[Y0] = ONE; 
+       BC[0].face[Y1] = ONE; 
+       BC[0].face[Z0] = ONE; 
+       BC[0].face[Z1] = ONE; 
+       break;
+     case SYMY:
+       BC[0].face[X0] = ONE; 
+       BC[0].face[Y0] = ONE; 
+       BC[0].face[Z0] = ONE; 
+       BC[0].face[Z1] = ONE; 
+       break;
+     case NOSYM:
+       BC[0].face[X0] = ONE; 
+       BC[0].face[X1] = ONE; 
+       BC[0].face[Y0] = ONE; 
+       BC[0].face[Y1] = ONE; 
+       BC[0].face[Z0] = ONE; 
+       BC[0].face[Z1] = ONE; 
+       break;
+    case TEST_CLAMPEDX0:
+    case TEST_CLAMPEDX1:
+    case TEST_CLAMPEDX0X1:
+    case TEST_CLAMPEDY0:
+    case TEST_CLAMPEDY1:
+    case TEST_CLAMPEDY0Y1:
+    case TEST_CLAMPEDZ0:
+    case TEST_CLAMPEDZ1:
+    case TEST_CLAMPEDZ0Z1:
+    case TEST_MANUAL:
       break;
     default:
       SETERRQ2(PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);

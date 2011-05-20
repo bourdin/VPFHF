@@ -1,6 +1,7 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
+#include "VFU.h"
 #include "../Utils/xdmf.h"
 #include "../Utils/VFGMRS.h"
 
@@ -133,7 +134,14 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
   
   ctx.timestep  = nstep;
   ctx.timevalue = tim;
-
+  
+  /*
+    Compute boundary displacements if necessary
+  */
+  if (nstep == 1 && newt == 1 && ctx.hasInsitu) {
+    ierr = VF_ComputeBCU(&fields,&ctx);CHKERRQ(ierr);
+  }
+  
   if (ctx.coupling != COUPLING_NONE) {
     /*
       Get Pressure and temperature from GMRS

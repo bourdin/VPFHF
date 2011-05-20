@@ -8,13 +8,13 @@ static const char banner[] = "\n\nVF:\nNumerical implementation of the variation
 
 typedef enum { 
   SYMXY,
-  SYMXY_DISP,
+//  SYMXY_DISP,
   SYMX,
-  SYMX_DISP,
+//  SYMX_DISP,
   SYMY,
-  SYMY_DISP,
+//  SYMY_DISP,
   NOSYM,
-  NOSYM_DISP,
+//  NOSYM_DISP,
   TEST_CLAMPEDX0,
   TEST_CLAMPEDX1,
   TEST_CLAMPEDX0X1,
@@ -26,8 +26,14 @@ typedef enum {
   TEST_CLAMPEDZ0Z1,
   TEST_MANUAL
 } VFPreset;
-static const char *VFPresetName[] = {"SYMXY","SYMXY_DISP","SYMX","SYMX_DISP","SYMY","SYMY_DISP",
-                                     "NOSYM","NOSYM_DISP",
+// static const char *VFPresetName[] = {"SYMXY","SYMXY_DISP","SYMX","SYMX_DISP","SYMY","SYMY_DISP",
+//                                      "NOSYM","NOSYM_DISP",
+//                                      "TEST_CLAMPEDX0","TEST_CLAMPEDX1","TEST_CLAMPEDX0X1",
+//                                      "TEST_CLAMPEDY0","TEST_CLAMPEDY1","TEST_CLAMPEDY0Y1",
+//                                      "TEST_CLAMPEDZ0","TEST_CLAMPEDZ1","TEST_CLAMPEDZ0Z1",
+//                                      "TEST_MANUAL",
+//                                      "VFPresetName","",0};
+static const char *VFPresetName[] = {"SYMXY","SYMX","SYMY","NOSYM",
                                      "TEST_CLAMPEDX0","TEST_CLAMPEDX1","TEST_CLAMPEDX0X1",
                                      "TEST_CLAMPEDY0","TEST_CLAMPEDY1","TEST_CLAMPEDY0Y1",
                                      "TEST_CLAMPEDZ0","TEST_CLAMPEDZ1","TEST_CLAMPEDZ0Z1",
@@ -167,6 +173,7 @@ typedef struct {
   VFLog               vflog;
   PetscReal           insitumin[6];
   PetscReal           insitumax[6];
+  PetscTruth          hasInsitu;
   VFMode              mode;
   PetscInt            saveint;    /* Save partial step every saveint alternate minimizations iterations */
   VFUnilateralType    unilateral;
