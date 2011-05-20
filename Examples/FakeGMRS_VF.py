@@ -66,7 +66,8 @@ def main():
     mygetenv(Param,'MODE','FakeGMRS_VF')
     mygetenv(Param,'U','-U_ksp_type cg')
     mygetenv(Param,'V','-V_ksp_type cg')
-    mygetenv(Param,'OPTS','-format hdf5')
+    mygetenv(Param,'FMT','hdf5')
+    mygetenv(Param,'OPTS','-alpha 1e-2 -gc .1 -epsilon 20 -eta 1e-5 -mode FRACTURE -preset SYMXY')
 
     #mygetenv(Param,'FAKEGMRSBIN',os.path.join(os.getenv('VFDIR'),os.getenv('PETSC_ARCH'),os.getenv('MODE')))
     
@@ -87,9 +88,9 @@ def main():
     ###
     
     t1 = time.time()
-    cmd = 'mpirun %(VFDIR)s/%(PETSC_ARCH)s/%(MODE)s %(U)s %(V)s %(OPTS)s'%Param
+    cmd = 'mpiexec %(VFDIR)s/bin/%(PETSC_ARCH)s/%(MODE)s %(U)s %(V)s -format %(FMT)s %(OPTS)s -p %(PBS_JOBID)s'%Param
     print cmd
-    #os.system(cmd)
+    os.system(cmd)
     t2 = time.time()
     print '###\n### Computation took %fs\n###\n'%(t2-t1)
     print '###\n### Script finished at %s\n###\n'%time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
