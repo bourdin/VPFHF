@@ -26,34 +26,8 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
     case SYMX:
     case SYMY:
     case NOSYM:
+       BC[0].face[Z1] = ONE; 
       break;
-//     case SYMXY_DISP:
-//       BC[0].face[X1] = ONE; 
-//       BC[0].face[Y1] = ONE; 
-//       BC[0].face[Z0] = ONE; 
-//       BC[0].face[Z1] = ONE; 
-//       break;
-//     case SYMX_DISP:
-//       BC[0].face[X1] = ONE; 
-//       BC[0].face[Y0] = ONE; 
-//       BC[0].face[Y1] = ONE; 
-//       BC[0].face[Z0] = ONE; 
-//       BC[0].face[Z1] = ONE; 
-//       break;
-//     case SYMY_DISP:
-//       BC[0].face[X0] = ONE; 
-//       BC[0].face[Y0] = ONE; 
-//       BC[0].face[Z0] = ONE; 
-//       BC[0].face[Z1] = ONE; 
-//       break;
-//     case NOSYM_DISP:
-//       BC[0].face[X0] = ONE; 
-//       BC[0].face[X1] = ONE; 
-//       BC[0].face[Y0] = ONE; 
-//       BC[0].face[Y1] = ONE; 
-//       BC[0].face[Z0] = ONE; 
-//       BC[0].face[Z1] = ONE; 
-//       break;
     case TEST_CLAMPEDX0:
     case TEST_CLAMPEDX1:
     case TEST_CLAMPEDX0X1:

@@ -41,17 +41,6 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       BC[1].face[Y0] = ZERO;
       BC[2].face[Z1] = ZERO;
       break;
-//     case SYMXY_DISP:
-//       /*
-//         symmetry with respect to the x=0 and y=0 planes, all other faces from data dile
-//       */
-//       BC[0].face[X0] = ZERO;
-//       BC[0].face[X1] = FIXED;   BC[1].face[X1] = FIXED;   BC[2].face[X1] = FIXED; 
-//       BC[1].face[Y0] = ZERO;
-//       BC[0].face[Y1] = FIXED;   BC[1].face[Y1] = FIXED;   BC[2].face[Y1] = FIXED; 
-//       BC[0].face[Z0] = FIXED;   BC[1].face[Z0] = FIXED;   BC[2].face[Z0] = FIXED; 
-//       BC[0].face[Z1] = FIXED;   BC[1].face[Z1] = FIXED;   BC[2].face[Z1] = FIXED; 
-//       break;
     case SYMX:
       /*
         blocking vertical displacement on the plane z=z_max, 
@@ -60,17 +49,6 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       BC[0].face[X0]       = ZERO;
       BC[1].vertex[X0Y0Z1] = ZERO;
       BC[2].face[Z1]       = ZERO;
-//     case SYMX_DISP:
-//       /*
-//         symmetry with respect to the x=0 plane, all other faces from data dile
-//       */
-//       BC[0].face[X0] = ZERO;
-//       BC[0].face[X1] = FIXED;   BC[1].face[X1] = FIXED;   BC[2].face[X1] = FIXED; 
-//       BC[0].face[Y0] = FIXED;   BC[1].face[Y0] = FIXED;   BC[2].face[Y0] = FIXED; 
-//       BC[0].face[Y1] = FIXED;   BC[1].face[Y1] = FIXED;   BC[2].face[Y1] = FIXED; 
-//       BC[0].face[Z0] = FIXED;   BC[1].face[Z0] = FIXED;   BC[2].face[Z0] = FIXED; 
-//       BC[0].face[Z1] = FIXED;   BC[1].face[Z1] = FIXED;   BC[2].face[Z1] = FIXED; 
-//       break;
     case SYMY:
       /*
         blocking vertical displacement on the plane z=z_max, 
@@ -79,17 +57,6 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       BC[0].vertex[X0Y0Z1] = ZERO;
       BC[1].face[Y0]       = ZERO;
       BC[2].face[Z1]       = ZERO;
-//     case SYMY_DISP:
-//       /*
-//         symmetry with respect to the x=0 plane, all other faces from data dile
-//       */
-//       BC[0].face[X0] = FIXED;   BC[1].face[X0] = FIXED;   BC[2].face[X0] = FIXED; 
-//       BC[0].face[X1] = FIXED;   BC[1].face[X1] = FIXED;   BC[2].face[X1] = FIXED; 
-//       BC[0].face[Y0] = ZERO;
-//       BC[0].face[Y1] = FIXED;   BC[1].face[Y1] = FIXED;   BC[2].face[Y1] = FIXED; 
-//       BC[0].face[Z0] = FIXED;   BC[1].face[Z0] = FIXED;   BC[2].face[Z0] = FIXED; 
-//       BC[0].face[Z1] = FIXED;   BC[1].face[Z1] = FIXED;   BC[2].face[Z1] = FIXED; 
-//       break;
     case NOSYM: 
       /*
         blocking vertical displacement on the plane z=z_max, 
@@ -100,19 +67,6 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       BC[1].vertex[X1Y0Z1] = ZERO;
       BC[2].face[Z1]       = ZERO;
       break;
-//     case NOSYM_DISP:
-//       /* 
-//          Reading all boundary displacements from file
-//       */
-//       for (c = 0; c < 3; c++) {
-//         BC[c].face[X0] = FIXED;
-//         BC[c].face[X1] = FIXED;
-//         BC[c].face[Y0] = FIXED;
-//         BC[c].face[Y1] = FIXED;
-//         BC[c].face[Z0] = FIXED;
-//         BC[c].face[Z1] = FIXED;
-//       }
-//       break;
     case TEST_CLAMPEDX0:
       for (c = 0; c < 3; c++) {
         BC[c].face[X0] = FIXED;
@@ -190,7 +144,7 @@ extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
        /*
          symmetry with respect to the x=0 and y=0 planes, all other faces from data dile
        */
-       BC[0].face[X0] = ZERO;
+       BC[0].face[X0] = FIXED;
        BC[0].face[X1] = FIXED;   BC[1].face[X1] = FIXED;   BC[2].face[X1] = FIXED; 
        BC[1].face[Y0] = ZERO;
        BC[0].face[Y1] = FIXED;   BC[1].face[Y1] = FIXED;   BC[2].face[Y1] = FIXED; 
@@ -979,12 +933,12 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
           if (ek == 0 ) {
             /* 
               Face Z0
-              sigma.(0,0,1) = (s_13,s_23,s_33) = (S4,S3,S2)
+              sigma.(0,0,-1) = (s_13,s_23,-s_33) = (S4,S3,-S2)
             */
             face = Z0;
             stresscomp[0] = 4; stressdir[0] = 1.;
             stresscomp[1] = 3; stressdir[1] = 1.;
-            stresscomp[2] = 2; stressdir[2] = 1.;
+            stresscomp[2] = 2; stressdir[2] = -1.;
             for (k = 0; k < ctx->e3D.nphiz; k++){
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1014,12 +968,12 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
           if (ek == nz-2) {
             /* 
               Face Z1
-              sigma.(0,0,-1) = (s_13,s_23,-s_33) = (S4,S3,-S2)
+              sigma.(0,0,1) = (s_13,s_23,s_33) = (S4,S3,S2)
             */
             face = Z1;
-            stresscomp[0] = 4; stressdir[0] =  1.;
-            stresscomp[1] = 3; stressdir[1] =  1.;
-            stresscomp[2] = 2; stressdir[2] = -1.;
+            stresscomp[0] = 4; stressdir[0] = 1.;
+            stresscomp[1] = 3; stressdir[1] = 1.;
+            stresscomp[2] = 2; stressdir[2] = 1.;
             for (k = 0; k < ctx->e3D.nphiz; k++){
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1050,12 +1004,13 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
           if (ej == 0) {
             /* 
               Face Y0
-              sigma.(0,1,0) = (s_12,s_22,s_23) = (S5,S1,S3)
+              sigma.(0,-1,0) = (s_12,-s_22,-s_23) = (S5,-S1,-S3)
+              the negative sign in the 3rd component comes from thaty the z-axis is pointing down
             */
             face = Y0;
             stresscomp[0] = 5; stressdir[0] = 1.;
-            stresscomp[1] = 1; stressdir[1] = 1.;
-            stresscomp[2] = 3; stressdir[2] = 1.;
+            stresscomp[1] = 1; stressdir[1] = -1.;
+            stresscomp[2] = 3; stressdir[2] = -1.;
             for (k = 0; k < ctx->e3D.nphiz; k++){
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1085,12 +1040,13 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
           if (ej == ny-2) {
             /* 
               Face Y1
-              sigma.(0,-1,0) = (s_12,-s_22,s_23) = (S5,-S1,S3)
+              sigma.(0,1,0) = (s_12,s_22,-s_23) = (S5,S1,-S3)
+              the negative sign in the 3rd component comes from thaty the z-axis is pointing down
             */
             face = Y1;
-            stresscomp[0] = 5; stressdir[0] =  1.;
-            stresscomp[1] = 1; stressdir[1] = -1.;
-            stresscomp[2] = 3; stressdir[2] =  1.;
+            stresscomp[0] = 5; stressdir[0] = 1.;
+            stresscomp[1] = 1; stressdir[1] = 1.;
+            stresscomp[2] = 3; stressdir[2] = -1.;
             for (k = 0; k < ctx->e3D.nphiz; k++){
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1121,12 +1077,13 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
           if (ei == 0) {
             /* 
               Face X0
-              sigma.(1,0,0) = (s_11,s_12,s_13) = (S0,S5,S4)
+              sigma.(-1,0,0) = (-s_11,s_12,-s_13) = (-S0,S5,-S4)
+              the negative sign in the 3rd component comes from thaty the z-axis is pointing down
             */
             face = X0;
-            stresscomp[0] = 0; stressdir[0] = 1.;
+            stresscomp[0] = 0; stressdir[0] = -1.;
             stresscomp[1] = 5; stressdir[1] = 1.;
-            stresscomp[2] = 4; stressdir[2] = 1.;
+            stresscomp[2] = 4; stressdir[2] = -1.;
             for (k = 0; k < ctx->e3D.nphiz; k++){
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1156,12 +1113,13 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
           if (ei == nx-2) {
             /* 
               Face X1
-              sigma.(-1,0,0) = (-s_11,s_12,s_13) = (-S0,S5,S4)
+              sigma.(1,0,0) = (s_11,s_12,-s_13) = (S0,S5,-S4)
+              the negative sign in the 3rd component comes from thaty the z-axis is pointing down
             */
             face = X1;
-            stresscomp[0] = 0; stressdir[0] = -1.;
-            stresscomp[1] = 5; stressdir[1] =  1.;
-            stresscomp[2] = 4; stressdir[2] =  1.;
+            stresscomp[0] = 0; stressdir[0] = 1.;
+            stresscomp[1] = 5; stressdir[1] = 1.;
+            stresscomp[2] = 4; stressdir[2] = -1.;
             for (k = 0; k < ctx->e3D.nphiz; k++){
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1740,6 +1698,9 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   
   PetscFunctionBegin;
   ierr = VF_UAssembly3D(ctx->KU,ctx->RHSU,fields,ctx);CHKERRQ(ierr);
+  if (ctx->hasInsitu) {
+    ierr = VecApplyDirichletBC(fields->U,fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
+  }
 
   if (ctx->verbose > 1) {
     ierr = MatView(ctx->KU,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
@@ -1819,13 +1780,23 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
   /*
     Copy elastic solution to U, since it is going to be the solution of the first time step
   */
-  ierr = VecCopy(fields->U,fields->BCU);CHKERRQ(ierr);
+  ierr = VecCopy(fields->BCU,fields->U);CHKERRQ(ierr);
 
   /* 
     Update boundary condition flags and others
   */
   ctx->hasInsitu = PETSC_FALSE;
   ierr = BCUUpdate(&ctx->bcU[0],ctx->preset);CHKERRQ(ierr);
+  if (ctx->verbose > 0) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD, "BCU: after update\n");CHKERRQ(ierr);
+    ierr = BCView(&ctx->bcU[0],PETSC_VIEWER_STDOUT_WORLD, 3);CHKERRQ(ierr);
+  }
+
+
   ierr = BCVUpdate(&ctx->bcV[0],ctx->preset);CHKERRQ(ierr);
+  if (ctx->verbose > 0) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD, "BCV: after update\n");CHKERRQ(ierr);
+    ierr = BCView(&ctx->bcV[0],PETSC_VIEWER_STDOUT_WORLD, 1);CHKERRQ(ierr);
+  }
   PetscFunctionReturn(0);
 }
