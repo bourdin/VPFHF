@@ -74,24 +74,27 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     for (i = 0;i < nopt;i++) {
       buffer[i]=0.;
     }
-    ierr = PetscOptionsRealArray("-insitumin","\n\tIn-situ stresses in the lower z-section.\n\tUse Voigt notations (s11, s22, s33, s23, s13, s12)","",buffer,&nopt,PETSC_NULL);CHKERRQ(ierr);    
+    ctx->hasInsitu = PETSC_FALSE;
+    ierr = PetscOptionsRealArray("-insitumin","\n\tIn-situ stresses in the lower z-section.\n\tUse Voigt notations (s11, s22, s33, s23, s13, s12)","",buffer,&nopt,&flg);CHKERRQ(ierr);    
     if (nopt > 6 && !hashelp) {
       SETERRQ2(PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the insitu stresses, got %i in %s\n",nopt,__FUNCT__);
     }
     for (i = 0;i < 6;i++) {
       ctx->insitumin[i]=buffer[i];
     }
+    ctx->hasInsitu = flg;
     
     nopt = 6;
-    ierr = PetscOptionsRealArray("-insitumax","\n\tIn-situ stresses in the upper z-section, will re-use insitumin if omitted","",buffer,&nopt,PETSC_NULL);CHKERRQ(ierr);    
+    ierr = PetscOptionsRealArray("-insitumax","\n\tIn-situ stresses in the upper z-section, will re-use insitumin if omitted","",buffer,&nopt,&flg);CHKERRQ(ierr);    
     for (i = 0;i < 6;i++) {
       ctx->insitumax[i]=buffer[i];
     }
     if (nopt > 6 && !hashelp) {
       SETERRQ2(PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the insitu stresses, got %i in %s\n",nopt,__FUNCT__);
     }
-
-    ctx->nlayer = 1;
+		if (ctx->hasInsitu || flg) ctx->hasInsitu = PETSC_TRUE;
+		
+		ctx->nlayer = 1;
     ierr = PetscOptionsInt("-nlayer","\n\tNumber of layers","",ctx->nlayer,&ctx->nlayer,PETSC_NULL);CHKERRQ(ierr);
     nopt = ctx->nlayer-1;
     ierr = PetscMalloc((ctx->nlayer) * sizeof(PetscReal), &ctx->layersep);CHKERRQ(ierr);
@@ -675,15 +678,22 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
       /* 
         Computing and displaying energies
       */
-      ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
+			if (ctx->hasInsitu) {
+	      ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
+	    }
       ierr = VF_VEnergy3D(&ctx->SurfaceEnergy,fields,ctx);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD, "   Elastic Energy:         %e\n",ctx->ElasticEnergy);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD, "   Work of surface forces: %e\n",ctx->InsituWork);CHKERRQ(ierr);
+      if (ctx->hasInsitu) {
+	      ierr = PetscPrintf(PETSC_COMM_WORLD, "   Work of surface forces: %e\n",ctx->InsituWork);CHKERRQ(ierr);
+	    } else {
+	    	ctx->InsituWork = 0;
+	    }
       ierr = PetscPrintf(PETSC_COMM_WORLD, "   Surface energy:         %e\n",ctx->SurfaceEnergy);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD, "   Total energy:           %e\n",ctx->ElasticEnergy+ctx->SurfaceEnergy-ctx->InsituWork);CHKERRQ(ierr);
     }
     altminit++;
   } while (errV > ctx->altmintol && altminit <= ctx->altminmaxit);
+  
   ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
   ierr = VF_VEnergy3D(&ctx->SurfaceEnergy,fields,ctx);CHKERRQ(ierr);
   ctx->TotalEnergy = ctx->ElasticEnergy + ctx->SurfaceEnergy - ctx->InsituWork;
