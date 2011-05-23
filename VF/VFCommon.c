@@ -171,8 +171,8 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
     ierr = PetscOptionsReal("-epsilon","\n\tVariational fracture regularization length (start from 4x cell size)","",vfprop->epsilon,&vfprop->epsilon,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsReal("-eta","\n\tArtificial stiffness of cracks ","",vfprop->eta,&vfprop->eta,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsReal("-irrevtol","\n\tThreshold on v below which fracture irreversibility is enforced","",vfprop->irrevtol,&vfprop->irrevtol,PETSC_NULL);CHKERRQ(ierr);
-    vfprop->permVcutoff = vfprop->irrevtol;
-    ierr = PetscOptionsReal("-permcutoff","\n\tThreshold on v below which permeability multipliers are set to 0.","",vfprop->permVcutoff,&vfprop->permVcutoff,PETSC_NULL);CHKERRQ(ierr);
+    vfprop->permmax = 5.;
+    ierr = PetscOptionsReal("-permmax","\n\tPermeability multiplier of cracks (achieved at  v=0.)","",vfprop->permmax,&vfprop->permmax,PETSC_NULL);CHKERRQ(ierr);
     vfprop->atCv = .5;
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
@@ -841,13 +841,13 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermUpdateTruncate"
+#define __FUNCT__ "PermUpdate"
 /*
-  PermUpdateTruncate
+  PermUpdate
 
   (c) 2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode PermUpdateTruncate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx)
+extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm;
@@ -864,9 +864,7 @@ extern PetscErrorCode PermUpdateTruncate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *c
   for (k = zs; k < zs + zm; k++) {
     for (j = ys; j < ys + ym; j++) {
       for (i = xs; i < xs + xm; i++) {
-        if (v_array[k][j][i] <= vfprop->permVcutoff) {
-          pmult_array[k][j][i] = 0.;
-        }
+				pmult_array[k][j][i] = 1. + (vfprop->permmax-1.) * v_array[k][j][i];
       }
     }
   }

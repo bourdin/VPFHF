@@ -198,7 +198,7 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
       if (ctx.verbose > 0) {
         ierr = PetscPrintf(PETSC_COMM_WORLD,"Updating permeability multipliers and sending them back to GMRS\n");CHKERRQ(ierr)
       }
-      ierr = PermUpdateTruncate(fields.V,fields.pmult,&ctx.vfprop,&ctx);
+      ierr = PermUpdate(fields.V,fields.pmult,&ctx.vfprop,&ctx);
       ierr = VecPetscToGMRS(fields.pmult,pmult);CHKERRQ(ierr);
       //ierr = VecPetscToGMRS(fields.V,pmult);CHKERRQ(ierr);
     }
