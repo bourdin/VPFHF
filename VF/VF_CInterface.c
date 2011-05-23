@@ -147,6 +147,7 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
     */
     ierr = VecGMRSToPetsc(pres,fields.pressure);CHKERRQ(ierr);  
     ierr = VecGMRSToPetsc(tempr,fields.theta);CHKERRQ(ierr);  
+    ierr = VecGMRSToPetsc(pmult,fields.pmult);CHKERRQ(ierr);
     
     if (ctx.verbose > 0) {
       ierr = VecMin(fields.theta,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
@@ -155,6 +156,9 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
       ierr = VecMin(fields.pressure,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
       ierr = VecMax(fields.pressure,PETSC_NULL,&fieldmax);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD, "Pressure range:    %g - %g\n", fieldmin, fieldmax);CHKERRQ(ierr);
+      ierr = VecMin(fields.pmult,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
+      ierr = VecMax(fields.pmult,PETSC_NULL,&fieldmax);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD, "Pmult range:       %g - %g\n", fieldmin, fieldmax);CHKERRQ(ierr);
     }
     /*
       If this is the first Newton iteration of the first time step, set the reference temperature:
@@ -188,10 +192,15 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
     }
     
     if (ctx.coupling == COUPLING_FULL) {
-    /*
-      Send permeability multiplier back to GMRS
-    */
-    ierr = PermUpdateTruncate(fields.V,fields.pmult,&ctx.vfprop,&ctx);
+      /*
+        Send permeability multiplier back to GMRS
+      */
+      if (ctx.verbose > 0) {
+        ierr = PetscPrintf(PETSC_COMM_WORLD,"Updating permeability multipliers and sending them back to GMRS\n");CHKERRQ(ierr)
+      }
+      ierr = PermUpdateTruncate(fields.V,fields.pmult,&ctx.vfprop,&ctx);
+      ierr = VecPetscToGMRS(fields.pmult,pmult);CHKERRQ(ierr);
+      //ierr = VecPetscToGMRS(fields.V,pmult);CHKERRQ(ierr);
     }
   }
 
@@ -202,8 +211,6 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
   ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i \t%e \t%e \t%e \t%e \t%e\n",nstep,tim,ctx.ElasticEnergy,
                                 ctx.InsituWork,ctx.SurfaceEnergy,ctx.TotalEnergy);CHKERRQ(ierr); 
   ierr = PetscViewerFlush(ctx.energyviewer);CHKERRQ(ierr);
-
-
   PetscFunctionReturn(0);
 }
 

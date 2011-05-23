@@ -51,8 +51,8 @@ def main():
 	mygetenv(Param,'NY',10)
 	mygetenv(Param,'NZ',5)
 	mygetenv(Param,'DX',1000/Param['NX'])
-	mygetenv(Param,'DY',1000/Param['NX'])
-	mygetenv(Param,'DZ',200/Param['NX'])
+	mygetenv(Param,'DY',1000/Param['NY'])
+	mygetenv(Param,'DZ',200/Param['NZ'])
 	mygetenv(Param,'TEMPR1',180)
 	mygetenv(Param,'WTEMPR',80)
 	mygetenv(Param,'PREFIX','Doublet')
@@ -80,7 +80,7 @@ def main():
 
 	print 'Param:    \n',Param
 
-	workdir = os.path.join(Param['PBS_O_WORKDIR'],Param['PREFIX']+'-'+Param['PBS_JOBID'])
+	workdir = os.path.join(Param['PBS_O_WORKDIR'],'Doublet',Param['PBS_JOBID'])
 	print 'Work dir is %s'%workdir
 	if not os.path.exists(workdir):
 		os.makedirs(workdir)
@@ -115,7 +115,7 @@ def main():
 	###
 	cmd = 'mpirun -np 1 %(VFDIR)s/bin/%(PETSC_ARCH)s/h5export -p %(PREFIX)s'%Param
 	print cmd
-	os.system(cmd)
+	#os.system(cmd)
 	print '###\n### Script finished at %s\n###\n'%time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 
 import sys  
