@@ -71,9 +71,8 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
   ierr = PetscOptionsPrint(file);CHKERRQ(ierr);
   fclose(file);
   
-  if (ctx.verbose>0) {
-    ierr = PetscOptionsPrint(stdout);CHKERRQ(ierr);
-  }
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Option table:\n");CHKERRQ(ierr);
+  ierr = PetscOptionsPrint(stdout);CHKERRQ(ierr);
 
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.ener",ctx.prefix);CHKERRQ(ierr);
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx.energyviewer);CHKERRQ(ierr);
