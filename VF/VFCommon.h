@@ -105,7 +105,7 @@ typedef struct {
   PetscReal        eta;
   PetscReal        atCv;
   PetscReal        irrevtol;
-  PetscReal        permVcutoff;
+  PetscReal        permmax;
 } VFProp;
 
 typedef struct {
@@ -200,6 +200,6 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFLogInitialize(VFLog *vflog);
 
-extern PetscErrorCode PermUpdateTruncate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx);
+extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx);
 
 #endif /* VFCOMMON_H */
