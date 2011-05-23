@@ -863,7 +863,7 @@ extern PetscErrorCode PermUpdateTruncate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *c
 
   for (k = zs; k < zs + zm; k++) {
     for (j = ys; j < ys + ym; j++) {
-      for (i = xs; i < xs + xm; i++) {    
+      for (i = xs; i < xs + xm; i++) {
         if (v_array[k][j][i] <= vfprop->permVcutoff) {
           pmult_array[k][j][i] = 0.;
         }

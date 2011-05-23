@@ -64,8 +64,8 @@ def main():
     mygetenv(Param,'PETSC_ARCH',os.getenv('PETSC_ARCH'))
     mygetenv(Param,'VFDIR',os.getenv('VFDIR'))
     mygetenv(Param,'MODE','FakeGMRS_VF')
-    mygetenv(Param,'U','-U_ksp_type cg')
-    mygetenv(Param,'V','-V_ksp_type cg')
+    mygetenv(Param,'U',' ')
+    mygetenv(Param,'V','')
     mygetenv(Param,'FMT','hdf5')
     mygetenv(Param,'OPTS','-alpha 1e-2 -gc .1 -epsilon 20 -eta 1e-5 -mode FRACTURE -preset SYMXY')
 
@@ -88,7 +88,7 @@ def main():
     ###
     
     t1 = time.time()
-    cmd = 'mpiexec %(VFDIR)s/bin/%(PETSC_ARCH)s/%(MODE)s %(U)s %(V)s -format %(FMT)s %(OPTS)s -p %(PBS_JOBID)s'%Param
+    cmd = 'mpirun %(VFDIR)s/bin/%(PETSC_ARCH)s/%(MODE)s %(U)s %(V)s -format %(FMT)s %(OPTS)s -p %(PBS_JOBID)s'%Param
     print cmd
     os.system(cmd)
     t2 = time.time()
