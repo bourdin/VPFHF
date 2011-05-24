@@ -4,7 +4,7 @@ include ${VFDIR}/FakeGMRS/makefile.include
 include ${VFDIR}/FakeGMRS2/makefile.include
 include ${VFDIR}/FakeVF/makefile.include
 
-all: Utils FakeGMRS_FakeVF FakeGMRS_VF FakeGMRS2_FakeVF FakeGMRS2_VF bin
+all: bin Utils FakeGMRS_FakeVF FakeGMRS_VF FakeGMRS2_FakeVF FakeGMRS2_VF GMRS_FakeVF GMRS_VF
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
@@ -49,6 +49,9 @@ installVF:
 	
 GMRS_VF: VF
 	@make -C ${GMRSDIR}/${GMRSARCH} -f makefile.GMRS_VF
+	
+GMRS_FakeVF: FakeVF
+	@make -C ${GMRSDIR}/${GMRSARCH} -f makefile.GMRS_FakeVF
 	
 clean::
 	@make -C Utils clean
