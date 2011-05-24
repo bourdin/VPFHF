@@ -228,10 +228,14 @@ extern PetscErrorCode vstdout(PetscInt rank,PetscReal tim,PetscInt nstep,PetscIn
   char           filename[FILENAME_MAX];
    
   PetscFunctionBegin;
+  /*
+    Since we already save the energies at the end of each time step, there is no need to do it again
+  */
+  /*
   ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i \t%e \t%e \t%e \t%e \t%e\n",nstep,tim,ctx.ElasticEnergy,ctx.InsituWork,ctx.SurfaceEnergy,
                                 ctx.TotalEnergy);CHKERRQ(ierr); 
   ierr = PetscViewerFlush(ctx.energyviewer);CHKERRQ(ierr);
-
+  */
   ierr = PetscLogStagePush(ctx.vflog.VF_IOStage);CHKERRQ(ierr);
   switch (ctx.fileformat) {
     case FILEFORMAT_HDF5:       

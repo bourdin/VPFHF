@@ -98,7 +98,6 @@ typedef struct {
   PetscReal       alpha;      /* Linear thermal expansion coef.  */
   PetscReal       Gc;         /* Fracture toughness              */
   PetscReal       beta;       /* Biot's constant                 */
-  PetscReal       porosity;   /* Porosity...                     */
   PetscReal       rho;        /* density                         */
 } MatProp;
 
