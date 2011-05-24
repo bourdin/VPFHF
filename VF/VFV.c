@@ -156,7 +156,11 @@ extern PetscErrorCode VF_MatVAT2Surface3D_local(PetscReal *Mat_local,MatProp *ma
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ****U_array,
+                                              PetscReal ***theta_array,PetscReal ***thetaRef_array,
+                                              PetscReal ***pressure_array,PetscReal ***pressureRef_array,
+                                              MatProp *matprop,VFProp *vfprop,
+                                              PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
@@ -165,7 +169,10 @@ extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ***
   PetscFunctionBegin;
   ierr = PetscMalloc(e->ng * sizeof(PetscReal),&ElasticEnergyDensity_local);CHKERRQ(ierr);
   for (g = 0; g < e->ng; g++) ElasticEnergyDensity_local[g] = 0;
-  ierr = ElasticEnergyDensity3D_local(ElasticEnergyDensity_local,U_array,theta_array,thetaRef_array,matprop,ek,ej,ei,e);CHKERRQ(ierr);
+  ierr = ElasticEnergyDensity3D_local(ElasticEnergyDensity_local,U_array,
+                                      theta_array,thetaRef_array,
+                                      pressure_array,pressureRef_array,
+                                      matprop,ek,ej,ei,e);CHKERRQ(ierr);
 
   /*
   PetscReal ElasticEnergyDensity = 0;
@@ -201,7 +208,11 @@ extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ***
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VF_MatVCouplingShearOnly3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_MatVCouplingShearOnly3D_local(PetscReal *Mat_local,PetscReal ****U_array,
+                                                       PetscReal ***theta_array,PetscReal ***thetaRef_array,
+                                                       PetscReal ***pressure_array,PetscReal ***pressureRef_array,
+                                                       MatProp *matprop,VFProp *vfprop,
+                                                       PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
@@ -209,7 +220,10 @@ extern PetscErrorCode VF_MatVCouplingShearOnly3D_local(PetscReal *Mat_local,Pets
   
   PetscFunctionBegin;
   ierr = PetscMalloc2(e->ng,PetscReal,&ElasticEnergyDensityS_local,e->ng,PetscReal,&ElasticEnergyDensityD_local);CHKERRQ(ierr);
-  ierr = ElasticEnergyDensitySphericalDeviatoric3D_local(ElasticEnergyDensityS_local,ElasticEnergyDensityD_local,U_array,theta_array,thetaRef_array,matprop,ek,ej,ei,e);CHKERRQ(ierr);
+  ierr = ElasticEnergyDensitySphericalDeviatoric3D_local(ElasticEnergyDensityS_local,ElasticEnergyDensityD_local,
+                                                         U_array,theta_array,thetaRef_array,
+                                                         pressure_array,pressureRef_array,
+                                                         matprop,ek,ej,ei,e);CHKERRQ(ierr);
   for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {
       for (i1 = 0; i1 < e->nphix; i1++) {
@@ -270,8 +284,12 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   PetscInt       zs,zm,nz;
   PetscInt       ei,ej,ek,i,j,k,l;
   PetscInt       nrow = ctx->e3D.nphix * ctx->e3D.nphiy * ctx->e3D.nphiz;
-  Vec            RHS_localVec,U_localVec,theta_localVec,thetaRef_localVec;
-  PetscReal      ***RHS_array,****U_array,***theta_array,***thetaRef_array;
+  Vec            RHS_localVec,U_localVec;
+  Vec            theta_localVec,thetaRef_localVec;
+  Vec            pressure_localVec,pressureRef_localVec;
+  PetscReal      ***RHS_array,****U_array;
+  PetscReal      ***theta_array,***thetaRef_array;
+  PetscReal      ***pressure_array,***pressureRef_array;
   PetscReal      *RHS_local;
   PetscReal      *K_local;
   MatStencil     *row;
@@ -321,6 +339,18 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = DAGlobalToLocalEnd(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
   ierr = DAVecGetArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);    
   /*
+    get pressure_array, pressureRef_array
+  */
+  ierr = DAGetLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DAVecGetArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);    
+
+  ierr = DAGetLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DAVecGetArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);    
+  /*
     get local mat and RHS
   */
   ierr = PetscMalloc(nrow * nrow * sizeof(PetscReal),&K_local);CHKERRQ(ierr);
@@ -350,10 +380,16 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
         ierr = VF_MatVAT2Surface3D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D);CHKERRQ(ierr);
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
-            ierr = VF_MatVCoupling3D_local(K_local,U_array,theta_array,thetaRef_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_MatVCoupling3D_local(K_local,U_array,theta_array,thetaRef_array,
+                                           pressure_array,pressureRef_array,
+                                           &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
+                                           &ctx->e3D);CHKERRQ(ierr);
             break;
           case UNILATERAL_SHEARONLY:
-            ierr = VF_MatVCouplingShearOnly3D_local(K_local,U_array,theta_array,thetaRef_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_MatVCouplingShearOnly3D_local(K_local,U_array,theta_array,thetaRef_array,
+                                                    pressure_array,pressureRef_array,
+                                                    &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
+                                                    &ctx->e3D);CHKERRQ(ierr);
             break;
         }
         ierr = PetscLogEventEnd(ctx->vflog.VF_MatVLocalEvent,0,0,0,0);CHKERRQ(ierr); 
@@ -418,6 +454,12 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = DARestoreLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
   ierr = DAVecRestoreArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
   ierr = DARestoreLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
+  ierr = DAVecRestoreArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
+  ierr = DARestoreLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DAVecRestoreArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
+  ierr = DARestoreLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+  ierr = DAVecRestoreArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);
+  ierr = DARestoreLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
 
   ierr = PetscFree3(RHS_local,K_local,row);CHKERRQ(ierr);
   ierr = PetscLogStagePop();CHKERRQ(ierr);

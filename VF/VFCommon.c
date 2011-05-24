@@ -221,6 +221,7 @@ extern PetscErrorCode VFMatPropGet(MatProp *matprop,PetscInt n)
   PetscReal      alpha = 1.e-5;
   PetscReal      Gc = 1.;
   PetscReal      beta = 1.;
+  PetscReal      porosity = 0;
   int            i;
   
   PetscFunctionBegin;
@@ -266,6 +267,14 @@ extern PetscErrorCode VFMatPropGet(MatProp *matprop,PetscInt n)
       SETERRQ4(PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-beta",nopt,__FUNCT__);
     }
     for (i=0; i< n; i++) matprop[i].beta = prop[i];
+
+    nopt = n;
+    for (i = 0; i < n; i++) prop[i] = porosity;
+    ierr = PetscOptionsRealArray("-beta","\n\tComma separated list of porosities","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    if (nopt != n && nopt != 0) {
+      SETERRQ4(PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-porosity",nopt,__FUNCT__);
+    }
+    for (i=0; i< n; i++) matprop[i].porosity = prop[i];
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   ierr = PetscFree(prop);CHKERRQ(ierr);
