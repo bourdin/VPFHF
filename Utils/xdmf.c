@@ -6,7 +6,7 @@
 /*
   XDMFuniformgridInitialize: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode XDMFuniformgridInitialize(PetscViewer viewer,PetscReal time,const char gridname[])
 {
@@ -26,7 +26,7 @@ extern PetscErrorCode XDMFuniformgridInitialize(PetscViewer viewer,PetscReal tim
 /*
   XDMFtopologyAdd: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode XDMFtopologyAdd(PetscViewer viewer,PetscInt nx,PetscInt ny,PetscInt nz,const char h5filename[],const char coordname[])
 {
@@ -45,7 +45,7 @@ extern PetscErrorCode XDMFtopologyAdd(PetscViewer viewer,PetscInt nx,PetscInt ny
 /*
   XDMFattributeAdd: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode XDMFattributeAdd(PetscViewer viewer,PetscInt nx,PetscInt ny,PetscInt nz,PetscInt nfields,const char fieldtype [],const char location[],const char h5filename[],const char fieldname[])
 {
@@ -63,7 +63,7 @@ extern PetscErrorCode XDMFattributeAdd(PetscViewer viewer,PetscInt nx,PetscInt n
 /*
   XDMFuniformgridFinalize: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode XDMFuniformgridFinalize(PetscViewer viewer)
 {
@@ -83,7 +83,7 @@ extern PetscErrorCode XDMFuniformgridFinalize(PetscViewer viewer)
 /*
   XDMFmultistepInitialize: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode XDMFmultistepInitialize(PetscViewer viewer)
 {
@@ -102,7 +102,7 @@ extern PetscErrorCode XDMFmultistepInitialize(PetscViewer viewer)
 /*
   XDMFmultistepAddstep: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode XDMFmultistepAddstep(PetscViewer viewer,const char filename[])
 {
@@ -118,7 +118,7 @@ extern PetscErrorCode XDMFmultistepAddstep(PetscViewer viewer,const char filenam
 /*
   XDMFmultistepFinalize: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode XDMFmultistepFinalize(PetscViewer viewer)
 {

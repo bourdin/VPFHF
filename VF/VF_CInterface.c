@@ -13,7 +13,7 @@ VFFields            fields;
 /*
   VFInitialize: Initialize the VF code. Called by the fortran implementation of VIADAT
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz)
 {
@@ -50,7 +50,7 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
   ierr = VFCtxGet(&ctx);CHKERRQ(ierr);
   ierr = VFPropGet(&ctx.vfprop);CHKERRQ(ierr);
 
-  ierr = PetscMalloc(ctx.nlayer * sizeof(MatProp), &ctx.matprop);CHKERRQ(ierr);
+  ierr = PetscMalloc(ctx.nlayer * sizeof(MatProp),&ctx.matprop);CHKERRQ(ierr);
   ierr = VFMatPropGet(ctx.matprop,ctx.nlayer);CHKERRQ(ierr);
 
   if (printhelp) {
@@ -76,7 +76,7 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
 
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.ener",ctx.prefix);CHKERRQ(ierr);
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx.energyviewer);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"#i, Elastic Energy, InsituWork, Surface Energy, Total Energy\n");CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Total Energy\n");CHKERRQ(ierr);
   ierr = PetscViewerFlush(ctx.energyviewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -86,7 +86,7 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
 /*
   vendit:
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode vendit(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt nfout,PetscInt nfbug)
 {
@@ -105,7 +105,7 @@ extern PetscErrorCode vendit(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt
 /*
   vtdata: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode vtdata(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt nfout,PetscInt nfbug)
 {
@@ -118,7 +118,7 @@ extern PetscErrorCode vtdata(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt
 /*
   vperm: This is where the permeability is updated from the pressure + temperature, i.e. the main hook for the fracture computation
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,PetscReal *pmult,PetscReal tim,PetscInt nstep,PetscInt newt,PetscInt nfout,PetscInt nfbug,PetscInt n)
 {
@@ -126,7 +126,7 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nThis is the PETSc / C implementation of %s\n", __FUNCT__);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nThis is the PETSc / C implementation of %s\n",__FUNCT__);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   TIME  = %15.5E\n",tim);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   NSTEP = %10i\n",nstep);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   NEWT  = %10i\n",newt);CHKERRQ(ierr);
@@ -152,19 +152,20 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
     if (ctx.verbose > 0) {
       ierr = VecMin(fields.theta,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
       ierr = VecMax(fields.theta,PETSC_NULL,&fieldmax);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD, "Temperature range: %g - %g\n", fieldmin, fieldmax);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Temperature range: %g - %g\n",fieldmin,fieldmax);CHKERRQ(ierr);
       ierr = VecMin(fields.pressure,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
       ierr = VecMax(fields.pressure,PETSC_NULL,&fieldmax);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD, "Pressure range:    %g - %g\n", fieldmin, fieldmax);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Pressure range:    %g - %g\n",fieldmin,fieldmax);CHKERRQ(ierr);
       ierr = VecMin(fields.pmult,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
       ierr = VecMax(fields.pmult,PETSC_NULL,&fieldmax);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD, "Pmult range:       %g - %g\n", fieldmin, fieldmax);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Pmult range:       %g - %g\n",fieldmin,fieldmax);CHKERRQ(ierr);
     }
     /*
       If this is the first Newton iteration of the first time step, set the reference temperature:
     */
     if (nstep == 1 && newt == 1) {
       ierr = VecCopy(fields.theta,fields.thetaRef);CHKERRQ(ierr);
+      ierr = VecCopy(fields.pressure,fields.pressureRef);CHKERRQ(ierr);
     }
     /* 
       Minimize the fracture energy in order to get Displacement and Fracture
@@ -204,10 +205,10 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
     }
   }
 
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "Work of insitu forces:     %e\n",ctx.InsituWork);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "Total energy:              %e\n",ctx.TotalEnergy);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of insitu forces:     %e\n",ctx.InsituWork);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.TotalEnergy);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i \t%e \t%e \t%e \t%e \t%e\n",nstep,tim,ctx.ElasticEnergy,
                                 ctx.InsituWork,ctx.SurfaceEnergy,ctx.TotalEnergy);CHKERRQ(ierr); 
   ierr = PetscViewerFlush(ctx.energyviewer);CHKERRQ(ierr);
@@ -219,7 +220,7 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
 /*
   vstdout: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode vstdout(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt nfout,PetscInt nfbug)
 {
@@ -227,7 +228,7 @@ extern PetscErrorCode vstdout(PetscInt rank,PetscReal tim,PetscInt nstep,PetscIn
   char           filename[FILENAME_MAX];
    
   PetscFunctionBegin;
-  ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i \t%e \t%e \t%e \t%e \t%e\n", nstep, tim, ctx.ElasticEnergy, ctx.InsituWork, ctx.SurfaceEnergy, 
+  ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i \t%e \t%e \t%e \t%e \t%e\n",nstep,tim,ctx.ElasticEnergy,ctx.InsituWork,ctx.SurfaceEnergy,
                                 ctx.TotalEnergy);CHKERRQ(ierr); 
   ierr = PetscViewerFlush(ctx.energyviewer);CHKERRQ(ierr);
 
@@ -242,6 +243,6 @@ extern PetscErrorCode vstdout(PetscInt rank,PetscReal tim,PetscInt nstep,PetscIn
   } 
   ierr = PetscLogStagePop();CHKERRQ(ierr);
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
-  ierr = PetscLogPrintSummary(PETSC_COMM_WORLD, filename);CHKERRQ(ierr);
+  ierr = PetscLogPrintSummary(PETSC_COMM_WORLD,filename);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

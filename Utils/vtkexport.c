@@ -1,9 +1,9 @@
 /*
   vtkexport.c
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 
-static const char banner[] = "vtkexport:\nconvert petsc binary files into vtk files\n(c) 2010 Blaise Bourdin Louisiana State University bourdin@lsu.edu\n\n";
+static const char banner[] = "vtkexport:\nconvert petsc binary files into vtk files\n(c) 2010-2011 Blaise Bourdin Louisiana State University bourdin@lsu.edu\n\n";
 
 #include "petsc.h"
 
@@ -42,7 +42,7 @@ int main(int argc,char **argv)
   ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,petscfilename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
   ierr = DALoad(viewer,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,&daScal);CHKERRQ(ierr);
   
-  ierr = DAGetInfo(daScal,0,&nx,&ny,&nz,0,0,0, 0,0,0,0);CHKERRQ(ierr);
+  ierr = DAGetInfo(daScal,0,&nx,&ny,&nz,0,0,0,0,0,0,0);CHKERRQ(ierr);
   ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,
                     PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                     &(daVect));CHKERRQ(ierr);

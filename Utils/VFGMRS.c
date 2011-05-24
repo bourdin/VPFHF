@@ -5,7 +5,7 @@
 /*
   VecGMRSToPetsc: convert a GMRS 1d array sent from CPU 0 into a distributed Petsc Vec
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VecGMRSToPetsc(PetscReal *GMRS_array,Vec x)
 {
@@ -25,7 +25,7 @@ extern PetscErrorCode VecGMRSToPetsc(PetscReal *GMRS_array,Vec x)
   
   ierr = PetscObjectQuery((PetscObject) x,"DA",(PetscObject *) &da);CHKERRQ(ierr);
   if (!da) SETERRQ(PETSC_ERR_ARG_WRONG,"Vector not generated from a DA");
-  ierr = DAGetInfo(da,0,&mx,&my,&mz,0,0,0, 0,0,0,0);CHKERRQ(ierr);
+  ierr = DAGetInfo(da,0,&mx,&my,&mz,0,0,0,0,0,0,0);CHKERRQ(ierr);
   N = mx * my * mz;
   if (!rank) {
     n = N;
@@ -57,8 +57,8 @@ extern PetscErrorCode VecGMRSToPetsc(PetscReal *GMRS_array,Vec x)
   ierr = VecScatterDestroy(tozero); CHKERRQ(ierr);
   ierr = VecDestroy(zero_Vec);CHKERRQ(ierr);
   
-  ierr = DANaturalToGlobalBegin(da, natural, INSERT_VALUES, x);CHKERRQ(ierr);
-  ierr = DANaturalToGlobalEnd  (da, natural, INSERT_VALUES, x);CHKERRQ(ierr);
+  ierr = DANaturalToGlobalBegin(da,natural,INSERT_VALUES,x);CHKERRQ(ierr);
+  ierr = DANaturalToGlobalEnd  (da,natural,INSERT_VALUES,x);CHKERRQ(ierr);
   ierr = VecDestroy(natural);CHKERRQ(ierr);  
   PetscFunctionReturn(0);
 }
@@ -68,7 +68,7 @@ extern PetscErrorCode VecGMRSToPetsc(PetscReal *GMRS_array,Vec x)
 /*
   VecPetscToGMRS: convert a distributed Petsc Vec into GMRS 1d array with all values on CPU 0
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VecPetscToGMRS(Vec x,PetscReal *GMRS_array)
 {
@@ -88,7 +88,7 @@ extern PetscErrorCode VecPetscToGMRS(Vec x,PetscReal *GMRS_array)
   
   ierr = PetscObjectQuery((PetscObject) x,"DA",(PetscObject *) &da);CHKERRQ(ierr);
   if (!da) SETERRQ(PETSC_ERR_ARG_WRONG,"Vector not generated from a DA");
-  ierr = DAGetInfo(da,0,&mx,&my,&mz,0,0,0, 0,0,0,0);CHKERRQ(ierr);
+  ierr = DAGetInfo(da,0,&mx,&my,&mz,0,0,0,0,0,0,0);CHKERRQ(ierr);
   N = mx * my * mz;
   if (!rank) {
     n = N;

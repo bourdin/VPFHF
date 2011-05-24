@@ -63,7 +63,7 @@ PetscErrorCode PETSCMAT_DLLEXPORT MatZeroRowsStencil(Mat mat,PetscInt numRows,co
   PetscInt      *dims   = mat->stencil.dims+1;
   PetscInt      *starts = mat->stencil.starts;
   PetscInt      *dxm    = (PetscInt *) rows;
-  PetscInt      *jdxm, i, j, tmp, numNewRows = 0;
+  PetscInt      *jdxm,i,j,tmp,numNewRows = 0;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -71,7 +71,7 @@ PetscErrorCode PETSCMAT_DLLEXPORT MatZeroRowsStencil(Mat mat,PetscInt numRows,co
   PetscValidType(mat,1);
   if (numRows) PetscValidIntPointer(rows,3);
 
-  ierr = PetscMalloc(numRows * sizeof(PetscInt), &jdxm);CHKERRQ(ierr);
+  ierr = PetscMalloc(numRows * sizeof(PetscInt),&jdxm);CHKERRQ(ierr);
   for(i = 0; i < numRows; ++i) {
     /* Skip unused dimensions (they are ordered k, j, i, c) */
     for(j = 0; j < 3-sdim; ++j) dxm++;

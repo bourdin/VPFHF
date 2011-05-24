@@ -13,7 +13,7 @@ PetscCookie   CartFE_Element;
 /*
   CartFE_Init
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Init()
 {
@@ -33,7 +33,7 @@ extern PetscErrorCode CartFE_Init()
   CartFE_Element1DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element1DCreate(CartFE_Element1D *e)
 {
@@ -51,9 +51,9 @@ extern PetscErrorCode CartFE_Element1DCreate(CartFE_Element1D *e)
 /*
   CartFE_Element1DInit
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e, PetscReal lx)
+extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
 {
   PetscErrorCode ierr;
   
@@ -90,7 +90,7 @@ extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e, PetscReal lx)
   CartFE_Element2DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element2DCreate(CartFE_Element2D *e)
 {
@@ -108,9 +108,9 @@ extern PetscErrorCode CartFE_Element2DCreate(CartFE_Element2D *e)
 /*
   CartFE_Element2DInit
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e, PetscReal lx, PetscReal ly)
+extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,PetscReal ly)
 {
   PetscErrorCode     ierr;
   CartFE_Element1D ex,ey;
@@ -121,24 +121,24 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e, PetscReal lx, Pe
   ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
   ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ex);CHKERRQ(ierr);
-  ierr = CartFE_Element1DInit(&ex, lx);CHKERRQ(ierr);
+  ierr = CartFE_Element1DInit(&ex,lx);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ey);CHKERRQ(ierr);
-  ierr = CartFE_Element1DInit(&ey, ly);CHKERRQ(ierr);
+  ierr = CartFE_Element1DInit(&ey,ly);CHKERRQ(ierr);
   
   ierr = CartFE_Element2DCreate(e);CHKERRQ(ierr);
   e->lx    = lx; 
   e->ly    = ly;
   e->lz    = 0;
   
-  for (g = 0, gj = 0; gj < ey.ng; gj++) {
-    for (gi = 0; gi < ex.ng; gi++, g++) {
+  for (g = 0,gj = 0; gj < ey.ng; gj++) {
+    for (gi = 0; gi < ex.ng; gi++,g++) {
       e->weight[g] = ey.weight[gj] * ex.weight[gi];
     }
   }
   for (j = 0; j < e->nphiy; j++) {
     for (i = 0; i < e->nphix; i++) {
-      for (g = 0, gj = 0; gj < ey.ng; gj++) {
-        for (gi = 0; gi < ex.ng; gi++, g++) {
+      for (g = 0,gj = 0; gj < ey.ng; gj++) {
+        for (gi = 0; gi < ex.ng; gi++,g++) {
           /* 
             Value of the basis functions and their derivatives at the integration points 
             Using the conventions
@@ -166,7 +166,7 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e, PetscReal lx, Pe
   CartFE_Element3DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element3DCreate(CartFE_Element3D *e)
 {
@@ -184,12 +184,12 @@ extern PetscErrorCode CartFE_Element3DCreate(CartFE_Element3D *e)
 /*
   CartFE_Element3DInit
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e, PetscReal lx, PetscReal ly, PetscReal lz)
+extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,PetscReal ly,PetscReal lz)
 {
   PetscErrorCode     ierr;
-  CartFE_Element1D   ex, ey, ez;
+  CartFE_Element1D   ex,ey,ez;
   PetscInt           gi,gj,gk,g;   /* local and lexicographic indices of the integration points */
   PetscInt           i,j,k;
   
@@ -197,27 +197,27 @@ extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e, PetscReal lx, Pe
   ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
   ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ex);CHKERRQ(ierr);
-  ierr = CartFE_Element1DInit(&ex, lx);CHKERRQ(ierr);
+  ierr = CartFE_Element1DInit(&ex,lx);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ey);CHKERRQ(ierr);
-  ierr = CartFE_Element1DInit(&ey, ly);CHKERRQ(ierr);
+  ierr = CartFE_Element1DInit(&ey,ly);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ez);CHKERRQ(ierr);
-  ierr = CartFE_Element1DInit(&ez, lz);CHKERRQ(ierr);
+  ierr = CartFE_Element1DInit(&ez,lz);CHKERRQ(ierr);
   
   ierr = CartFE_Element3DCreate(e);CHKERRQ(ierr);
   e->lx    = lx; 
   e->ly    = ly;
   e->lz    = lz;
   
-  for (g = 0, gk = 0; gk < ez.ng; gk++) {
+  for (g = 0,gk = 0; gk < ez.ng; gk++) {
     for (gj = 0; gj < ey.ng; gj++) {
-      for (gi = 0; gi < ex.ng; gi++, g++) {
+      for (gi = 0; gi < ex.ng; gi++,g++) {
         e->weight[g] = ez.weight[gk] * ey.weight[gj] * ex.weight[gi];
       }
     }
   }
-  for (g = 0, gk = 0; gk < ez.ng; gk++) {
+  for (g = 0,gk = 0; gk < ez.ng; gk++) {
     for (gj = 0; gj < ey.ng; gj++) {
-      for (gi = 0; gi < ex.ng; gi++, g++) {
+      for (gi = 0; gi < ex.ng; gi++,g++) {
         for (k = 0; k < e->nphiz; k++) {
           for (j = 0; j < e->nphiy; j++) {
             for (i = 0; i < e->nphix; i++) { 
@@ -250,7 +250,7 @@ extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e, PetscReal lx, Pe
 /*
   VecApplyDirichletBC
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
 {
@@ -265,7 +265,7 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
   PetscInt       dim,dof;
   
   PetscFunctionBegin;
-  ierr = PetscObjectQuery((PetscObject) RHS, "DA", (PetscObject *) &da); CHKERRQ(ierr);
+  ierr = PetscObjectQuery((PetscObject) RHS,"DA",(PetscObject *) &da); CHKERRQ(ierr);
     if (!da) SETERRQ(PETSC_ERR_ARG_WRONG,"Vector not generated from a DA");
   
   ierr = DAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,&dof,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -506,7 +506,7 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
 /*
   MatApplyDirichletBC
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode MatApplyDirichletBC(Mat K,DA da,BC *BC)
 {
@@ -526,7 +526,7 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DA da,BC *BC)
     This is only implemented in petsc-dev (as of petsc-3.1 days)
   */
   /*
-    ierr = PetscObjectQuery((PetscObject) K, "DA", (PetscObject *) &da); CHKERRQ(ierr);
+    ierr = PetscObjectQuery((PetscObject) K,"DA",(PetscObject *) &da); CHKERRQ(ierr);
     if (!da) SETERRQ(PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
   */
   ierr = DAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,&dof,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -552,7 +552,7 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DA da,BC *BC)
     if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] != NONE && dim == 3) numBC++;
     if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] != NONE && dim == 3) numBC++;
   }
-  ierr = PetscMalloc(numBC * sizeof(MatStencil), &row);CHKERRQ(ierr);
+  ierr = PetscMalloc(numBC * sizeof(MatStencil),&row);CHKERRQ(ierr);
   /*
     Create an array of rows to be zeroed out
   */
@@ -669,7 +669,7 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DA da,BC *BC)
 /*
   DAReadCoordinatesHDF5
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode DAReadCoordinatesHDF5(DA da,const char filename[])
 {
@@ -694,7 +694,7 @@ extern PetscErrorCode DAReadCoordinatesHDF5(DA da,const char filename[])
 /*
   BCInit: Set all boundary conditions to FREE
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCInit(BC *bc,PetscInt dof)
 {
@@ -735,15 +735,15 @@ extern PetscErrorCode BCInit(BC *bc,PetscInt dof)
   BCGet: Get boundary condition flag for each face, edge, vertex of the domain.
   The option names are -<prefix>_<name> where name is the nema of a geometric entity
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode BCGet(BC *bc, const char prefix[], PetscInt dof)
+extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof)
 {
   PetscErrorCode ierr;
   PetscInt       i,c,t,nbc;
   char           optstr[256];
   PetscInt       tmpbc[3];
-  BCTYPE         bctype[5] = {NONE, ZERO, ONE, FIXED};
+  BCTYPE         bctype[5] = {NONE,ZERO,ONE,FIXED};
   
 
   PetscFunctionBegin;
@@ -808,7 +808,7 @@ extern PetscErrorCode BCGet(BC *bc, const char prefix[], PetscInt dof)
 /*
   BCView
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof)
 {

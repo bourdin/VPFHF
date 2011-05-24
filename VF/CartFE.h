@@ -2,7 +2,7 @@
 #define CARTFE_H
 /* 
   Implement a simple P1 Lagrange element on a rectangle aligned with axis directions.
-  (c) B. Bourdin, bourdin@lsu.edu 2010
+  (c) 2010-2011 B. Bourdin, bourdin@lsu.edu
   
   Uses 3 points / 5th order quadrature from 
     A. Ern  and J.-L. Guermond "Theory and Practice of Finite Elements"
@@ -69,9 +69,9 @@ typedef struct {
 } CartesianElement;
 
 typedef enum {
-  NONE, 
-  ZERO, 
-  ONE, 
+  NONE,
+  ZERO,
+  ONE,
   FIXED
 } BCTYPE;
 
@@ -91,11 +91,11 @@ static const char *BCTYPE_NAME[] = {
 */
 
 typedef enum {
-  X0, 
-  X1, 
-  Y0, 
-  Y1, 
-  Z0, 
+  X0,
+  X1,
+  Y0,
+  Y1,
+  Z0,
   Z1
 } FACE;
 
@@ -107,17 +107,17 @@ static const char *FACE_NAME[] = {
 };
 
 typedef enum {
-  X0Z0, 
-  X1Z0, 
-  Y0Z0, 
-  Y1Z0, 
-  X0Z1, 
-  X1Z1, 
-  Y0Z1, 
-  Y1Z1, 
-  X0Y0, 
-  X0Y1, 
-  X1Y0, 
+  X0Z0,
+  X1Z0,
+  Y0Z0,
+  Y1Z0,
+  X0Z1,
+  X1Z1,
+  Y0Z1,
+  Y1Z1,
+  X0Y0,
+  X0Y1,
+  X1Y0,
   X1Y1
 } EDGE;
 
@@ -129,13 +129,13 @@ static const char *EDGE_NAME[] = {
 };
 
 typedef enum {
-  X0Y0Z0, 
-  X1Y0Z0, 
-  X0Y1Z0, 
-  X1Y1Z0, 
-  X0Y0Z1, 
-  X1Y0Z1, 
-  X0Y1Z1, 
+  X0Y0Z0,
+  X1Y0Z0,
+  X0Y1Z0,
+  X1Y1Z0,
+  X0Y0Z1,
+  X1Y0Z1,
+  X0Y1Z1,
   X1Y1Z1
 } VERTEX;
 
@@ -153,15 +153,15 @@ typedef struct {
 #ifndef CARTFE_C
 extern PetscErrorCode CartFE_Init();
 extern PetscErrorCode CartFE_Element1DCreate1D(CartFE_Element1D *e);
-extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e, PetscReal lx);
+extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx);
 extern PetscErrorCode CartFE_Element2DCreate(CartFE_Element2D *e);
-extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e, PetscReal lx, PetscReal ly);
+extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,PetscReal ly);
 extern PetscErrorCode CartFE_Element3DCreate(CartFE_Element3D *e);
-extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e, PetscReal lx, PetscReal ly, PetscReal lz);
+extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,PetscReal ly,PetscReal lz);
 
 extern PetscErrorCode DAReadCoordinatesHDF5(DA da,const char filename[]);
 extern PetscErrorCode BCInit(BC *bc,PetscInt dof);
-extern PetscErrorCode BCGet(BC *bc, const char prefix[], PetscInt dof);
+extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof);
 extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof);
 
 extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC);

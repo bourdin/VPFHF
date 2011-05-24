@@ -1,6 +1,6 @@
 /*
   VFracture.c
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 
 #include "petsc.h"
@@ -94,11 +94,11 @@ int main(int argc,char **argv)
     /*
       This is essentially VSTOUT
     */
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "Elastic Energy:            %e\n",ElasticEnergy);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "Work of surface forces:    %e\n",InsituWork);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "Surface energy:            %e\n",SurfaceEnergy);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "Total energy:              %e\n",ElasticEnergy+SurfaceEnergy-InsituWork);CHKERRQ(ierr);
-    ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e\n", ctx.timestep, ElasticEnergy, InsituWork, SurfaceEnergy, 
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ElasticEnergy);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",InsituWork);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy:            %e\n",SurfaceEnergy);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ElasticEnergy+SurfaceEnergy-InsituWork);CHKERRQ(ierr);
+    ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ElasticEnergy,InsituWork,SurfaceEnergy,
                                   ElasticEnergy - InsituWork + SurfaceEnergy);CHKERRQ(ierr); 
 
      switch (ctx.fileformat) {
@@ -111,7 +111,7 @@ int main(int argc,char **argv)
       break; 
     } 
     ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
-    ierr = PetscLogPrintSummary(PETSC_COMM_WORLD, filename);CHKERRQ(ierr);
+    ierr = PetscLogPrintSummary(PETSC_COMM_WORLD,filename);CHKERRQ(ierr);
 
     /* 
       flushes out statistics about the current run
