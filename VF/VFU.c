@@ -10,6 +10,7 @@
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
+
 extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
 {
   PetscInt       c,loc;
