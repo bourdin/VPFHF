@@ -1,9 +1,9 @@
 /*
   h5export.c
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 
-static const char banner[] = "h5export:\nconvert petsc binary files into hdf5 / xmf files\n(c) 2010 Blaise Bourdin Louisiana State University bourdin@lsu.edu\n\n";
+static const char banner[] = "h5export:\nconvert petsc binary files into hdf5 / xmf files\n(c) 2010-2011 Blaise Bourdin Louisiana State University bourdin@lsu.edu\n\n";
 
 #include "petsc.h"
 #include "../Utils/xdmf.h"
@@ -44,7 +44,7 @@ int main(int argc,char **argv)
   ierr = DALoad(viewer,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,&daScal);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(viewer);CHKERRQ(ierr);
   
-  ierr = DAGetInfo(daScal,0,&nx,&ny,&nz,0,0,0, 0,0,0,0);CHKERRQ(ierr);
+  ierr = DAGetInfo(daScal,0,&nx,&ny,&nz,0,0,0,0,0,0,0);CHKERRQ(ierr);
   ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,
                     PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                     &(daVect));CHKERRQ(ierr);

@@ -8,7 +8,7 @@
 /*
   BCUInit
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
 {
@@ -116,7 +116,7 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       }
       break;
     case TEST_MANUAL:
-      ierr = BCGet(BC, "U", 3);
+      ierr = BCGet(BC,"U",3);
       break;
     default:
       SETERRQ2(PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
@@ -209,7 +209,7 @@ extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
 /*
   ElasticEnergyDensity3D_local
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensity_local,PetscReal ****u_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,MatProp *matprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -308,7 +308,7 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
 /*
   ElasticEnergyDensitySphericalDeviatoric3D_local
   Compute the spherical and deviatoric parts of the elastic energy density in an element
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal *ElasticEnergyDensityS_local,PetscReal *ElasticEnergyDensityD_local,PetscReal ****u_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,MatProp *matprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -394,7 +394,7 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal 
 /*
   VF_MatU3D_local
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_MatU3D_local(PetscReal *Mat_local,PetscReal ***V_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -404,7 +404,7 @@ extern PetscErrorCode VF_MatU3D_local(PetscReal *Mat_local,PetscReal ***V_array,
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = PetscMalloc(e->ng * sizeof(PetscReal), &v_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc(e->ng * sizeof(PetscReal),&v_elem);CHKERRQ(ierr);
   lambda = matprop->lambda;
   mu     = matprop->mu;
   
@@ -420,7 +420,7 @@ extern PetscErrorCode VF_MatU3D_local(PetscReal *Mat_local,PetscReal ***V_array,
   }
   ierr = PetscLogFlops(2 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
 
-  for (l = 0, k1 = 0; k1 < e->nphiz; k1++) {
+  for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {
       for (i1 = 0; i1 < e->nphix; i1++) {
         for (c1 = 0; c1 < e->dim; c1++) {
@@ -465,7 +465,7 @@ extern PetscErrorCode VF_MatU3D_local(PetscReal *Mat_local,PetscReal ***V_array,
 /*
   VF_MatUShearOnly3D_local
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_MatUShearOnly3D_local(PetscReal *Mat_local,PetscReal ***V_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -475,7 +475,7 @@ extern PetscErrorCode VF_MatUShearOnly3D_local(PetscReal *Mat_local,PetscReal **
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = PetscMalloc(e->ng * sizeof(PetscReal), &v_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc(e->ng * sizeof(PetscReal),&v_elem);CHKERRQ(ierr);
   lambda = matprop->lambda;
   mu     = matprop->mu;
   kappa  = lambda + 2. * mu / 3.;
@@ -492,7 +492,7 @@ extern PetscErrorCode VF_MatUShearOnly3D_local(PetscReal *Mat_local,PetscReal **
   }
   ierr = PetscLogFlops(2 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
 
-  for (l = 0, k1 = 0; k1 < e->nphiz; k1++) {
+  for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {
       for (i1 = 0; i1 < e->nphix; i1++) {
         for (c1 = 0; c1 < e->dim; c1++) {
@@ -538,7 +538,7 @@ extern PetscErrorCode VF_MatUShearOnly3D_local(PetscReal *Mat_local,PetscReal **
 /*
   VF_RHSUCoupling3D_local
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_RHSUCoupling3D_local(PetscReal *RHS_local,PetscReal ***V_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -601,7 +601,7 @@ extern PetscErrorCode VF_RHSUCoupling3D_local(PetscReal *RHS_local,PetscReal ***
 /*
   VF_RHSUCouplingShearOnly3D_local
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_RHSUCouplingShearOnly3D_local(PetscReal *RHS_local,PetscReal ***V_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -662,7 +662,7 @@ extern PetscErrorCode VF_RHSUCouplingShearOnly3D_local(PetscReal *RHS_local,Pets
 /*
   VF_RHSUInSituStresses3D_local: Accumulates the contribution of surface forces along the face of an element
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_RHSUInSituStresses3D_local(PetscReal *RHS_local,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element3D *e)
 {
@@ -790,7 +790,7 @@ extern PetscErrorCode VF_RHSUInSituStresses3D_local(PetscReal *RHS_local,PetscRe
 /*
   VF_UAssembly3D
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
 {
@@ -824,7 +824,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   if (zs+zm == nz) zm--;
 
   ierr = MatZeroEntries(K);CHKERRQ(ierr);
-  ierr = VecSet(RHS, 0.);CHKERRQ(ierr);
+  ierr = VecSet(RHS,0.);CHKERRQ(ierr);
   /*
     Get coordinates
   */
@@ -863,10 +863,10 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = PetscMalloc(nrow * nrow * sizeof(PetscReal),&K_local);CHKERRQ(ierr);
   ierr = PetscMalloc(nrow * sizeof(MatStencil),&row);CHKERRQ(ierr);
   ierr = DAGetLocalVector(ctx->daVect,&RHS_localVec);CHKERRQ(ierr);
-  ierr = VecSet(RHS_localVec, 0.);CHKERRQ(ierr);
+  ierr = VecSet(RHS_localVec,0.);CHKERRQ(ierr);
   ierr = DAVecGetArrayDOF(ctx->daVect,RHS_localVec,&RHS_array);CHKERRQ(ierr);    
 
-  ierr = PetscMalloc(nrow * sizeof(PetscReal), &RHS_local);CHKERRQ(ierr);
+  ierr = PetscMalloc(nrow * sizeof(PetscReal),&RHS_local);CHKERRQ(ierr);
   /*
     loop through all elements (ei,ej)
   */
@@ -1191,7 +1191,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
 /*
   VF_ElasticEnergy3D_local: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,PetscReal ****u_array,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -1208,7 +1208,7 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
   ierr = PetscMalloc3(e->ng,PetscReal,&epsilon11_elem,e->ng,PetscReal,&epsilon22_elem,e->ng,PetscReal,&epsilon33_elem);CHKERRQ(ierr);
   ierr = PetscMalloc3(e->ng,PetscReal,&epsilon12_elem,e->ng,PetscReal,&epsilon23_elem,e->ng,PetscReal,&epsilon13_elem);CHKERRQ(ierr);
 
-  ierr = PetscMalloc(e->ng * sizeof(PetscReal), &v_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc(e->ng * sizeof(PetscReal),&v_elem);CHKERRQ(ierr);
   lambda = matprop->lambda;
   mu     = matprop->mu;
   alpha  = matprop->alpha;
@@ -1270,7 +1270,7 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
   }
   
   /*
-  ierr = PetscPrintf(PETSC_COMM_SELF, "%s Elast E[%i,%i,%i]: %e\n",__FUNCT__,ei,ej,ek,*ElasticEnergy_local);
+  ierr = PetscPrintf(PETSC_COMM_SELF,"%s Elast E[%i,%i,%i]: %e\n",__FUNCT__,ei,ej,ek,*ElasticEnergy_local);
   */
   ierr = PetscFree3(sigma11_elem,sigma22_elem,sigma33_elem);CHKERRQ(ierr);
   ierr = PetscFree3(sigma12_elem,sigma23_elem,sigma13_elem);CHKERRQ(ierr);
@@ -1285,7 +1285,7 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
 /*
   VF_InSituStressWork3D_local
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscReal ****u_array,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element3D *e)
 {
@@ -1413,7 +1413,7 @@ extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscRea
 /*
   VF_ElasticEnergy3D
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWork,VFFields *fields,VFCtx *ctx)
 {
@@ -1687,14 +1687,14 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
 /*
   VF_StepU
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode     ierr;
   KSPConvergedReason reason;
   PetscInt           its;
-  PetscReal          Umin, Umax;
+  PetscReal          Umin,Umax;
   
   PetscFunctionBegin;
   ierr = VF_UAssembly3D(ctx->KU,ctx->RHSU,fields,ctx);CHKERRQ(ierr);
@@ -1717,7 +1717,7 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   if (ctx->verbose > 0) {
     ierr = VecMin(fields->U,PETSC_NULL,&Umin);CHKERRQ(ierr);
     ierr = VecMax(fields->U,PETSC_NULL,&Umax);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "Umin = %g, Umax = %g\n", Umin,Umax);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Umin = %g, Umax = %g\n",Umin,Umax);CHKERRQ(ierr);
   }
   
   ierr = KSPGetConvergedReason(ctx->kspU,&reason);CHKERRQ(ierr);
@@ -1736,14 +1736,14 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   VF_ComputeBCU: Compute the boundary displacement by performing an elastic solve with insitu stresses
                  The sets ctx->hasInsitu to PETSC_FALSE and update the BC flags
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode     ierr;
   KSPConvergedReason reason;
   PetscInt           its;
-  PetscReal          Umin, Umax;
+  PetscReal          Umin,Umax;
   
   PetscFunctionBegin;
   ierr = VF_UAssembly3D(ctx->KU,ctx->RHSU,fields,ctx);CHKERRQ(ierr);
@@ -1766,7 +1766,7 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
   if (ctx->verbose > 0) {
     ierr = VecMin(fields->BCU,PETSC_NULL,&Umin);CHKERRQ(ierr);
     ierr = VecMax(fields->BCU,PETSC_NULL,&Umax);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "Umin = %g, Umax = %g\n", Umin,Umax);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Umin = %g, Umax = %g\n",Umin,Umax);CHKERRQ(ierr);
   }
   
   ierr = KSPGetConvergedReason(ctx->kspU,&reason);CHKERRQ(ierr);
@@ -1788,15 +1788,15 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
   ctx->hasInsitu = PETSC_FALSE;
   ierr = BCUUpdate(&ctx->bcU[0],ctx->preset);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "BCU: after update\n");CHKERRQ(ierr);
-    ierr = BCView(&ctx->bcU[0],PETSC_VIEWER_STDOUT_WORLD, 3);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"BCU: after update\n");CHKERRQ(ierr);
+    ierr = BCView(&ctx->bcU[0],PETSC_VIEWER_STDOUT_WORLD,3);CHKERRQ(ierr);
   }
 
 
   ierr = BCVUpdate(&ctx->bcV[0],ctx->preset);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "BCV: after update\n");CHKERRQ(ierr);
-    ierr = BCView(&ctx->bcV[0],PETSC_VIEWER_STDOUT_WORLD, 1);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"BCV: after update\n");CHKERRQ(ierr);
+    ierr = BCView(&ctx->bcV[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }

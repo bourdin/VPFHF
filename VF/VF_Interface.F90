@@ -18,8 +18,8 @@ Subroutine VIADAT(myprc,numprc,nx,ny,nz,dx,dy,dz,nfout,nfbug)
 #include "finclude/petscdef.h"
    Use petsc
    Implicit NONE
-   Integer, Intent(IN) :: myprc,numprc,nx,ny,nz,nfout,nfbug
-   Real*8, Intent(IN)  :: dx(nx),dy(ny),dz(nz)
+   Integer,Intent(IN)  :: myprc,numprc,nx,ny,nz,nfout,nfbug
+   Real*8,Intent(IN)   :: dx(nx),dy(ny),dz(nz)
    PetscInt            :: ierr
    integer             :: junk
 

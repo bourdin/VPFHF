@@ -10,7 +10,7 @@ VFCtx user;
 /*
   VFInitialize: Initialize the VF code. Called by the fortran implementation of VIADAT
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz)
 {
@@ -28,19 +28,19 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
   {
     ierr = PetscSNPrintf(user.prefix,FILENAME_MAX,"TEST");CHKERRQ(ierr);
     user.fileformat = FILEFORMAT_BIN;
-    ierr = PetscOptionsEnum("-format", "FileFormat","",VFFileFormatName,(PetscEnum)user.fileformat,(PetscEnum*)&user.fileformat,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsEnum("-format","FileFormat","",VFFileFormatName,(PetscEnum)user.fileformat,(PetscEnum*)&user.fileformat,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsString("-p","file prefix","",user.prefix,user.prefix,PETSC_MAX_PATH_LEN-1,&flg);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",user.prefix);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n log file is %s\n\n",filename);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD, filename,&user.logviewer);CHKERRQ(ierr);  
+  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&user.logviewer);CHKERRQ(ierr);  
   ierr = PetscViewerASCIIPrintf(user.logviewer,"This is %s\n",__FUNCT__);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "This is the PETSc / C implementation of %s\n", __FUNCT__);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "nx      = %i\n", nx);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "ny      = %i\n", ny);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "nz      = %i\n", nz);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"This is the PETSc / C implementation of %s\n",__FUNCT__);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"nx      = %i\n",nx);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"ny      = %i\n",ny);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"nz      = %i\n",nz);CHKERRQ(ierr);
 
   user.nx = nx-1;
   user.ny = ny-1;
@@ -108,12 +108,6 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
   */
   switch (user.fileformat) {
     case FILEFORMAT_BIN:
-      /*
-        As of version 3.1, there is a bug in petsc preventing to save 2 DA with different number of degrees of freedoms
-        per node in a single file.
-        Even coordinates are part of the DA and do not need to be saved separately, it looks like the coordinate vector
-        obtained from DAGetCoordinates cannot be saved properly in an hdf5 file, so we save the coordinate vector anyway
-      */
       ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.bin",user.prefix);CHKERRQ(ierr);
       ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
       ierr = DAView(user.daScal,viewer);CHKERRQ(ierr);
@@ -145,7 +139,7 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
 /*
   vendit:
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode vendit(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt nfout,PetscInt nfbug)
 {
@@ -176,7 +170,7 @@ extern PetscErrorCode vendit(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt
 /*
   vtdata: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode vtdata(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt nfout,PetscInt nfbug)
 {
@@ -185,7 +179,7 @@ extern PetscErrorCode vtdata(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt
   PetscFunctionBegin;
   ierr = PetscViewerASCIIPrintf(user.logviewer,"\nThis is %s\n",__FUNCT__);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(user.logviewer,"\tTime=\t%g\n\tnstep=\t%i\n",tim,nstep);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nThis is the PETSc / C implementation of %s\n", __FUNCT__);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nThis is the PETSc / C implementation of %s\n",__FUNCT__);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   TIME = %15.5E\n",tim);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   NSTEP = %10i\n",nstep);CHKERRQ(ierr);
   
@@ -201,18 +195,17 @@ extern PetscErrorCode vtdata(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt
 /*
   vperm: This is where the permeability is updated from the pressure + temperature, i.e. the main hook for the fracture computation
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,PetscReal *pmult,PetscReal tim,PetscInt nstep,PetscInt newt,PetscInt nfout,PetscInt nfbug,PetscInt n)
 {
   PetscReal      fieldmin,fieldmax;   
   PetscErrorCode ierr;
-  Vec            tmpVec;
   
   PetscFunctionBegin;
   ierr = PetscViewerASCIIPrintf(user.logviewer,"\nThis is %s\n",__FUNCT__);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(user.logviewer,"\tTime=%g\tnstep=%i\tnewt=%i\n",tim,nstep,newt);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nThis is the PETSc / C implementation of %s\n", __FUNCT__);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nThis is the PETSc / C implementation of %s\n",__FUNCT__);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   TIME  = %15.5E\n",tim);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   NSTEP = %10i\n",nstep);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   NEWT  = %10i\n",newt);CHKERRQ(ierr);
@@ -225,10 +218,10 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
 
   ierr = VecMin(user.tempr,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
   ierr = VecMax(user.tempr,PETSC_NULL,&fieldmax);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "Temperature range: %g - %g\n", fieldmin, fieldmax);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Temperature range: %g - %g\n",fieldmin,fieldmax);CHKERRQ(ierr);
   ierr = VecMin(user.pres,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
   ierr = VecMax(user.pres,PETSC_NULL,&fieldmax);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD, "Pressure range:    %g - %g\n", fieldmin, fieldmax);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Pressure range:    %g - %g\n",fieldmin,fieldmax);CHKERRQ(ierr);
   /* 
     Compute Displacement and Fracture, then derive permeability multipliers
   */
@@ -257,7 +250,7 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
 /*
   vstdout: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode vstdout(PetscInt rank,PetscReal tim,PetscInt nstep,PetscInt nfout,PetscInt nfbug)
 {
@@ -268,7 +261,7 @@ extern PetscErrorCode vstdout(PetscInt rank,PetscReal tim,PetscInt nstep,PetscIn
   PetscFunctionBegin;
   ierr = PetscViewerASCIIPrintf(user.logviewer,"\nThis is %s\n",__FUNCT__);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(user.logviewer,"\tTime=%g\tnstep=%i\n",tim,nstep);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nThis is the PETSc / C implementation of %s\n", __FUNCT__);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nThis is the PETSc / C implementation of %s\n",__FUNCT__);CHKERRQ(ierr);
 
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   TIME  = %15.5g\n",tim);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   NSTEP = %10i\n",nstep);CHKERRQ(ierr);

@@ -1,6 +1,6 @@
 /*
   VFU.h
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 
 #ifndef VFV_H

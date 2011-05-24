@@ -2,7 +2,7 @@
 #define VFCOMMON_H
 /*
   VFCommon.h
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 static const char banner[] = "\n\nVF:\nNumerical implementation of the variational approach to fracture.\n(c) 2010-2011 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu\n\n";
 
@@ -88,6 +88,7 @@ typedef struct {
   Vec theta;
   Vec thetaRef;
   Vec pressure;
+  Vec pressureRef;
   Vec pmult;
 } VFFields;
 
@@ -164,7 +165,6 @@ typedef struct {
   PetscReal           insitumax[6];
   PetscTruth          hasInsitu;
   VFMode              mode;
-  PetscInt            saveint;    /* Save partial step every saveint alternate minimizations iterations */
   VFUnilateralType    unilateral;
   VFCouplingType      coupling;
   VFFileFormatType    fileformat;

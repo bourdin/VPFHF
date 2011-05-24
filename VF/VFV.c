@@ -10,7 +10,7 @@
 /*
   BCVInit
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
 {
@@ -47,7 +47,7 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
       BC[0].face[Z1] = ONE; 
       break;
     case TEST_MANUAL:
-      ierr = BCGet(BC, "V", 1);
+      ierr = BCGet(BC,"V",1);
       break;
     default:
       SETERRQ2(PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
@@ -65,8 +65,6 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
 */
 extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset)
 {
-  PetscErrorCode ierr;
-
   PetscFunctionBegin;
   switch (preset) {
       /*
@@ -122,7 +120,7 @@ extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset)
 /*
   VF_MatVAT2Surface3D_local
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_MatVAT2Surface3D_local(PetscReal *Mat_local,MatProp *matprop,VFProp *vfprop,CartFE_Element3D *e)
 {
@@ -156,7 +154,7 @@ extern PetscErrorCode VF_MatVAT2Surface3D_local(PetscReal *Mat_local,MatProp *ma
 /*
   VF_MatVCoupling3D_local
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -165,7 +163,7 @@ extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ***
   PetscReal      *ElasticEnergyDensity_local;
   
   PetscFunctionBegin;
-  ierr = PetscMalloc(e->ng * sizeof(PetscReal), &ElasticEnergyDensity_local);CHKERRQ(ierr);
+  ierr = PetscMalloc(e->ng * sizeof(PetscReal),&ElasticEnergyDensity_local);CHKERRQ(ierr);
   for (g = 0; g < e->ng; g++) ElasticEnergyDensity_local[g] = 0;
   ierr = ElasticEnergyDensity3D_local(ElasticEnergyDensity_local,U_array,theta_array,thetaRef_array,matprop,ek,ej,ei,e);CHKERRQ(ierr);
 
@@ -201,7 +199,7 @@ extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ***
 /*
   VF_MatVCouplingShearOnly3D_local
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_MatVCouplingShearOnly3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -237,7 +235,7 @@ extern PetscErrorCode VF_MatVCouplingShearOnly3D_local(PetscReal *Mat_local,Pets
 /*
   VF_RHSVAT2Surface3D_local
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_RHSVAT2Surface3D_local(PetscReal *RHS_local,MatProp *matprop,VFProp *vfprop,CartFE_Element3D *e)
 {
@@ -245,7 +243,7 @@ extern PetscErrorCode VF_RHSVAT2Surface3D_local(PetscReal *RHS_local,MatProp *ma
   PetscReal      coef = matprop->Gc / vfprop->atCv / vfprop->epsilon *.5;
 
   PetscFunctionBegin;
-  for (l=0, k=0; k < e->nphiz; k++) {
+  for (l=0,k=0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++,l++) {
         for (g = 0; g < e->ng; g++) {
@@ -262,7 +260,7 @@ extern PetscErrorCode VF_RHSVAT2Surface3D_local(PetscReal *RHS_local,MatProp *ma
 /*
   VF_VAssembly3D
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
 {
@@ -297,7 +295,7 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   if (zs+zm == nz) zm--;
 
   ierr = MatZeroEntries(K);CHKERRQ(ierr);
-  ierr = VecSet(RHS, 0.);CHKERRQ(ierr);
+  ierr = VecSet(RHS,0.);CHKERRQ(ierr);
   /*
     Get coordinates
   */
@@ -328,10 +326,10 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = PetscMalloc(nrow * nrow * sizeof(PetscReal),&K_local);CHKERRQ(ierr);
   ierr = PetscMalloc(nrow * sizeof(MatStencil),&row);CHKERRQ(ierr);
   ierr = DAGetLocalVector(ctx->daScal,&RHS_localVec);CHKERRQ(ierr);
-  ierr = VecSet(RHS_localVec, 0.);CHKERRQ(ierr);
+  ierr = VecSet(RHS_localVec,0.);CHKERRQ(ierr);
   ierr = DAVecGetArray(ctx->daScal,RHS_localVec,&RHS_array);CHKERRQ(ierr);    
 
-  ierr = PetscMalloc(nrow * sizeof(PetscReal), &RHS_local);CHKERRQ(ierr);
+  ierr = PetscMalloc(nrow * sizeof(PetscReal),&RHS_local);CHKERRQ(ierr);
   /*
     loop through all elements (ei,ej)
   */
@@ -431,7 +429,7 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
 /*
   VF_SurfaceEnergy3D_local: 
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,PetscReal ***v_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -474,7 +472,7 @@ extern PetscErrorCode VF_SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,Pe
 /*
   VF_VEnergy3D
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFCtx *ctx)
 {
@@ -532,9 +530,9 @@ extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFC
 /*
   VF_IrrevApplyEQ: Apply irreversibility conditions using truncation and equality constraints
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VF_IrrevApplyEQ(Mat K,Vec RHS,Vec V,Vec VIrrev, VFProp *vfprop,VFCtx *ctx)
+extern PetscErrorCode VF_IrrevApplyEQ(Mat K,Vec RHS,Vec V,Vec VIrrev,VFProp *vfprop,VFCtx *ctx)
 {
   PetscErrorCode ierr;
   PetscInt       myirrevnum = 0;
@@ -568,7 +566,7 @@ extern PetscErrorCode VF_IrrevApplyEQ(Mat K,Vec RHS,Vec V,Vec VIrrev, VFProp *vf
       }
     }
   }
-  ierr = PetscMalloc(myirrevnum * sizeof(MatStencil), &row);CHKERRQ(ierr);
+  ierr = PetscMalloc(myirrevnum * sizeof(MatStencil),&row);CHKERRQ(ierr);
   /* 
     second pass: Matrix
   */
@@ -596,7 +594,7 @@ extern PetscErrorCode VF_IrrevApplyEQ(Mat K,Vec RHS,Vec V,Vec VIrrev, VFProp *vf
 /*
   VF_StepV
 
-  (c) 2010 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
 {
