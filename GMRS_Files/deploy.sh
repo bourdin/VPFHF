@@ -2,7 +2,7 @@
 
 if [ -z "${VFDIR}" ]
 then
-	echo "ERROR: VFDIR not set"
+	echo "ERROR: VFDIR environment not set"
 	exit
 fi
 if [ ! -d $VFDIR ] 
@@ -13,7 +13,7 @@ fi
 
 if [ -z "${GMRSDIR}" ]
 then
-	echo "ERROR GMRSDIR not set"
+	echo "ERROR: GMRSDIR environment variable not set"
 	exit
 fi
 if [ ! -d $GMRSDIR ]

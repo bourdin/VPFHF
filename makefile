@@ -44,6 +44,12 @@ FakeGMRS2_FakeVF: bin Utils FakeVF FakeGMRS2 chkopts
 FakeGMRS2_VF: bin Utils VF FakeGMRS2 chkopts
 	@${FLINKER} -o bin/${PETSC_ARCH}/FakeGMRS2_VF ${VFUTILSOBJ} ${VFOBJ} ${FAKEGMRS2OBJ} ${PETSC_LIB}
 	
+installVF:
+	@sh GMRS_Files/deploy.sh
+	
+GMRS_VF: VF
+	@make -C ${GMRSDIR}/${GMRSARCH} -f makefile.GMRS_VF
+	
 clean::
 	@make -C Utils clean
 	@make -C FakeVF clean
