@@ -71,12 +71,16 @@ def main():
 	
 	mygetenv(Param,'MODE','ELASTICITY')
 	mygetenv(Param,'PRESET','SYMXY')
+	mygetenv(Param,'COUPLING','GMRSTOVF')
+	mygetenv(Param,'VERBOSE',0)
 
 	mygetenv(Param,'E',5e+3)
+ 	mygetenv(Param,'EPSILON',20)
 	mygetenv(Param,'NU',.25)
 	mygetenv(Param,'GC',5e-2)
 	mygetenv(Param,'ALPHA',1e-5)
-	mygetenv(Param,'VFOPTS','-U_ksp_atol 1e-12 -U_ksp_rtol 1e-12 -V_ksp_atol 1e-12 -V_ksp_rtol 1e-12')
+	mygetenv(Param,'ETA',1e-5)
+	mygetenv(Param,'VFOPTS','-U_ksp_max_it 20000 -V_ksp_max_it 2000')
 
 	print 'Param:    \n',Param
 
@@ -103,7 +107,10 @@ def main():
 	###
 	
 	t1 = time.time()
-	cmd = 'mpirun %(GMRSDIR)s/%(GMRSARCH)s/%(GMRSBIN)s -p %(PREFIX)s -E %(E)f -nu %(NU)f -alpha %(ALPHA)f -gc %(GC)f -mode %(MODE)s -preset %(PRESET)s %(VFOPTS)s < temp.txt'%Param
+	cmd = '''mpirun %(GMRSDIR)s/%(GMRSARCH)s/%(GMRSBIN)s -p %(PREFIX)s \
+           -E %(E)f -nu %(NU)f -alpha %(ALPHA)f -gc %(GC)f -mode %(MODE)s \
+           -preset %(PRESET)s -coupling %(COUPLING)s -epsilon %(EPSILON)f -eta %(ETA)f \
+           -verbose %(VERBOSE)i %(VFOPTS)s < temp.txt'''%Param
 	print cmd
 	os.system(cmd)
 	t2 = time.time()

@@ -850,6 +850,7 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
 extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx)
 {
   PetscErrorCode ierr;
+  PetscReal      pmult,v;
   PetscInt       xs,xm;
   PetscInt       ys,ym;
   PetscInt       zs,zm;
@@ -857,19 +858,26 @@ extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx)
   PetscReal      ***v_array,***pmult_array;
 
   PetscFunctionBegin;
+
   ierr = DAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);        
   ierr = DAVecGetArray(ctx->daScal,Pmult,&pmult_array);CHKERRQ(ierr);        
-
   for (k = zs; k < zs + zm; k++) {
     for (j = ys; j < ys + ym; j++) {
       for (i = xs; i < xs + xm; i++) {
-				pmult_array[k][j][i] = 1. + (vfprop->permmax-1.) * v_array[k][j][i];
+        v = v_array[k][j][i];
+        if (v <= 0) {
+          pmult = vfprop->permmax;
+        } else if (v >= 1.) {
+          pmult = 1.;
+        } else {
+				  pmult = vfprop->permmax - (vfprop->permmax - 1.0) * v;
+        }
+        pmult_array[k][j][i] = pmult;
       }
     }
   }
-
-  ierr = DAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);        
-  ierr = DAVecGetArray(ctx->daScal,Pmult,&pmult_array);CHKERRQ(ierr);        
+  ierr = DAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);        
+  ierr = DAVecRestoreArray(ctx->daScal,Pmult,&pmult_array);CHKERRQ(ierr);        
   PetscFunctionReturn(0);
 }
