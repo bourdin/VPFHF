@@ -123,16 +123,16 @@ WELLCONN() = 2    $ All wells pass through nodes
 WELLNAME(1) = "I1"
 KINDWELL(1) = 2             $ Well has prescribed water injection rate
 PLIMIT(1) = 5500.           $ BHP limit
-WELLTOP(1 TO 3,1,1) =     1*(400.  0.  4040.)   $ Well top  
-WELLBOTTOM(1 TO 3,1,1) =  1*(400.  0.  4060.)   $ Well bottom
+WELLTOP(1 TO 3,1,1) =     1*(400. 500.  4040.)   $ Well top  
+WELLBOTTOM(1 TO 3,1,1) =  1*(400. 500.  4060.)   $ Well bottom
 RATE(1) = 20000.             $ Prescribed well rate
 WTEMPR(1) = %(WTEMPR)f             $ Temperature of injecting fluid
  
 WELLNAME(2) = "I2"
 KINDWELL(2) = 2             $ Well has prescribed water production rate
 PLIMIT(2) = 5500.            $ BHP limit
-WELLTOP(1 TO 3,1,2) =     600.  500.  4040.   $ Well top  
-WELLBOTTOM(1 TO 3,1,2) =  600.  500.  4060.   $ Well bottom
+WELLTOP(1 TO 3,1,2) =     600.  1000.  4040.   $ Well top  
+WELLBOTTOM(1 TO 3,1,2) =  600.  1000.  4060.   $ Well bottom
 WTEMPR(2) = %(WTEMPR)f
 RATE(2) = 20000.           $ Prescribed well rate
  
