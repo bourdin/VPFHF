@@ -9,8 +9,3 @@ include ${PETSC_DIR}/conf/rules
 VF_Chevron: VF_Chevron.o ${VFOBJ} ${VFUTILSOBJ} chkopts
 	-${CLINKER} -o VF_Chevron VF_Chevron.o ${VFOBJ} ${VFUTILSOBJ} ${PETSC_LIB}
 
-#VFCommon.o: CartFE.o
-#CartFE.o:   PetscFixes.o
-#VFU.o:      VFCommon.o
-#VFV.o:      VFCommon.o
-	

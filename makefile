@@ -53,12 +53,16 @@ GMRS_VF: VF
 GMRS_FakeVF: FakeVF
 	@make -C ${GMRSDIR}/${GMRSARCH} -f makefile.GMRS_FakeVF
 	
+Tests: VF
+	@make -C Tests 
+	
 clean::
 	@make -C Utils clean
 	@make -C FakeVF clean
 	@make -C FakeGMRS clean
 	@make -C FakeGMRS2 clean
 	@make -C VF clean
+	@make -C Tests clean
 	@${RM} -f bin/${PETSC_ARCH}/FakeGMRS_FakeVF bin/${PETSC_ARCH}/FakeGMRS_VF
 	@${RM} -f bin/${PETSC_ARCH}/FakeGMRS2_FakeVF bin/${PETSC_ARCH}/FakeGMRS2_VF
 	@${RM} -f bin/${PETSC_ARCH}/h5export bin/${PETSC_ARCH}/vtkexport

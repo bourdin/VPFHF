@@ -1,1 +1,3 @@
-VFOBJ = ${VFDIR}/VF/VFCommon.o ${VFDIR}/VF/VFU.o ${VFDIR}/VF/VFV.o ${VFDIR}/VF/CartFE.o ${VFDIR}/VF/PetscFixes.o ${VFDIR}/VF/VF_Interface.o ${VFDIR}/VF/VF_CInterface.o ${VFDIR}/VF/VF_CInterfacef.o
+VFOBJ = ${VFDIR}/VF/VFCommon.o ${VFDIR}/VF/VFU.o ${VFDIR}/VF/VFV.o ${VFDIR}/VF/CartFE.o \
+        ${VFDIR}/VF/PetscFixes.o ${VFDIR}/VF/VF_Interface.o ${VFDIR}/VF/VF_CInterface.o \
+        ${VFDIR}/VF/VF_CInterfacef.o ${VFDIR}/VF/VFWell.o
