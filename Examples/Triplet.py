@@ -48,10 +48,10 @@ def main():
 	print '###\n### Script started at %s\n###\n'%time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 	Param = {}
 	mygetenv(Param,'NX',10)
-	mygetenv(Param,'NY',10)
+	mygetenv(Param,'NY',15)
 	mygetenv(Param,'NZ',5)
 	mygetenv(Param,'DX',1000/Param['NX'])
-	mygetenv(Param,'DY',500/Param['NY'])
+	mygetenv(Param,'DY',1500/Param['NY'])
 	mygetenv(Param,'DZ',100/Param['NZ'])
 	mygetenv(Param,'TEMPR1',180)
 	mygetenv(Param,'WTEMPR',80)
