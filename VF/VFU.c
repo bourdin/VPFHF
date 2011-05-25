@@ -214,8 +214,8 @@ extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
   The elastic energy density is defiend as 
       1/2 A \epsilon : \epsilon 
   where epsilon is the inelastic strain:
-       \epsilon = e(u) - \alpha (\theta-\theta_0) Id + \beta (p-p_0) A^{-1}Id
-                = e(u) - \alpha (\theta-\theta_0) Id + \beta (p-p_0) / (3\lambda + 2\u) Id
+       \epsilon = e(u) - \alpha (\theta-\theta_0) Id - \beta (p-p_0) A^{-1}Id
+                = e(u) - \alpha (\theta-\theta_0) Id - \beta (p-p_0) / (3\lambda + 2\u) Id
   and 
      * ":" denotes tensor contraction, i.e. M:N = tr M^tN
      * A is the Hooke's law, \lambda and \mu are the lam\'e coefficients
@@ -268,17 +268,17 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
           epsilon11_elem[g] +=  e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] 
                               - alpha * e->phi[k][j][i][g] 
                                 * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i])
-                              + coefbeta * e->phi[k][j][i][g] 
+                              - coefbeta * e->phi[k][j][i][g] 
                                 * (pressure_array[ek+k][ej+j][ei+i]-pressureRef_array[ek+k][ej+j][ei+i]);
           epsilon22_elem[g] +=  e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] 
                               - alpha * e->phi[k][j][i][g] 
                                 * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i])
-                              + coefbeta * e->phi[k][j][i][g] 
+                              - coefbeta * e->phi[k][j][i][g] 
                                 * (pressure_array[ek+k][ej+j][ei+i]-pressureRef_array[ek+k][ej+j][ei+i]);
           epsilon33_elem[g] +=  e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2] 
                               - alpha * e->phi[k][j][i][g] 
                                 * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i])
-                              + coefbeta * e->phi[k][j][i][g] 
+                              - coefbeta * e->phi[k][j][i][g] 
                                 * (pressure_array[ek+k][ej+j][ei+i]-pressureRef_array[ek+k][ej+j][ei+i]);
 
           epsilon12_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][1] 
@@ -387,17 +387,17 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal 
           epsilon11_elem[g] +=  e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] 
                               - alpha * e->phi[k][j][i][g] 
                                 * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i])
-                              + coefbeta * e->phi[k][j][i][g] 
+                              - coefbeta * e->phi[k][j][i][g] 
                                 * (pressure_array[ek+k][ej+j][ei+i]-pressureRef_array[ek+k][ej+j][ei+i]);
           epsilon22_elem[g] +=  e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] 
                               - alpha * e->phi[k][j][i][g] 
                                 * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i])
-                              + coefbeta * e->phi[k][j][i][g] 
+                              - coefbeta * e->phi[k][j][i][g] 
                                 * (pressure_array[ek+k][ej+j][ei+i]-pressureRef_array[ek+k][ej+j][ei+i]);
           epsilon33_elem[g] +=  e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2] 
                               - alpha * e->phi[k][j][i][g] 
                                 * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i])
-                              + coefbeta * e->phi[k][j][i][g] 
+                              - coefbeta * e->phi[k][j][i][g] 
                                 * (pressure_array[ek+k][ej+j][ei+i]-pressureRef_array[ek+k][ej+j][ei+i]);
 
           epsilon12_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][1] 
@@ -719,7 +719,7 @@ extern PetscErrorCode VF_RHSUCouplingShearOnly3D_local(PetscReal *RHS_local,Pets
         for (c = 0; c < dim; c++,l++) {
           for (g = 0; g < e->ng; g++) {
             RHS_local[l] += e->weight[g] * e->dphi[k][j][i][c][g] 
-                            * (theta_elem[g] * coefalpha - pressure_elem[g] * beta);  
+                            * (theta_elem[g] * coefalpha + pressure_elem[g] * beta);  
           }
         }
       }
@@ -1348,17 +1348,17 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,
       for (i = 0; i < e->nphix; i++) {
         for (g = 0; g < e->ng; g++) {
           epsilon11_elem[g] +=  e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] 
-                              + e->phi[k][j][i][g] * ( 
+                              - e->phi[k][j][i][g] * ( 
                                   coefbeta * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i])
-                                - alpha * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]));
+                                + alpha * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]));
           epsilon22_elem[g] +=  e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] 
-                              + e->phi[k][j][i][g] * ( 
+                              - e->phi[k][j][i][g] * ( 
                                   coefbeta * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i])
-                                - alpha * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]));
+                                + alpha * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]));
           epsilon33_elem[g] +=  e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2] 
-                              + e->phi[k][j][i][g] * ( 
+                              - e->phi[k][j][i][g] * ( 
                                   coefbeta * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i])
-                                - alpha * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]));
+                                + alpha * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]));
 
           epsilon12_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][1] 
                               + e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
