@@ -105,6 +105,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     nopt = ctx->nlayer-1;
     ierr = PetscMalloc((ctx->nlayer) * sizeof(PetscReal),&ctx->layersep);CHKERRQ(ierr);
     ctx->layersep[0] = -1e+30;
+    ctx->layersep[1] = 0.;    
     ierr = PetscOptionsRealArray("-layersep","\n\tComma separated list of (nlayer-1) layer interfaces","",&ctx->layersep[1],&nopt,PETSC_NULL);CHKERRQ(ierr);    
     if (ctx->nlayer !=1 && nopt != ctx->nlayer-1 && !hashelp) {
       SETERRQ3(PETSC_ERR_USER,"ERROR: Expecting %i layers separators, got only %i in %s\n",ctx->nlayer+1,nopt,__FUNCT__);
@@ -789,6 +790,7 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
   ierr = VecView(fields->pressure,viewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
 
 #undef __FUNCT__
 #define __FUNCT__ "PermUpdate"
