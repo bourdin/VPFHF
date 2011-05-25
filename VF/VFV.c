@@ -674,5 +674,8 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
   ierr = VecMin(fields->V,PETSC_NULL,&Vmin);CHKERRQ(ierr);
   ierr = VecMax(fields->V,PETSC_NULL,&Vmax);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"      V min / max:     %e %e\n",Vmin,Vmax);CHKERRQ(ierr);
+  if (Vmin < -.5 || Vmax > 1.5) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] V is not in or near (0,1). Is EPSILON of the order of h?\n");CHKERRQ(ierr);  
+  }
   PetscFunctionReturn(0);
 }
