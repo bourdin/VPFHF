@@ -38,7 +38,7 @@ $      GRID DEFINITION FOR RESERVOIR (GRID 1)
 $ ***********************************************
 
 $ Note: Z-direction is vertical
-NX(1) = %(NX)f  NY(1) = %(NY)f  NZ(1) = %(NZ)f  $ Set grid dimensions for grid 1 
+NX(1) = %(NX)i  NY(1) = %(NY)i  NZ(1) = %(NZ)i  $ Set grid dimensions for grid 1 
 
 $ Layer thicknesses 
 DZ(,1) = %(DZ)f 
