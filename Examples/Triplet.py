@@ -55,7 +55,7 @@ def main():
 	mygetenv(Param,'DZ',100/Param['NZ'])
 	mygetenv(Param,'TEMPR1',180)
 	mygetenv(Param,'WTEMPR',80)
-	mygetenv(Param,'PREFIX','Doublet')
+	mygetenv(Param,'PREFIX','Triplet')
 
 	### PBS stuff
 	mygetenv(Param,'PBS_JOBID','00000')
@@ -80,6 +80,8 @@ def main():
 	mygetenv(Param,'GC',5e-2)
 	mygetenv(Param,'ALPHA',1e-5)
 	mygetenv(Param,'ETA',1e-5)
+	mygetenv(Param,'INSITUMIN','0,0,0')
+	mygetenv(Param,'INSITUMAX','0,0,0')
 	mygetenv(Param,'VFOPTS','-U_ksp_max_it 20000 -V_ksp_max_it 2000')
 
 	print 'Param:    \n',Param
@@ -110,7 +112,7 @@ def main():
 	cmd = '''mpirun %(GMRSDIR)s/%(GMRSARCH)s/%(GMRSBIN)s -p %(PREFIX)s \
            -E %(E)f -nu %(NU)f -alpha %(ALPHA)f -gc %(GC)f -mode %(MODE)s \
            -preset %(PRESET)s -coupling %(COUPLING)s -epsilon %(EPSILON)f -eta %(ETA)f \
-           -verbose %(VERBOSE)i %(VFOPTS)s < temp.txt'''%Param
+           -verbose %(VERBOSE)i -insitumin %(INSITUMIN)s -insitumax %(INSITUMAX)s %(VFOPTS)s < temp.txt'''%Param
 	print cmd
 	os.system(cmd)
 	t2 = time.time()
