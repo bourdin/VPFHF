@@ -28,10 +28,7 @@ $ **************************************************
 $     PLOT INFORMATION
 $ **************************************************
 
- GRAPHICS = 1             
- PLOTFILE = "Doublet"            
- GRIDPLOT = TRUE
- WELLPLOT = TRUE
+ GRAPHICS = 0             
 
 $ ***********************************************
 $      GRID DEFINITION FOR RESERVOIR (GRID 1)
