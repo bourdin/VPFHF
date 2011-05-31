@@ -71,13 +71,13 @@ def main():
 	
 	mygetenv(Param,'MODE','ELASTICITY')
 	mygetenv(Param,'PRESET','SYMXY')
-	mygetenv(Param,'COUPLING','GMRSTOVF')
+	mygetenv(Param,'COUPLING','FULL')
 	mygetenv(Param,'VERBOSE',0)
 
-	mygetenv(Param,'E',5e+3)
+	mygetenv(Param,'E',1e+6)
  	mygetenv(Param,'EPSILON',20)
 	mygetenv(Param,'NU',.25)
-	mygetenv(Param,'GC',5e-2)
+	mygetenv(Param,'GC',1)
 	mygetenv(Param,'ALPHA',1e-5)
 	mygetenv(Param,'ETA',1e-5)
 	mygetenv(Param,'INSITUMIN','0,0,0')
