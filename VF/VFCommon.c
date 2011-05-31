@@ -221,7 +221,7 @@ extern PetscErrorCode VFMatPropGet(MatProp *matprop,PetscInt n)
   PetscReal      nu = 0.;
   PetscReal      alpha = 1.e-5;
   PetscReal      Gc = 1.;
-  PetscReal      beta = 1.;
+  PetscReal      beta = 1.e-6;
   int            i;
   
   PetscFunctionBegin;
