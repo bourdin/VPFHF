@@ -1,0 +1,3 @@
+VFOBJ = ${VFDIR}/VF_Chevron/VFCommon.o ${VFDIR}/VF_Chevron/VFU.o ${VFDIR}/VF_Chevron/VFV.o ${VFDIR}/VF_Chevron/CartFE.o \
+        ${VFDIR}/VF_Chevron/PetscFixes.o  \
+        ${VFDIR}/VF_Chevron/VF_CInterface.o ${VFDIR}/VF_Chevron/VFWell.o ${VFDIR}/VF_Chevron/VFFlow.o 
