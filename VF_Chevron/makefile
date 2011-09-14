@@ -1,7 +1,7 @@
 include makefile.include	
 include ../Utils/makefile.include
 
-all: ${VFOBJ}
+all: VF_Chevron
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules

@@ -124,7 +124,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr = PetscOptionsEnum("-unilateral","\n\tType of unilateral conditions","",VFUnilateralName,(PetscEnum)ctx->unilateral,(PetscEnum*)&ctx->unilateral,PETSC_NULL);CHKERRQ(ierr);
     ctx->coupling = COUPLING_GMRSTOVF;
     ierr = PetscOptionsEnum("-coupling","\n\tCoupling type","",VFCouplingName,(PetscEnum)ctx->coupling,(PetscEnum*)&ctx->coupling,PETSC_NULL);CHKERRQ(ierr);
-    ctx->fileformat = FILEFORMAT_BIN;
+    ctx->fileformat = FILEFORMAT_HDF5;
     ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
 
     ctx->maxtimestep  = 5;
@@ -436,7 +436,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *d
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields,ResProp *resprop)
+extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 {
   PetscErrorCode ierr;
 
@@ -459,19 +459,19 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields,ResProp *re
 
   ierr = DACreateGlobalVector(ctx->daScal,&fields->theta);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->theta,"Temperature");CHKERRQ(ierr);
-  ierr = VecSet(fields->theta,resprop->Tinit);CHKERRQ(ierr);
+  ierr = VecSet(fields->theta,ctx->resprop.Tinit);CHKERRQ(ierr);
   
   ierr = DACreateGlobalVector(ctx->daScal,&fields->thetaRef);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->thetaRef,"Reference Temperature");CHKERRQ(ierr);
-  ierr = VecSet(fields->thetaRef,resprop->Tinit);CHKERRQ(ierr);
+  ierr = VecSet(fields->thetaRef,ctx->resprop.Tinit);CHKERRQ(ierr);
   
   ierr = DACreateGlobalVector(ctx->daScal,&fields->pressure);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->pressure,"Pressure");CHKERRQ(ierr);
-  ierr = VecSet(fields->pressure,resprop->Pinit);CHKERRQ(ierr);
+  ierr = VecSet(fields->pressure,ctx->resprop.Pinit);CHKERRQ(ierr);
   
   ierr = DACreateGlobalVector(ctx->daScal,&fields->pressureRef);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->pressureRef,"Reference Pressure");CHKERRQ(ierr);
-  ierr = VecSet(fields->pressureRef,resprop->Pinit);CHKERRQ(ierr);
+  ierr = VecSet(fields->pressureRef,ctx->resprop.Pinit);CHKERRQ(ierr);
   
   ierr = DACreateGlobalVector(ctx->daScal,&fields->pmult);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->pmult,"Permeability");CHKERRQ(ierr);
@@ -563,6 +563,81 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   PetscFunctionReturn(0);
 }
 
+
+#undef __FUNCT__
+#define __FUNCT__ "VFInitialize"
+/*
+  VFInitialize: Initialize the VF code. Called by the fortran implementation of VIADAT
+
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz)
+{
+  PetscErrorCode ierr;
+
+  PetscTruth     printhelp;
+  FILE           *file;
+  char           filename[FILENAME_MAX];
+  
+  PetscFunctionBegin;
+  ierr = PetscPrintf(PETSC_COMM_WORLD,banner);CHKERRQ(ierr);
+#if defined(PETSC_USE_DEBUG)
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      ##########################################################\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                                                        #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                          WARNING!!!                    #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                                                        #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   This code was compiled with a debugging option,      #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   For production runs, use a petsc compiled with       #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   optimization, the performance will be generally      #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   two or three times faster.                           #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                                                        #\n");CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      ##########################################################\n\n\n");CHKERRQ(ierr);
+#endif
+  
+
+  ierr = PetscOptionsHasName(PETSC_NULL,"-help",&printhelp);CHKERRQ(ierr);
+
+  ierr = VFLogInitialize(&ctx.vflog);CHKERRQ(ierr);
+
+  ctx.ncellx = nx-1;
+  ctx.ncelly = ny-1;
+  ctx.ncellz = nz-1;
+  ierr = VFCtxGet(&ctx);CHKERRQ(ierr);
+  ierr = VFPropGet(&ctx.vfprop);CHKERRQ(ierr);
+
+  ierr = PetscMalloc(ctx.nlayer * sizeof(MatProp),&ctx.matprop);CHKERRQ(ierr);
+  ierr = VFMatPropGet(ctx.matprop,ctx.nlayer);CHKERRQ(ierr);
+
+  ierr = VFResPropGet(&ctx.resprop);CHKERRQ(ierr);
+
+  if (printhelp) {
+    ierr = PetscFinalize();
+    return(-1);
+  }
+
+  ierr = VFGeometryInitialize(&ctx,dx,dy,dz);CHKERRQ(ierr);
+  ierr = VFFieldsInitialize(&ctx,&fields);CHKERRQ(ierr);
+  ierr = VFBCInitialize(&ctx);CHKERRQ(ierr);
+  ierr = VFSolversInitialize(&ctx);CHKERRQ(ierr);
+
+  /*
+    Save command line options to a file
+  */
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.txt",ctx.prefix,0);CHKERRQ(ierr);
+  file = fopen(filename,"w");
+  ierr = PetscOptionsPrint(file);CHKERRQ(ierr);
+  fclose(file);
+  
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Option table:\n");CHKERRQ(ierr);
+  ierr = PetscOptionsPrint(stdout);CHKERRQ(ierr);
+
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.ener",ctx.prefix);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx.energyviewer);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Total Energy\n");CHKERRQ(ierr);
+  ierr = PetscViewerFlush(ctx.energyviewer);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "VFTimeStepPrepare"

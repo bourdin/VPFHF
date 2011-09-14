@@ -166,7 +166,7 @@ typedef struct {
   PetscReal           altmintol;
   PetscInt            altminmaxit;
   MatProp             *matprop;
-  ResProp             *resprop;
+  ResProp             resprop;
   VFProp              vfprop;
   VFLog               vflog;
   PetscReal           insitumin[6];
@@ -193,8 +193,9 @@ extern VFFields       fields;
 
 extern PetscErrorCode OldVFInitialize(VFCtx *ctx,VFFields *fields);  
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
+extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz);
 extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *dy,PetscReal *dz);
-extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields,ResProp *resprop);
+extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFBCInitialize(VFCtx *ctx);
 extern PetscErrorCode VFSolversInitialize(VFCtx *ctx);
 extern PetscErrorCode VFTimeStepPrepare(VFCtx *ctx,VFFields *fields);
