@@ -3,31 +3,12 @@
 #include "VFCommon.h"
 
 #undef __FUNCT__
-#define __FUNCT__ "VFFlowTimeStep"
-
-
-extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
-{
-  PetscErrorCode     ierr;
-//  KSPConvergedReason reason;  
-
-  PetscFunctionBegin;
-//  ierr = VF_FFAssembly3D(...);CHKERRQ(ierr);
-//  ierr = KSPSolve(...);CHKERRQ(ierr);
-  
-  ierr = VF_FakeFlow(ctx,fields,&ctx->resprop);  
-
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "VF_FakeFlow"
-
 /* 
    Fake flow solver for VF_Chevron.c test
 */
 
-extern PetscErrorCode VF_FakeFlow(VFCtx *ctx, VFFields *fields,ResProp *resprop)
+extern PetscErrorCode VF_FakeFlow(VFCtx *ctx, VFFields *fields)
 {
   PetscErrorCode ierr;
   PetscReal      time;
@@ -57,8 +38,8 @@ extern PetscErrorCode VF_FakeFlow(VFCtx *ctx, VFFields *fields,ResProp *resprop)
   ierr = DAVecGetArray(ctx->daScal,fields->pressure,&pressure_array);CHKERRQ(ierr);
 
   time = ctx->timevalue;
-  Tinit = resprop->Tinit;
-  Pinit = resprop->Pinit;
+  Tinit = ctx->resprop.Tinit;
+  Pinit = ctx->resprop.Pinit;
   P1 = 30.;
   P2 = 1.e6;
   T1 = 2.;
@@ -85,6 +66,24 @@ extern PetscErrorCode VF_FakeFlow(VFCtx *ctx, VFFields *fields,ResProp *resprop)
   ierr = DAVecRestoreArray(ctx->daScal,fields->pressure,&pressure_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VFFlowTimeStep"
+extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
+{
+  PetscErrorCode     ierr;
+//  KSPConvergedReason reason;  
+
+  PetscFunctionBegin;
+//  ierr = VF_FFAssembly3D(...);CHKERRQ(ierr);
+//  ierr = KSPSolve(...);CHKERRQ(ierr);
+  
+  ierr = VF_FakeFlow(ctx,fields);  
+
+  PetscFunctionReturn(0);
+}
+
 
 
   
