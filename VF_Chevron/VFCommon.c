@@ -131,6 +131,16 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr = PetscOptionsInt("-maxtimestep","\n\tMaximum number of timestep","",ctx->maxtimestep,&ctx->maxtimestep,PETSC_NULL);CHKERRQ(ierr);
     ctx->maxtimevalue  = 10.;
     ierr = PetscOptionsReal("-maxtimevalue","\n\tMaximum timevalue","",ctx->maxtimevalue,&ctx->maxtimevalue,PETSC_NULL);CHKERRQ(ierr);
+   
+    nopt = 6; 
+    ierr = PetscOptionsRealArray("-BCpres", "\n\tPressure at Boundaries.\n\t (PX0,PX1,PY0,PY1,PZ0,PZ1) negative value if natural BC","",buffer,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    if (nopt > 6 && !hashelp) {
+      SETERRQ2(PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the Pressure BC, got %i in %s\n",nopt,__FUNCT__);
+    }
+    for (i = 0;i < 6;i++) {
+      ctx->BCpres[i]=buffer[i];
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"BCpres[%d]:%f\n",i,buffer[i]);CHKERRQ(ierr);
+    }
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   ctx->timestep = 1;
@@ -227,7 +237,7 @@ extern PetscErrorCode VFMatPropGet(MatProp *matprop,PetscInt n)
   PetscReal      nu = 0.;
   PetscReal      alpha = 1.e-5;
   PetscReal      Gc = 1.;
-  PetscReal      beta = 1.e-6;
+  PetscReal      beta = 1.e-4; /* Normalized by E (MPa) assuming E=10,000 MPa */
   int            i;
   
   PetscFunctionBegin;
@@ -298,10 +308,13 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop)
   PetscFunctionBegin;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
   {
-    resprop->perm = 1.e-13;
-    resprop->por  = 0.2;
-    resprop->Pinit = 2000.;
-    resprop->Tinit = 300.;
+    resprop->perm = 1.e-1; /* Multiply by 1e12 because pressure unit in MPa, viscosity unit in cp, and density is specific density */
+    resprop->por  = 0.2;   /* fraction */
+    resprop->Pinit = 20.;  /* MPa */
+    resprop->Tinit = 200.; /* Celcius */
+    resprop->relk = 1.0;   /* fraction */
+    resprop->visc = 1.0;   /* cp */
+    resprop->fdens = 1.0;  /* specific density */
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -502,6 +515,12 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
     ierr = BCView(&ctx->bcV[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
   
+  ierr = BCPInit(&ctx->bcP[0],ctx);CHKERRQ(ierr);
+  if (ctx->verbose > 0) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"BCP:\n");CHKERRQ(ierr);
+    ierr = BCView(&ctx->bcP[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
+  }
+  
   PetscFunctionReturn(0);
   }
 
@@ -560,6 +579,28 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = KSPGetPC(ctx->kspV,&ctx->pcV);CHKERRQ(ierr);
   ierr = PCSetType(ctx->pcV,PCBJACOBI);CHKERRQ(ierr);
   ierr = PCSetFromOptions(ctx->pcV);CHKERRQ(ierr);
+
+  if (comm_size == 1) {
+    ierr = DAGetMatrix(ctx->daScal,MATSEQAIJ,&ctx->KP);CHKERRQ(ierr);
+  } else {
+    ierr = DAGetMatrix(ctx->daScal,MATMPIAIJ,&ctx->KP);CHKERRQ(ierr);
+  }
+  ierr = MatSetOption(ctx->KP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = DACreateGlobalVector(ctx->daScal,&ctx->RHSP);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->RHSP,"RHSP");CHKERRQ(ierr);
+
+  ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspP);CHKERRQ(ierr);
+
+  ierr = KSPSetTolerances(ctx->kspP,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSetOperators(ctx->kspP,ctx->KP,ctx->KP,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
+  ierr = KSPSetInitialGuessNonzero(ctx->kspP,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = KSPAppendOptionsPrefix(ctx->kspP,"P_");CHKERRQ(ierr);
+  ierr = KSPSetType(ctx->kspP,KSPBCGSL);CHKERRQ(ierr);
+  ierr = KSPSetFromOptions(ctx->kspP);CHKERRQ(ierr);
+  ierr = KSPGetPC(ctx->kspP,&ctx->pcP);CHKERRQ(ierr);
+  ierr = PCSetType(ctx->pcP,PCBJACOBI);CHKERRQ(ierr);
+  ierr = PCSetFromOptions(ctx->pcP);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
 

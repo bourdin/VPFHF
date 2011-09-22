@@ -110,10 +110,13 @@ typedef struct {
 } VFProp;
 
 typedef struct {
-  PetscReal         perm;  /* Permeability */
+  PetscReal         perm;  /* Permeability in m^2 muliply by 1e12 */
   PetscReal         por;   /* Porosity */
-  PetscReal         Pinit; /* Initial Pressure */
-  PetscReal         Tinit; /* Initial Temperature */ 
+  PetscReal         Pinit; /* Initial Pressure in MPa*/
+  PetscReal         Tinit; /* Initial Temperature in C*/ 
+  PetscReal         relk;  /* Relative Permeability */
+  PetscReal         visc;  /* Viscosity in cp */
+  PetscReal         fdens; /* Fluid Density in specific density*/
 } ResProp; //change them to Vec later
 
 typedef struct {
@@ -138,6 +141,14 @@ typedef struct {
   PetscLogStage VF_EnergyStage;
   PetscCookie   VF_EnergyLocalCookie;
   PetscLogEvent VF_EnergyLocalEvent;
+
+  PetscLogStage VF_PAssemblyStage;
+  PetscCookie   VF_MatPLocalCookie;
+  PetscLogEvent VF_MatPLocalEvent;
+  PetscCookie   VF_VecPLocalCookie;
+  PetscLogEvent VF_VecPLocalEvent;
+
+  PetscLogStage VF_PSolverStage;
 } VFLog;
 
 typedef struct {
@@ -148,6 +159,7 @@ typedef struct {
   PetscReal           BoundingBox[6]; /* Reservoir bounding box [Xmin, Xmax, Ymin, Ymax, Zmin, Zmax] */
   BC                  bcU[3];
   BC                  bcV[1];
+  BC                  bcP[1];
   DA                  daVect;
   DA                  daScal;
   CartFE_Element3D    e3D;
@@ -163,6 +175,10 @@ typedef struct {
   PC                  pcV;
   KSP                 kspV;
   Vec                 RHSV;
+  Mat                 KP;
+  PC                  pcP;
+  KSP                 kspP;
+  Vec                 RHSP;
   PetscReal           altmintol;
   PetscInt            altminmaxit;
   MatProp             *matprop;
@@ -172,6 +188,7 @@ typedef struct {
   PetscReal           insitumin[6];
   PetscReal           insitumax[6];
   PetscTruth          hasInsitu;
+  PetscReal           BCpres[6];
   VFMode              mode;
   VFUnilateralType    unilateral;
   VFCouplingType      coupling;

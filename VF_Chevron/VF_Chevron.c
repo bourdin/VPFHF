@@ -96,7 +96,6 @@ int main(int argc,char **argv)
     */
 
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-    
 
     /*
       This is essentially VPERM (minus pmult update, and transfer from GMRS)
