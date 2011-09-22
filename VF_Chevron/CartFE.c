@@ -847,5 +847,179 @@ extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof)
 }
 
 
+#undef __FUNCT__
+#define __FUNCT__ "VecApplyDirichletFlowBC"
+/*
+  VecApplyDirichletBC
 
+  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *BCpres)
+{
+  PetscErrorCode ierr;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       i,j,k,c;
+  DA             da;
+  PetscReal      ****RHS_array;
+  PetscReal      ****BCU_array;
+  PetscInt       dim,dof;
+  
+  PetscFunctionBegin;
+  ierr = PetscObjectQuery((PetscObject) RHS,"DA",(PetscObject *) &da); CHKERRQ(ierr);
+    if (!da) SETERRQ(PETSC_ERR_ARG_WRONG,"Vector not generated from a DA");
+  
+  ierr = DAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,&dof,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  
+  if (dim == 2) {
+    ierr = PetscMalloc(sizeof(PetscReal ***),&RHS_array);CHKERRQ(ierr);
+    ierr = PetscMalloc(sizeof(PetscReal ***),&BCU_array);CHKERRQ(ierr);
+    ierr = DAVecGetArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
+    ierr = DAVecGetArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+  } else {
+    ierr = DAVecGetArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
+    ierr = DAVecGetArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
+  }
+  
+  for (c = 0;c < dof;c++) {
+    /* 
+      Faces
+    */
+    if (xs == 0) {
+      /*
+        x == 0
+      */
+      i = 0;
+      if (BC[c].face[X0] == FIXED) {
+        for (k = zs; k < zs + zm; k++) {
+          for (j = ys; j < ys + ym; j++) {
+            RHS_array[k][j][i][c] = BCU_array[k][j][i][c];
+          }
+        }
+      }
+      if (BC[c].face[X0] == VALUE) {
+        for (k = zs; k < zs + zm; k++) {
+          for (j = ys; j < ys + ym; j++) {
+            RHS_array[k][j][i][c] = BCpres[X0];
+          }
+        }
+      }  
+    }
+    if (xs + xm == nx) {
+      /*
+        x == nx-1
+      */
+      i = nx-1;
+      if (BC[c].face[X1] == FIXED) {
+        for (k = zs; k < zs + zm; k++) {
+          for (j = ys; j < ys + ym; j++) {
+            RHS_array[k][j][i][c] = BCU_array[k][j][i][c];
+          }
+        }
+      }
+      if (BC[c].face[X1] == VALUE) {
+        for (k = zs; k < zs + zm; k++) {
+          for (j = ys; j < ys + ym; j++) {
+            RHS_array[k][j][i][c] = BCpres[X1];
+          }
+        }
+      }  
+    }
+    if (ys == 0) {
+      /*
+        y == 0
+      */
+      j = 0;
+      if (BC[c].face[Y0] == FIXED) {
+        for (k = zs; k < zs + zm; k++) {
+          for (i = xs; i < xs + xm; i++) {
+            RHS_array[k][j][i][c] = BCU_array[k][j][i][c];
+          }
+        }
+      }
+      if (BC[c].face[Y0] == VALUE) {
+        for (k = zs; k < zs + zm; k++) {
+          for (i = xs; i < xs + xm; i++) {
+            RHS_array[k][j][i][c] = BCpres[Y0];
+          }
+        }
+      }
+    }
+    if (ys + ym == ny) {
+      /*
+        y == ny-1
+      */
+      j = ny-1;
+      if (BC[c].face[Y1] == FIXED) {
+        for (k = zs; k < zs + zm; k++) {
+          for (i = xs; i < xs + xm; i++) {
+            RHS_array[k][j][i][c] = BCU_array[k][j][i][c];
+          }
+        }
+      }
+      if (BC[c].face[Y1] == VALUE) {
+        for (k = zs; k < zs + zm; k++) {
+          for (i = xs; i < xs + xm; i++) {
+            RHS_array[k][j][i][c] = BCpres[Y1];
+          }
+        }
+      }
+    }
+    if (dim == 3) {
+      if (zs == 0) {
+        /*
+          z == 0
+        */
+        k = 0;
+        if (BC[c].face[Z0] == FIXED) {
+          for (j = ys; j < ys + ym; j++) {
+            for (i = xs; i < xs + xm; i++) {
+              RHS_array[k][j][i][c] = BCU_array[k][j][i][c];
+            }
+          }
+        }
+        if (BC[c].face[Z0] == VALUE) {
+          for (j = ys; j < ys + ym; j++) {
+            for (i = xs; i < xs + xm; i++) {
+              RHS_array[k][j][i][c] = BCpres[Z0];
+            }
+          }
+        }
+      }
+      if (zs + zm == nz) {
+        /*
+          z == nz-1
+        */
+        k = nz-1;
+        if (BC[c].face[Z1] == FIXED) {
+          for (j = ys; j < ys + ym; j++) {
+            for (i = xs; i < xs + xm; i++) {
+              RHS_array[k][j][i][c] = BCU_array[k][j][i][c];
+            }
+          }
+        }
+        if (BC[c].face[Z1] == VALUE) {
+          for (j = ys; j < ys + ym; j++) {
+            for (i = xs; i < xs + xm; i++) {
+              RHS_array[k][j][i][c] = BCpres[Z1];
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  if (dim == 2) {
+    ierr = DAVecRestoreArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
+    ierr = DAVecRestoreArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+    ierr = PetscFree(RHS_array);CHKERRQ(ierr);
+    ierr = PetscFree(BCU_array);CHKERRQ(ierr);
+  } else {
+    ierr = DAVecRestoreArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
+    ierr = DAVecRestoreArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
+}
 

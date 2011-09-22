@@ -72,7 +72,8 @@ typedef enum {
   NONE,
   ZERO,
   ONE,
-  FIXED
+  FIXED,
+  VALUE
 } BCTYPE;
 
 static const char *BCTYPE_NAME[] = {
@@ -166,6 +167,7 @@ extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof);
 
 extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC);
 extern PetscErrorCode MatApplyDirichletBC(Mat K,DA da,BC *BC);
+extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *BCpres);
 #endif
 #endif /* CARTFE_H */
 
