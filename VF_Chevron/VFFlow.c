@@ -38,7 +38,7 @@ extern PetscErrorCode BCPInit(BC *BC,VFCtx *ctx)
 
 extern PetscErrorCode VF_MatP3D_local(PetscReal *Mat_local,ResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
-  PetscInt       g,i1,i2,j1,j2,k1,k2,c1,c2,l;
+  PetscInt       g,i1,i2,j1,j2,k1,k2,l;
   PetscReal      fdens,relk,perm,visc;
   PetscReal      DCoef_P;
   PetscErrorCode ierr;
@@ -49,29 +49,25 @@ extern PetscErrorCode VF_MatP3D_local(PetscReal *Mat_local,ResProp *resprop,Pets
   perm = resprop->perm;
   visc = resprop->visc;
   DCoef_P = fdens*relk*perm/visc;
-
+  
   for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {
       for (i1 = 0; i1 < e->nphix; i1++) {
-        for (c1 = 0; c1 < e->dim; c1++) {
-          for (k2 = 0; k2 < e->nphiz; k2++) {
-            for (j2 = 0; j2 < e->nphiy; j2++) {
-              for (i2 = 0; i2 < e->nphix; i2++) {
-                for (c2 = 0; c2 < e->dim; c2++,l++) {
-                  Mat_local[l] = 0;
-                  for (g = 0; g < e->ng; g++) {
-                    Mat_local[l] += e->weight[g] * DCoef_P * ( e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
-                                                            + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
-                                                            + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]);
-                  }
-                }
+        for (k2 = 0; k2 < e->nphiz; k2++) {
+          for (j2 = 0; j2 < e->nphiy; j2++) {
+            for (i2 = 0; i2 < e->nphix; i2++,l++) {
+              Mat_local[l] = 0.;
+              for (g = 0; g < e->ng; g++) {
+                Mat_local[l] += e->weight[g] * DCoef_P * ( e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
+                                                         + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
+                                                         + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]);
               }
             }
           }
-        } 
+        }
       }
     }
-  }
+  } 
 
   PetscFunctionReturn(0);
 }
@@ -88,9 +84,8 @@ extern PetscErrorCode VF_PAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   PetscInt       xs,xm,nx;
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
-  PetscInt       ei,ej,ek,i,j,k,c,l;
-  PetscInt       dim=3;
-  PetscInt       nrow = dim * ctx->e3D.nphix * ctx->e3D.nphiy * ctx->e3D.nphiz;
+  PetscInt       ei,ej,ek,i,j,k,l;
+  PetscInt       nrow = ctx->e3D.nphix * ctx->e3D.nphiy * ctx->e3D.nphiz;
   Vec            RHS_localVec;
   PetscReal      ***RHS_array;
   PetscReal      *RHS_local;
@@ -133,7 +128,7 @@ extern PetscErrorCode VF_PAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
       for (ei = xs; ei < xs+xm; ei++) {
         hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
-        hx = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+        hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
         ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         /*
           Accumulate stiffness matrix
@@ -142,16 +137,16 @@ extern PetscErrorCode VF_PAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
         ierr = PetscLogEventBegin(ctx->vflog.VF_MatPLocalEvent,0,0,0,0);CHKERRQ(ierr);
         ierr = VF_MatP3D_local(K_local,&ctx->resprop,ek,ej,ei,&ctx->e3D);
         ierr = PetscLogEventEnd(ctx->vflog.VF_MatPLocalEvent,0,0,0,0);CHKERRQ(ierr);
-
+        
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
-            for (i = 0; i < ctx->e3D.nphix; i++) {
-              for (c = 0; c < dim; c++,l++) {
-                row[l].i = ei + i; row[l].j = ej + j; row[l].k = ek + k; row[l].c = c;
-              }
+            for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+              row[l].i = ei + i; row[l].j = ej + j; row[l].k = ek + k; row[l].c = 0;
             }  
           }
-        }   
+        } 
+        
+ 
         ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K_local,ADD_VALUES);CHKERRQ(ierr);
 
         /*
@@ -174,7 +169,7 @@ extern PetscErrorCode VF_PAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
-  ierr = DAVecRestoreArrayDOF(ctx->daVect,RHS_localVec,&RHS_array);CHKERRQ(ierr); 
+  ierr = DAVecRestoreArrayDOF(ctx->daScal,RHS_localVec,&RHS_array);CHKERRQ(ierr); 
   ierr = DALocalToGlobalBegin(ctx->daScal,RHS_localVec,RHS);CHKERRQ(ierr);
   ierr = DALocalToGlobalEnd(ctx->daScal,RHS_localVec,RHS);CHKERRQ(ierr);
   ierr = VecApplyDirichletFlowBC(RHS,fields->pressure,&ctx->bcP[0],&ctx->BCpres);CHKERRQ(ierr);
@@ -270,7 +265,7 @@ extern PetscErrorCode VF_LinFlow(VFCtx *ctx, VFFields *fields)
   PetscFunctionBegin;
   ierr = VF_PAssembly3D(ctx->KP,ctx->RHSP,fields,ctx);CHKERRQ(ierr);
   if (ctx->verbose > 1) {
-    ierr = MatView(ctx->KP,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
+    ierr = MatView(ctx->KP,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
     ierr = VecView(ctx->RHSP,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   } 
 
