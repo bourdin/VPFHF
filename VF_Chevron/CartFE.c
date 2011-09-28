@@ -852,7 +852,6 @@ extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof)
 /*
   VecApplyDirichletBC
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *BCpres)
 {
@@ -863,7 +862,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
   PetscInt       i,j,k,c;
   DA             da;
   PetscReal      ****RHS_array;
-  PetscReal      ****BCU_array;
+  PetscReal      ****BCP_array;
   PetscInt       dim,dof;
   
   PetscFunctionBegin;
@@ -875,12 +874,12 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
   
   if (dim == 2) {
     ierr = PetscMalloc(sizeof(PetscReal ***),&RHS_array);CHKERRQ(ierr);
-    ierr = PetscMalloc(sizeof(PetscReal ***),&BCU_array);CHKERRQ(ierr);
+    ierr = PetscMalloc(sizeof(PetscReal ***),&BCP_array);CHKERRQ(ierr);
     ierr = DAVecGetArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+    ierr = DAVecGetArrayDOF(da,BCU,&BCP_array[0]);CHKERRQ(ierr);
   } else {
     ierr = DAVecGetArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
+    ierr = DAVecGetArrayDOF(da,BCU,&BCP_array);CHKERRQ(ierr);
   }
   
   for (c = 0;c < dof;c++) {
@@ -895,7 +894,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
       if (BC[c].face[X0] == FIXED) {
         for (k = zs; k < zs + zm; k++) {
           for (j = ys; j < ys + ym; j++) {
-            RHS_array[k][j][i][c] = BCU_array[k][j][i][c];
+            RHS_array[k][j][i][c] = BCP_array[k][j][i][c];
           }
         }
       }
@@ -915,7 +914,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
       if (BC[c].face[X1] == FIXED) {
         for (k = zs; k < zs + zm; k++) {
           for (j = ys; j < ys + ym; j++) {
-            RHS_array[k][j][i][c] = BCU_array[k][j][i][c];
+            RHS_array[k][j][i][c] = BCP_array[k][j][i][c];
           }
         }
       }
@@ -935,7 +934,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
       if (BC[c].face[Y0] == FIXED) {
         for (k = zs; k < zs + zm; k++) {
           for (i = xs; i < xs + xm; i++) {
-            RHS_array[k][j][i][c] = BCU_array[k][j][i][c];
+            RHS_array[k][j][i][c] = BCP_array[k][j][i][c];
           }
         }
       }
@@ -955,7 +954,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
       if (BC[c].face[Y1] == FIXED) {
         for (k = zs; k < zs + zm; k++) {
           for (i = xs; i < xs + xm; i++) {
-            RHS_array[k][j][i][c] = BCU_array[k][j][i][c];
+            RHS_array[k][j][i][c] = BCP_array[k][j][i][c];
           }
         }
       }
@@ -976,7 +975,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
         if (BC[c].face[Z0] == FIXED) {
           for (j = ys; j < ys + ym; j++) {
             for (i = xs; i < xs + xm; i++) {
-              RHS_array[k][j][i][c] = BCU_array[k][j][i][c];
+              RHS_array[k][j][i][c] = BCP_array[k][j][i][c];
             }
           }
         }
@@ -996,7 +995,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
         if (BC[c].face[Z1] == FIXED) {
           for (j = ys; j < ys + ym; j++) {
             for (i = xs; i < xs + xm; i++) {
-              RHS_array[k][j][i][c] = BCU_array[k][j][i][c];
+              RHS_array[k][j][i][c] = BCP_array[k][j][i][c];
             }
           }
         }
@@ -1013,12 +1012,12 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
   
   if (dim == 2) {
     ierr = DAVecRestoreArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
-    ierr = DAVecRestoreArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+    ierr = DAVecRestoreArrayDOF(da,BCU,&BCP_array[0]);CHKERRQ(ierr);
     ierr = PetscFree(RHS_array);CHKERRQ(ierr);
-    ierr = PetscFree(BCU_array);CHKERRQ(ierr);
+    ierr = PetscFree(BCP_array);CHKERRQ(ierr);
   } else {
     ierr = DAVecRestoreArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
-    ierr = DAVecRestoreArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
+    ierr = DAVecRestoreArrayDOF(da,BCU,&BCP_array);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }

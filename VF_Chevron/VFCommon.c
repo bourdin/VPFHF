@@ -139,8 +139,16 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     }
     for (i = 0;i < 6;i++) {
       ctx->BCpres[i]=buffer[i];
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"BCpres[%d]:%f\n",i,buffer[i]);CHKERRQ(ierr);
     }
+
+    nopt = 3;
+    for (i = 0; i < 3; i++) ctx->SrcLoc[i] = 99999;
+    ierr = PetscOptionsIntArray("-SrcLoc","\n\t location of source point","",ctx->SrcLoc,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    if (nopt != 3 && nopt != 0) {
+      SETERRQ2(PETSC_ERR_USER,"ERROR: Expecting at most 3 component of SrcLoc, got %i in %s\n",nopt,__FUNCT__);
+    }
+    ctx->SrcRate  = 0.0;
+    ierr = PetscOptionsReal("-SrcRate","\n\tStrength of the source in kg/s","",ctx->SrcRate,&ctx->SrcRate,PETSC_NULL);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   ctx->timestep = 1;
