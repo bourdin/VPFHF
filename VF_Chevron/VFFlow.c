@@ -39,16 +39,28 @@ extern PetscErrorCode BCPInit(BC *BC,VFCtx *ctx)
 extern PetscErrorCode VF_MatP3D_local(PetscReal *Mat_local,ResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
-  PetscReal      fdens,relk,perm,visc;
+  PetscReal      fdens,relk,visc;
+  PetscReal      kxx,kyy,kzz,kxy,kxz,kyz;
   PetscReal      DCoef_P;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
+/*
+  The following properties should be changed to a function of pressure and temperature (and saturation for multi-phase) 
+*/
   fdens = resprop->fdens;
   relk = resprop->relk;
-  perm = resprop->perm;
   visc = resprop->visc;
-  DCoef_P = fdens*relk*perm/visc;
+  DCoef_P = fdens*relk/visc;
+/*
+  Permeability should be associated with each element later
+*/
+  kxx = resprop->perm;
+  kyy = resprop->perm;
+  kzz = resprop->perm;
+  kxy = 0.*resprop->perm;
+  kxz = 0.*resprop->perm;
+  kyz = 0.*resprop->perm;
   
   for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {
@@ -58,9 +70,12 @@ extern PetscErrorCode VF_MatP3D_local(PetscReal *Mat_local,ResProp *resprop,Pets
             for (i2 = 0; i2 < e->nphix; i2++,l++) {
               Mat_local[l] = 0.;
               for (g = 0; g < e->ng; g++) {
-                Mat_local[l] += e->weight[g] * DCoef_P * ( e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
-                                                         + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
-                                                         + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]);
+                Mat_local[l] += e->weight[g] * DCoef_P * ( kxx * e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
+                                                         + kyy * e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
+                                                         + kzz * e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]
+                                                         + kxy * (e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][0][g] + e->dphi[k1][j1][i1][0][g]*e->dphi[k2][j2][i2][1][g])
+                                                         + kxz * (e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][0][g] + e->dphi[k1][j1][i1][0][g]*e->dphi[k2][j2][i2][2][g])
+                                                         + kyz * (e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][1][g] + e->dphi[k1][j1][i1][1][g]*e->dphi[k2][j2][i2][2][g]) );
               }
             }
           }
@@ -150,15 +165,30 @@ extern PetscErrorCode VF_PAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
         ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K_local,ADD_VALUES);CHKERRQ(ierr);
 
         /*
-          RHS - add source terms
-        */
-
-        /*
          Jump to next element
         */
       }  
     }   
   }  
+
+  /*
+    Source term defined at a node
+  */
+
+  if(xs+xm == nx-1) xm++;
+  if(ys+ym == ny-1) ym++;
+  if(zs+zm == nz-1) zm++;
+
+  for (k = zs; k < zs + zm; k++) {
+    for (j = ys; j < ys + ym; j++) {
+      for (i = xs; i < xs + xm; i++) {
+        if(i == ctx->SrcLoc[0] && j == ctx->SrcLoc[1] && k == ctx->SrcLoc[2]) {
+          RHS_array[k][j][i] = ctx->SrcRate;
+        }
+      }
+    }
+  }
+
 
   /*
     Global Assembly and Source/Sink terms (Boundary Conditions ?)
@@ -168,11 +198,13 @@ extern PetscErrorCode VF_PAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = MatApplyDirichletBC(K,ctx->daScal,&ctx->bcP[0]);CHKERRQ(ierr);
   ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+ 
+  
 
   ierr = DAVecRestoreArrayDOF(ctx->daScal,RHS_localVec,&RHS_array);CHKERRQ(ierr); 
   ierr = DALocalToGlobalBegin(ctx->daScal,RHS_localVec,RHS);CHKERRQ(ierr);
   ierr = DALocalToGlobalEnd(ctx->daScal,RHS_localVec,RHS);CHKERRQ(ierr);
-  ierr = VecApplyDirichletFlowBC(RHS,fields->pressure,&ctx->bcP[0],&ctx->BCpres);CHKERRQ(ierr);
+  ierr = VecApplyDirichletFlowBC(RHS,fields->pressure,&ctx->bcP[0],ctx->BCpres);CHKERRQ(ierr);
   /*
    Cleanup
   */

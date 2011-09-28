@@ -189,6 +189,8 @@ typedef struct {
   PetscReal           insitumax[6];
   PetscTruth          hasInsitu;
   PetscReal           BCpres[6];
+  PetscInt            SrcLoc[3];
+  PetscReal           SrcRate;
   VFMode              mode;
   VFUnilateralType    unilateral;
   VFCouplingType      coupling;
