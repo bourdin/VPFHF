@@ -51,7 +51,8 @@ static const char *VFUnilateralName[] = {
   "",
   0
 };
-    
+
+/*    
 typedef enum {
   COUPLING_NONE,
   COUPLING_GMRSTOVF,
@@ -65,7 +66,26 @@ static const char *VFCouplingName[] = {
   "",
   0
 };
+*/
 
+typedef enum {
+  FLOW_DARCYPOISSON,
+  FLOW_DARCYSTEADYSTATE,
+  FLOW_DARCYTRANSIENT,
+  FLOW_FAKE,
+  FLOW_READFROMFILES
+  } VFFlowType;
+static const char *VFFlowName[] = {
+  "DARCYPOISSON",
+  "DARCYSTEADYSTATE",
+  "DARCYTRANSIENT",
+  "FAKE",
+  "READFROMFILES",
+  "",
+  0
+};
+  
+ 
 typedef enum {
   FILEFORMAT_BIN,
   FILEFORMAT_HDF5
@@ -193,7 +213,10 @@ typedef struct {
   PetscReal           SrcRate;
   VFMode              mode;
   VFUnilateralType    unilateral;
+  /*
   VFCouplingType      coupling;
+  */
+  VFFlowType          flowtype;
   VFFileFormatType    fileformat;
   PetscViewer         energyviewer;
   PetscViewer         XDMFviewer;

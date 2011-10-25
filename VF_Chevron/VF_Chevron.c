@@ -40,8 +40,8 @@ int main(int argc,char **argv)
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: uncoupled variational fracture model specific options:","");CHKERRQ(ierr);
   {
     ierr = PetscMalloc(3 * sizeof(PetscInt),&n);CHKERRQ(ierr);
-    for (i = 0; i < 3; i++) n[i] = 10;
-    ierr = PetscOptionsIntArray("-n","\n\tnumber of cells (default 10), comma separated","",n,&nval,PETSC_NULL);CHKERRQ(ierr);
+    for (i = 0; i < 3; i++) n[i] = 11;
+    ierr = PetscOptionsIntArray("-n","\n\tnumber of grid poins (default 11), comma separated","",n,&nval,PETSC_NULL);CHKERRQ(ierr);
     if (nval != 3 && nval != 0) {
       SETERRQ4(PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-n",nval,__FUNCT__);
     }
