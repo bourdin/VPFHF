@@ -122,8 +122,10 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr = PetscOptionsEnum("-preset","\n\tPreset simulation type","",VFPresetName,(PetscEnum)ctx->preset,(PetscEnum*)&ctx->preset,PETSC_NULL);CHKERRQ(ierr);
     ctx->unilateral = UNILATERAL_NONE;
     ierr = PetscOptionsEnum("-unilateral","\n\tType of unilateral conditions","",VFUnilateralName,(PetscEnum)ctx->unilateral,(PetscEnum*)&ctx->unilateral,PETSC_NULL);CHKERRQ(ierr);
+    /*
     ctx->coupling = COUPLING_GMRSTOVF;
     ierr = PetscOptionsEnum("-coupling","\n\tCoupling type","",VFCouplingName,(PetscEnum)ctx->coupling,(PetscEnum*)&ctx->coupling,PETSC_NULL);CHKERRQ(ierr);
+    */
     ctx->fileformat = FILEFORMAT_HDF5;
     ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
 
@@ -716,10 +718,11 @@ extern PetscErrorCode VFTimeStepPrepare(VFCtx *ctx,VFFields *fields)
   ierr = VecApplyDirichletBC(fields->U,fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
   ierr = VecApplyDirichletBC(fields->V,fields->V,&ctx->bcV[0]);CHKERRQ(ierr);
 
-  if (ctx->coupling == COUPLING_NONE) {
-    /*
-      If we do an uncoupled computation, read Temperature and pressure from file.
-    */
+  /*
+    If we do an uncoupled computation, read Temperature and pressure from file.
+  */
+  /*
+  if (ctx->flowtype == COUPLING_NONE) {
     ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
     switch (ctx->fileformat) {
       case FILEFORMAT_HDF5:
@@ -736,6 +739,7 @@ extern PetscErrorCode VFTimeStepPrepare(VFCtx *ctx,VFFields *fields)
       }
     ierr = PetscLogStagePop();CHKERRQ(ierr);
   }
+  */
   PetscFunctionReturn(0);
 }
 
