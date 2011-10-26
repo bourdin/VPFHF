@@ -69,13 +69,13 @@ static const char *VFCouplingName[] = {
 */
 
 typedef enum {
-  FLOW_DARCYPOISSON,
-  FLOW_DARCYSTEADYSTATE,
-  FLOW_DARCYTRANSIENT,
-  FLOW_FAKE,
-  FLOW_READFROMFILES
-  } VFFlowType;
-static const char *VFFlowName[] = {
+  FLOWSOLVER_DARCYPOISSON,
+  FLOWSOLVER_DARCYSTEADYSTATE,
+  FLOWSOLVER_DARCYTRANSIENT,
+  FLOWSOLVER_FAKE,
+  FLOWSOLVER_READFROMFILES
+  } VFFlowSolverType;
+static const char *VFFlowSolverName[] = {
   "DARCYPOISSON",
   "DARCYSTEADYSTATE",
   "DARCYTRANSIENT",
@@ -216,7 +216,7 @@ typedef struct {
   /*
   VFCouplingType      coupling;
   */
-  VFFlowType          flowtype;
+  VFFlowSolverType    flowsolver;
   VFFileFormatType    fileformat;
   PetscViewer         energyviewer;
   PetscViewer         XDMFviewer;

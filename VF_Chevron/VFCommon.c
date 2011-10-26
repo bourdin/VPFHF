@@ -4,6 +4,9 @@
 #include "VFV.h"
 #include "VFU.h"
 #include "VFFlow.h"
+
+//#include "VFFlow_Fake.h"
+//#include "VFFlow_Poisson.h"
 #include "../Utils/xdmf.h"
 
 #undef __FUNCT__
@@ -126,6 +129,8 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->coupling = COUPLING_GMRSTOVF;
     ierr = PetscOptionsEnum("-coupling","\n\tCoupling type","",VFCouplingName,(PetscEnum)ctx->coupling,(PetscEnum*)&ctx->coupling,PETSC_NULL);CHKERRQ(ierr);
     */
+    ctx->flowsolver = FLOWSOLVER_FAKE;
+    ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
     ctx->fileformat = FILEFORMAT_HDF5;
     ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
 
@@ -702,8 +707,6 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
 */
 extern PetscErrorCode VFTimeStepPrepare(VFCtx *ctx,VFFields *fields)
 {
-  char           filename[FILENAME_MAX];
-  PetscViewer    viewer;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -718,28 +721,6 @@ extern PetscErrorCode VFTimeStepPrepare(VFCtx *ctx,VFFields *fields)
   ierr = VecApplyDirichletBC(fields->U,fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
   ierr = VecApplyDirichletBC(fields->V,fields->V,&ctx->bcV[0]);CHKERRQ(ierr);
 
-  /*
-    If we do an uncoupled computation, read Temperature and pressure from file.
-  */
-  /*
-  if (ctx->flowtype == COUPLING_NONE) {
-    ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
-    switch (ctx->fileformat) {
-      case FILEFORMAT_HDF5:
-#ifdef PETSC_HAVE_HDF5
-        ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-        ierr = VecLoadIntoVector(viewer,fields->theta);CHKERRQ(ierr);
-        ierr = VecLoadIntoVector(viewer,fields->pressure);CHKERRQ(ierr);
-        ierr = PetscViewerDestroy(viewer);CHKERRQ(ierr);    
-#endif
-        break;
-      case FILEFORMAT_BIN:
-        SETERRQ(PETSC_ERR_SUP,"Reading from binary files not implemented yet\n");
-        break;
-      }
-    ierr = PetscLogStagePop();CHKERRQ(ierr);
-  }
-  */
   PetscFunctionReturn(0);
 }
 
