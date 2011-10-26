@@ -1,6 +1,9 @@
 /*
-   VFFlow.h
-   VF - Fluid Flow
+   VFFlow.c
+   Generic interface to flow solvers
+
+     (c) 2010-2011 Blaise Bourdin, LSU. bourdin@lsu.edu
+                    Keita Yoshioka, Chevron ETC
 */
 
 #ifndef VFFLOW_H
@@ -8,10 +11,6 @@
 #include "PetscFixes.h"
 
 extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode VF_FakeFlow(VFCtx *ctx, VFFields *fields);
-extern PetscErrorCode VF_LinFlow(VFCtx *ctx, VFFields *fields);
-extern PetscErrorCode VF_PAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx);
-extern PetscErrorCode VF_MatP3D_local(PetscReal *Mat_local,ResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e);
 extern PetscErrorCode BCPInit(BC *BC,VFCtx *ctx);
 
 
