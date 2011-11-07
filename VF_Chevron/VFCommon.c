@@ -502,7 +502,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VecSet(fields->pressureRef,ctx->resprop.Pinit);CHKERRQ(ierr);
   
   ierr = DACreateGlobalVector(ctx->daScal,&fields->pmult);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) fields->pmult,"Permeability");CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->pmult,"PermeabilityMultiplier");CHKERRQ(ierr);
   ierr = VecSet(fields->pmult,0.0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -890,7 +890,7 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   ierr = XDMFtopologyAdd (XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,H5coordfilename,"Coordinates");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,3,"Vector","Node",H5filename,"Displacement");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",H5filename,"Fracture");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",H5filename,"Permeability");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",H5filename,"Pressure");CHKERRQ(ierr);
   ierr = XDMFuniformgridFinalize(XDMFViewer);CHKERRQ(ierr); 

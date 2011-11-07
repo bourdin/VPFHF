@@ -31,9 +31,7 @@ int main(int argc,char **argv)
   PetscInt            *n,i,nval=3;
   PetscReal           *l,*dx,*dy,*dz;
   PetscTruth          flg;
-  /*
-    This is essentially VIADAT
-  */
+
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   
   ierr = PetscOptionsGetInt("","-debug",&DebugMode,&flg);CHKERRQ(ierr);
@@ -63,11 +61,10 @@ int main(int argc,char **argv)
 
   ierr = VFInitialize(n[0],n[1],n[2],dx,dy,dz);CHKERRQ(ierr);
 
- /* end VIADAT */
-
   /* start of time step */
-  ctx.timestep = 1 ;
+  ctx.timestep = 0;
 
+  /*
   switch (ctx.fileformat) {
    case FILEFORMAT_HDF5:       
      ierr = FieldsH5Write(&ctx,&fields);
@@ -76,30 +73,27 @@ int main(int argc,char **argv)
      ierr = FieldsBinaryWrite(&ctx,&fields);
    break; 
   } 
-  ctx.timestep++; 
-  ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx.prefix,ctx.timestep);CHKERRQ(ierr);
-  while ( file = fopen(H5filename,"w") ) {
-    fclose(file);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i (%s).\n",ctx.timestep,H5filename);CHKERRQ(ierr);
-    ctx.timevalue = (PetscReal) ctx.timestep;
+  */
+  for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
+
+  //ctx.timestep++; 
+  //ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx.prefix,ctx.timestep);CHKERRQ(ierr);
+  //while ( file = fopen(H5filename,"w") ) {
+  //  fclose(file);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
+    ctx.timevalue = ctx.timestep * ctx.maxtimevalue / ctx.maxtimestep;
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
+
     /*
-      This is called in VTDATA
-    */
-    ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-    /*
-      End VTDATA
-    */
-   
-    /*
-      Update pressure and theta here
+      Update pressure here
     */
 
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 
     /*
-      This is essentially VPERM (minus pmult update, and transfer from GMRS)
+      Update boundary values of displacement and fracture irreversibility
     */
+    ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
     switch (ctx.mode) {
       case ELASTICITY:
         ierr = VFElasticityTimeStep(&ctx,&fields);CHKERRQ(ierr);
@@ -109,9 +103,6 @@ int main(int argc,char **argv)
       break;
     }
 
-    /*
-      This is essentially VSTOUT
-    */
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
@@ -137,9 +128,9 @@ int main(int argc,char **argv)
     /*
       build filename of next step and loops
     */
-    ctx.timestep++;
-    if((ctx.timestep > ctx.maxtimestep) || (ctx.timevalue > ctx.maxtimevalue)) break;
-    ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx.prefix,ctx.timestep);CHKERRQ(ierr);
+    //ctx.timestep++;
+    //if ((ctx.timestep > ctx.maxtimestep) || (ctx.timevalue > ctx.maxtimevalue)) break;
+    //ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx.prefix,ctx.timestep);CHKERRQ(ierr);
   }
   /* end of time step */
 
