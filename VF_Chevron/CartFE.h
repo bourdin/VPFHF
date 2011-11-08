@@ -87,6 +87,7 @@ static const char *BCTYPE_NAME[] = {
   "ZERO",
   "ONE",
   "FIXED",
+  "VALUE",
   "BCTYPE_NAME","",0
 };
 /*

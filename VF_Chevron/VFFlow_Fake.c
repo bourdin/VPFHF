@@ -44,10 +44,8 @@ extern PetscErrorCode VFFlow_Fake(VFCtx *ctx, VFFields *fields)
 	ierr = DAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	
-	
 	ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DAVecGetArray(ctx->daScal,fields->pressure,&pressure_array);CHKERRQ(ierr);    
-	
 	
   radius_x = (ctx->BoundingBox[1] - ctx->BoundingBox[0]) / 2. * (ctx->timevalue / ctx->maxtimevalue + .1);
   radius_y = (ctx->BoundingBox[3] - ctx->BoundingBox[2]) / 20.;
@@ -58,7 +56,6 @@ extern PetscErrorCode VFFlow_Fake(VFCtx *ctx, VFFields *fields)
     		z = (coords_array[ek][ej][ei][2] - (ctx->BoundingBox[4] + ctx->BoundingBox[5]) * .5) / radius_z;
         y = (coords_array[ek][ej][ei][1] - ctx->BoundingBox[2]) / radius_y;
 				x = (coords_array[ek][ej][ei][0] - ctx->BoundingBox[0]) / radius_x;
-				//ierr = PetscPrintf(PETSC_COMM_WORLD,"(%i,%i,%i): [%g,%g,%g], r=%g\n",ei,ej,ek,x,y,z,1. - x*x + y*y + z*z);
 				if ( x*x + y*y + z*z < 1.) {
 				  p = ctx->resprop.Pinit;
 				} else {
@@ -68,7 +65,6 @@ extern PetscErrorCode VFFlow_Fake(VFCtx *ctx, VFFields *fields)
 			}
 		}
 	}
-	
 	ierr = DAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DAVecRestoreArray(ctx->daScal,fields->pressure,&pressure_array);CHKERRQ(ierr);
 

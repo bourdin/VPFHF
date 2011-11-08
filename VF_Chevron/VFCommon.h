@@ -32,12 +32,12 @@ typedef enum {
   FRACTURE,
   ELASTICITY,
   NOMECH
-} VFMode;
-static const char *VFModeName[] = {
+} VFMechSolverType;
+static const char *VFMechSolverName[] = {
   "FRACTURE",
   "ELASTICITY",
   "NOMECH",
-  "VFModeName",
+  "VFMechSolverName",
   "",
   0
 };
@@ -53,22 +53,6 @@ static const char *VFUnilateralName[] = {
   "",
   0
 };
-
-/*    
-typedef enum {
-  COUPLING_NONE,
-  COUPLING_GMRSTOVF,
-  COUPLING_FULL
-} VFCouplingType;
-static const char *VFCouplingName[] = {
-  "NONE",
-  "GMRSTOVF",
-  "FULL",
-  "VFCouplingName",
-  "",
-  0
-};
-*/
 
 typedef enum {
   FLOWSOLVER_DARCYPOISSON,
@@ -221,12 +205,12 @@ typedef struct {
   PetscReal           BCpres[6];
   PetscInt            SrcLoc[3];
   PetscReal           SrcRate;
-  VFMode              mode;
   VFUnilateralType    unilateral;
   /*
   VFCouplingType      coupling;
   */
   VFFlowSolverType    flowsolver;
+  VFMechSolverType    mechsolver;
   VFFileFormatType    fileformat;
   PetscViewer         energyviewer;
   PetscViewer         XDMFviewer;
@@ -240,13 +224,15 @@ typedef struct {
   PetscReal           TotalEnergy;
 } VFCtx;
 
-extern VFCtx          ctx;
-extern VFFields       fields;
+//extern VFCtx          ctx;
+//extern VFFields       fields;
 
 extern PetscErrorCode OldVFInitialize(VFCtx *ctx,VFFields *fields);  
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
-extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz);
+extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields,PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz);
+//extern PetscErrorCode VFInitialize(VFCtx *ctx);
 extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *dy,PetscReal *dz);
+//extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx);
 extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFBCInitialize(VFCtx *ctx);
 extern PetscErrorCode VFSolversInitialize(VFCtx *ctx);
