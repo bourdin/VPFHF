@@ -18,9 +18,9 @@ extern PetscErrorCode VFFlow_Fake(VFCtx *ctx, VFFields *fields)
 {
 	PetscErrorCode ierr;
 	PetscReal			time;
-	PetscReal			min_radius, max_radius, alpha = 0.5;
+	PetscReal			radius_x, radius_y, alphax = 0.5;
 	PetscReal			dist;
-	PetscReal			incremnt = 2.;
+	PetscReal			incremnt = 3.;
 	PetscInt			xs,xm,nx;
 	PetscInt			ys,ym,ny;
 	PetscInt			zs,zm,nz;
@@ -53,13 +53,13 @@ extern PetscErrorCode VFFlow_Fake(VFCtx *ctx, VFFields *fields)
 	
 	time = ctx->timevalue;
 	Pinit = ctx->resprop.Pinit;
-	min_radius = 0.5*(1.0-exp(-time*alpha));
-	max_radius = 0.2*(1.0-exp(-time*alpha));
+	radius_x = 0.2*(1.0-exp(-time*alphax));
+	radius_y = 0.4*(1.0-exp(-time*alphax));
 	
 	for (ek = zs; ek < zs + zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
-				dist = pow( ((coords_array[ek][ej][ei][0]-0.5)/min_radius), 2) + pow(((coords_array[ek][ej][ei][1]-0.5)/max_radius), 2);
+				dist = pow( ((coords_array[ek][ej][ei][0]-0.5)/radius_x), 2) + pow(((coords_array[ek][ej][ei][1]-0.5)/radius_y), 2);
 				if( dist <= 1 )
 					pressure_array[ek][ej][ei] = incremnt * Pinit;
 				else
