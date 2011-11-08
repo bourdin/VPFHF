@@ -447,6 +447,9 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *d
   ctx->BoundingBox[3] = BBmax[1];
   ctx->BoundingBox[4] = BBmin[2];
   ctx->BoundingBox[5] = BBmax[2];
+  /*
+    This is stupid. ctx->BoundingBox = BBmin...
+  */
   
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Reservoir bounding box: (%g,%g) x (%g,%g) x (%g,%g)\n",ctx->BoundingBox[0],ctx->BoundingBox[1],ctx->BoundingBox[2],ctx->BoundingBox[3],ctx->BoundingBox[4],ctx->BoundingBox[5]);CHKERRQ(ierr);

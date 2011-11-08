@@ -30,11 +30,13 @@ static const char *VFPresetName[] = {"SYMXY","SYMX","SYMY","NOSYM",
                                      "VFPresetName","",0};
 typedef enum {
   FRACTURE,
-  ELASTICITY
+  ELASTICITY,
+  NOMECH
 } VFMode;
 static const char *VFModeName[] = {
   "FRACTURE",
   "ELASTICITY",
+  "NOMECH",
   "VFModeName",
   "",
   0
@@ -127,6 +129,9 @@ typedef struct {
   PetscReal        atCv;
   PetscReal        irrevtol;
   PetscReal        permmax;
+  /*
+    permmax should be moved to resprop
+  */
 } VFProp;
 
 typedef struct {
@@ -137,7 +142,12 @@ typedef struct {
   PetscReal         relk;  /* Relative Permeability */
   PetscReal         visc;  /* Viscosity in cp */
   PetscReal         fdens; /* Fluid Density in specific density*/
-} ResProp; //change them to Vec later
+  /*
+    change them to Vec later.
+    Instead, I would suggest keeping the structure this way and add a pointer to a resprop in the main context
+    We can read them in a file later, the difficulty is to initialize the files to something reasonable
+  */
+} ResProp; 
 
 typedef struct {
   PetscLogStage VF_IOStage;
