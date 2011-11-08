@@ -71,14 +71,17 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
   {
     ctx->verbose = 0;
     ierr = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
-    ctx->mode = FRACTURE;
-    ierr = PetscOptionsEnum("-mode","\n\tType of simulation","",VFModeName,(PetscEnum)ctx->mode,(PetscEnum*)&ctx->mode,PETSC_NULL);CHKERRQ(ierr);
+    ctx->mechsolver = FRACTURE;
+    ierr = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,PETSC_NULL);CHKERRQ(ierr);
+    ctx->flowsolver = FLOWSOLVER_FAKE;
+    ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
+
+    ctx->hasInsitu = PETSC_FALSE;
     nopt = 6;
     ierr = PetscMalloc(nopt * sizeof(PetscReal),&buffer); CHKERRQ(ierr);
     for (i = 0;i < nopt;i++) {
       buffer[i]=0.;
     }
-    ctx->hasInsitu = PETSC_FALSE;
     ierr = PetscOptionsRealArray("-insitumin","\n\tIn-situ stresses in the lower z-section.\n\tUse Voigt notations (s11, s22, s33, s23, s13, s12)","",buffer,&nopt,&flg);CHKERRQ(ierr);    
     if (nopt > 6 && !hashelp) {
       SETERRQ2(PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the insitu stresses, got %i in %s\n",nopt,__FUNCT__);
@@ -129,8 +132,6 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->coupling = COUPLING_GMRSTOVF;
     ierr = PetscOptionsEnum("-coupling","\n\tCoupling type","",VFCouplingName,(PetscEnum)ctx->coupling,(PetscEnum*)&ctx->coupling,PETSC_NULL);CHKERRQ(ierr);
     */
-    ctx->flowsolver = FLOWSOLVER_FAKE;
-    ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
     ctx->fileformat = FILEFORMAT_HDF5;
     ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
 
@@ -630,7 +631,8 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz)
+extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields,PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz)
+//extern PetscErrorCode VFInitialize()
 {
   PetscErrorCode ierr;
 
@@ -657,33 +659,33 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
 
   ierr = PetscOptionsHasName(PETSC_NULL,"-help",&printhelp);CHKERRQ(ierr);
 
-  ierr = VFLogInitialize(&ctx.vflog);CHKERRQ(ierr);
+  ierr = VFLogInitialize(&ctx->vflog);CHKERRQ(ierr);
 
-  ctx.ncellx = nx-1;
-  ctx.ncelly = ny-1;
-  ctx.ncellz = nz-1;
-  ierr = VFCtxGet(&ctx);CHKERRQ(ierr);
-  ierr = VFPropGet(&ctx.vfprop);CHKERRQ(ierr);
+  ctx->ncellx = nx-1;
+  ctx->ncelly = ny-1;
+  ctx->ncellz = nz-1;
+  ierr = VFCtxGet(ctx);CHKERRQ(ierr);
+  ierr = VFPropGet(&ctx->vfprop);CHKERRQ(ierr);
 
-  ierr = PetscMalloc(ctx.nlayer * sizeof(MatProp),&ctx.matprop);CHKERRQ(ierr);
-  ierr = VFMatPropGet(ctx.matprop,ctx.nlayer);CHKERRQ(ierr);
+  ierr = PetscMalloc(ctx->nlayer * sizeof(MatProp),&ctx->matprop);CHKERRQ(ierr);
+  ierr = VFMatPropGet(ctx->matprop,ctx->nlayer);CHKERRQ(ierr);
 
-  ierr = VFResPropGet(&ctx.resprop);CHKERRQ(ierr);
+  ierr = VFResPropGet(&ctx->resprop);CHKERRQ(ierr);
 
   if (printhelp) {
     ierr = PetscFinalize();
     return(-1);
   }
 
-  ierr = VFGeometryInitialize(&ctx,dx,dy,dz);CHKERRQ(ierr);
-  ierr = VFFieldsInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ierr = VFBCInitialize(&ctx);CHKERRQ(ierr);
-  ierr = VFSolversInitialize(&ctx);CHKERRQ(ierr);
+  ierr = VFGeometryInitialize(ctx,dx,dy,dz);CHKERRQ(ierr);
+  ierr = VFFieldsInitialize(ctx,fields);CHKERRQ(ierr);
+  ierr = VFBCInitialize(ctx);CHKERRQ(ierr);
+  ierr = VFSolversInitialize(ctx);CHKERRQ(ierr);
 
   /*
     Save command line options to a file
   */
-  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.txt",ctx.prefix,0);CHKERRQ(ierr);
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.txt",ctx->prefix,0);CHKERRQ(ierr);
   file = fopen(filename,"w");
   ierr = PetscOptionsPrint(file);CHKERRQ(ierr);
   fclose(file);
@@ -691,10 +693,10 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Option table:\n");CHKERRQ(ierr);
   ierr = PetscOptionsPrint(stdout);CHKERRQ(ierr);
 
-  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.ener",ctx.prefix);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx.energyviewer);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Total Energy\n");CHKERRQ(ierr);
-  ierr = PetscViewerFlush(ctx.energyviewer);CHKERRQ(ierr);
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.ener",ctx->prefix);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->energyviewer);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(ctx->energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Total Energy\n");CHKERRQ(ierr);
+  ierr = PetscViewerFlush(ctx->energyviewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
