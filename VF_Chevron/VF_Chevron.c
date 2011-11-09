@@ -21,24 +21,19 @@ int main(int argc,char **argv)
   VFFields            fields;
   PetscErrorCode      ierr;
   
-  /*
-    Iteration
-  */
   PetscReal           ElasticEnergy = 0;
   PetscReal           InsituWork = 0;
   PetscReal           SurfaceEnergy = 0;
   PetscInt            DebugMode = 0;
   FILE                *file;
   char                H5filename[FILENAME_MAX],filename[FILENAME_MAX];
-  PetscInt            *n,i,nval=3;
-  PetscReal           *l,*dx,*dy,*dz;
   PetscTruth          flg;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   
   ierr = PetscOptionsGetInt("","-debug",&DebugMode,&flg);CHKERRQ(ierr);
 
-
+  /*
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: uncoupled variational fracture model specific options:","");CHKERRQ(ierr);
   {
     ierr = PetscMalloc(3 * sizeof(PetscInt),&n);CHKERRQ(ierr);
@@ -58,12 +53,12 @@ int main(int argc,char **argv)
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   ierr = PetscMalloc3(n[0],PetscReal,&dx,n[1],PetscReal,&dy,n[2],PetscReal,&dz);CHKERRQ(ierr);
 
-
   for (i = 0; i < n[0]; i++) dx[i] = l[0]/n[0];
   for (i = 0; i < n[1]; i++) dy[i] = l[1]/n[1];
   for (i = 0; i < n[2]; i++) dz[i] = l[2]/n[2];
-
   ierr = VFInitialize(&ctx,&fields,n[0],n[1],n[2],dx,dy,dz);CHKERRQ(ierr);
+  */
+  ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 
   /* start of time step */
   ctx.timestep = 0;

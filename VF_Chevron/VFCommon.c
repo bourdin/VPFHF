@@ -65,7 +65,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
   ierr = PetscOptionsGetTruth(PETSC_NULL,"-help",&hashelp,&flg);CHKERRQ(ierr);
   
   /* 
-    Get options and register help messge
+    Get options and register help message
   */
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF: general options:","");CHKERRQ(ierr);
   {
@@ -206,13 +206,15 @@ extern PetscErrorCode VFLayerInit(VFCtx *ctx)
   PetscInt       ek,l;
   PetscReal      ****coords_array;
   PetscInt       xs,xm,ys,ym,zs,zm;
+  PetscInt       nz;
   
   PetscFunctionBegin;
   ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = PetscMalloc((ctx->ncellz+1) * sizeof(PetscInt),&ctx->layer);CHKERRQ(ierr);
+  ierr = DAGetInfo(ctx->daVect,PETSC_NULL,PETSC_NULL,PETSC_NULL,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscMalloc(nz * sizeof(PetscInt),&ctx->layer);CHKERRQ(ierr);
 
-  for (l = 0; l < ctx->ncellz+1; l++) {
+  for (l = 0; l < nz; l++) {
     ctx->layer[l] = 0;
   }
   for (ek = zs; ek < zs+zm; ek++) {
@@ -223,7 +225,7 @@ extern PetscErrorCode VFLayerInit(VFCtx *ctx)
     }
   }
   if (ctx->verbose > 0) {
-    for (ek = 0; ek < ctx->ncellz+1; ek++) {
+    for (ek = 0; ek < nz; ek++) {
       if (ek >= zs && ek < zs+zm) {
         ierr = PetscSynchronizedPrintf(PETSC_COMM_WORLD,"ctx->layer[%i]=%i (depth=%g)\n",ek,ctx->layer[ek],coords_array[ek][ys][xs][2]);CHKERRQ(ierr);
       } else {
@@ -344,22 +346,62 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop)
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *dy,PetscReal *dz)
+//extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *dy,PetscReal *dz)
+extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 {
   PetscErrorCode      ierr;
   PetscViewer         viewer,h5viewer;
   char                filename[FILENAME_MAX];  
-  PetscReal           BBmin[3],BBmax[3];
+  //PetscReal           BBmin[3],BBmax[3];
   PetscReal           *X,*Y,*Z;
   PetscReal           ****coords_array;
   PetscInt            xs,xm,ys,ym,zs,zm;
   int                 i,j,k;
-  
+  int                 nval;
+  PetscInt            *n,nx,ny,nz;
+  PetscReal           *l,lx,ly,lz;
+  PetscTruth          flg;
+  PetscTruth          hashelp;
+    
   PetscFunctionBegin;
   ierr = CartFE_Init();CHKERRQ(ierr);
+  
+  ierr = PetscOptionsGetTruth(PETSC_NULL,"-help",&hashelp,&flg);CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: geometry options:","");CHKERRQ(ierr);
+  {
+    ierr = PetscMalloc(3 * sizeof(PetscInt),&n);CHKERRQ(ierr);
+    for (i = 0; i < 3; i++) n[i] = 11;
+    ierr = PetscOptionsIntArray("-n","\n\tnumber of grid poins (default 11), comma separated","",n,&nval,PETSC_NULL);CHKERRQ(ierr);
+    if (nval != 3 && nval != 0) {
+      SETERRQ4(PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-n",nval,__FUNCT__);
+    }
+    nx = n[0];
+    ny = n[1];
+    nz = n[2];
+    ierr = PetscFree(n);CHKERRQ(ierr);
 
-  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVect);CHKERRQ(ierr);
-  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daScal);CHKERRQ(ierr);
+    ierr = PetscMalloc(3 * sizeof(PetscReal),&l);CHKERRQ(ierr);
+    for (i = 0; i < 3; i++) l[i] = 1.;
+    ierr = PetscOptionsRealArray("-l","\n\tDomain dimensions (default 1.), comma separated","",l,&nval,PETSC_NULL);CHKERRQ(ierr);
+    if (nval != 3 && nval != 0) {
+      SETERRQ4(PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-l",nval,__FUNCT__);
+    }
+    lx = l[0];
+    ly = l[1];
+    lz = l[2];
+    ierr = PetscFree(l);CHKERRQ(ierr);
+  }
+  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  
+  ctx->BoundingBox[0] = 0.;
+  ctx->BoundingBox[1] = lx;
+  ctx->BoundingBox[2] = 0.;
+  ctx->BoundingBox[3] = ly;
+  ctx->BoundingBox[4] = 0.;
+  ctx->BoundingBox[5] = lz;
+
+  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVect);CHKERRQ(ierr);
+  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daScal);CHKERRQ(ierr);
   ierr = CartFE_Element3DCreate(&ctx->e3D);CHKERRQ(ierr);
   /*
     Constructs coordinates Vec
@@ -372,13 +414,13 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *d
   */
   ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = PetscMalloc3(ctx->ncellx+1,PetscReal,&X,ctx->ncelly+1,PetscReal,&Y,ctx->ncellz+1,PetscReal,&Z);CHKERRQ(ierr);
+  ierr = PetscMalloc3(nx,PetscReal,&X,ny,PetscReal,&Y,nz,PetscReal,&Z);CHKERRQ(ierr);
   Z[0] = 0.;
   Y[0] = 0.;
   X[0] = 0.;
-  for (k = 1; k < ctx->ncellz+1; k++) Z[k] = Z[k-1] + dz[k-1];
-  for (j = 1; j < ctx->ncelly+1; j++) Y[j] = Y[j-1] + dy[j-1];
-  for (i = 1; i < ctx->ncellx+1; i++) X[i] = X[i-1] + dx[i-1];
+  for (k = 1; k < nz; k++) Z[k] = k * lz / (nz-1.);
+  for (j = 1; j < ny; j++) Y[j] = j * ly / (ny-1.);
+  for (i = 1; i < nx; i++) X[i] = i * lx / (nx-1.);
 
   for (k = zs; k < zs + zm; k++) {
     for (j = ys; j < ys + ym; j++) {
@@ -438,19 +480,6 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *d
   ierr = VecDestroy(ctx->coordinates);CHKERRQ(ierr);
   ierr = DAGetGhostedCoordinates(ctx->daScal,&ctx->coordinates);CHKERRQ(ierr);
   
-  /*
-    Get bounding box from petsc DA
-  */
-  ierr = DAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
-  ctx->BoundingBox[0] = BBmin[0];
-  ctx->BoundingBox[1] = BBmax[0];
-  ctx->BoundingBox[2] = BBmin[1];
-  ctx->BoundingBox[3] = BBmax[1];
-  ctx->BoundingBox[4] = BBmin[2];
-  ctx->BoundingBox[5] = BBmax[2];
-  /*
-    This is stupid. ctx->BoundingBox = BBmin...
-  */
   
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Reservoir bounding box: (%g,%g) x (%g,%g) x (%g,%g)\n",ctx->BoundingBox[0],ctx->BoundingBox[1],ctx->BoundingBox[2],ctx->BoundingBox[3],ctx->BoundingBox[4],ctx->BoundingBox[5]);CHKERRQ(ierr);
@@ -473,6 +502,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
+  fields->numfields = 9;
   ierr = DACreateGlobalVector(ctx->daVect,&fields->U);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->U,"Displacement");CHKERRQ(ierr);
   ierr = VecSet(fields->U,0.0);CHKERRQ(ierr);
@@ -631,8 +661,8 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields,PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz)
-//extern PetscErrorCode VFInitialize()
+//extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields,PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz)
+extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 {
   PetscErrorCode ierr;
 
@@ -661,10 +691,9 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields,PetscInt nx,Petsc
 
   ierr = VFLogInitialize(&ctx->vflog);CHKERRQ(ierr);
 
-  ctx->ncellx = nx-1;
-  ctx->ncelly = ny-1;
-  ctx->ncellz = nz-1;
   ierr = VFCtxGet(ctx);CHKERRQ(ierr);
+  ierr = VFGeometryInitialize(ctx);CHKERRQ(ierr);
+
   ierr = VFPropGet(&ctx->vfprop);CHKERRQ(ierr);
 
   ierr = PetscMalloc(ctx->nlayer * sizeof(MatProp),&ctx->matprop);CHKERRQ(ierr);
@@ -677,7 +706,6 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields,PetscInt nx,Petsc
     return(-1);
   }
 
-  ierr = VFGeometryInitialize(ctx,dx,dy,dz);CHKERRQ(ierr);
   ierr = VFFieldsInitialize(ctx,fields);CHKERRQ(ierr);
   ierr = VFBCInitialize(ctx);CHKERRQ(ierr);
   ierr = VFSolversInitialize(ctx);CHKERRQ(ierr);
@@ -869,12 +897,14 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   PetscErrorCode ierr;
   char           H5filename[FILENAME_MAX],H5coordfilename[FILENAME_MAX],XDMFfilename[FILENAME_MAX];
   PetscViewer    H5Viewer,XDMFViewer;
+  PetscInt       nx, ny, nz;
   
   PetscFunctionBegin;
   /*
     Write the hdf5 files
   */
 #ifdef PETSC_HAVE_HDF5
+  ierr = DAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
   ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,H5filename,FILE_MODE_WRITE,&H5Viewer);
   ierr = VecView(fields->U,H5Viewer);CHKERRQ(ierr);
@@ -892,12 +922,12 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,XDMFfilename,&XDMFViewer);CHKERRQ(ierr);
   ierr = XDMFuniformgridInitialize(XDMFViewer,ctx->timevalue,H5filename);CHKERRQ(ierr); 
-  ierr = XDMFtopologyAdd (XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,H5coordfilename,"Coordinates");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,3,"Vector","Node",H5filename,"Displacement");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",H5filename,"Fracture");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",H5filename,"Pressure");CHKERRQ(ierr);
+  ierr = XDMFtopologyAdd (XDMFViewer,nx,ny,nz,H5coordfilename,"Coordinates");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Displacement");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Fracture");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Pressure");CHKERRQ(ierr);
   ierr = XDMFuniformgridFinalize(XDMFViewer);CHKERRQ(ierr); 
   ierr = PetscViewerDestroy(XDMFViewer);CHKERRQ(ierr);
   /*
