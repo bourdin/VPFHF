@@ -17,7 +17,6 @@
 */
 extern PetscErrorCode VFFlow_DarcySteadyState(VFCtx *ctx, VFFields *fields)
 {
-  PetscErrorCode ierr;
   SETERRQ1(PETSC_ERR_SUP,"Flow solver %s not implemented yet",VFFlowSolverName[ctx->flowsolver]);
   PetscFunctionReturn(0);
 }

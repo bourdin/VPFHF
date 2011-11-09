@@ -24,73 +24,24 @@ int main(int argc,char **argv)
   PetscReal           ElasticEnergy = 0;
   PetscReal           InsituWork = 0;
   PetscReal           SurfaceEnergy = 0;
-  PetscInt            DebugMode = 0;
-  FILE                *file;
-  char                H5filename[FILENAME_MAX],filename[FILENAME_MAX];
-  PetscTruth          flg;
+  char                filename[FILENAME_MAX];
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   
-  ierr = PetscOptionsGetInt("","-debug",&DebugMode,&flg);CHKERRQ(ierr);
-
-  /*
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: uncoupled variational fracture model specific options:","");CHKERRQ(ierr);
-  {
-    ierr = PetscMalloc(3 * sizeof(PetscInt),&n);CHKERRQ(ierr);
-    for (i = 0; i < 3; i++) n[i] = 11;
-    ierr = PetscOptionsIntArray("-n","\n\tnumber of grid poins (default 11), comma separated","",n,&nval,PETSC_NULL);CHKERRQ(ierr);
-    if (nval != 3 && nval != 0) {
-      SETERRQ4(PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-n",nval,__FUNCT__);
-    }
-
-    ierr = PetscMalloc(3 * sizeof(PetscReal),&l);CHKERRQ(ierr);
-    for (i = 0; i < 3; i++) l[i] = 1.;
-    ierr = PetscOptionsRealArray("-l","\n\tDomain dimensions (default 1.), comma separated","",l,&nval,PETSC_NULL);CHKERRQ(ierr);
-    if (nval != 3 && nval != 0) {
-      SETERRQ4(PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-l",nval,__FUNCT__);
-    }
-  }
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
-  ierr = PetscMalloc3(n[0],PetscReal,&dx,n[1],PetscReal,&dy,n[2],PetscReal,&dz);CHKERRQ(ierr);
-
-  for (i = 0; i < n[0]; i++) dx[i] = l[0]/n[0];
-  for (i = 0; i < n[1]; i++) dy[i] = l[1]/n[1];
-  for (i = 0; i < n[2]; i++) dz[i] = l[2]/n[2];
-  ierr = VFInitialize(&ctx,&fields,n[0],n[1],n[2],dx,dy,dz);CHKERRQ(ierr);
-  */
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 
-  /* start of time step */
-  ctx.timestep = 0;
-
-  /*
-  switch (ctx.fileformat) {
-   case FILEFORMAT_HDF5:       
-     ierr = FieldsH5Write(&ctx,&fields);
-   break;
-   case FILEFORMAT_BIN:
-     ierr = FieldsBinaryWrite(&ctx,&fields);
-   break; 
-  } 
-  */
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
-
-  //ctx.timestep++; 
-  //ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx.prefix,ctx.timestep);CHKERRQ(ierr);
-  //while ( file = fopen(H5filename,"w") ) {
-  //  fclose(file);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
     ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
 
     /*
-      Update pressure here
+      Do flow solver step 
     */
-
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 
     /*
-      Update boundary values of displacement and fracture irreversibility
+      Do mechanics step
     */
     ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
     switch (ctx.mechsolver) {
@@ -117,7 +68,10 @@ int main(int argc,char **argv)
     }
 
 
-     switch (ctx.fileformat) {
+    /*
+      Save fields and write statistics about current run
+    */    
+    switch (ctx.fileformat) {
       case FILEFORMAT_HDF5:       
         ierr = FieldsH5Write(&ctx,&fields);
       break;
@@ -128,16 +82,6 @@ int main(int argc,char **argv)
     ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
     ierr = PetscLogPrintSummary(PETSC_COMM_WORLD,filename);CHKERRQ(ierr);
 
-    /* 
-      flushes out statistics about the current run
-    */
-    
-    /*
-      build filename of next step and loops
-    */
-    //ctx.timestep++;
-    //if ((ctx.timestep > ctx.maxtimestep) || (ctx.timevalue > ctx.maxtimevalue)) break;
-    //ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx.prefix,ctx.timestep);CHKERRQ(ierr);
   }
   /* end of time step */
 
