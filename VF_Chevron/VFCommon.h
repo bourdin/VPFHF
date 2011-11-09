@@ -186,7 +186,7 @@ typedef struct {
   PetscInt            nlayer;
   PetscReal           *layersep;
   PetscInt            *layer;         /* dim=nz+1. gives the layer number of a cell  */
-  PetscReal           BoundingBox[6]; /* Reservoir bounding box [Xmin, Xmax, Ymin, Ymax, Zmin, Zmax] */
+  //PetscReal           BoundingBox[6]; /* Reservoir bounding box [Xmin, Xmax, Ymin, Ymax, Zmin, Zmax] */
   BC                  bcU[3];
   BC                  bcV[1];
   BC                  bcP[1];

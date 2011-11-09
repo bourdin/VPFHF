@@ -80,7 +80,7 @@ int main(int argc,char **argv)
   //while ( file = fopen(H5filename,"w") ) {
   //  fclose(file);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
-    ctx.timevalue = ctx.timestep * ctx.maxtimevalue / ctx.maxtimestep;
+    ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
 
     /*

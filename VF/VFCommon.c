@@ -291,12 +291,12 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *d
   PetscErrorCode      ierr;
   PetscViewer         viewer,h5viewer;
   char                filename[FILENAME_MAX];  
-  PetscReal           BBmin[3],BBmax[3];
   PetscReal           *X,*Y,*Z;
   PetscReal           ****coords_array;
   PetscInt            xs,xm,ys,ym,zs,zm;
   int                 i,j,k;
-  
+  PetscReal           BBmin[3],BBmax[3];
+
   PetscFunctionBegin;
   ierr = CartFE_Init();CHKERRQ(ierr);
 
@@ -380,19 +380,9 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *d
   ierr = VecDestroy(ctx->coordinates);CHKERRQ(ierr);
   ierr = DAGetGhostedCoordinates(ctx->daScal,&ctx->coordinates);CHKERRQ(ierr);
   
-  /*
-    Get bounding box from petsc DA
-  */
-  ierr = DAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
-  ctx->BoundingBox[0] = BBmin[0];
-  ctx->BoundingBox[1] = BBmax[0];
-  ctx->BoundingBox[2] = BBmin[1];
-  ctx->BoundingBox[3] = BBmax[1];
-  ctx->BoundingBox[4] = BBmin[2];
-  ctx->BoundingBox[5] = BBmax[2];
-  
   if (ctx->verbose > 0) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Reservoir bounding box: (%g,%g) x (%g,%g) x (%g,%g)\n",ctx->BoundingBox[0],ctx->BoundingBox[1],ctx->BoundingBox[2],ctx->BoundingBox[3],ctx->BoundingBox[4],ctx->BoundingBox[5]);CHKERRQ(ierr);
+    ierr = DAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Reservoir bounding box: (%g,%g) x (%g,%g) x (%g,%g)\n",BBmin[0],BBmax[0],BBmin[1],BBmax[1],BBmin[2],BBmax[2]);CHKERRQ(ierr);
     ierr = DAView(ctx->daVect,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
     ierr = DAView(ctx->daScal,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
