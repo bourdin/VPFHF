@@ -9,7 +9,6 @@
 
 extern PetscErrorCode BCUInit(BC *BC,VFPreset preset);
 extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset);
-
 extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensity_local,
                                                    PetscReal ****u_array,
                                                    PetscReal ***theta_array,PetscReal ***thetaRef_array,

@@ -71,7 +71,6 @@ static const char *VFFlowSolverName[] = {
   0
 };
   
- 
 typedef enum {
   FILEFORMAT_BIN,
   FILEFORMAT_HDF5
@@ -182,11 +181,9 @@ typedef struct {
 } VFLog;
 
 typedef struct {
-  //PetscInt            ncellx,ncelly,ncellz;
   PetscInt            nlayer;
   PetscReal           *layersep;
   PetscInt            *layer;         /* dim=nz+1. gives the layer number of a cell  */
-  //PetscReal           BoundingBox[6]; /* Reservoir bounding box [Xmin, Xmax, Ymin, Ymax, Zmin, Zmax] */
   BC                  bcU[3];
   BC                  bcV[1];
   BC                  bcP[1];
@@ -222,9 +219,6 @@ typedef struct {
   PetscInt            SrcLoc[3];
   PetscReal           SrcRate;
   VFUnilateralType    unilateral;
-  /*
-  VFCouplingType      coupling;
-  */
   VFFlowSolverType    flowsolver;
   VFMechSolverType    mechsolver;
   VFFileFormatType    fileformat;
@@ -240,14 +234,9 @@ typedef struct {
   PetscReal           TotalEnergy;
 } VFCtx;
 
-//extern VFCtx          ctx;
-//extern VFFields       fields;
-
 extern PetscErrorCode OldVFInitialize(VFCtx *ctx,VFFields *fields);  
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
-//extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields,PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz);
 extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields);
-//extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *dy,PetscReal *dz);
 extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx);
 extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFBCInitialize(VFCtx *ctx);

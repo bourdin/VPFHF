@@ -5,9 +5,7 @@
 #include "VFU.h"
 #include "VFFlow.h"
 
-//#include "VFFlow_Fake.h"
-//#include "VFFlow_Poisson.h"
-#include "../Utils/xdmf.h"
+#include "xdmf.h"
 
 #undef __FUNCT__
 #define __FUNCT__ "VFLogInitialize"
