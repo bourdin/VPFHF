@@ -352,7 +352,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   PetscErrorCode      ierr;
   PetscViewer         viewer,h5viewer;
   char                filename[FILENAME_MAX];  
-  //PetscReal           BBmin[3],BBmax[3];
+  PetscReal           BBmin[3],BBmax[3];
   PetscReal           *X,*Y,*Z;
   PetscReal           ****coords_array;
   PetscInt            xs,xm,ys,ym,zs,zm;
@@ -393,13 +393,6 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   
-  ctx->BoundingBox[0] = 0.;
-  ctx->BoundingBox[1] = lx;
-  ctx->BoundingBox[2] = 0.;
-  ctx->BoundingBox[3] = ly;
-  ctx->BoundingBox[4] = 0.;
-  ctx->BoundingBox[5] = lz;
-
   ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVect);CHKERRQ(ierr);
   ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daScal);CHKERRQ(ierr);
   ierr = CartFE_Element3DCreate(&ctx->e3D);CHKERRQ(ierr);
@@ -482,7 +475,11 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   
   
   if (ctx->verbose > 0) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Reservoir bounding box: (%g,%g) x (%g,%g) x (%g,%g)\n",ctx->BoundingBox[0],ctx->BoundingBox[1],ctx->BoundingBox[2],ctx->BoundingBox[3],ctx->BoundingBox[4],ctx->BoundingBox[5]);CHKERRQ(ierr);
+    /*
+      Get bounding box from petsc DA
+    */
+    ierr = DAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Reservoir bounding box: (%g,%g) x (%g,%g) x (%g,%g)\n",BBmin[0],BBmax[0],BBmin[1],BBmax[1],BBmin[2],BBmax[2]);CHKERRQ(ierr);
     ierr = DAView(ctx->daVect,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
     ierr = DAView(ctx->daScal,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
