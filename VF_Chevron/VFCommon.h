@@ -83,6 +83,7 @@ static const char *VFFileFormatName[] = {
   "",
   0
 };
+
 /* 
   all fields involved in the computations
 */

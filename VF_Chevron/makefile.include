@@ -7,4 +7,5 @@ VFOBJ = ${VFDIR}/VF_Chevron/VFCommon.o                \
         ${VFDIR}/VF_Chevron/VFFlow_DarcyPoisson.o     \
         ${VFDIR}/VF_Chevron/VFFlow_DarcySteadyState.o \
         ${VFDIR}/VF_Chevron/CartFE.o                  \
-        ${VFDIR}/VF_Chevron/PetscFixes.o
+        ${VFDIR}/VF_Chevron/PetscFixes.o              \
+        ${VFDIR}/VF_Chevron/xdmf.o
