@@ -87,6 +87,7 @@ static const char *VFFileFormatName[] = {
   all fields involved in the computations
 */
 typedef struct {
+  int numfields;
   Vec V;
   Vec VIrrev;
   Vec U;
@@ -97,6 +98,20 @@ typedef struct {
   Vec pressureRef;
   Vec pmult;
 } VFFields;
+
+static const char *VFFieldNames[] = {
+  "V",
+  "VIrrev",
+  "Displacement",
+  "BCU",
+  "theta",
+  "thetaref",
+  "pressure",
+  "pressureRef",
+  "pmult",
+  "",
+  0
+};
 
 typedef struct {
   PetscReal       E,nu;       /* Young modulus and poisson ratio */
@@ -166,7 +181,7 @@ typedef struct {
 } VFLog;
 
 typedef struct {
-  PetscInt            ncellx,ncelly,ncellz;
+  //PetscInt            ncellx,ncelly,ncellz;
   PetscInt            nlayer;
   PetscReal           *layersep;
   PetscInt            *layer;         /* dim=nz+1. gives the layer number of a cell  */
@@ -229,10 +244,10 @@ typedef struct {
 
 extern PetscErrorCode OldVFInitialize(VFCtx *ctx,VFFields *fields);  
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
-extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields,PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz);
-//extern PetscErrorCode VFInitialize(VFCtx *ctx);
-extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *dy,PetscReal *dz);
-//extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx);
+//extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields,PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz);
+extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields);
+//extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *dy,PetscReal *dz);
+extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx);
 extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFBCInitialize(VFCtx *ctx);
 extern PetscErrorCode VFSolversInitialize(VFCtx *ctx);
