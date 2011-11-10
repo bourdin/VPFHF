@@ -38,6 +38,7 @@ int main(int argc,char **argv)
     /*
       Do flow solver step 
     */
+  //  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n %s \n",ctx.flowsolver);CHKERRQ(ierr);
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 
     /*

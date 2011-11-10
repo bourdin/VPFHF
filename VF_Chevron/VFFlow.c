@@ -8,9 +8,9 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
-#include "VFFlow_DarcyPoisson.h"
+#include "VFFlow_FEM.h"
 #include "VFFlow_Fake.h"
-#include "VFFlow_DarcySteadyState.h"
+#include "VFFlow_MixFEM.h"
 
 
 #undef __FUNCT__
@@ -52,16 +52,14 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
 
   PetscFunctionBegin;
   switch (ctx->flowsolver) {
-    case FLOWSOLVER_DARCYPOISSON:       
-      ierr = VFFlow_DarcyPoisson(ctx,fields);
+    case FLOWSOLVER_FEM:       
+      ierr = VFFlow_FEM(ctx,fields);
+      break;
+    case FLOWSOLVER_MixFEM:
+      ierr = VFFlow_MixFEM(ctx,fields);
       break;
     case FLOWSOLVER_FAKE:
       ierr = VFFlow_Fake(ctx,fields);
-      break;
-    case FLOWSOLVER_DARCYSTEADYSTATE:
-      ierr = VFFlow_DarcySteadyState(ctx,fields);
-    case FLOWSOLVER_DARCYTRANSIENT:
-      SETERRQ1(PETSC_ERR_SUP,"Flow solver %s not implemented yet",VFFlowSolverName[ctx->flowsolver]);
       break;
     case FLOWSOLVER_READFROMFILES:
       ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
