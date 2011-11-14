@@ -106,6 +106,7 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
   /* 
     Saves DA informations
   */
+	ierr = DAView(user.daScal,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   switch (user.fileformat) {
     case FILEFORMAT_BIN:
       ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.bin",user.prefix);CHKERRQ(ierr);
