@@ -64,8 +64,13 @@ def main():
     mygetenv(Param,'PETSC_ARCH',os.getenv('PETSC_ARCH'))
     mygetenv(Param,'VFDIR',os.getenv('VFDIR'))
     mygetenv(Param,'MODE','FakeGMRS_VF')
+<<<<<<< /Volumes/VTrak1/Users/bourdin/Development/VF-Chevron/Examples/FakeGMRS_VF.py
+    mygetenv(Param,'U','-U_ksp_max_it 20000')
+    mygetenv(Param,'V','-V_ksp_max_it 20000')
+=======
     mygetenv(Param,'U',' ')
     mygetenv(Param,'V','')
+>>>>>>> /tmp/FakeGMRS_VF.py~other.AL6xwP
     mygetenv(Param,'FMT','hdf5')
     mygetenv(Param,'OPTS','-alpha 1e-2 -gc .1 -epsilon 20 -eta 1e-5 -mode FRACTURE -preset SYMXY')
 
