@@ -56,13 +56,13 @@ static const char *VFUnilateralName[] = {
 
 typedef enum {
   FLOWSOLVER_FEM,
-  FLOWSOLVER_MixFEM,
+  FLOWSOLVER_MixedFEM,
   FLOWSOLVER_FAKE,
   FLOWSOLVER_READFROMFILES,
   } VFFlowSolverType;
 static const char *VFFlowSolverName[] = {
   "FEM",
-  "MixFEM",
+  "MixedFEM",
   "FAKE",
   "READFROMFILES",
   "",

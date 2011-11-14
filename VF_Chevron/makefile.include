@@ -4,8 +4,8 @@ VFOBJ = ${VFDIR}/VF_Chevron/VFCommon.o                \
         ${VFDIR}/VF_Chevron/VFWell.o                  \
         ${VFDIR}/VF_Chevron/VFFlow.o                  \
         ${VFDIR}/VF_Chevron/VFFlow_Fake.o             \
-        ${VFDIR}/VF_Chevron/VFFlow_FEM.o     \
-        ${VFDIR}/VF_Chevron/VFFlow_MixFEM.o \
+        ${VFDIR}/VF_Chevron/VFFlow_FEM.o              \
+        ${VFDIR}/VF_Chevron/VFFlow_MixedFEM.o         \
         ${VFDIR}/VF_Chevron/CartFE.o                  \
         ${VFDIR}/VF_Chevron/PetscFixes.o              \
         ${VFDIR}/VF_Chevron/xdmf.o
