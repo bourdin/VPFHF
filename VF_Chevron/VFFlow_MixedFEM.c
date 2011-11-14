@@ -15,7 +15,7 @@
 /* 
    Fake flow solver for VF_Chevron.c test
 */
-extern PetscErrorCode VFFlow_MixFEM(VFCtx *ctx, VFFields *fields)
+extern PetscErrorCode VFFlow_MixedFEM(VFCtx *ctx, VFFields *fields)
 {
   SETERRQ1(PETSC_ERR_SUP,"Flow solver %s not implemented yet",VFFlowSolverName[ctx->flowsolver]);
   PetscFunctionReturn(0);

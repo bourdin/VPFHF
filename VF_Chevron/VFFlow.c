@@ -10,7 +10,7 @@
 #include "VFCommon.h"
 #include "VFFlow_FEM.h"
 #include "VFFlow_Fake.h"
-#include "VFFlow_MixFEM.h"
+#include "VFFlow_MixedFEM.h"
 
 
 #undef __FUNCT__
@@ -55,8 +55,8 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
     case FLOWSOLVER_FEM:       
       ierr = VFFlow_FEM(ctx,fields);
       break;
-    case FLOWSOLVER_MixFEM:
-      ierr = VFFlow_MixFEM(ctx,fields);
+    case FLOWSOLVER_MixedFEM:
+      ierr = VFFlow_MixedFEM(ctx,fields);
       break;
     case FLOWSOLVER_FAKE:
       ierr = VFFlow_Fake(ctx,fields);
