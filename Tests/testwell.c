@@ -18,7 +18,7 @@ int main(int argc,char **argv)
   PetscReal           ****coord_array,***d_array,***v_array;
   PetscInt            xs,xm,ys,ym,zs,zm,nx,ny,nz,k,j,i,w,c;
   PetscReal           d0,d1,*x;
-  PetscViewer         h5viewer,XDMFviewer;
+  PetscViewer         h5viewer,XDMFviewer,binviewer;
   PetscReal           epsilon;
   
   ierr = PetscInitialize(&argc,&argv,(char*)0,help);CHKERRQ(ierr);
@@ -123,6 +123,10 @@ int main(int argc,char **argv)
   ierr = XDMFuniformgridFinalize(XDMFviewer);CHKERRQ(ierr); 
   ierr = PetscViewerDestroy(XDMFviewer);CHKERRQ(ierr);
 
+	ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,"TEST.bin",FILE_MODE_WRITE,&binviewer);CHKERRQ(ierr);
+	ierr = DAView(da,binviewer);CHKERRQ(ierr);
+	ierr = VecView(coord,binviewer);CHKERRQ(ierr);
+ierr = PetscViewerDestroy(binviewer);CHKERRQ(ierr);
 
   /*
     Clean up
