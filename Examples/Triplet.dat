@@ -29,9 +29,9 @@ $     PLOT INFORMATION
 $ **************************************************
 
  GRAPHICS = 1             
- PLOTFILE = "Doublet"            
- GRIDPLOT = TRUE
- WELLPLOT = TRUE
+ PLOTFILE = "Triplet"            
+ GRIDPLOT = FALSE
+ WELLPLOT = FALSE
 
 $ ***********************************************
 $      GRID DEFINITION FOR RESERVOIR (GRID 1)
