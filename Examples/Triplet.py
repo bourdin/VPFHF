@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-#PBS -l nodes=2:ppn=2
+#PBS -l select=2:ncpus=4
 #PBS -V
 #PBS -m a
-#PBS -M bnvk@chevron.com
 #PBS -j oe
 #PBS -o Doublet
+#PBS -q gmrs
 
 def mygetenv(Dict,key,defaultvalue=None):
 	### I could do better 
