@@ -232,7 +232,6 @@ typedef struct {
   PetscReal           TotalEnergy;
 } VFCtx;
 
-extern PetscErrorCode OldVFInitialize(VFCtx *ctx,VFFields *fields);  
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
 extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx);
