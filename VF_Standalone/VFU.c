@@ -1110,6 +1110,27 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
             stresscomp[0] = 4; stressdir[0] = 1.;
             stresscomp[1] = 3; stressdir[1] = 1.;
             stresscomp[2] = 2; stressdir[2] = -1.;
+            for (c = 0; c < 3; c++) {
+              if (ctx->bcU[c].face[face] == NONE) {
+                for (k = 0; k < ctx->e3D.nphiz; k++){
+                  z = coords_array[ek+k][ej][ei][2];
+                  stressmag = stressdir[c] * 
+                           (ctx->insitumin[stresscomp[c]] + (z - BBmin[2]) / (BBmax[2] - BBmin[2])
+                            * (ctx->insitumax[stresscomp[c]] - ctx->insitumin[stresscomp[c]]));
+                  for (j = 0; j < ctx->e3D.nphiy; j++) {
+                    for (i = 0; i < ctx->e3D.nphix; i++) {
+                      f_array[ek+k][ej+j][ei+i][c] = stressmag;
+                    }
+                  }
+                }
+              }
+            }
+
+            
+/*            face = Z0;
+            stresscomp[0] = 4; stressdir[0] = 1.;
+            stresscomp[1] = 3; stressdir[1] = 1.;
+            stresscomp[2] = 2; stressdir[2] = -1.;
             for (k = 0; k < ctx->e3D.nphiz; k++){
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1125,6 +1146,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                 }
               }
             }
+            */
             ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_RHSUInSituStresses3D_local(RHS_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
