@@ -62,6 +62,20 @@ int main(int argc,char **argv)
   for (i = 0; i < n[2]; i++) dz[i] = l[2]/n[2];
 
   ierr = VFInitialize(n[0],n[1],n[2],dx,dy,dz);CHKERRQ(ierr);
+	
+	switch (ctx.flowsolver) {
+		case FLOWSOLVER_DARCYSTEADYSTATE:       
+			ierr = FlowSolverInitialize(&ctx);CHKERRQ(ierr);
+			break;
+		case FLOWSOLVER_DARCYTRANSIENT:
+			break; 
+		case FLOWSOLVER_DARCYPOISSON:
+			break; 
+		case FLOWSOLVER_FAKE:
+			break; 
+		case FLOWSOLVER_READFROMFILES:
+			break;
+	}
 
  /* end VIADAT */
 
@@ -142,7 +156,20 @@ int main(int argc,char **argv)
     ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx.prefix,ctx.timestep);CHKERRQ(ierr);
   }
   /* end of time step */
-
+	
+	switch (ctx.flowsolver) {
+		case FLOWSOLVER_DARCYSTEADYSTATE:       
+			ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
+			break;
+		case FLOWSOLVER_DARCYTRANSIENT:
+			break; 
+		case FLOWSOLVER_DARCYPOISSON:
+			break; 
+		case FLOWSOLVER_FAKE:
+			break; 
+		case FLOWSOLVER_READFROMFILES:
+			break;
+	}
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscFinalize();
   return(0);

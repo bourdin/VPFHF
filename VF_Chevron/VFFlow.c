@@ -60,6 +60,7 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
       break;
     case FLOWSOLVER_DARCYSTEADYSTATE:
       ierr = VFFlow_DarcySteadyState(ctx,fields);
+		break;
     case FLOWSOLVER_DARCYTRANSIENT:
       SETERRQ1(PETSC_ERR_SUP,"Flow solver %s not implemented yet",VFFlowSolverName[ctx->flowsolver]);
       break;
