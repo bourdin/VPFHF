@@ -62,9 +62,9 @@ extern PetscErrorCode VFFlow_Fake(VFCtx *ctx, VFFields *fields)
         y = (coords_array[ek][ej][ei][1] - BBmin[1]) / radius_y;
 				x = (coords_array[ek][ej][ei][0] - BBmin[0]) / radius_x;
 				if ( x*x + y*y + z*z < 1.) {
-				  p = ctx->resprop.Pinit;
+				  p = 2. * ctx->resprop.Pinit;
 				} else {
-				  p = ctx->resprop.Pinit * PetscExpScalar ( (1. - x*x - y*y - z*z) / 2. / ctx->vfprop.epsilon);
+				  p = ctx->resprop.Pinit * (1. + PetscExpScalar ( (1. - x*x - y*y - z*z) / 2. / ctx->vfprop.epsilon));
 				}
 				pressure_array[ek][ej][ei] = p;
 			}
