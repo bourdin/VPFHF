@@ -1,11 +1,11 @@
-VFOBJ = ${VFDIR}/VF_Chevron/VFCommon.o                \
-        ${VFDIR}/VF_Chevron/VFU.o                     \
-        ${VFDIR}/VF_Chevron/VFV.o                     \
-        ${VFDIR}/VF_Chevron/VFWell.o                  \
-        ${VFDIR}/VF_Chevron/VFFlow.o                  \
-        ${VFDIR}/VF_Chevron/VFFlow_Fake.o             \
-        ${VFDIR}/VF_Chevron/VFFlow_FEM.o              \
-        ${VFDIR}/VF_Chevron/VFFlow_MixedFEM.o         \
-        ${VFDIR}/VF_Chevron/CartFE.o                  \
-        ${VFDIR}/VF_Chevron/PetscFixes.o              \
-        ${VFDIR}/VF_Chevron/xdmf.o
+VFOBJ = ${VFDIR}/VF_Standalone/VFCommon.o                \
+        ${VFDIR}/VF_Standalone/VFU.o                     \
+        ${VFDIR}/VF_Standalone/VFV.o                     \
+        ${VFDIR}/VF_Standalone/VFWell.o                  \
+        ${VFDIR}/VF_Standalone/VFFlow.o                  \
+        ${VFDIR}/VF_Standalone/VFFlow_Fake.o             \
+        ${VFDIR}/VF_Standalone/VFFlow_FEM.o              \
+        ${VFDIR}/VF_Standalone/VFFlow_MixedFEM.o         \
+        ${VFDIR}/VF_Standalone/CartFE.o                  \
+        ${VFDIR}/VF_Standalone/PetscFixes.o              \
+        ${VFDIR}/VF_Standalone/xdmf.o

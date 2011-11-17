@@ -643,7 +643,7 @@ extern PetscErrorCode VF_RHSUCoupling3D_local(PetscReal *RHS_local,PetscReal ***
         for (c = 0; c < dim; c++,l++) {
           for (g = 0; g < e->ng; g++) {
             RHS_local[l] += e->weight[g] * e->dphi[k][j][i][c][g] 
-                            * (coefalpha * theta_elem[g] - beta * pressure_elem[g])
+                            * (coefalpha * theta_elem[g] + beta * pressure_elem[g])
                             * (v_elem[g] * v_elem[g] + vfprop->eta);  
           }
         }
