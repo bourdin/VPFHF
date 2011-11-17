@@ -6,6 +6,65 @@
 */
 static const char banner[] = "\n\nVF:\nNumerical implementation of the variational approach to fracture.\n(c) 2010-2011 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu\n\n";
 
+
+typedef enum {
+	VELOCITY,
+	PRESSURE,
+	NOBC
+} FlowBCTYPE;
+
+typedef struct {
+	FlowBCTYPE     face[6];
+	FlowBCTYPE     edge[12];
+	FlowBCTYPE     vertex[8];   
+} FLOWBC;
+
+static const char *FLOWBCTYPE_NAME[] = {
+"NORMALVELOCITY",
+"PRESSURE",
+"FLOWBCTYPE_NAME",
+"",
+0
+};
+
+typedef struct {
+	PetscReal       mu;			/* Fluid viscosity						*/
+	PetscReal       rho;        /* Fluid density						*/
+	PetscReal		por;
+	PetscReal       cf;         /* Fluid compressibility				*/
+	PetscReal		beta;		/* Conversion constant					*/
+	PetscReal		gamma;		/*Conversion parameter					*/
+	PetscReal		alpha;		/*Conversion parameter					*/
+	PetscReal		g[3];
+} FlowProp; 
+
+typedef enum {
+	FieldUnits,			/* Flow computation in field units						*/
+	MetricUnits        /* Flow computation in metric units						*/
+} FlowUnit; 
+
+static const char *FlowUnitName[] = {
+"FieldUnit",
+"MetricUnit",
+"FlowUnitName",
+"",
+0
+};
+
+typedef enum { 
+	ALLNORMALFLOWBC,
+	ALLPRESSUREBC
+} FlowCases;
+
+static const char *FlowBC_Case[] = {
+"ALLNORMALFLOWBC",
+"ALLPRESSUREBC",
+"FlowBC_Case",
+"",
+0
+};
+
+
 typedef enum { 
   SYMXY,
   SYMX,
@@ -110,6 +169,8 @@ typedef struct {
   Vec pressure;
   Vec pressureRef;
   Vec pmult;
+	Vec VelnPress;
+	Vec vfperm;
 } VFFields;
 
 typedef struct {
@@ -137,6 +198,7 @@ typedef struct {
   PetscReal         relk;  /* Relative Permeability */
   PetscReal         visc;  /* Viscosity in cp */
   PetscReal         fdens; /* Fluid Density in specific density*/
+	PetscReal		cf;	/* Rock compressibility in field unit*/
 } ResProp; //change them to Vec later
 
 typedef struct {
@@ -199,6 +261,19 @@ typedef struct {
   PC                  pcP;
   KSP                 kspP;
   Vec                 RHSP;
+	
+	Mat					KVelP;
+	PC					pcVelP;
+	KSP					kspVelP;
+	FLOWBC				bcFlow[4];
+	DA					daFlow;
+	DA					daVFperm;
+	FlowProp			flowprop;
+	Vec					RHSVelP;
+	FlowUnit			units;
+	FlowCases			flowcase;
+	PetscReal			flowrate;
+	
   PetscReal           altmintol;
   PetscInt            altminmaxit;
   MatProp             *matprop;

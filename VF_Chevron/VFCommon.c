@@ -129,12 +129,13 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->coupling = COUPLING_GMRSTOVF;
     ierr = PetscOptionsEnum("-coupling","\n\tCoupling type","",VFCouplingName,(PetscEnum)ctx->coupling,(PetscEnum*)&ctx->coupling,PETSC_NULL);CHKERRQ(ierr);
     */
-    ctx->flowsolver = FLOWSOLVER_FAKE;
+	 // ctx->flowsolver = FLOWSOLVER_FAKE;
+    ctx->flowsolver = FLOWSOLVER_DARCYSTEADYSTATE;
     ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
     ctx->fileformat = FILEFORMAT_HDF5;
     ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
 
-    ctx->maxtimestep  = 5;
+    ctx->maxtimestep  = 6;
     ierr = PetscOptionsInt("-maxtimestep","\n\tMaximum number of timestep","",ctx->maxtimestep,&ctx->maxtimestep,PETSC_NULL);CHKERRQ(ierr);
     ctx->maxtimevalue  = 10.;
     ierr = PetscOptionsReal("-maxtimevalue","\n\tMaximum timevalue","",ctx->maxtimevalue,&ctx->maxtimevalue,PETSC_NULL);CHKERRQ(ierr);
@@ -330,6 +331,7 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop)
     resprop->relk = 1.0;   /* fraction */
     resprop->visc = 1.0;   /* cp */
     resprop->fdens = 1.0;  /* specific density */
+	  resprop->cf = 1e-6;  /* Rock Compressibility */
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -359,6 +361,8 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *d
 
   ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVect);CHKERRQ(ierr);
   ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daScal);CHKERRQ(ierr);
+  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,4,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daFlow);CHKERRQ(ierr);
+  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,ctx->ncellx,ctx->ncelly,ctx->ncellz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,6,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVFperm);CHKERRQ(ierr);
   ierr = CartFE_Element3DCreate(&ctx->e3D);CHKERRQ(ierr);
   /*
     Constructs coordinates Vec
@@ -393,6 +397,8 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *d
 
   ierr = DASetCoordinates(ctx->daVect,ctx->coordinates);CHKERRQ(ierr);
   ierr = DASetCoordinates(ctx->daScal,ctx->coordinates);CHKERRQ(ierr);
+  ierr = DASetCoordinates(ctx->daFlow,ctx->coordinates);CHKERRQ(ierr);
+
   switch (ctx->fileformat) {
     case FILEFORMAT_BIN:
       /*
@@ -504,6 +510,14 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DACreateGlobalVector(ctx->daScal,&fields->pmult);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->pmult,"Permeability");CHKERRQ(ierr);
   ierr = VecSet(fields->pmult,0.0);CHKERRQ(ierr);
+	
+  ierr = DACreateGlobalVector(ctx->daFlow,&fields->VelnPress);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->VelnPress,"Velocity and Pressure");CHKERRQ(ierr);
+  ierr = VecSet(fields->VelnPress,0.0);CHKERRQ(ierr);
+
+  ierr = DACreateGlobalVector(ctx->daVFperm,&fields->vfperm);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->vfperm,"Permeability from V-field");CHKERRQ(ierr);
+  ierr = VecSet(fields->vfperm,1.0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
