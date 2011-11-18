@@ -790,8 +790,9 @@ extern PetscErrorCode VFElasticityTimeStep(VFCtx *ctx,VFFields *fields)
   ierr = VF_StepU(fields,ctx);CHKERRQ(ierr);
   ctx->ElasticEnergy=0;
   ctx->InsituWork=0;
+  ctx->PressureWork = 0.;
   ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,&ctx->PressureWork,fields,ctx);CHKERRQ(ierr);
-  ctx->TotalEnergy = ctx->ElasticEnergy - ctx->InsituWork;
+  ctx->TotalEnergy = ctx->ElasticEnergy - ctx->InsituWork + ctx->PressureWork;
   PetscFunctionReturn(0);
 }
 
