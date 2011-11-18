@@ -20,7 +20,7 @@ NBLKOIL = 0        $ Black-Oil single phase option
 ITHERMGRD(1) = 1   $ Include thermal calculations
 THERM_PROP = 2     $ Include temperatures in phase package
 
-TIMEEND = 1.    $ Final simulation time in days
+TIMEEND = 100.    $ Final simulation time in days
 BUGKEY(6) = TRUE   $ Print nonlinear iteration info
 METHOD_DIVIDE = 1
 
@@ -104,9 +104,12 @@ $ ***********************************************
 CR1() = 3.0E-6
 
 $ Permeabilities (Note: Z is vertical direction)
-XPERM1() =  50. 
-YPERM1() =  50.
+XPERM1() =  1. 
+YPERM1() =  1.
 ZPERM1() = 1.
+
+XPERM1(,1,) =  1000. 
+YPERM1(,1,) =  1000.
 
 $ PRINTING
 OUT_TEMPR = TRUE     
@@ -123,16 +126,16 @@ WELLCONN() = 2    $ All wells pass through nodes
 WELLNAME(1) = "I1"
 KINDWELL(1) = 2             $ Well has prescribed water injection rate
 PLIMIT(1) = 5500.           $ BHP limit
-WELLTOP(1 TO 3,1,1) =     1*(400. 500.  4040.)   $ Well top  
-WELLBOTTOM(1 TO 3,1,1) =  1*(400. 500.  4060.)   $ Well bottom
+WELLTOP(1 TO 3,1,1) =     1*(0. 0.  4000.)   $ Well top  
+WELLBOTTOM(1 TO 3,1,1) =  1*(0. 0.  4500.)   $ Well bottom
 RATE(1) = 20000.             $ Prescribed well rate
 WTEMPR(1) = %(WTEMPR)f             $ Temperature of injecting fluid
  
-WELLNAME(2) = "I2"
-KINDWELL(2) = 2             $ Well has prescribed water production rate
-PLIMIT(2) = 5500.            $ BHP limit
-WELLTOP(1 TO 3,1,2) =     600.  1000.  4040.   $ Well top  
-WELLBOTTOM(1 TO 3,1,2) =  600.  1000.  4060.   $ Well bottom
+WELLNAME(2) = "P1"
+KINDWELL(2) = 35             $ Well has prescribed water production rate
+PLIMIT(2) = 2000.            $ BHP limit
+WELLTOP(1 TO 3,1,2) =     1000.  0.  4000.   $ Well top  
+WELLBOTTOM(1 TO 3,1,2) =  1000.  0.  4500.   $ Well bottom
 WTEMPR(2) = %(WTEMPR)f
 RATE(2) = 20000.           $ Prescribed well rate
  
@@ -143,6 +146,6 @@ $ TRANSIENT DATA INPUT BLOCKS
 BeginTime    0.0     $ Time for reading transient data
    DELTIM = 1.0E-5[min]       $ Initial step size
    DTIMMIN = 1.0E-8[min]  $ Minimum step size
-   DTIMMAX = 10.[min]     $ Maximum step size
-   DTIMOUT = 60.[min]      $ Interval for printout 
+   DTIMMAX = 1.[day]     $ Maximum step size
+   DTIMOUT = 1.[day]      $ Interval for printout 
 EndTime                   $ End of block of transient data

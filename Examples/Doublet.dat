@@ -20,7 +20,7 @@ NBLKOIL = 0        $ Black-Oil single phase option
 ITHERMGRD(1) = 1   $ Include thermal calculations
 THERM_PROP = 2     $ Include temperatures in phase package
 
-TIMEEND = 3650.    $ Final simulation time in days
+TIMEEND = 1.    $ Final simulation time in days
 BUGKEY(6) = TRUE   $ Print nonlinear iteration info
 METHOD_DIVIDE = 1
 
@@ -140,5 +140,5 @@ BeginTime    0.0     $ Time for reading transient data
    DELTIM = .1       $ Initial step size
    DTIMMIN = 1.0E-5  $ Minimum step size
    DTIMMAX = 365.     $ Maximum step size
-   DTIMOUT = 100.      $ Interval for printout 
+   DTIMOUT = 20.      $ Interval for printout 
 EndTime                   $ End of block of transient data

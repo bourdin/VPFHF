@@ -139,6 +139,9 @@ typedef struct {
   PetscReal         relk;  /* Relative Permeability */
   PetscReal         visc;  /* Viscosity in cp */
   PetscReal         fdens; /* Fluid Density in specific density*/
+//  PetscReal         TCond_X /* Thermal Conductivity in x-direction */
+ // PetscReal         TCond_Y /* Thermal Conductivity in y-direction */
+ // PetscReal         TCond_Z /* Thermal COnductivity in z-direction */
   /*
     change them to Vec later.
     Instead, I would suggest keeping the structure this way and add a pointer to a resprop in the main context
@@ -176,6 +179,14 @@ typedef struct {
   PetscLogEvent VF_VecPLocalEvent;
 
   PetscLogStage VF_PSolverStage;
+  
+  PetscLogStage VF_TAssemblyStage;
+  PetscCookie   VF_MatTLocalCookie;
+  PetscLogEvent VF_MatTLocalEvent;
+  PetscCookie   VF_VecTLocalCookie;
+  PetscLogEvent VF_VecTLocalEvent;
+  
+  PetscLogStage VF_TSolverStage;
 } VFLog;
 
 typedef struct {
@@ -185,6 +196,7 @@ typedef struct {
   BC                  bcU[3];
   BC                  bcV[1];
   BC                  bcP[1];
+  BC                  bcT[1];
   DA                  daVect;
   DA                  daScal;
   CartFE_Element3D    e3D;
@@ -204,6 +216,10 @@ typedef struct {
   PC                  pcP;
   KSP                 kspP;
   Vec                 RHSP;
+  Mat                 KT;
+  PC                  pcT;
+  KSP                 kspT;
+  Vec                 RHST;
   PetscReal           altmintol;
   PetscInt            altminmaxit;
   MatProp             *matprop;
@@ -215,6 +231,7 @@ typedef struct {
   PetscTruth          hasInsitu;
   PetscTruth          hasCrackPressure;
   PetscReal           BCpres[6];
+  PetscReal           BCtheta[6];
   PetscInt            SrcLoc[3];
   PetscReal           SrcRate;
   VFUnilateralType    unilateral;
