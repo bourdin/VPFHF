@@ -56,7 +56,12 @@ int main(int argc,char **argv)
       case FRACTURE:
         ierr = VFFractureTimeStep(&ctx,&fields);CHKERRQ(ierr);
         ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
-        ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
+        if (ctx.hasInsitu) {
+          ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
+        }
+        if (ctx.hasCrackPressure) {
+          ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:    %e\n",ctx.PressureWork);CHKERRQ(ierr);
+        }
         ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
         ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy+SurfaceEnergy-InsituWork);CHKERRQ(ierr);
         ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ElasticEnergy,InsituWork,SurfaceEnergy,

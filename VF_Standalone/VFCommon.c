@@ -228,6 +228,8 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     }
     ctx->SrcRate  = 0.0;
     ierr = PetscOptionsReal("-SrcRate","\n\tStrength of the source in kg/s","",ctx->SrcRate,&ctx->SrcRate,PETSC_NULL);CHKERRQ(ierr);
+    ctx->hasCrackPressure = PETSC_FALSE;
+    ierr = PetscOptionsTruth("-pressurize","\n\tPressurize cracks","",ctx->hasCrackPressure,&ctx->hasCrackPressure,PETSC_NULL);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   ctx->timestep = 1;
@@ -258,13 +260,10 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   PetscReal          *l,lx,ly,lz;
   
   /*
-    This makes absolutely no sense, but the following option block is ignored
-    unless preceded by a dummy one... 
-    If this behavior persists after upgrading to 3.2, track this bug...
+    for some reasons, the following does not work. 
+    Using nx,ny,nz and lx, ly, lz instead.
   */
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
-  
+  /*
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: geometry options:","");CHKERRQ(ierr);
   {
     ierr = PetscMalloc(3 * sizeof(PetscReal),&l);CHKERRQ(ierr);
@@ -288,9 +287,26 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
     ny = n[1];
     nz = n[2];
     ierr = PetscFree(n);CHKERRQ(ierr);
-
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  */
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: geometry options:","");CHKERRQ(ierr);
+  {
+    nx = 11;
+    ierr = PetscOptionsInt("-nx","\n\tnumber of grid points in the x direction (default 11)","",nx,&nx,PETSC_NULL);CHKERRQ(ierr);
+    ny = nx;
+    ierr = PetscOptionsInt("-ny","\n\tnumber of grid points in the y direction (default nx)","",nx,&ny,PETSC_NULL);CHKERRQ(ierr);
+    nz = nx;
+    ierr = PetscOptionsInt("-nz","\n\tnumber of grid points in the x direction (default nx)","",nx,&nz,PETSC_NULL);CHKERRQ(ierr);
+    lx = 1.;
+    ierr = PetscOptionsReal("-lx","\n\tReservoir size along the x direction (default 1.)","",lx,&lx,PETSC_NULL);CHKERRQ(ierr);
+    ly = lx;
+    ierr = PetscOptionsReal("-ly","\n\tReservoir size along the y direction (default lx)","",lx,&ly,PETSC_NULL);CHKERRQ(ierr);
+    lz = lx;
+    ierr = PetscOptionsReal("-lz","\n\tReservoir size along the z direction (default lx)","",lx,&lz,PETSC_NULL);CHKERRQ(ierr);
+  }
+  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  
   
   ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVect);CHKERRQ(ierr);
   ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daScal);CHKERRQ(ierr);
@@ -506,7 +522,7 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop)
     resprop->perm = 1.e-1; /* Multiply by 1e12 because pressure unit in MPa, viscosity unit in cp, and density is specific density */
     resprop->por  = 0.2;   /* fraction */
     resprop->Pinit = 20.;  /* MPa */
-    resprop->Tinit = 200.; /* Celcius */
+    resprop->Tinit = 200.; /* Celsius */
     resprop->relk = 1.0;   /* fraction */
     resprop->visc = 1.0;   /* cp */
     resprop->fdens = 1.0;  /* specific density */
@@ -774,7 +790,7 @@ extern PetscErrorCode VFElasticityTimeStep(VFCtx *ctx,VFFields *fields)
   ierr = VF_StepU(fields,ctx);CHKERRQ(ierr);
   ctx->ElasticEnergy=0;
   ctx->InsituWork=0;
-  ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
+  ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,&ctx->PressureWork,fields,ctx);CHKERRQ(ierr);
   ctx->TotalEnergy = ctx->ElasticEnergy - ctx->InsituWork;
   PetscFunctionReturn(0);
 }
@@ -817,10 +833,10 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
     altminit++;
   } while (errV > ctx->altmintol && altminit <= ctx->altminmaxit);
   
-  ctx->ElasticEnergy=0;
-  ctx->InsituWork=0;
-  ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
-  ctx->SurfaceEnergy=0;
+  ctx->ElasticEnergy = 0.;
+  ctx->InsituWork = 0.;
+  ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,&ctx->PressureWork,fields,ctx);CHKERRQ(ierr);
+  ctx->SurfaceEnergy = 0.;
   ierr = VF_VEnergy3D(&ctx->SurfaceEnergy,fields,ctx);CHKERRQ(ierr);
   ctx->TotalEnergy = ctx->ElasticEnergy + ctx->SurfaceEnergy - ctx->InsituWork;
   ierr = VecDestroy(Vold);CHKERRQ(ierr);

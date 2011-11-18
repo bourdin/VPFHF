@@ -745,7 +745,6 @@ extern PetscErrorCode VF_RHSUPressure3D_local(PetscReal *RHS_local,PetscReal ***
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
-  PetscInt       dim=3;
   PetscReal      *pressure_elem,*gradv_elem[3];
 
   PetscFunctionBegin;
@@ -759,7 +758,7 @@ extern PetscErrorCode VF_RHSUPressure3D_local(PetscReal *RHS_local,PetscReal ***
   */
   for (g = 0; g < e->ng; g++) {
     pressure_elem[g] = 0;
-    for (c=0; c<dim; c++) gradv_elem[c][g] = 0.;
+    for (c=0; c<3; c++) gradv_elem[c][g] = 0.;
   }
   for (k = 0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
@@ -767,12 +766,12 @@ extern PetscErrorCode VF_RHSUPressure3D_local(PetscReal *RHS_local,PetscReal ***
         for (g = 0; g < e->ng; g++) {
           pressure_elem[g] += e->phi[k][j][i][g] 
                               * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i]);
-          for (c=0; c<dim; c++) gradv_elem[c][g] += e->dphi[k][j][i][g][c] * v_array[ek+k][ej+j][ei+i];
+          for (c=0; c<3; c++) gradv_elem[c][g] += e->dphi[k][j][i][c][g] * v_array[ek+k][ej+j][ei+i];
         }
       }
     }
   }  
-  ierr = PetscLogFlops((3 + 2*dim) * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  ierr = PetscLogFlops(9 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
 
   /*
     Accumulate the contribution of the current element to the local
@@ -781,16 +780,17 @@ extern PetscErrorCode VF_RHSUPressure3D_local(PetscReal *RHS_local,PetscReal ***
   for (l=0,k = 0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
-        for (c = 0; c < dim; c++,l++) {
+        for (c = 0; c < 3; c++,l++) {
           for (g = 0; g < e->ng; g++) {
             RHS_local[l] += e->weight[g] * pressure_elem[g] 
+                          * gradv_elem[c][g]            
                           * e->phi[k][j][i][g] ;  
           }
         }
       }
     }
   }
-  ierr = PetscLogFlops(4 * dim * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  ierr = PetscLogFlops(12 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
   /*
     Clean up
   */
@@ -1085,6 +1085,11 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                                                     &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                                     ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
             break;
+        }
+        if (ctx->hasCrackPressure) {
+          ierr = VF_RHSUPressure3D_local(RHS_local,v_array,pressure_array,pressureRef_array,
+                                           &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
+                                           ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
         }
         ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
         for (l=0,k = 0; k < ctx->e3D.nphiz; k++) {
@@ -1553,7 +1558,7 @@ extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,Pets
           pressure_elem[g] += e->phi[k][j][i][g] 
                               * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i]);
           for (c=0; c<dim; c++) {
-            gradv_elem[c][g] += e->dphi[k][j][i][g][c] * v_array[ek+k][ej+j][ei+i];
+            gradv_elem[c][g] += e->dphi[k][j][i][c][g] * v_array[ek+k][ej+j][ei+i];
             u_elem[c][g]     += e->phi[k][j][i][g]     * u_array[ek+k][ej+j][ei+i][c];
           }
         }
@@ -1569,16 +1574,14 @@ extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,Pets
   for (l=0,k = 0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
-        for (c = 0; c < dim; c++,l++) {
-          for (g = 0; g < e->ng; g++) {
-            *PressureWork_local += e->weight[g] * pressure_elem[g] 
-                                 * u_elem[c][g] * gradv_elem[c][g];  
-          }
+        for (g = 0; g < e->ng; g++) {
+          *PressureWork_local += e->weight[g] * pressure_elem[g] 
+                               * (u_elem[0][g] * gradv_elem[0][g] + u_elem[1][g] * gradv_elem[1][g] + u_elem[2][g] * gradv_elem[2][g]);  
         }
       }
     }
   }
-  ierr = PetscLogFlops(4 * dim * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  ierr = PetscLogFlops(8 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
   /*
     Clean up
   */
@@ -1722,7 +1725,7 @@ extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscRea
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWork,VFFields *fields,VFCtx *ctx)
+extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWork,PetscReal *PressureWork,VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -1736,7 +1739,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   PetscReal      ****u_array,***v_array;
   PetscReal      ***theta_array,***thetaRef_array;
   PetscReal      ***pressure_array,***pressureRef_array;
-  PetscReal      myInsituWork=0.;
+  PetscReal      myInsituWork=0.,myPressureWork=0.;
   PetscReal      myElasticEnergy=0.,myElasticEnergyLocal=0.;
   PetscReal      hx,hy,hz;
   PetscReal      ****coords_array;
@@ -1814,6 +1817,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   
   *ElasticEnergy = 0;
   *InsituWork = 0;
+  *PressureWork = 0.;
   for (ek = zs; ek < zs + zm; ek++) {
     for (ej = ys; ej < ys+ym; ej++) {
       for (ei = xs; ei < xs+xm; ei++) {
@@ -1831,6 +1835,12 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                                         &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                         ek,ej,ei,&ctx->e3D);CHKERRQ(ierr); 
         myElasticEnergy += myElasticEnergyLocal;
+        if (ctx->hasCrackPressure) {
+          ierr = VF_PressureWork3D_local(&myPressureWork,u_array,v_array,pressure_array,pressureRef_array,
+                                           &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
+                                           ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
+        }
+        //myPressureWork += myPressureWorkLocal;
         ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
         
         if (ctx->hasInsitu) {
@@ -2016,6 +2026,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
     }
   }
   ierr = MPI_Reduce(&myElasticEnergy,ElasticEnergy,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
+  ierr = MPI_Reduce(&myPressureWork,PressureWork,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
   ierr = MPI_Reduce(&myInsituWork,InsituWork,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
   
   ierr = DAVecRestoreArrayDOF(ctx->daVect,u_localVec,&u_array);CHKERRQ(ierr);

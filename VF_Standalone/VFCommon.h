@@ -213,6 +213,7 @@ typedef struct {
   PetscReal           insitumin[6];
   PetscReal           insitumax[6];
   PetscTruth          hasInsitu;
+  PetscTruth          hasCrackPressure;
   PetscReal           BCpres[6];
   PetscInt            SrcLoc[3];
   PetscReal           SrcRate;
@@ -229,6 +230,7 @@ typedef struct {
   PetscReal           ElasticEnergy;
   PetscReal           SurfaceEnergy;
   PetscReal           InsituWork;
+  PetscReal           PressureWork;
   PetscReal           TotalEnergy;
 } VFCtx;
 
