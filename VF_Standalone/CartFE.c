@@ -851,9 +851,9 @@ extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof)
 #define __FUNCT__ "VecApplyDirichletFlowBC"
 /*
   VecApplyDirichletBC
-
+  (c) 2011 K. Yoshioka, CHEVRON ETC
 */
-extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *BCpres)
+extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,BC *BC,PetscReal *BCflow)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -862,7 +862,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
   PetscInt       i,j,k,c;
   DA             da;
   PetscReal      ****RHS_array;
-  PetscReal      ****BCP_array;
+  PetscReal      ****BCF_array;
   PetscInt       dim,dof;
   
   PetscFunctionBegin;
@@ -874,12 +874,12 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
   
   if (dim == 2) {
     ierr = PetscMalloc(sizeof(PetscReal ***),&RHS_array);CHKERRQ(ierr);
-    ierr = PetscMalloc(sizeof(PetscReal ***),&BCP_array);CHKERRQ(ierr);
+    ierr = PetscMalloc(sizeof(PetscReal ***),&BCF_array);CHKERRQ(ierr);
     ierr = DAVecGetArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(da,BCU,&BCP_array[0]);CHKERRQ(ierr);
+    ierr = DAVecGetArrayDOF(da,BCF,&BCF_array[0]);CHKERRQ(ierr);
   } else {
     ierr = DAVecGetArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(da,BCU,&BCP_array);CHKERRQ(ierr);
+    ierr = DAVecGetArrayDOF(da,BCF,&BCF_array);CHKERRQ(ierr);
   }
   
   for (c = 0;c < dof;c++) {
@@ -894,14 +894,14 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
       if (BC[c].face[X0] == FIXED) {
         for (k = zs; k < zs + zm; k++) {
           for (j = ys; j < ys + ym; j++) {
-            RHS_array[k][j][i][c] = BCP_array[k][j][i][c];
+            RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
           }
         }
       }
       if (BC[c].face[X0] == VALUE) {
         for (k = zs; k < zs + zm; k++) {
           for (j = ys; j < ys + ym; j++) {
-            RHS_array[k][j][i][c] = BCpres[X0];
+            RHS_array[k][j][i][c] = BCflow[X0];
           }
         }
       }  
@@ -914,14 +914,14 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
       if (BC[c].face[X1] == FIXED) {
         for (k = zs; k < zs + zm; k++) {
           for (j = ys; j < ys + ym; j++) {
-            RHS_array[k][j][i][c] = BCP_array[k][j][i][c];
+            RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
           }
         }
       }
       if (BC[c].face[X1] == VALUE) {
         for (k = zs; k < zs + zm; k++) {
           for (j = ys; j < ys + ym; j++) {
-            RHS_array[k][j][i][c] = BCpres[X1];
+            RHS_array[k][j][i][c] = BCflow[X1];
           }
         }
       }  
@@ -934,14 +934,14 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
       if (BC[c].face[Y0] == FIXED) {
         for (k = zs; k < zs + zm; k++) {
           for (i = xs; i < xs + xm; i++) {
-            RHS_array[k][j][i][c] = BCP_array[k][j][i][c];
+            RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
           }
         }
       }
       if (BC[c].face[Y0] == VALUE) {
         for (k = zs; k < zs + zm; k++) {
           for (i = xs; i < xs + xm; i++) {
-            RHS_array[k][j][i][c] = BCpres[Y0];
+            RHS_array[k][j][i][c] = BCflow[Y0];
           }
         }
       }
@@ -954,14 +954,14 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
       if (BC[c].face[Y1] == FIXED) {
         for (k = zs; k < zs + zm; k++) {
           for (i = xs; i < xs + xm; i++) {
-            RHS_array[k][j][i][c] = BCP_array[k][j][i][c];
+            RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
           }
         }
       }
       if (BC[c].face[Y1] == VALUE) {
         for (k = zs; k < zs + zm; k++) {
           for (i = xs; i < xs + xm; i++) {
-            RHS_array[k][j][i][c] = BCpres[Y1];
+            RHS_array[k][j][i][c] = BCflow[Y1];
           }
         }
       }
@@ -975,14 +975,14 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
         if (BC[c].face[Z0] == FIXED) {
           for (j = ys; j < ys + ym; j++) {
             for (i = xs; i < xs + xm; i++) {
-              RHS_array[k][j][i][c] = BCP_array[k][j][i][c];
+              RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
             }
           }
         }
         if (BC[c].face[Z0] == VALUE) {
           for (j = ys; j < ys + ym; j++) {
             for (i = xs; i < xs + xm; i++) {
-              RHS_array[k][j][i][c] = BCpres[Z0];
+              RHS_array[k][j][i][c] = BCflow[Z0];
             }
           }
         }
@@ -995,14 +995,14 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
         if (BC[c].face[Z1] == FIXED) {
           for (j = ys; j < ys + ym; j++) {
             for (i = xs; i < xs + xm; i++) {
-              RHS_array[k][j][i][c] = BCP_array[k][j][i][c];
+              RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
             }
           }
         }
         if (BC[c].face[Z1] == VALUE) {
           for (j = ys; j < ys + ym; j++) {
             for (i = xs; i < xs + xm; i++) {
-              RHS_array[k][j][i][c] = BCpres[Z1];
+              RHS_array[k][j][i][c] = BCflow[Z1];
             }
           }
         }
@@ -1012,12 +1012,12 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *
   
   if (dim == 2) {
     ierr = DAVecRestoreArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
-    ierr = DAVecRestoreArrayDOF(da,BCU,&BCP_array[0]);CHKERRQ(ierr);
+    ierr = DAVecRestoreArrayDOF(da,BCF,&BCF_array[0]);CHKERRQ(ierr);
     ierr = PetscFree(RHS_array);CHKERRQ(ierr);
-    ierr = PetscFree(BCP_array);CHKERRQ(ierr);
+    ierr = PetscFree(BCF_array);CHKERRQ(ierr);
   } else {
     ierr = DAVecRestoreArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
-    ierr = DAVecRestoreArrayDOF(da,BCU,&BCP_array);CHKERRQ(ierr);
+    ierr = DAVecRestoreArrayDOF(da,BCF,&BCF_array);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }

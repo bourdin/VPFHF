@@ -3,6 +3,10 @@
 #PBS -l select=2:ncpus=4
 #PBS -V
 #PBS -m a
+<<<<<<< local
+#PBS -M kyac@chevron.com
+=======
+>>>>>>> other
 #PBS -j oe
 #PBS -o Doublet
 #PBS -q gmrs
@@ -47,12 +51,12 @@ def main():
 	# Timestamp:
 	print '###\n### Script started at %s\n###\n'%time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 	Param = {}
-	mygetenv(Param,'NX',10)
-	mygetenv(Param,'NY',15)
-	mygetenv(Param,'NZ',5)
+	mygetenv(Param,'NX',20)
+	mygetenv(Param,'NY',20)
+	mygetenv(Param,'NZ',10)
 	mygetenv(Param,'DX',1000/Param['NX'])
-	mygetenv(Param,'DY',1500/Param['NY'])
-	mygetenv(Param,'DZ',100/Param['NZ'])
+	mygetenv(Param,'DY',1000/Param['NY'])
+	mygetenv(Param,'DZ',500/Param['NZ'])
 	mygetenv(Param,'TEMPR1',180)
 	mygetenv(Param,'WTEMPR',80)
 	mygetenv(Param,'PREFIX','Triplet')
@@ -74,14 +78,15 @@ def main():
 	mygetenv(Param,'COUPLING','FULL')
 	mygetenv(Param,'VERBOSE',0)
 
-	mygetenv(Param,'E',1e+6)
- 	mygetenv(Param,'EPSILON',20)
-	mygetenv(Param,'NU',.25)
-	mygetenv(Param,'GC',1)
+	mygetenv(Param,'E',1)
+ 	mygetenv(Param,'EPSILON',50)
+	mygetenv(Param,'NU',.2)
+	mygetenv(Param,'GC',0.2)
 	mygetenv(Param,'ALPHA',1e-5)
+	mygetenv(Param,'BETA',1e-6)
 	mygetenv(Param,'ETA',1e-5)
-	mygetenv(Param,'INSITUMIN','0,0,0')
-	mygetenv(Param,'INSITUMAX','0,0,0')
+	mygetenv(Param,'INSITUMIN','-3e-3,-6e-3,-6e-3')
+	mygetenv(Param,'INSITUMAX','-3e-3,-6e-3,-6e-3')
 	mygetenv(Param,'VFOPTS','-U_ksp_max_it 20000 -V_ksp_max_it 2000')
 
 	print 'Param:    \n',Param
@@ -110,7 +115,7 @@ def main():
 	
 	t1 = time.time()
 	cmd = '''mpirun %(GMRSDIR)s/%(GMRSARCH)s/%(GMRSBIN)s -p %(PREFIX)s \
-           -E %(E)f -nu %(NU)f -alpha %(ALPHA)f -gc %(GC)f -mode %(MODE)s \
+           -E %(E)f -nu %(NU)f -alpha %(ALPHA)f -beta %(BETA)f -gc %(GC)f -mode %(MODE)s \
            -preset %(PRESET)s -coupling %(COUPLING)s -epsilon %(EPSILON)f -eta %(ETA)f \
            -verbose %(VERBOSE)i -insitumin %(INSITUMIN)s -insitumax %(INSITUMAX)s %(VFOPTS)s < temp.txt'''%Param
 	print cmd

@@ -17,6 +17,7 @@
 #define __FUNCT__ "BCPInit"
 /* 
    BCPInit
+   Keita Yoshioka yoshk@chevron.com
 */
 extern PetscErrorCode BCPInit(BC *BC,VFCtx *ctx)
 {
@@ -26,7 +27,7 @@ extern PetscErrorCode BCPInit(BC *BC,VFCtx *ctx)
   ierr = BCInit(BC,1);CHKERRQ(ierr);
 
 /*
-  if given value is positive, this applies 
+  When positive value is given, boundary condiction has a numecial value
 */
   if(ctx->BCpres[0] > -1.e-8) BC[0].face[X0] = VALUE;
   if(ctx->BCpres[1] > -1.e-8) BC[0].face[X1] = VALUE;
@@ -38,6 +39,33 @@ extern PetscErrorCode BCPInit(BC *BC,VFCtx *ctx)
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "BCTInit"
+/*
+  BCTInit
+  Keita Yoshioka yoshk@chevron.com
+*/
+extern PetscErrorCode BCTInit(BC *BC,VFCtx *ctx)
+{
+  PetscErrorCode ierr;
+  
+  PetscFunctionBegin;
+  ierr = BCInit(BC,1);CHKERRQ(ierr);
+  
+/*
+  When positive value is given, boundary condiction has a numecial value
+*/
+  if(ctx->BCtheta[0] > -1.e-8) BC[0].face[X0] = VALUE;
+  if(ctx->BCtheta[1] > -1.e-8) BC[0].face[X1] = VALUE;
+  if(ctx->BCtheta[2] > -1.e-8) BC[0].face[Y0] = VALUE;
+  if(ctx->BCtheta[3] > -1.e-8) BC[0].face[Y1] = VALUE;
+  if(ctx->BCtheta[4] > -1.e-8) BC[0].face[Z0] = VALUE;
+  if(ctx->BCtheta[5] > -1.e-8) BC[0].face[Z1] = VALUE;
+
+  PetscFunctionReturn(0);
+}
+  
+  
 
 /*
   VFFlowTimeStep: Does one time step of the flow solver selected in ctx.flowsolver

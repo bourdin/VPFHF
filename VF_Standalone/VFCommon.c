@@ -119,6 +119,20 @@ extern PetscErrorCode VFLogInitialize(VFLog *vflog)
   ierr = PetscCookieRegister  ("Energy",&vflog->VF_EnergyLocalCookie);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("Energy",vflog->VF_EnergyLocalCookie,&vflog->VF_EnergyLocalEvent);CHKERRQ(ierr);
   
+  ierr = PetscLogStageRegister("P assembly",&vflog->VF_PAssemblyStage);CHKERRQ(ierr);
+  ierr = PetscCookieRegister  ("P Mat local",&vflog->VF_MatPLocalCookie);CHKERRQ(ierr);
+  ierr = PetscLogEventRegister("P Mat local",vflog->VF_MatPLocalCookie,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
+  ierr = PetscCookieRegister  ("P Vec local",&vflog->VF_VecPLocalCookie);CHKERRQ(ierr);
+  ierr = PetscLogEventRegister("P Vec local",vflog->VF_VecPLocalCookie,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
+  ierr = PetscLogStageRegister("P solver",&vflog->VF_PSolverStage);CHKERRQ(ierr);  
+
+  ierr = PetscLogStageRegister("T assembly",&vflog->VF_TAssemblyStage);CHKERRQ(ierr);
+  ierr = PetscCookieRegister  ("T Mat local",&vflog->VF_MatTLocalCookie);CHKERRQ(ierr);
+  ierr = PetscLogEventRegister("T Mat local",vflog->VF_MatTLocalCookie,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
+  ierr = PetscCookieRegister  ("T Vec local",&vflog->VF_VecTLocalCookie);CHKERRQ(ierr);
+  ierr = PetscLogEventRegister("T Vec local",vflog->VF_VecTLocalCookie,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
+  ierr = PetscLogStageRegister("T solver",&vflog->VF_TSolverStage);CHKERRQ(ierr);    
+
   PetscFunctionReturn(0);
 }
 
@@ -619,6 +633,12 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
     ierr = BCView(&ctx->bcP[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
   
+  ierr = BCTInit(&ctx->bcT[0],ctx);CHKERRQ(ierr);
+  if (ctx->verbose > 0) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"BCT:\n");CHKERRQ(ierr);
+	ierr = BCView(&ctx->bcT[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
+  }
+  
   PetscFunctionReturn(0);
   }
 
@@ -628,6 +648,7 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
   VFSolversInitialize: Creates matrices, RHS, solvers
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+      Keita Yoshioka yoshk@chevron.com   
 */
 extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 {
@@ -699,6 +720,27 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = PCSetType(ctx->pcP,PCBJACOBI);CHKERRQ(ierr);
   ierr = PCSetFromOptions(ctx->pcP);CHKERRQ(ierr);
 
+  if (comm_size == 1) {
+    ierr = DAGetMatrix(ctx->daScal,MATSEQAIJ,&ctx->KT);CHKERRQ(ierr);
+  } else {
+    ierr = DAGetMatrix(ctx->daScal,MATMPIAIJ,&ctx->KT);CHKERRQ(ierr);
+  }
+  ierr = MatSetOption(ctx->KT,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = DACreateGlobalVector(ctx->daScal,&ctx->RHST);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->RHST,"RHST");CHKERRQ(ierr);
+
+  ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspT);CHKERRQ(ierr);
+
+  ierr = KSPSetTolerances(ctx->kspT,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSetOperators(ctx->kspT,ctx->KT,ctx->KT,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
+  ierr = KSPSetInitialGuessNonzero(ctx->kspT,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = KSPAppendOptionsPrefix(ctx->kspT,"T_");CHKERRQ(ierr);
+  ierr = KSPSetType(ctx->kspT,KSPBCGSL);CHKERRQ(ierr);
+  ierr = KSPSetFromOptions(ctx->kspT);CHKERRQ(ierr);
+  ierr = KSPGetPC(ctx->kspT,&ctx->pcT);CHKERRQ(ierr);
+  ierr = PCSetType(ctx->pcT,PCBJACOBI);CHKERRQ(ierr);
+  ierr = PCSetFromOptions(ctx->pcT);CHKERRQ(ierr);
+  
   PetscFunctionReturn(0);
 }
 
@@ -709,6 +751,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   VFLayerInit: find the horizontal layer associated to a cell in the most stupid and unoptimzed way
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+
 */
 extern PetscErrorCode VFLayerInit(VFCtx *ctx)
 {
@@ -809,6 +852,7 @@ extern PetscErrorCode VFElasticityTimeStep(VFCtx *ctx,VFFields *fields)
   VFFractureTimeStep
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+
 */
 extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
 {
