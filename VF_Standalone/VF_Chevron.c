@@ -21,9 +21,6 @@ int main(int argc,char **argv)
   VFFields            fields;
   PetscErrorCode      ierr;
   
-  PetscReal           ElasticEnergy = 0;
-  PetscReal           InsituWork = 0;
-  PetscReal           SurfaceEnergy = 0;
   char                filename[FILENAME_MAX];
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -49,9 +46,8 @@ int main(int argc,char **argv)
         ierr = VFElasticityTimeStep(&ctx,&fields);CHKERRQ(ierr);
         ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
         ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
-        ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork);CHKERRQ(ierr);
-        ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e\n",ctx.timestep,ElasticEnergy,InsituWork,
-                                  ElasticEnergy - InsituWork);CHKERRQ(ierr); 
+        ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.TotalEnergy);CHKERRQ(ierr);
+        ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e\n",ctx.timestep,ctx.ElasticEnergy,ctx.TotalEnergy);CHKERRQ(ierr); 
       break;
       case FRACTURE:
         ierr = VFFractureTimeStep(&ctx,&fields);CHKERRQ(ierr);
@@ -60,12 +56,12 @@ int main(int argc,char **argv)
           ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
         }
         if (ctx.hasCrackPressure) {
-          ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:    %e\n",ctx.PressureWork);CHKERRQ(ierr);
+          ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:   %e\n",ctx.PressureWork);CHKERRQ(ierr);
         }
         ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
-        ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy+SurfaceEnergy-InsituWork);CHKERRQ(ierr);
-        ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ElasticEnergy,InsituWork,SurfaceEnergy,
-                                  ElasticEnergy - InsituWork + SurfaceEnergy);CHKERRQ(ierr); 
+        ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.TotalEnergy);CHKERRQ(ierr);
+        ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ctx.ElasticEnergy,
+          ctx.InsituWork,ctx.SurfaceEnergy,ctx.TotalEnergy);CHKERRQ(ierr); 
       break;
       case NOMECH:
         ierr = PetscPrintf(PETSC_COMM_WORLD,"Skipping mechanics step\n");CHKERRQ(ierr);

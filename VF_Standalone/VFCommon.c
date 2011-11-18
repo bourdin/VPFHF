@@ -843,7 +843,7 @@ extern PetscErrorCode VFElasticityTimeStep(VFCtx *ctx,VFFields *fields)
   ctx->InsituWork=0;
   ctx->PressureWork = 0.;
   ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,&ctx->PressureWork,fields,ctx);CHKERRQ(ierr);
-  ctx->TotalEnergy = ctx->ElasticEnergy - ctx->InsituWork + ctx->PressureWork;
+  ctx->TotalEnergy = ctx->ElasticEnergy - ctx->InsituWork - ctx->PressureWork;
   PetscFunctionReturn(0);
 }
 
@@ -891,7 +891,7 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
   ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,&ctx->PressureWork,fields,ctx);CHKERRQ(ierr);
   ctx->SurfaceEnergy = 0.;
   ierr = VF_VEnergy3D(&ctx->SurfaceEnergy,fields,ctx);CHKERRQ(ierr);
-  ctx->TotalEnergy = ctx->ElasticEnergy + ctx->SurfaceEnergy - ctx->InsituWork;
+  ctx->TotalEnergy = ctx->ElasticEnergy + ctx->SurfaceEnergy - ctx->InsituWork - ctx->PressureWork;
   ierr = VecDestroy(Vold);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -908,6 +908,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 {
   PetscErrorCode ierr;
   char           filename[FILENAME_MAX];
+  PetscInt       nopts;
   
   PetscFunctionBegin;
   ierr = PetscFree(ctx->matprop);CHKERRQ(ierr);
@@ -948,7 +949,11 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 #endif
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx->prefix);CHKERRQ(ierr);
   ierr = PetscLogPrintSummary(PETSC_COMM_WORLD,filename);CHKERRQ(ierr);
-
+  ierr = PetscOptionsAllUsed(&nopts);CHKERRQ(ierr);
+  if (nopts > 0) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nWARNING: \nSome options were unused. Check the command line for typos.\n");CHKERRQ(ierr);
+    ierr = PetscOptionsLeft();CHKERRQ(ierr);
+  }
   PetscFunctionReturn(0);
 }
 
