@@ -21,12 +21,15 @@ int main(int argc,char **argv)
   VFFields            fields;
   PetscErrorCode      ierr;
   
-  PetscReal           cx = .2,cz = .2;
+  PetscReal           radius = .2;
+  PetscReal           center[3]={0.,0.,.5};
+  PetscInt            orientation=2;
+  PetscInt            nopts=3;
   PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
   PetscReal       ****coords_array;
   PetscReal        ***v_array;  
   PetscReal           BBmin[3],BBmax[3];
-  PetscReal           x,z;  
+  PetscReal           x,y,z;  
   PetscReal           ElasticEnergy = 0;
   PetscReal           InsituWork = 0;
   PetscReal           SurfaceEnergy = 0;
@@ -35,30 +38,72 @@ int main(int argc,char **argv)
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-cx",&cx,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-cz",&cz,PETSC_NULL);CHKERRQ(ierr);
-  
-  /*
-    Build a composite v_Irrev field that is 0 inside the ellipse or radii (cx,cz)
-    in the (x,z) plane centered at 0,0,lz/2.
-  */
+  ierr = PetscOptionsGetReal(PETSC_NULL,"-radius",&radius,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
+
+  ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
   ierr = DAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	
 	ierr = DAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);    
-  if (ys == 0) {
-    for (k = zs; k < zs+zm; k++) {
-      for (i = xs; i < xs+xm; i++) {
-        z = (coords_array[k][0][i][2] - (BBmin[2] + BBmax[2]) * .5) / cz;
-        x = (coords_array[k][0][i][0] - BBmin[0]) / cx;
-        if ( x*x + z*z < 1.) {
-          v_array[k][0][i] = 0.;
+
+  switch (orientation) {
+    case 1:
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of radius %g at (%g,%g,%g) with normal vector <1,0,0>\n",
+                         radius,center[0],center[1],center[2]);CHKERRQ(ierr);
+      i = (center[0] - BBmin[0]) / (BBmax[0] - BBmin[0]) * nx;      
+      if (i >= xs && i < (xs+xm)) { 
+        for (k = zs; k < zs+zm; k++) {
+          for (j = ys; j < ys+ym; j++) {
+            z = (coords_array[k][j][i][2] - center[2]) / radius;
+            y = (coords_array[k][j][i][1] - center[1]) / radius;
+            if ( z*z + y*y < 1.) {
+              v_array[k][j][i] = 0.;
+            }
+          }
         }
-			}
-		}
-	}
+      }      
+      break;
+    case 2:
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of radius %g at (%g,%g,%g) with normal vector <0,1,0>\n",
+                         radius,center[0],center[1],center[2]);CHKERRQ(ierr);
+      j = (center[1] - BBmin[1]) / (BBmax[1] - BBmin[1]) * ny;      
+      if (j >= ys && j < (ys+ym)) { 
+        for (k = zs; k < zs+zm; k++) {
+          for (i = xs; i < xs+xm; i++) {
+            z = (coords_array[k][j][i][2] - center[2]) / radius;
+            x = (coords_array[k][j][i][0] - center[0]) / radius;
+            if ( x*x + z*z < 1.) {
+              v_array[k][j][i] = 0.;
+            }
+          }
+        }
+      }      
+      break;
+    case 3:
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of radius %g at (%g,%g,%g) with normal vector <0,0,1>\n",
+                         radius,center[0],center[1],center[2]);CHKERRQ(ierr);
+      k = (center[2] - BBmin[2]) / (BBmax[2] - BBmin[2]) * nz;      
+      if (k >= zs && k < (zs+zm)) { 
+        for (j = ys; j < ys+ym; j++) {
+          for (i = xs; i < xs+xm; i++) {
+            y = (coords_array[k][j][i][1] - center[1]) / radius;
+            x = (coords_array[k][j][i][0] - center[0]) / radius;
+            if ( x*x + y*y < 1.) {
+              v_array[k][j][i] = 0.;
+            }
+          }
+        }
+      }      
+      break;
+    default:
+      SETERRQ1(PETSC_ERR_USER,"ERROR: Orientation should be one of {1,2,3}, got %i\n",orientation);
+      break;
+  }  
+
+
 	ierr = DAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
 	ierr = DAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 
@@ -70,24 +115,26 @@ int main(int argc,char **argv)
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,ctx.resprop.Pinit);CHKERRQ(ierr);
   ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
-  ctx.hasCrackPressure = PETSC_TRUE;
-  
-  ctx.hasCrackPressure = PETSC_FALSE;
-  //ierr = VF_ComputeBCU(&fields,&ctx);CHKERRQ(ierr);
+
   ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr);
   ctx.hasCrackPressure = PETSC_TRUE;
-  //ierr = VFElasticityTimeStep(&ctx,&fields);CHKERRQ(ierr);
   ierr = VF_StepU(&fields,&ctx);
+  ctx.ElasticEnergy=0;
+  ctx.InsituWork=0;
+  ctx.PressureWork = 0.;
+  ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
+  ctx.TotalEnergy = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork;
+  
+  
+  
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
   if (ctx.hasCrackPressure) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:    %e\n",ctx.PressureWork);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:   %e\n",ctx.PressureWork);CHKERRQ(ierr);
   }
   if (ctx.hasInsitu) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
   }
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork+ctx.PressureWork);CHKERRQ(ierr);
-  //ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e\n",ctx.timestep,ElasticEnergy,InsituWork,
-  //                          ElasticEnergy - InsituWork);CHKERRQ(ierr); 
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 
 
 

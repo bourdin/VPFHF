@@ -1043,6 +1043,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
         /* 
           Compute and accumulate the contribution of the local stiffness matrix to the global stiffness matrix
         */
+        //printf("(%i,%i,%i) is in layer %i\n",ek,ej,ei,ctx->layer[ek]);
         for (l = 0; l < nrow * nrow; l++) K_local[l] = 0.;
         ierr = PetscLogEventBegin(ctx->vflog.VF_MatULocalEvent,0,0,0,0);CHKERRQ(ierr);
         switch (ctx->unilateral) {
@@ -1517,7 +1518,9 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,
 #undef __FUNCT__
 #define __FUNCT__ "VF_PressureWork3D_local"
 /*
-  VF_PressureWork3D_local
+  VF_PressureWork3D_local: Compute the contribution of an element to the work of the pressure forces along the crack walls,
+  given by
+    \int_e p(x)\nabla v(x) \cdot u(x) \, dx
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
@@ -1528,7 +1531,6 @@ extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,Pets
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
-  PetscInt       dim=3;
   PetscReal      *pressure_elem,*gradv_elem[3],*u_elem[3];
 
   PetscFunctionBegin;
@@ -1540,13 +1542,13 @@ extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,Pets
                       e->ng,PetscReal,&u_elem[1],
                       e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);
 
-  *PressureWork_local = 0.;
+  //*PressureWork_local = 0.;
   /*
     Compute the projection of the fields in the local base functions basis
   */
   for (g = 0; g < e->ng; g++) {
     pressure_elem[g] = 0;
-    for (c=0; c<dim; c++) {
+    for (c=0; c<3; c++) {
       gradv_elem[c][g] = 0.;
       u_elem[c][g] = 0.;
     }
@@ -1557,7 +1559,7 @@ extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,Pets
         for (g = 0; g < e->ng; g++) {
           pressure_elem[g] += e->phi[k][j][i][g] 
                               * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i]);
-          for (c=0; c<dim; c++) {
+          for (c=0; c<3; c++) {
             gradv_elem[c][g] += e->dphi[k][j][i][c][g] * v_array[ek+k][ej+j][ei+i];
             u_elem[c][g]     += e->phi[k][j][i][g]     * u_array[ek+k][ej+j][ei+i][c];
           }
@@ -1565,11 +1567,10 @@ extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,Pets
       }
     }
   }  
-  ierr = PetscLogFlops((3 + 4*dim) * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  ierr = PetscLogFlops(15 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
 
   /*
-    Accumulate the contribution of the current element to the local
-    version of the RHS
+    Accumulate the contribution of the current element
   */
   for (l=0,k = 0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
