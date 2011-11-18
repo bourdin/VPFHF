@@ -76,7 +76,8 @@ int main(int argc,char **argv)
   //ierr = VF_ComputeBCU(&fields,&ctx);CHKERRQ(ierr);
   ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr);
   ctx.hasCrackPressure = PETSC_TRUE;
-  ierr = VFElasticityTimeStep(&ctx,&fields);CHKERRQ(ierr);
+  //ierr = VFElasticityTimeStep(&ctx,&fields);CHKERRQ(ierr);
+  ierr = VF_StepU(&fields,&ctx);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
   if (ctx.hasCrackPressure) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:    %e\n",ctx.PressureWork);CHKERRQ(ierr);
