@@ -108,13 +108,6 @@ extern PetscErrorCode VFLogInitialize(VFLog *vflog)
   ierr = PetscLogEventRegister("V Vec local",vflog->VF_VecVLocalCookie,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
   ierr = PetscLogStageRegister("V solver",&vflog->VF_VSolverStage);CHKERRQ(ierr);
   
-  ierr = PetscLogStageRegister("P assembly",&vflog->VF_PAssemblyStage);CHKERRQ(ierr);
-  ierr = PetscCookieRegister  ("P Mat local",&vflog->VF_MatPLocalCookie);CHKERRQ(ierr);
-  ierr = PetscLogEventRegister("P Mat local",vflog->VF_MatPLocalCookie,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
-  ierr = PetscCookieRegister  ("P Vec local",&vflog->VF_VecPLocalCookie);CHKERRQ(ierr);
-  ierr = PetscLogEventRegister("P Vec local",vflog->VF_VecPLocalCookie,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
-  ierr = PetscLogStageRegister("P solver",&vflog->VF_PSolverStage);CHKERRQ(ierr);
-  
   ierr = PetscLogStageRegister("Energy",&vflog->VF_EnergyStage);CHKERRQ(ierr);
   ierr = PetscCookieRegister  ("Energy",&vflog->VF_EnergyLocalCookie);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("Energy",vflog->VF_EnergyLocalCookie,&vflog->VF_EnergyLocalEvent);CHKERRQ(ierr);
@@ -240,7 +233,15 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     for (i = 0;i < 6;i++) {
       ctx->BCpres[i]=buffer[i];
     }
-
+	
+    ierr = PetscOptionsRealArray("-BCtheta", "\n\tTemperature at Boundaries.\n\t (TX0,TX1,TY0,TY1,TZ0,TZ1) negative value if natural BC","",buffer,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    if (nopt > 6 && !hashelp) {
+      SETERRQ2(PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the Temperature BC, got %i in %s\n",nopt,__FUNCT__);
+    }
+    for (i = 0;i < 6;i++) {
+      ctx->BCtheta[i]=buffer[i];
+    }
+	
     nopt = 3;
     for (i = 0; i < 3; i++) ctx->SrcLoc[i] = 99999;
     ierr = PetscOptionsIntArray("-SrcLoc","\n\t location of source point","",ctx->SrcLoc,&nopt,PETSC_NULL);CHKERRQ(ierr);

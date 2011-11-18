@@ -139,9 +139,9 @@ typedef struct {
   PetscReal         relk;  /* Relative Permeability */
   PetscReal         visc;  /* Viscosity in cp */
   PetscReal         fdens; /* Fluid Density in specific density*/
-//  PetscReal         TCond_X /* Thermal Conductivity in x-direction */
- // PetscReal         TCond_Y /* Thermal Conductivity in y-direction */
- // PetscReal         TCond_Z /* Thermal COnductivity in z-direction */
+  PetscReal         TCond_X; /* Thermal Conductivity in x-direction */
+  PetscReal         TCond_Y; /* Thermal Conductivity in y-direction */
+  PetscReal         TCond_Z; /* Thermal COnductivity in z-direction */
   /*
     change them to Vec later.
     Instead, I would suggest keeping the structure this way and add a pointer to a resprop in the main context
