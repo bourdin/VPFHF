@@ -25,7 +25,7 @@ int main(int argc,char **argv)
   PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
   PetscReal       ****coords_array;
   PetscReal        ***v_array;  
-  PetscReal           BBmin[2],BBmax[3];
+  PetscReal           BBmin[3],BBmax[3];
   PetscReal           x,z;  
   PetscReal           ElasticEnergy = 0;
   PetscReal           InsituWork = 0;
@@ -37,7 +37,6 @@ int main(int argc,char **argv)
   
   ierr = PetscOptionsGetReal(PETSC_NULL,"-cx",&cx,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-cz",&cz,PETSC_NULL);CHKERRQ(ierr);
-  printf("cx=%g,cz=%g\n",cx,cz);
   
   /*
     Build a composite v_Irrev field that is 0 inside the ellipse or radii (cx,cz)
@@ -67,12 +66,27 @@ int main(int argc,char **argv)
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = VF_StepV(&fields,&ctx);
   
+  ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
+  ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressure,ctx.resprop.Pinit);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
+  ctx.hasCrackPressure = PETSC_TRUE;
+  
+  ctx.hasCrackPressure = PETSC_FALSE;
+  //ierr = VF_ComputeBCU(&fields,&ctx);CHKERRQ(ierr);
+  ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr);
+  ctx.hasCrackPressure = PETSC_TRUE;
   ierr = VFElasticityTimeStep(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e\n",ctx.timestep,ElasticEnergy,InsituWork,
-                            ElasticEnergy - InsituWork);CHKERRQ(ierr); 
+  if (ctx.hasCrackPressure) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:    %e\n",ctx.PressureWork);CHKERRQ(ierr);
+  }
+  if (ctx.hasInsitu) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
+  }
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork+ctx.PressureWork);CHKERRQ(ierr);
+  //ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e\n",ctx.timestep,ElasticEnergy,InsituWork,
+  //                          ElasticEnergy - InsituWork);CHKERRQ(ierr); 
 
 
 
@@ -81,6 +95,9 @@ int main(int argc,char **argv)
     */    
     switch (ctx.fileformat) {
       case FILEFORMAT_HDF5:       
+        ierr = FieldsH5Write(&ctx,&fields);
+        ctx.timestep++;
+        ctx.timevalue += 1.;
         ierr = FieldsH5Write(&ctx,&fields);
       break;
       case FILEFORMAT_BIN:
