@@ -204,6 +204,38 @@ extern PetscErrorCode VFFlow_FEM_MatPAssembly3D(Mat K,Vec RHS,VFFields *fields,V
 */
 extern PetscErrorCode VFFlow_FEM_MatTAssembly3D_local(PetscReal *Mat_local,ResProp *resprop,PetscInt ek, PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
+  PetscInt        g,i1,i2,j1,j2,k1,k2,l;
+  PetscReal       TCond_X,TCond_Y,TCond_Z;
+  PetscErrorCode  ierr;
+  
+  PetscFunctionBegin;
+  
+/*
+  Thermal properties should be an element property 
+*/
+  TCond_X = resprop->TCond_X;
+  TCond_Y = resprop->TCond_Y;
+  TCond_Z = resprop->TCond_Z;
+  
+  for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
+    for (j1 = 0; j1 < e->nphiy; j1++) {
+	  for (i1 = 0; i1 < e->nphix; i1++) {
+	    for (k2 = 0; k2 < e->nphiz; k2++) {
+		  for (j2 = 0; j2 < e->nphiy; j2++) {
+		    for (i2 = 0; i2 < e->nphix; i2++,l++) {
+			  Mat_local[l] = 0.;
+			    for (g = 0; g < e->ng; g++) {
+				  Mat_local[l] += e->weight[g] * (TCond_X * e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
+			                                      + TCond_Y * e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
+												  + TCond_Z * e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]);
+				}
+			}
+		  }
+		}
+      }
+	}
+  }  
+ 
   PetscFunctionReturn(0);
 }
 
@@ -346,36 +378,36 @@ extern PetscErrorCode VFFlow_FEM(VFCtx *ctx, VFFields *fields)
   ierr = KSPSolve(ctx->kspP,ctx->RHSP,fields->pressure);CHKERRQ(ierr);
   ierr = PetscLogStagePop();CHKERRQ(ierr);
   
-/*  ierr = PetscLogStagePush(ctx->vflog.VF_TSolverStage);CHKERRQ(ierr);
+  ierr = PetscLogStagePush(ctx->vflog.VF_TSolverStage);CHKERRQ(ierr);
   ierr = KSPSolve(ctx->kspT,ctx->RHST,fields->theta);CHKERRQ(ierr);
   ierr = PetscLogStagePop();CHKERRQ(ierr);
-*/
+
   if (ctx->verbose >1) {
     ierr = VecView(fields->pressure,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-//	ierr = VecView(fields->theta,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+	ierr = VecView(fields->theta,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
   if (ctx->verbose > 0) {
     ierr = VecMin(fields->pressure,PETSC_NULL,&Pmin);CHKERRQ(ierr);
     ierr = VecMax(fields->pressure,PETSC_NULL,&Pmax);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Pmin = %g, Pmax = %g\n",Pmin,Pmax);CHKERRQ(ierr);
-/*	ierr = VecMin(fields->theta,PETSC_NULL,&Tmin);CHKERRQ(ierr);
+	ierr = VecMin(fields->theta,PETSC_NULL,&Tmin);CHKERRQ(ierr);
 	ierr = VecMax(fields->theta,PETSC_NULL,&Tmax);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"Tmin = %g, Tmax = %g\n",Tmin,Tmax);CHKERRQ(ierr);
- */ }
+  }
 
   ierr = KSPGetConvergedReason(ctx->kspP,&reasonP);CHKERRQ(ierr);
-//  ierr = KSPGetConvergedReason(ctx->kspT,&reasonT);CHKERRQ(ierr);
+  ierr = KSPGetConvergedReason(ctx->kspT,&reasonT);CHKERRQ(ierr);
   if (reasonP < 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] kspP diverged with reason %d\n", (int)reasonP);CHKERRQ(ierr);
   } else {
     ierr = KSPGetIterationNumber(ctx->kspP,&itsP);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"      kspP converged in %d iterations %d. \n",(int)itsP,(int)reasonP);CHKERRQ(ierr);
   } 
-/*  if(reasonT < 0){
+  if(reasonT < 0){
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] kspT diverged with reason %d\n", (int)reasonT);CHKERRQ(ierr);
   } else {
 	ierr = KSPGetIterationNumber(ctx->kspT,&itsT);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      kspT converged in %d iterations %d. \n",(int)itsT,(int)reasonT);CHKERRQ(ierr);
   }
-*/  PetscFunctionReturn(0);
+  PetscFunctionReturn(0);
 }
