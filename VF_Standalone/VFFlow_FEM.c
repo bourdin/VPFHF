@@ -369,9 +369,9 @@ extern PetscErrorCode VFFlow_FEM(VFCtx *ctx, VFFields *fields)
   ierr = VFFlow_FEM_MatPAssembly3D(ctx->KP,ctx->RHSP,fields,ctx);CHKERRQ(ierr);
   ierr = VFFlow_FEM_MatTAssembly3D(ctx->KT,ctx->RHST,fields,ctx);CHKERRQ(ierr);
   if (ctx->verbose > 1) {
-//    ierr = MatView(ctx->KP,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+    ierr = MatView(ctx->KP,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 	ierr = MatView(ctx->KT,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-//    ierr = VecView(ctx->RHSP,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+    ierr = VecView(ctx->RHSP,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 	ierr = VecView(ctx->RHST,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   } 
 
@@ -384,7 +384,7 @@ extern PetscErrorCode VFFlow_FEM(VFCtx *ctx, VFFields *fields)
   ierr = PetscLogStagePop();CHKERRQ(ierr);
 
   if (ctx->verbose >1) {
-//    ierr = VecView(fields->pressure,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+    ierr = VecView(fields->pressure,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 	ierr = VecView(fields->theta,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
   if (ctx->verbose > 0) {
