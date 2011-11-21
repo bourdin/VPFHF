@@ -218,7 +218,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr = PetscOptionsEnum("-coupling","\n\tCoupling type","",VFCouplingName,(PetscEnum)ctx->coupling,(PetscEnum*)&ctx->coupling,PETSC_NULL);CHKERRQ(ierr);
     */
 	 // ctx->flowsolver = FLOWSOLVER_FAKE;
-    ctx->flowsolver = FLOWSOLVER_DARCYSTEADYSTATE;
+    //ctx->flowsolver = FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE;
     //ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
     ctx->fileformat = FILEFORMAT_HDF5;
     ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
@@ -335,6 +335,8 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   
   ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVect);CHKERRQ(ierr);
   ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daScal);CHKERRQ(ierr);
+  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,4,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daFlow);CHKERRQ(ierr);
+  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,6,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVFperm);CHKERRQ(ierr);
   ierr = CartFE_Init();CHKERRQ(ierr);
   ierr = CartFE_Element3DCreate(&ctx->e3D);CHKERRQ(ierr);
   /*
@@ -562,134 +564,6 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop)
 
 
 #undef __FUNCT__
-<<<<<<< mine
-#define __FUNCT__ "VFGeometryInitialize"
-/*
-  VFGeometryInitialize: Creates DA, and coordinates, and other geometric informations
-
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
-*/
-extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *dy,PetscReal *dz)
-{
-  PetscErrorCode      ierr;
-  PetscViewer         viewer,h5viewer;
-  char                filename[FILENAME_MAX];  
-  PetscReal           BBmin[3],BBmax[3];
-  PetscReal           *X,*Y,*Z;
-  PetscReal           ****coords_array;
-  PetscInt            xs,xm,ys,ym,zs,zm;
-  int                 i,j,k;
-  
-  PetscFunctionBegin;
-  ierr = CartFE_Init();CHKERRQ(ierr);
-
-  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVect);CHKERRQ(ierr);
-  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daScal);CHKERRQ(ierr);
-  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,4,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daFlow);CHKERRQ(ierr);
-  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,ctx->ncellx,ctx->ncelly,ctx->ncellz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,6,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVFperm);CHKERRQ(ierr);
-  ierr = CartFE_Element3DCreate(&ctx->e3D);CHKERRQ(ierr);
-  /*
-    Constructs coordinates Vec
-  */
-  ierr = DACreateGlobalVector(ctx->daVect,&ctx->coordinates);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) ctx->coordinates,"Coordinates");CHKERRQ(ierr);
-  
-  /*
-    Construct coordinates from the arrays of cell sizes
-  */
-  ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = DAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = PetscMalloc3(ctx->ncellx+1,PetscReal,&X,ctx->ncelly+1,PetscReal,&Y,ctx->ncellz+1,PetscReal,&Z);CHKERRQ(ierr);
-  Z[0] = 0.;
-  Y[0] = 0.;
-  X[0] = 0.;
-  for (k = 1; k < ctx->ncellz+1; k++) Z[k] = Z[k-1] + dz[k-1];
-  for (j = 1; j < ctx->ncelly+1; j++) Y[j] = Y[j-1] + dy[j-1];
-  for (i = 1; i < ctx->ncellx+1; i++) X[i] = X[i-1] + dx[i-1];
-
-  for (k = zs; k < zs + zm; k++) {
-    for (j = ys; j < ys + ym; j++) {
-      for (i = xs; i < xs + xm; i++) {
-        coords_array[k][j][i][2] = Z[k];
-        coords_array[k][j][i][1] = Y[j];
-        coords_array[k][j][i][0] = X[i]; 
-      }
-    }
-  }
-  ierr = PetscFree3(X,Y,Z);CHKERRQ(ierr);
-  ierr = DAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);    
-
-  ierr = DASetCoordinates(ctx->daVect,ctx->coordinates);CHKERRQ(ierr);
-  ierr = DASetCoordinates(ctx->daScal,ctx->coordinates);CHKERRQ(ierr);
-  ierr = DASetCoordinates(ctx->daFlow,ctx->coordinates);CHKERRQ(ierr);
-
-  switch (ctx->fileformat) {
-    case FILEFORMAT_BIN:
-      /*
-        As of version 3.1, there is a bug in petsc preventing to save 2 DA with different number of degrees of freedoms
-        per node in a single file.
-        Even coordinates are part of the DA and do not need to be saved separately, it looks like the coordinate vector
-        obtained from DAGetCoordinates cannot be saved properly in an hdf5 file, so we save the coordinate vector anyway
-      */
-      ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
-      ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.bin",ctx->prefix);CHKERRQ(ierr);
-      ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
-      ierr = DAView(ctx->daScal,viewer);CHKERRQ(ierr);
-      ierr = VecView(ctx->coordinates,viewer);CHKERRQ(ierr);
-      ierr = PetscViewerDestroy(viewer);CHKERRQ(ierr);
-      ierr = PetscLogStagePop();CHKERRQ(ierr);
-      break;
-#ifdef PETSC_HAVE_HDF5
-    case FILEFORMAT_HDF5:
-      /*
-        Write headers in multistep XDMF file
-      */
-      ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
-      ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.xmf",ctx->prefix);CHKERRQ(ierr);
-      ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->XDMFviewer);
-      ierr = XDMFmultistepInitialize(ctx->XDMFviewer);CHKERRQ(ierr);
-      
-      /* 
-        Save cordinate in main hdf5 file
-      */
-      ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.h5",ctx->prefix);CHKERRQ(ierr);
-      ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&h5viewer);CHKERRQ(ierr);
-      ierr = VecView(ctx->coordinates,h5viewer);CHKERRQ(ierr);
-      ierr = PetscViewerDestroy(h5viewer);CHKERRQ(ierr);
-      ierr = PetscLogStagePop();CHKERRQ(ierr);
-#endif
-  }
-  
-  /*
-    Replace the coordinate vector defined on PETSC_COMM_WORLD with ghosted coordinate vectors on PETSC_COMM_SELF, 
-    so that we can query coordinates of ghost points
-  */
-  ierr = VecDestroy(ctx->coordinates);CHKERRQ(ierr);
-  ierr = DAGetGhostedCoordinates(ctx->daScal,&ctx->coordinates);CHKERRQ(ierr);
-  
-  /*
-    Get bounding box from petsc DA
-  */
-  ierr = DAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
-  ctx->BoundingBox[0] = BBmin[0];
-  ctx->BoundingBox[1] = BBmax[0];
-  ctx->BoundingBox[2] = BBmin[1];
-  ctx->BoundingBox[3] = BBmax[1];
-  ctx->BoundingBox[4] = BBmin[2];
-  ctx->BoundingBox[5] = BBmax[2];
-  
-  if (ctx->verbose > 0) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Reservoir bounding box: (%g,%g) x (%g,%g) x (%g,%g)\n",ctx->BoundingBox[0],ctx->BoundingBox[1],ctx->BoundingBox[2],ctx->BoundingBox[3],ctx->BoundingBox[4],ctx->BoundingBox[5]);CHKERRQ(ierr);
-    ierr = DAView(ctx->daVect,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-    ierr = DAView(ctx->daScal,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-  }
-  ierr = VFLayerInit(ctx);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-=======
->>>>>>> theirs
 #define __FUNCT__ "VFFieldsInitialize"
 /*
   VFFieldsInitialize: Creates fields

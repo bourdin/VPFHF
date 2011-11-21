@@ -6,7 +6,6 @@
 */
 static const char banner[] = "\n\nVF:\nNumerical implementation of the variational approach to fracture.\n(c) 2010-2011 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu\n\n";
 
-
 typedef enum {
 	VELOCITY,
 	PRESSURE,
@@ -64,7 +63,6 @@ static const char *FlowBC_Case[] = {
 0
 };
 
-
 typedef enum { 
   SYMXY,
   SYMX,
@@ -115,7 +113,7 @@ static const char *VFUnilateralName[] = {
 
 typedef enum {
   FLOWSOLVER_FEM,
-  FLOWSOLVER_MixedFEM,
+  FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE,
   FLOWSOLVER_FAKE,
   FLOWSOLVER_READFROMFILES,
   } VFFlowSolverType;
@@ -278,26 +276,30 @@ typedef struct {
   PC                  pcP;
   KSP                 kspP;
   Vec                 RHSP;
-<<<<<<< mine
-	
-	Mat					KVelP;
-	PC					pcVelP;
-	KSP					kspVelP;
-	FLOWBC				bcFlow[4];
-	DA					daFlow;
-	DA					daVFperm;
-	FlowProp			flowprop;
-	Vec					RHSVelP;
-	FlowUnit			units;
-	FlowCases			flowcase;
-	PetscReal			flowrate;
-	
-=======
+
+  /* 
+    Global variables for Mixed Darcy Flow
+  */
+	Mat					        KVelP;
+	PC					        pcVelP;
+	KSP					        kspVelP;
+	FLOWBC				      bcFlow[4];
+	DA					        daFlow;
+	DA					        daVFperm;
+	FlowProp			      flowprop;
+	Vec					        RHSVelP;
+	FlowUnit			      units;
+	FlowCases			      flowcase;
+	PetscReal			      flowrate;
+
+  /*
+    Global Variables for Heat Transfer
+  */	
   Mat                 KT;
   PC                  pcT;
   KSP                 kspT;
   Vec                 RHST;
->>>>>>> theirs
+
   PetscReal           altmintol;
   PetscInt            altminmaxit;
   MatProp             *matprop;

@@ -9,6 +9,10 @@
 #include "VFV.h"
 #include "VFU.h"
 #include "VFFlow.h"
+/*
+  Remove this as soon as the functions are moved in the proper location
+*/
+#include "VFFlow_MixedFEM.h"
 
 VFCtx               ctx;
 VFFields            fields;
@@ -31,12 +35,10 @@ int main(int argc,char **argv)
     This will have to be moved into a FlowSolverInitialize in VF_Flow.c
   */
   switch (ctx.flowsolver) {
-		case FLOWSOLVER_DARCYSTEADYSTATE:       
+		case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:       
 			ierr = FlowSolverInitialize(&ctx);CHKERRQ(ierr);
 			break;
-		case FLOWSOLVER_DARCYTRANSIENT:
-			break; 
-		case FLOWSOLVER_DARCYPOISSON:
+		case FLOWSOLVER_FEM:
 			break; 
 		case FLOWSOLVER_FAKE:
 			break; 
@@ -104,14 +106,13 @@ int main(int argc,char **argv)
 	
 	/*
 	  This will also have to move into a VF_FlowFinalize in VF_Flow.c
+    ctx.FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 	*/
 	switch (ctx.flowsolver) {
-		case FLOWSOLVER_DARCYSTEADYSTATE:       
+		case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:       
 			ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 			break;
-		case FLOWSOLVER_DARCYTRANSIENT:
-			break; 
-		case FLOWSOLVER_DARCYPOISSON:
+		case FLOWSOLVER_FEM:
 			break; 
 		case FLOWSOLVER_FAKE:
 			break; 

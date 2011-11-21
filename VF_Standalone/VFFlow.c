@@ -83,8 +83,8 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
     case FLOWSOLVER_FEM:       
       ierr = VFFlow_FEM(ctx,fields);
       break;
-    case FLOWSOLVER_MixedFEM:
-      ierr = VFFlow_MixedFEM(ctx,fields);
+    case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:
+      ierr = VFFlow_DarcyMixedFEMSteadyState(ctx,fields);
       break;
     case FLOWSOLVER_FAKE:
       ierr = VFFlow_Fake(ctx,fields);

@@ -1,5 +1,5 @@
 /*
-   VFFlow.c
+   VFFlow.h
    Generic interface to flow solvers
 
      (c) 2010-2011 Blaise Bourdin, LSU. bourdin@lsu.edu
@@ -11,16 +11,6 @@
 #include "PetscFixes.h"
 
 /*
- VFFlow.h
- VF - Fluid Flow
- */
-
-#ifndef VFFLOW_H
-#define VFFLOW_H
-#include "PetscFixes.h"
-
-
-
 typedef enum {
 	NORMALVELOCITY,
 	PRESSURE
@@ -44,6 +34,7 @@ typedef enum {
 	ALLNORMALFLOWBC,
 	ALLPRESSUREBC
 } FlowCases;
+*/
 
 typedef struct {
 	PetscReal       mu;			/* Fluid viscosity						*/
@@ -55,9 +46,14 @@ typedef struct {
 	PetscReal		g;
 } FluidProp; //change them to Vec later
 
-extern PetscErrorCode GetFlowBC(FLOWBC *BC, FlowCases setbc)
-extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
-extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx)
+extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields);
+extern PetscErrorCode GetFlowBC(FLOWBC *BC, FlowCases setbc);
+extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields);
+extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx);
+
+extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx);
+extern PetscErrorCode BCTInit(BC *BCT,VFCtx *ctx);
+
 #endif /* VFFLOW_H */
 
 
@@ -72,37 +68,3 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx)
  7.	Finalize
  
  */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#endif /* VFFLOW_H */
