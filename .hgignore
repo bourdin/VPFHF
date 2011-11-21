@@ -1,0 +1,6 @@
+Examples/Output/
+bin/
+syntax: glob
+*.o
+*.mod
+*~

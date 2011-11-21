@@ -89,12 +89,14 @@ static const char *VFPresetName[] = {"SYMXY","SYMX","SYMY","NOSYM",
                                      "VFPresetName","",0};
 typedef enum {
   FRACTURE,
-  ELASTICITY
-} VFMode;
-static const char *VFModeName[] = {
+  ELASTICITY,
+  NOMECH
+} VFMechSolverType;
+static const char *VFMechSolverName[] = {
   "FRACTURE",
   "ELASTICITY",
-  "VFModeName",
+  "NOMECH",
+  "VFMechSolverName",
   "",
   0
 };
@@ -111,40 +113,21 @@ static const char *VFUnilateralName[] = {
   0
 };
 
-/*    
 typedef enum {
-  COUPLING_NONE,
-  COUPLING_GMRSTOVF,
-  COUPLING_FULL
-} VFCouplingType;
-static const char *VFCouplingName[] = {
-  "NONE",
-  "GMRSTOVF",
-  "FULL",
-  "VFCouplingName",
-  "",
-  0
-};
-*/
-
-typedef enum {
-  FLOWSOLVER_DARCYPOISSON,
-  FLOWSOLVER_DARCYSTEADYSTATE,
-  FLOWSOLVER_DARCYTRANSIENT,
+  FLOWSOLVER_FEM,
+  FLOWSOLVER_MixedFEM,
   FLOWSOLVER_FAKE,
-  FLOWSOLVER_READFROMFILES
+  FLOWSOLVER_READFROMFILES,
   } VFFlowSolverType;
 static const char *VFFlowSolverName[] = {
-  "DARCYPOISSON",
-  "DARCYSTEADYSTATE",
-  "DARCYTRANSIENT",
+  "FEM",
+  "MixedFEM",
   "FAKE",
   "READFROMFILES",
   "",
   0
 };
   
- 
 typedef enum {
   FILEFORMAT_BIN,
   FILEFORMAT_HDF5
@@ -156,10 +139,12 @@ static const char *VFFileFormatName[] = {
   "",
   0
 };
+
 /* 
   all fields involved in the computations
 */
 typedef struct {
+  int numfields;
   Vec V;
   Vec VIrrev;
   Vec U;
@@ -172,6 +157,20 @@ typedef struct {
 	Vec VelnPress;
 	Vec vfperm;
 } VFFields;
+
+static const char *VFFieldNames[] = {
+  "V",
+  "VIrrev",
+  "Displacement",
+  "BCU",
+  "theta",
+  "thetaref",
+  "pressure",
+  "pressureRef",
+  "pmult",
+  "",
+  0
+};
 
 typedef struct {
   PetscReal       E,nu;       /* Young modulus and poisson ratio */
@@ -188,6 +187,9 @@ typedef struct {
   PetscReal        atCv;
   PetscReal        irrevtol;
   PetscReal        permmax;
+  /*
+    permmax should be moved to resprop
+  */
 } VFProp;
 
 typedef struct {
@@ -198,8 +200,16 @@ typedef struct {
   PetscReal         relk;  /* Relative Permeability */
   PetscReal         visc;  /* Viscosity in cp */
   PetscReal         fdens; /* Fluid Density in specific density*/
-	PetscReal		cf;	/* Rock compressibility in field unit*/
-} ResProp; //change them to Vec later
+	PetscReal		      cf;	     /* Rock compressibility in field unit*/
+  PetscReal         TCond_X; /* Thermal Conductivity in x-direction */
+  PetscReal         TCond_Y; /* Thermal Conductivity in y-direction */
+  PetscReal         TCond_Z; /* Thermal COnductivity in z-direction */
+  /*
+    change them to Vec later.
+    Instead, I would suggest keeping the structure this way and add a pointer to a resprop in the main context
+    We can read them in a file later, the difficulty is to initialize the files to something reasonable
+  */
+} ResProp; 
 
 typedef struct {
   PetscLogStage VF_IOStage;
@@ -231,17 +241,24 @@ typedef struct {
   PetscLogEvent VF_VecPLocalEvent;
 
   PetscLogStage VF_PSolverStage;
+  
+  PetscLogStage VF_TAssemblyStage;
+  PetscCookie   VF_MatTLocalCookie;
+  PetscLogEvent VF_MatTLocalEvent;
+  PetscCookie   VF_VecTLocalCookie;
+  PetscLogEvent VF_VecTLocalEvent;
+  
+  PetscLogStage VF_TSolverStage;
 } VFLog;
 
 typedef struct {
-  PetscInt            ncellx,ncelly,ncellz;
   PetscInt            nlayer;
   PetscReal           *layersep;
   PetscInt            *layer;         /* dim=nz+1. gives the layer number of a cell  */
-  PetscReal           BoundingBox[6]; /* Reservoir bounding box [Xmin, Xmax, Ymin, Ymax, Zmin, Zmax] */
   BC                  bcU[3];
   BC                  bcV[1];
   BC                  bcP[1];
+  BC                  bcT[1];
   DA                  daVect;
   DA                  daScal;
   CartFE_Element3D    e3D;
@@ -261,6 +278,7 @@ typedef struct {
   PC                  pcP;
   KSP                 kspP;
   Vec                 RHSP;
+<<<<<<< mine
 	
 	Mat					KVelP;
 	PC					pcVelP;
@@ -274,6 +292,12 @@ typedef struct {
 	FlowCases			flowcase;
 	PetscReal			flowrate;
 	
+=======
+  Mat                 KT;
+  PC                  pcT;
+  KSP                 kspT;
+  Vec                 RHST;
+>>>>>>> theirs
   PetscReal           altmintol;
   PetscInt            altminmaxit;
   MatProp             *matprop;
@@ -283,15 +307,14 @@ typedef struct {
   PetscReal           insitumin[6];
   PetscReal           insitumax[6];
   PetscTruth          hasInsitu;
+  PetscTruth          hasCrackPressure;
   PetscReal           BCpres[6];
+  PetscReal           BCtheta[6];
   PetscInt            SrcLoc[3];
   PetscReal           SrcRate;
-  VFMode              mode;
   VFUnilateralType    unilateral;
-  /*
-  VFCouplingType      coupling;
-  */
   VFFlowSolverType    flowsolver;
+  VFMechSolverType    mechsolver;
   VFFileFormatType    fileformat;
   PetscViewer         energyviewer;
   PetscViewer         XDMFviewer;
@@ -302,16 +325,13 @@ typedef struct {
   PetscReal           ElasticEnergy;
   PetscReal           SurfaceEnergy;
   PetscReal           InsituWork;
+  PetscReal           PressureWork;
   PetscReal           TotalEnergy;
 } VFCtx;
 
-extern VFCtx          ctx;
-extern VFFields       fields;
-
-extern PetscErrorCode OldVFInitialize(VFCtx *ctx,VFFields *fields);  
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
-extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal *dx,PetscReal *dy,PetscReal *dz);
-extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *dy,PetscReal *dz);
+extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields);
+extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx);
 extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFBCInitialize(VFCtx *ctx);
 extern PetscErrorCode VFSolversInitialize(VFCtx *ctx);

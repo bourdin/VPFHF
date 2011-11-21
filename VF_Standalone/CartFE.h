@@ -68,6 +68,12 @@ typedef struct {
   PetscReal    *****dphi;            /* phi[k][j][i][l][g] = value of the derivative w.r.t. x_l of the (i,j,k)^th basis function at g^th integration point */
 } CartesianElement;
 
+typedef struct {
+  PetscReal    x;
+  PetscReal    y;
+  PetscReal    z;
+} coord3d;
+
 typedef enum {
   NONE,
   ZERO,
@@ -81,6 +87,7 @@ static const char *BCTYPE_NAME[] = {
   "ZERO",
   "ONE",
   "FIXED",
+  "VALUE",
   "BCTYPE_NAME","",0
 };
 /*

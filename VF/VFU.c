@@ -895,6 +895,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   PetscReal      z;
   int            stresscomp[3];
   PetscReal      stressdir[3];
+  PetscReal      BBmin[3],BBmax[3];
   
   PetscFunctionBegin;
   ierr = PetscLogStagePush(ctx->vflog.VF_UAssemblyStage);CHKERRQ(ierr);
@@ -910,6 +911,10 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
     Get coordinates
   */
   ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  /*
+    Get bounding box from petsc DA
+  */
+  ierr = DAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
   /*
     get V_array
   */
@@ -1045,7 +1050,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                     z = coords_array[ek+k][ej+j][ei+i][2];
                     for (c = 0; c < 3; c++) {
                        if (ctx->bcU[c].face[face] == NONE) {
-                          f_array[ek+k][ej+j][ei+i][c] = stressdir[c] * (ctx->insitumin[stresscomp[c]] + (z - ctx->BoundingBox[4]) / (ctx->BoundingBox[5] - ctx->BoundingBox[4]) * (ctx->insitumax[stresscomp[c]] - ctx->insitumin[stresscomp[c]]));
+                          f_array[ek+k][ej+j][ei+i][c] = stressdir[c] * (ctx->insitumin[stresscomp[c]] + (z - BBmin[2]) / (BBmax[2] - BBmin[2]) * (ctx->insitumax[stresscomp[c]] - ctx->insitumin[stresscomp[c]]));
                        }
                     }
                 }
@@ -1557,7 +1562,8 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   PetscReal      z;
   int            stresscomp[3];
   PetscReal      stressdir[3];
-
+  PetscReal      BBmin[3],BBmax[3];
+ 
   PetscFunctionBegin;
   ierr = PetscLogStagePush(ctx->vflog.VF_EnergyStage);CHKERRQ(ierr);
   ierr = DAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -1570,6 +1576,10 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
     Get coordinates
   */
   ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  /*
+    Get bounding box from petsc DA
+  */
+  ierr = DAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
   /*
     get U_array
   */
@@ -1659,7 +1669,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                      if (ctx->bcU[0].face[face] != FIXED) {
                        f_array[ek+k][ej+j][ei+i][c] = stressdir[c] * 
                                                       (ctx->insitumin[stresscomp[c]] + 
-                                                        (z - ctx->BoundingBox[4]) / (ctx->BoundingBox[5] - ctx->BoundingBox[4]) 
+                                                        (z - BBmin[2]) / (BBmax[2] - BBmin[2]) 
                                                         * (ctx->insitumax[stresscomp[c]] - ctx->insitumin[stresscomp[c]]));
                      }
                    }
@@ -1688,7 +1698,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                      if (ctx->bcU[0].face[face] != FIXED) {
                        f_array[ek+k][ej+j][ei+i][c] = stressdir[c] * 
                                                       (ctx->insitumin[stresscomp[c]] + 
-                                                        (z - ctx->BoundingBox[4]) / (ctx->BoundingBox[5] - ctx->BoundingBox[4]) 
+                                                        (z - BBmin[2]) / (BBmax[2] - BBmin[2])  
                                                         * (ctx->insitumax[stresscomp[c]] - ctx->insitumin[stresscomp[c]]));
                      }
                    }
@@ -1746,7 +1756,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                      if (ctx->bcU[0].face[face] != FIXED) {
                        f_array[ek+k][ej+j][ei+i][c] = stressdir[c] * 
                                                       (ctx->insitumin[stresscomp[c]] + 
-                                                        (z - ctx->BoundingBox[4]) / (ctx->BoundingBox[5] - ctx->BoundingBox[4]) 
+                                                        (z - BBmin[2]) / (BBmax[2] - BBmin[2])  
                                                         * (ctx->insitumax[stresscomp[c]] - ctx->insitumin[stresscomp[c]]));
                      }
                    }
@@ -1775,7 +1785,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                      if (ctx->bcU[0].face[face] != FIXED) {
                        f_array[ek+k][ej+j][ei+i][c] = stressdir[c] * 
                                                       (ctx->insitumin[stresscomp[c]] + 
-                                                        (z - ctx->BoundingBox[4]) / (ctx->BoundingBox[5] - ctx->BoundingBox[4]) 
+                                                        (z - BBmin[2]) / (BBmax[2] - BBmin[2]) 
                                                         * (ctx->insitumax[stresscomp[c]] - ctx->insitumin[stresscomp[c]]));
                      }
                    }
@@ -1804,7 +1814,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                      if (ctx->bcU[0].face[face] != FIXED) {
                        f_array[ek+k][ej+j][ei+i][c] = stressdir[c] * 
                                                       (ctx->insitumin[stresscomp[c]] + 
-                                                        (z - ctx->BoundingBox[4]) / (ctx->BoundingBox[5] - ctx->BoundingBox[4]) 
+                                                        (z - BBmin[2]) / (BBmax[2] - BBmin[2])  
                                                         * (ctx->insitumax[stresscomp[c]] - ctx->insitumin[stresscomp[c]]));
                      }
                    }

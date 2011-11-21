@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-#PBS -l nodes=2:ppn=2
+#PBS -l select=2
 #PBS -V
 #PBS -m a
-#PBS -M bnvk@chevron.com
 #PBS -j oe
 #PBS -o Doublet
+#PBS -q gmrs
 
 def mygetenv(Dict,key,defaultvalue=None):
     '''Adds an entry to a dictionary based on the environment variable
@@ -116,7 +116,7 @@ def main():
            -preset %(PRESET)s -coupling %(COUPLING)s -epsilon %(EPSILON)f -eta %(ETA)f \
            -beta %(BETA)f -verbose %(VERBOSE)i %(VFOPTS)s < temp.txt'''%Param
     print cmd
-    #os.system(cmd)
+    os.system(cmd)
     t2 = time.time()
     print '###\n### Computation took %fs\n###\n'%(t2-t1)
     ###
@@ -126,7 +126,7 @@ def main():
     ###
     cmd = 'mpirun -np 1 %(VFDIR)s/bin/%(PETSC_ARCH)s/h5export -p %(PREFIX)s'%Param
     print cmd
-    #os.system(cmd)
+    os.system(cmd)
     print '###\n### Script finished at %s\n###\n'%time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 
 import sys  
