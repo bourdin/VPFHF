@@ -1140,9 +1140,9 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
   /*
     The viewer should probably be collective on PETSC_COMM_WORLD, if this works
   */
-  /*
+  
 	PetscViewer viewer;
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrixb.txt",&viewer);CHKERRQ(ierr);
+/*	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrixb.txt",&viewer);CHKERRQ(ierr);
 	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
 	ierr = MatView(K,viewer);CHKERRQ(ierr);
 	*/
