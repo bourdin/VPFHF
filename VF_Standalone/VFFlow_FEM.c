@@ -217,6 +217,7 @@ extern PetscErrorCode VFFlow_FEM_MatTAssembly3D_local(PetscReal *Mat_local,ResPr
   TCond_Y = resprop->TCond_Y;
   TCond_Z = resprop->TCond_Z;
   
+  
   for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {
 	  for (i1 = 0; i1 < e->nphix; i1++) {
@@ -227,7 +228,7 @@ extern PetscErrorCode VFFlow_FEM_MatTAssembly3D_local(PetscReal *Mat_local,ResPr
 			    for (g = 0; g < e->ng; g++) {
 				  Mat_local[l] += e->weight[g] * (TCond_X * e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
 			                                      + TCond_Y * e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
-												  + TCond_Z * e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]);
+												  + TCond_Z * e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]); 
 				}
 			}
 		  }
@@ -368,9 +369,9 @@ extern PetscErrorCode VFFlow_FEM(VFCtx *ctx, VFFields *fields)
   ierr = VFFlow_FEM_MatPAssembly3D(ctx->KP,ctx->RHSP,fields,ctx);CHKERRQ(ierr);
   ierr = VFFlow_FEM_MatTAssembly3D(ctx->KT,ctx->RHST,fields,ctx);CHKERRQ(ierr);
   if (ctx->verbose > 1) {
-    ierr = MatView(ctx->KP,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+//    ierr = MatView(ctx->KP,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 	ierr = MatView(ctx->KT,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-    ierr = VecView(ctx->RHSP,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+//    ierr = VecView(ctx->RHSP,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 	ierr = VecView(ctx->RHST,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   } 
 
@@ -383,7 +384,7 @@ extern PetscErrorCode VFFlow_FEM(VFCtx *ctx, VFFields *fields)
   ierr = PetscLogStagePop();CHKERRQ(ierr);
 
   if (ctx->verbose >1) {
-    ierr = VecView(fields->pressure,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+//    ierr = VecView(fields->pressure,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 	ierr = VecView(fields->theta,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
   if (ctx->verbose > 0) {

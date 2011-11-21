@@ -548,6 +548,9 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop)
     resprop->relk = 1.0;   /* fraction */
     resprop->visc = 1.0;   /* cp */
     resprop->fdens = 1.0;  /* specific density */
+	resprop->TCond_X = 0.6; /* Water thermal conductivity in W/m-K */
+	resprop->TCond_Y = resprop->TCond_X;
+	resprop->TCond_Z = resprop->TCond_X;
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -637,7 +640,7 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
   ierr = BCTInit(&ctx->bcT[0],ctx);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCT:\n");CHKERRQ(ierr);
-	ierr = BCView(&ctx->bcT[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
+    ierr = BCView(&ctx->bcT[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
   
   PetscFunctionReturn(0);
