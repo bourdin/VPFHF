@@ -8,36 +8,64 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
-#include "VFFlow_DarcyPoisson.h"
+#include "VFFlow_FEM.h"
 #include "VFFlow_Fake.h"
-#include "VFFlow_DarcySteadyState.h"
+#include "VFFlow_MixedFEM.h"
 
 
 #undef __FUNCT__
 #define __FUNCT__ "BCPInit"
 /* 
    BCPInit
+   Keita Yoshioka yoshk@chevron.com
 */
-extern PetscErrorCode BCPInit(BC *BC,VFCtx *ctx)
+extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx)
 {
   PetscErrorCode ierr;
  
   PetscFunctionBegin;
-  ierr = BCInit(BC,1);CHKERRQ(ierr);
+  ierr = BCInit(BCP,1);CHKERRQ(ierr);
 
 /*
-  if given value is positive, this applies 
+  When positive value is given, boundary condiction has a numecial value
 */
-  if(ctx->BCpres[0] > -1.e-8) BC[0].face[X0] = VALUE;
-  if(ctx->BCpres[1] > -1.e-8) BC[0].face[X1] = VALUE;
-  if(ctx->BCpres[2] > -1.e-8) BC[0].face[Y0] = VALUE;
-  if(ctx->BCpres[3] > -1.e-8) BC[0].face[Y1] = VALUE;
-  if(ctx->BCpres[4] > -1.e-8) BC[0].face[Z0] = VALUE;
-  if(ctx->BCpres[5] > -1.e-8) BC[0].face[Z1] = VALUE;
+  if(ctx->BCpres[0] > -1.e-8) BCP[0].face[X0] = VALUE;
+  if(ctx->BCpres[1] > -1.e-8) BCP[0].face[X1] = VALUE;
+  if(ctx->BCpres[2] > -1.e-8) BCP[0].face[Y0] = VALUE;
+  if(ctx->BCpres[3] > -1.e-8) BCP[0].face[Y1] = VALUE;
+  if(ctx->BCpres[4] > -1.e-8) BCP[0].face[Z0] = VALUE;
+  if(ctx->BCpres[5] > -1.e-8) BCP[0].face[Z1] = VALUE;
 
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "BCTInit"
+/*
+  BCTInit
+  Keita Yoshioka yoshk@chevron.com
+*/
+extern PetscErrorCode BCTInit(BC *BCT,VFCtx *ctx)
+{
+  PetscErrorCode ierr;
+  
+  PetscFunctionBegin;
+  ierr = BCInit(BCT,1);CHKERRQ(ierr);
+  
+/*
+  When positive value is given, boundary condiction has a numecial value
+*/
+  if(ctx->BCtheta[0] > -1.e-8) BCT[0].face[X0] = VALUE;
+  if(ctx->BCtheta[1] > -1.e-8) BCT[0].face[X1] = VALUE;
+  if(ctx->BCtheta[2] > -1.e-8) BCT[0].face[Y0] = VALUE;
+  if(ctx->BCtheta[3] > -1.e-8) BCT[0].face[Y1] = VALUE;
+  if(ctx->BCtheta[4] > -1.e-8) BCT[0].face[Z0] = VALUE;
+  if(ctx->BCtheta[5] > -1.e-8) BCT[0].face[Z1] = VALUE;
+
+  PetscFunctionReturn(0);
+}
+  
+  
 
 /*
   VFFlowTimeStep: Does one time step of the flow solver selected in ctx.flowsolver
@@ -52,18 +80,27 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
 
   PetscFunctionBegin;
   switch (ctx->flowsolver) {
-    case FLOWSOLVER_DARCYPOISSON:       
-      ierr = VFFlow_DarcyPoisson(ctx,fields);
+    case FLOWSOLVER_FEM:       
+      ierr = VFFlow_FEM(ctx,fields);
+      break;
+    case FLOWSOLVER_MixedFEM:
+      ierr = VFFlow_MixedFEM(ctx,fields);
       break;
     case FLOWSOLVER_FAKE:
       ierr = VFFlow_Fake(ctx,fields);
       break;
+
+/*  
+<<<<<<< mine
     case FLOWSOLVER_DARCYSTEADYSTATE:
       ierr = VFFlow_DarcySteadyState(ctx,fields);
 		break;
     case FLOWSOLVER_DARCYTRANSIENT:
       SETERRQ1(PETSC_ERR_SUP,"Flow solver %s not implemented yet",VFFlowSolverName[ctx->flowsolver]);
       break;
+=======
+>>>>>>> theirs
+*/
     case FLOWSOLVER_READFROMFILES:
       ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
       switch (ctx->fileformat) {
@@ -84,8 +121,6 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
       ierr = PetscLogStagePop();CHKERRQ(ierr);
     break;
   }
-  
-//   
   PetscFunctionReturn(0);
 }
 
