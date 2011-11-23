@@ -24,11 +24,14 @@ extern PetscErrorCode VFFlow_DarcyMixedFEMSteadyState(VFCtx *ctx, VFFields *fiel
 	PetscErrorCode				ierr;
 	PetscViewer			viewer;
 	PetscInt					xs,xm,ys,ym,zs,zm;
-	PetscInt					i,j,k;
+	PetscInt					i,j,k,c,veldof=3;
 	PetscInt					its;
 	KSPConvergedReason			reason;
 	PetscReal					****VelnPress_array;
 	PetscReal					***Press_array;
+
+	PetscReal					****vel_array;
+	
 	PetscFunctionBegin;
 	ierr = DAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = GetFlowProp(&ctx->flowprop, ctx->units, ctx->resprop);CHKERRQ(ierr);
@@ -44,16 +47,24 @@ extern PetscErrorCode VFFlow_DarcyMixedFEMSteadyState(VFCtx *ctx, VFFields *fiel
 	}
 	/*The next few lines equate the values of pressure calculated from the flow solver, to the pressure defined in da=daScal*/
 	ierr = DAVecGetArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);
+	ierr = DAVecGetArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DAVecGetArrayDOF(ctx->daFlow,fields->VelnPress,&VelnPress_array);CHKERRQ(ierr);
 	for (k = zs; k < zs + zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
 				Press_array[k][j][i] = VelnPress_array[k][j][i][3];
-//				printf("p[%d][%d][%d] = %f\n",k, j, i, Press_array[k][j][i]);
+	//			printf("p[%d][%d][%d] = %f\n",k, j, i, Press_array[k][j][i]);
+				for(c = 0; c < veldof; c++){
+					vel_array[k][j][i][c] =  VelnPress_array[k][j][i][c];
+			//		printf("p[%d][%d][%d][%d] = %f\n",k, j, i, c, vel_array[k][j][i][c]);
+
+				}
 			}
 		}
 	}
+
 	ierr = DAVecRestoreArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);
+	ierr = DAVecRestoreArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DAVecRestoreArrayDOF(ctx->daFlow,fields->VelnPress,&VelnPress_array);CHKERRQ(ierr);
 	
 	PetscFunctionReturn(0);

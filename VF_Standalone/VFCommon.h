@@ -154,6 +154,7 @@ typedef struct {
   Vec pmult;
 	Vec VelnPress;
 	Vec vfperm;
+	Vec velocity;
 } VFFields;
 
 static const char *VFFieldNames[] = {
@@ -198,7 +199,7 @@ typedef struct {
   PetscReal         relk;  /* Relative Permeability */
   PetscReal         visc;  /* Viscosity in cp */
   PetscReal         fdens; /* Fluid Density in specific density*/
-	PetscReal		      cf;	     /* Rock compressibility in field unit*/
+  PetscReal		    cf;	     /* Rock compressibility in field unit*/
   PetscReal         TCond_X; /* Thermal Conductivity in x-direction */
   PetscReal         TCond_Y; /* Thermal Conductivity in y-direction */
   PetscReal         TCond_Z; /* Thermal COnductivity in z-direction */
@@ -291,6 +292,7 @@ typedef struct {
 	FlowUnit			      units;
 	FlowCases			      flowcase;
 	PetscReal			      flowrate;
+	
 
   /*
     Global Variables for Heat Transfer
