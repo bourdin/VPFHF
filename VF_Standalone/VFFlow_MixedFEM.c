@@ -107,16 +107,49 @@ extern PetscErrorCode SETFlowBC(FLOWBC *BC, FlowCases flowcase)
 			}
 			break;
 		case ALLNORMALFLOWBC:
-			for (i = 0; i < 6; i++) {
-				for (c = 0; c < 3; c++) {
-					BC[c].face[i] = VELOCITY;
-				}
-			}
-			for (i = 0; i < 12; i++) {
-				for (c = 0; c < 3; c++) {
-					BC[c].edge[i] = VELOCITY;
-				}
-			}
+			BC[0].face[X0] = VELOCITY;
+			BC[0].face[X1] = VELOCITY;
+			BC[1].face[Y0] = VELOCITY;
+			BC[1].face[Y1] = VELOCITY;
+			BC[2].face[Z0] = VELOCITY;
+			BC[2].face[Z1] = VELOCITY;
+
+			BC[0].edge[X0Z0] = VELOCITY;
+			BC[2].edge[X0Z0] = VELOCITY;
+
+			BC[0].edge[X1Z0] = VELOCITY;
+			BC[2].edge[X1Z0] = VELOCITY;
+			
+			BC[1].edge[Y0Z0] = VELOCITY;
+			BC[2].edge[Y0Z0] = VELOCITY;
+
+			BC[1].edge[Y1Z0] = VELOCITY;
+			BC[2].edge[Y1Z0] = VELOCITY;
+			
+			BC[0].edge[X0Z1] = VELOCITY;
+			BC[2].edge[X0Z1] = VELOCITY;
+			
+			BC[0].edge[X1Z1] = VELOCITY;
+			BC[2].edge[X1Z1] = VELOCITY;
+			
+			BC[1].edge[Y0Z1] = VELOCITY;
+			BC[2].edge[Y0Z1] = VELOCITY;			
+			
+			BC[1].edge[Y1Z1] = VELOCITY;
+			BC[2].edge[Y1Z1] = VELOCITY;
+			
+			BC[0].edge[X0Y0] = VELOCITY;
+			BC[1].edge[X0Y0] = VELOCITY;			
+
+			BC[0].edge[X0Y1] = VELOCITY;
+			BC[1].edge[X0Y1] = VELOCITY;
+
+			BC[0].edge[X1Y0] = VELOCITY;
+			BC[1].edge[X1Y0] = VELOCITY;
+			
+			BC[0].edge[X1Y1] = VELOCITY;
+			BC[1].edge[X1Y1] = VELOCITY;
+			
 			for (i = 0; i < 8; i++) {
 				for (c = 0; c < 3; c++) {
 					BC[c].vertex[i] = VELOCITY;
@@ -208,9 +241,9 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 	PetscReal		PressEdgeBC_Values[8];
 	PetscReal		PressVertexBC_Values[12];
 	DA				da;
-	PetscReal		VelFaceBC_Values[6][3];
-	PetscReal		VelEdgeBC_Values[12][3];
-	PetscReal		VelVertexBC_Values[8][3];
+	PetscReal		VelFaceBC_Values[6];
+	PetscReal		VelEdgeBC_Values[12];
+	PetscReal		VelVertexBC_Values[8];
 	PetscReal		****RHS_array;
 	
 	PetscFunctionBegin;
@@ -243,7 +276,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			if(BC[c].face[X0] == VELOCITY){
 				for(k = zs; k < zs+zm; k++){
 					for(j = ys; j < ys+ym; j++){
-						RHS_array[k][j][i][c] = VelFaceBC_Values[0][c];
+						RHS_array[k][j][i][c] = VelFaceBC_Values[0];
 					}
 				}
 			}
@@ -269,7 +302,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			if(BC[c].face[X1] == VELOCITY){
 				for(k = zs; k < zs+zm; k++){
 					for(j = ys; j < ys+ym; j++){
-						RHS_array[k][j][i][c] = VelFaceBC_Values[1][c];
+						RHS_array[k][j][i][c] = VelFaceBC_Values[1];
 					}
 				}
 			}
@@ -296,7 +329,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			if(BC[c].face[Y0] == VELOCITY){
 				for(k = zs; k < zs+zm; k++){
 					for(i = xs; i < xs+xm; i++){
-						RHS_array[k][j][i][c] = VelFaceBC_Values[2][c];
+						RHS_array[k][j][i][c] = VelFaceBC_Values[2];
 					}
 				}
 			}
@@ -322,7 +355,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			if(BC[c].face[Y1] == VELOCITY){
 				for(k = zs; k < zs+zm; k++){
 					for(i = xs; i < xs+xm; i++){
-						RHS_array[k][j][i][c] = VelFaceBC_Values[3][c];
+						RHS_array[k][j][i][c] = VelFaceBC_Values[3];
 					}
 				}
 			}
@@ -349,7 +382,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			if(BC[c].face[Z0] == VELOCITY){
 				for(j = ys; j < ys+ym; j++){
 					for(i = xs; i < xs+xm; i++){
-						RHS_array[k][j][i][c] = VelFaceBC_Values[4][c];
+						RHS_array[k][j][i][c] = VelFaceBC_Values[4];
 					}
 				}
 			}
@@ -375,7 +408,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			if(BC[c].face[Z1] == VELOCITY){
 				for(j = ys; j < ys+ym; j++){
 					for(i = xs; i < xs+xm; i++){
-						RHS_array[k][j][i][c] = VelFaceBC_Values[5][c];
+						RHS_array[k][j][i][c] = VelFaceBC_Values[5];
 					}
 				}
 			}
@@ -397,7 +430,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			}
 			if(BC[c].edge[X0Z0] == VELOCITY){
 				for(j = ys; j < ys+ym; j++){
-					RHS_array[k][j][i][c] = VelEdgeBC_Values[0][c];
+					RHS_array[k][j][i][c] = VelEdgeBC_Values[0];
 				}
 			}
 			//Alignment to proper partitioning preparatory for realignment
@@ -416,7 +449,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			}
 			if(BC[c].edge[X1Z0] == VELOCITY){
 				for(j = ys; j < ys+ym; j++){
-					RHS_array[k][j][i][c] = VelEdgeBC_Values[1][c];
+					RHS_array[k][j][i][c] = VelEdgeBC_Values[1];
 				}
 			}
 			//Alignment to proper partitioning preparatory for realignment
@@ -435,7 +468,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			}
 			if(BC[c].edge[Y0Z0] == VELOCITY){
 				for(i = xs; i < xs+xm; i++){
-					RHS_array[k][j][i][c] = VelEdgeBC_Values[2][c];
+					RHS_array[k][j][i][c] = VelEdgeBC_Values[2];
 				}
 			}
 			//Alignment to proper partitioning preparatory for realignment
@@ -454,7 +487,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			}
 			if(BC[c].edge[Y1Z0] == VELOCITY){
 				for(i = xs; i < xs+xm; i++){
-					RHS_array[k][j][i][c] = VelEdgeBC_Values[3][c];
+					RHS_array[k][j][i][c] = VelEdgeBC_Values[3];
 				}
 			}
 			//Alignment to proper partitioning preparatory for realignment
@@ -473,7 +506,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			}
 			if(BC[c].edge[X0Z1] == VELOCITY){
 				for(j = ys; j < ys+ym; j++){
-					RHS_array[k][j][i][c] = VelEdgeBC_Values[4][c];
+					RHS_array[k][j][i][c] = VelEdgeBC_Values[4];
 				}
 			}
 			//Alignment to proper partitioning preparatory for realignment
@@ -492,7 +525,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			}
 			if(BC[c].edge[X1Z1] == VELOCITY){
 				for(j = ys; j < ys+ym; j++){
-					RHS_array[k][j][i][c] = VelEdgeBC_Values[5][c];
+					RHS_array[k][j][i][c] = VelEdgeBC_Values[5];
 				}
 			}
 			//Alignment to proper partitioning preparatory for realignment
@@ -511,7 +544,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			}
 			if(BC[c].edge[Y0Z1] == VELOCITY){
 				for(i = xs; i < xs+xm; i++){
-					RHS_array[k][j][i][c] = VelEdgeBC_Values[6][c];
+					RHS_array[k][j][i][c] = VelEdgeBC_Values[6];
 				}
 			}
 			//Alignment to proper partitioning preparatory for realignment
@@ -530,7 +563,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			}
 			if(BC[c].edge[Y1Z1] == VELOCITY){
 				for(i = xs; i < xs+xm; i++){
-					RHS_array[k][j][i][c] = VelEdgeBC_Values[7][c];
+					RHS_array[k][j][i][c] = VelEdgeBC_Values[7];
 				}
 			}
 			//Alignment to proper partitioning preparatory for realignment
@@ -549,7 +582,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			}
 			if(BC[c].edge[X0Y0] == VELOCITY){
 				for(k = zs; k < zs+zm; k++){
-					RHS_array[k][j][i][c] = VelEdgeBC_Values[8][c];
+					RHS_array[k][j][i][c] = VelEdgeBC_Values[8];
 				}
 			}
 			//Alignment to proper partitioning preparatory for realignment
@@ -568,7 +601,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			}
 			if(BC[c].edge[X0Y1] == VELOCITY){
 				for(k = zs; k < zs+zm; k++){
-					RHS_array[k][j][i][c] = VelEdgeBC_Values[9][c];
+					RHS_array[k][j][i][c] = VelEdgeBC_Values[9];
 				}
 			}
 			//Alignment to proper partitioning preparatory for realignment
@@ -587,7 +620,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			}
 			if(BC[c].edge[X1Y0] == VELOCITY){
 				for(k = zs; k < zs+zm; k++){
-					RHS_array[k][j][i][c] = VelEdgeBC_Values[10][c];
+					RHS_array[k][j][i][c] = VelEdgeBC_Values[10];
 				}
 			}
 			//Alignment to proper partitioning preparatory for realignment
@@ -606,7 +639,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 			}
 			if(BC[c].edge[X1Y1] == VELOCITY){
 				for(k = zs; k < zs+zm; k++){
-					RHS_array[k][j][i][c] = VelEdgeBC_Values[11][c];
+					RHS_array[k][j][i][c] = VelEdgeBC_Values[11];
 				}
 			}
 			//Alignment to proper partitioning preparatory for realignment
@@ -619,7 +652,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 				RHS_array[k][j][i][c] = PressVertexBC_Values[0];
 			}
 			if(BC[c].edge[X0Y0Z0] == VELOCITY){
-				RHS_array[k][j][i][c] = VelVertexBC_Values[0][c];
+				RHS_array[k][j][i][c] = VelVertexBC_Values[0];
 			}
 		}		
 		if (xs+xm == nx && ys == 0 && zs == 0) {
@@ -628,7 +661,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 				RHS_array[k][j][i][c] = PressVertexBC_Values[1];
 			}
 			if(BC[c].edge[X1Y0Z0] == VELOCITY){
-				RHS_array[k][j][i][c] = VelVertexBC_Values[1][c];
+				RHS_array[k][j][i][c] = VelVertexBC_Values[1];
 			}
 		}		
 		if (xs == 0 && ys+ym == ny && zs == 0) {
@@ -637,7 +670,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 				RHS_array[k][j][i][c] = PressVertexBC_Values[2];
 			}
 			if(BC[c].edge[X0Y1Z0] == VELOCITY){
-				RHS_array[k][j][i][c] = VelVertexBC_Values[2][c];
+				RHS_array[k][j][i][c] = VelVertexBC_Values[2];
 			}
 		}			
 		if (xs+xm == nx && ys+ym == ny && zs == 0) {
@@ -646,7 +679,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 				RHS_array[k][j][i][c] = PressVertexBC_Values[3];
 			}
 			if(BC[c].edge[X1Y1Z0] == VELOCITY){
-				RHS_array[k][j][i][c] = VelVertexBC_Values[3][c];
+				RHS_array[k][j][i][c] = VelVertexBC_Values[3];
 			}
 		}	
 		if (xs == 0 && ys == 0 && zs+zm == nz) {
@@ -655,7 +688,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 				RHS_array[k][j][i][c] = PressVertexBC_Values[4];
 			}
 			if(BC[c].edge[X0Y0Z1] == VELOCITY){
-				RHS_array[k][j][i][c] = VelVertexBC_Values[4][c];
+				RHS_array[k][j][i][c] = VelVertexBC_Values[4];
 			}
 		}	
 		if (xs+xm == nx && ys == 0 && zs+zm == nz) {
@@ -664,7 +697,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 				RHS_array[k][j][i][c] = PressVertexBC_Values[5];
 			}
 			if(BC[c].edge[X1Y0Z1] == VELOCITY){
-				RHS_array[k][j][i][c] = VelVertexBC_Values[5][c];
+				RHS_array[k][j][i][c] = VelVertexBC_Values[5];
 			}
 		}	
 		if (xs == 0 && ys+ym == ny && zs+zm == nz) {
@@ -673,7 +706,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 				RHS_array[k][j][i][c] = PressVertexBC_Values[6];
 			}
 			if(BC[c].edge[X0Y1Z1] == VELOCITY){
-				RHS_array[k][j][i][c] = VelVertexBC_Values[6][c];
+				RHS_array[k][j][i][c] = VelVertexBC_Values[6];
 			}
 		}			
 		if (xs+xm == nx && ys+ym == ny && zs+zm == nz) {
@@ -682,7 +715,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, ResProp resprop)
 				RHS_array[k][j][i][c] = PressVertexBC_Values[7];
 			}
 			if(BC[c].edge[X1Y1Z1] == VELOCITY){
-				RHS_array[k][j][i][c] = VelVertexBC_Values[7][c];
+				RHS_array[k][j][i][c] = VelVertexBC_Values[7];
 			}
 		}			
 	}
