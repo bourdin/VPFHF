@@ -223,9 +223,9 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->fileformat = FILEFORMAT_HDF5;
     ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
 
-    ctx->maxtimestep  = 6;
+    ctx->maxtimestep  = 1;
     ierr = PetscOptionsInt("-maxtimestep","\n\tMaximum number of timestep","",ctx->maxtimestep,&ctx->maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-    ctx->maxtimevalue  = 10.;
+    ctx->maxtimevalue  = 2.;
     ierr = PetscOptionsReal("-maxtimevalue","\n\tMaximum timevalue","",ctx->maxtimevalue,&ctx->maxtimevalue,PETSC_NULL);CHKERRQ(ierr);
    
     nopt = 6; 
@@ -317,7 +317,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   */
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: geometry options:","");CHKERRQ(ierr);
   {
-    nx = 11;
+    nx = 9;
     ierr = PetscOptionsInt("-nx","\n\tnumber of grid points in the x direction (default 11)","",nx,&nx,PETSC_NULL);CHKERRQ(ierr);
     ny = nx;
     ierr = PetscOptionsInt("-ny","\n\tnumber of grid points in the y direction (default nx)","",nx,&ny,PETSC_NULL);CHKERRQ(ierr);
@@ -623,6 +623,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 	ierr = DACreateGlobalVector(ctx->daVect,&fields->velocity);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject) fields->velocity,"Fluid Velocity");CHKERRQ(ierr);
 	ierr = VecSet(fields->velocity,0.0);CHKERRQ(ierr);
+	
   PetscFunctionReturn(0);
 }
 
