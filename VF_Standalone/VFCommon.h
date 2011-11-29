@@ -292,7 +292,7 @@ typedef struct {
 	FlowUnit			      units;
 	FlowCases			      flowcase;
 	PetscReal			      flowrate;
-	
+	Vec							Source;
 
   /*
     Global Variables for Heat Transfer
