@@ -154,8 +154,9 @@ typedef struct {
   Vec pressure;
   Vec pressureRef;
   Vec pmult;
-  Vec VelnPress;
-  Vec vfperm;
+	Vec VelnPress;
+	Vec vfperm;
+	Vec velocity;
 } VFFields;
 
 static const char *VFFieldNames[] = {
@@ -293,6 +294,7 @@ typedef struct {
 	FlowUnit			      units;
 	FlowCases			      flowcase;
 	PetscReal			      flowrate;
+	Vec							Source;
 
   /*
     Global Variables for Heat Transfer

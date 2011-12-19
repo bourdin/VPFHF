@@ -218,14 +218,14 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr = PetscOptionsEnum("-coupling","\n\tCoupling type","",VFCouplingName,(PetscEnum)ctx->coupling,(PetscEnum*)&ctx->coupling,PETSC_NULL);CHKERRQ(ierr);
     */
 	 // ctx->flowsolver = FLOWSOLVER_FAKE;
-    //ctx->flowsolver = FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE;
+    ctx->flowsolver = FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE;
     //ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
     ctx->fileformat = FILEFORMAT_HDF5;
     ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
 
     ctx->maxtimestep  = 2;
     ierr = PetscOptionsInt("-maxtimestep","\n\tMaximum number of timestep","",ctx->maxtimestep,&ctx->maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-    ctx->maxtimevalue  = 10.;
+    ctx->maxtimevalue  = 2.;
     ierr = PetscOptionsReal("-maxtimevalue","\n\tMaximum timevalue","",ctx->maxtimevalue,&ctx->maxtimevalue,PETSC_NULL);CHKERRQ(ierr);
    
     nopt = 6; 
@@ -317,7 +317,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   */
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: geometry options:","");CHKERRQ(ierr);
   {
-    nx = 11;
+    nx = 9;
     ierr = PetscOptionsInt("-nx","\n\tnumber of grid points in the x direction (default 11)","",nx,&nx,PETSC_NULL);CHKERRQ(ierr);
     ny = nx;
     ierr = PetscOptionsInt("-ny","\n\tnumber of grid points in the y direction (default nx)","",nx,&ny,PETSC_NULL);CHKERRQ(ierr);
@@ -619,6 +619,11 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DACreateGlobalVector(ctx->daVFperm,&fields->vfperm);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->vfperm,"Permeability from V-field");CHKERRQ(ierr);
   ierr = VecSet(fields->vfperm,1.0);CHKERRQ(ierr);
+	
+	ierr = DACreateGlobalVector(ctx->daVect,&fields->velocity);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) fields->velocity,"Fluid Velocity");CHKERRQ(ierr);
+	ierr = VecSet(fields->velocity,0.0);CHKERRQ(ierr);
+	
   PetscFunctionReturn(0);
 
 }
@@ -953,6 +958,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(fields->pressure);CHKERRQ(ierr);
   ierr = VecDestroy(fields->pressureRef);CHKERRQ(ierr);
   ierr = VecDestroy(fields->pmult);CHKERRQ(ierr);
+  ierr = VecDestroy(fields->velocity);CHKERRQ(ierr);
   
   ierr = PetscViewerDestroy(ctx->energyviewer);CHKERRQ(ierr);
   
@@ -997,7 +1003,8 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   ierr = DAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
   ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,H5filename,FILE_MODE_WRITE,&H5Viewer);
-  ierr = VecView(fields->U,H5Viewer);CHKERRQ(ierr);
+	ierr = VecView(fields->U,H5Viewer);CHKERRQ(ierr);
+ierr = VecView(fields->velocity,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->V,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->pmult,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->theta,H5Viewer);CHKERRQ(ierr);
@@ -1013,8 +1020,9 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,XDMFfilename,&XDMFViewer);CHKERRQ(ierr);
   ierr = XDMFuniformgridInitialize(XDMFViewer,ctx->timevalue,H5filename);CHKERRQ(ierr); 
   ierr = XDMFtopologyAdd (XDMFViewer,nx,ny,nz,H5coordfilename,"Coordinates");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Displacement");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Fracture");CHKERRQ(ierr);
+	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Displacement");CHKERRQ(ierr);
+	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Fluid Velocity");CHKERRQ(ierr);
+ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Fracture");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Pressure");CHKERRQ(ierr);
@@ -1048,7 +1056,8 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.%.5i.bin",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
   ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);
   ierr = VecView(fields->U,viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->V,viewer);CHKERRQ(ierr);
+	ierr = VecView(fields->velocity,viewer);CHKERRQ(ierr);
+ ierr = VecView(fields->V,viewer);CHKERRQ(ierr);
   ierr = VecView(fields->pmult,viewer);CHKERRQ(ierr);
   ierr = VecView(fields->theta,viewer);CHKERRQ(ierr);
   ierr = VecView(fields->pressure,viewer);CHKERRQ(ierr);
