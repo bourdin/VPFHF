@@ -25,7 +25,7 @@ extern PetscErrorCode VFFlow_Fake(VFCtx *ctx, VFFields *fields)
 	PetscInt			ys,ym,ny;
 	PetscInt			zs,zm,nz;
 	PetscInt			ei,ej,ek;
-	PetscReal     p;
+	PetscReal			p;
 	PetscReal			***pressure_array;
 	PetscReal			****coords_array;
 	PetscReal     BBmin[3],BBmax[3];
