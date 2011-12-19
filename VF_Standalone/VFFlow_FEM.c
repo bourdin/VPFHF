@@ -659,7 +659,7 @@ extern PetscErrorCode VFFormJacobian_Flow(SNES snes, Vec pressure_Vec, Mat *J, M
   if (ys+ym == ny) ym--;
   if (zs+zm == nz) zm--;
 
-  ierr = MatZeroEntries(J);CHKERRQ(ierr);
+  ierr = MatZeroEntries(*J);CHKERRQ(ierr);
 
   /* 
     Get coordinates
@@ -698,7 +698,7 @@ extern PetscErrorCode VFFormJacobian_Flow(SNES snes, Vec pressure_Vec, Mat *J, M
         } 
         
  
-        ierr = MatSetValuesStencil(J,nrow,row,nrow,row,J_local,ADD_VALUES);CHKERRQ(ierr);
+        ierr = MatSetValuesStencil(*J,nrow,row,nrow,row,J_local,ADD_VALUES);CHKERRQ(ierr);
 
         /*
          Jump to next element
@@ -710,11 +710,11 @@ extern PetscErrorCode VFFormJacobian_Flow(SNES snes, Vec pressure_Vec, Mat *J, M
   /*
     Global Assembly
   */
-  ierr = MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatApplyDirichletBC(J,ctx->daScal,&ctx->bcP[0]);CHKERRQ(ierr);
-  ierr = MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatApplyDirichletBC(*J,ctx->daScal,&ctx->bcP[0]);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
   /*
    Cleanup

@@ -50,12 +50,12 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VFMatPropGet(ctx->matprop,ctx->nlayer);CHKERRQ(ierr);
   ierr = VFResPropGet(&ctx->resprop);CHKERRQ(ierr);
 
-  /*
+  
   if (printhelp) {
     ierr = PetscFinalize();
     return(0);
   }
-  */
+  
 
   ierr = VFFieldsInitialize(ctx,fields);CHKERRQ(ierr);
   ierr = VFBCInitialize(ctx);CHKERRQ(ierr);
