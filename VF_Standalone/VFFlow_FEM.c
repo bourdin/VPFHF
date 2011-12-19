@@ -604,7 +604,7 @@ extern PetscErrorCode VFFormFunction_Flow(SNES snes, Vec pressure_Vec, Vec F, vo
 			}
 		  }
 		}
-		PetscPrintf(PETSC_COMM_WORLD,"func_array[%d][%d][%d] = %e \n",ek,ej,ei,func_array[ek][ej][ei]);
+//		PetscPrintf(PETSC_COMM_WORLD,"func_array[%d][%d][%d] = %e \n",ek,ej,ei,func_array[ek][ej][ei]);
 	  }
 	}
   }
@@ -763,7 +763,7 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx, VFFields *fields)
   ierr = SNESSetJacobian(snes,J,J,SNESDefaultComputeJacobianColor,matfdcoloring);CHKERRQ(ierr);
 */
   ierr = DAGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);	  
-  ierr = SNESSetJacobian(snes,J,J,VFFormJacobian_Flow,&ctx);CHKERRQ(ierr);  
+  ierr = SNESSetJacobian(snes,J,J,VFFormJacobian_Flow,ctx);CHKERRQ(ierr);  
 
 	  // move to VFCommon later?
   ierr = SNESSetFromOptions(snes);CHKERRQ(ierr);
