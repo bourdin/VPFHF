@@ -752,7 +752,7 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx, VFFields *fields)
   ierr = VecDuplicate(fields->pressure,&r);CHKERRQ(ierr);
   
   ierr = SNESSetFunction(snes,r,VFFormFunction_Flow,ctx);CHKERRQ(ierr);
-  
+
   // create if-then based on Jacobian computation choise (numerical or analytical) later
 /*  ierr = DAGetColoring(ctx->daScal,IS_COLORING_GLOBAL,MATAIJ,&iscoloring);CHKERRQ(ierr);
   ierr = DAGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
@@ -761,7 +761,8 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx, VFFields *fields)
   ierr = MatFDColoringSetFunction(matfdcoloring,(PetscErrorCode (*)(void))VFFormFunction_Flow,&ctx);CHKERRQ(ierr);
   ierr = MatFDColoringSetFromOptions(matfdcoloring);CHKERRQ(ierr);
   ierr = SNESSetJacobian(snes,J,J,SNESDefaultComputeJacobianColor,matfdcoloring);CHKERRQ(ierr);
-*/	  
+*/
+  ierr = DAGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);	  
   ierr = SNESSetJacobian(snes,J,J,VFFormJacobian_Flow,&ctx);CHKERRQ(ierr);  
 
 	  // move to VFCommon later?
