@@ -632,6 +632,101 @@ extern PetscErrorCode VFFormFunction_Flow(SNES snes, Vec pressure_Vec, Vec F, vo
 	
   PetscFunctionReturn(0);
 }
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VFFormJacobian_Flow"
+
+extern PetscErrorCode VFFormJacobian_Flow(SNES snes, Vec pressure_Vec, Mat *J, Mat *B, MatStructure *flag, void *voidctx)
+{
+  VFCtx           *ctx = (VFCtx*)voidctx;
+  PetscErrorCode ierr;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       ei,ej,ek,i,j,k,l;
+  PetscInt       nrow = ctx->e3D.nphix * ctx->e3D.nphiy * ctx->e3D.nphiz;
+  PetscReal      *J_local;
+  MatStencil     *row;
+  PetscReal      hx,hy,hz;
+  PetscReal      ****coords_array;
+ 
+  PetscFunctionBegin;
+  ierr = PetscLogStagePush(ctx->vflog.VF_PAssemblyStage);CHKERRQ(ierr);
+  ierr = DAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  if (xs+xm == nx) xm--;
+  if (ys+ym == ny) ym--;
+  if (zs+zm == nz) zm--;
+
+  ierr = MatZeroEntries(J);CHKERRQ(ierr);
+
+  /* 
+    Get coordinates
+  */
+  ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  /*
+   Get local Jacobian
+  */
+  ierr = PetscMalloc(nrow * nrow *sizeof(PetscReal), &J_local);CHKERRQ(ierr);
+  ierr = PetscMalloc(nrow * sizeof(MatStencil),&row);CHKERRQ(ierr);
+
+  /*
+    loop through all elements
+  */
+  for (ek = zs; ek < zs+zm; ek++) {
+    for (ej = ys; ej < ys+ym; ej++) {
+      for (ei = xs; ei < xs+xm; ei++) {
+        hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+        hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+        hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        /*
+          Accumulate Jacobian matrix
+        */
+        for (l = 0; l < nrow * nrow; l++) J_local[l] = 0.;
+        ierr = PetscLogEventBegin(ctx->vflog.VF_MatPLocalEvent,0,0,0,0);CHKERRQ(ierr);
+        ierr = VFFlow_FEM_MatPAssembly3D_local(J_local,&ctx->resprop,ek,ej,ei,&ctx->e3D);
+        ierr = PetscLogEventEnd(ctx->vflog.VF_MatPLocalEvent,0,0,0,0);CHKERRQ(ierr);
+        
+        for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
+          for (j = 0; j < ctx->e3D.nphiy; j++) {
+            for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+              row[l].i = ei + i; row[l].j = ej + j; row[l].k = ek + k; row[l].c = 0;
+            }  
+          }
+        } 
+        
+ 
+        ierr = MatSetValuesStencil(J,nrow,row,nrow,row,J_local,ADD_VALUES);CHKERRQ(ierr);
+
+        /*
+         Jump to next element
+        */
+      }  
+    }   
+  }  
+
+  /*
+    Global Assembly
+  */
+  ierr = MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatApplyDirichletBC(J,ctx->daScal,&ctx->bcP[0]);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+
+  /*
+   Cleanup
+  */
+  ierr = DAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  ierr = PetscFree2(J_local,row);CHKERRQ(ierr);
+  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  
+  *flag = SAME_NONZERO_PATTERN;
+  
+  PetscFunctionReturn(0);
+}
   
 
 #undef __FUNCT__
@@ -659,15 +754,17 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx, VFFields *fields)
   ierr = SNESSetFunction(snes,r,VFFormFunction_Flow,ctx);CHKERRQ(ierr);
   
   // create if-then based on Jacobian computation choise (numerical or analytical) later
-  ierr = DAGetColoring(ctx->daScal,IS_COLORING_GLOBAL,MATAIJ,&iscoloring);CHKERRQ(ierr);
+/*  ierr = DAGetColoring(ctx->daScal,IS_COLORING_GLOBAL,MATAIJ,&iscoloring);CHKERRQ(ierr);
   ierr = DAGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
   ierr = MatFDColoringCreate(J,iscoloring,&matfdcoloring);CHKERRQ(ierr);
   ierr = ISColoringDestroy(iscoloring);CHKERRQ(ierr);
   ierr = MatFDColoringSetFunction(matfdcoloring,(PetscErrorCode (*)(void))VFFormFunction_Flow,&ctx);CHKERRQ(ierr);
   ierr = MatFDColoringSetFromOptions(matfdcoloring);CHKERRQ(ierr);
   ierr = SNESSetJacobian(snes,J,J,SNESDefaultComputeJacobianColor,matfdcoloring);CHKERRQ(ierr);
-  
-  // move to VFCommon later?
+*/	  
+  ierr = SNESSetJacobian(snes,J,J,VFFormJacobian_Flow,&ctx);CHKERRQ(ierr);  
+
+	  // move to VFCommon later?
   ierr = SNESSetFromOptions(snes);CHKERRQ(ierr);
   
   ierr = VFFormIBCondition_Flow(ctx,fields); CHKERRQ(ierr);
