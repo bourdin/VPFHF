@@ -507,9 +507,9 @@ extern PetscErrorCode VFFormIBCondition_Flow(VFCtx *ctx, VFFields *fields)
 #undef __FUNCT__
 #define __FUNCT__ "VFFormFunction_Flow"
 
-extern PetscErrorCode VFFormFunction_Flow(SNES snes, Vec pressure_Vec, Vec F, VFCtx *ctx)
+extern PetscErrorCode VFFormFunction_Flow(SNES snes, Vec pressure_Vec, Vec F, void *voidctx)
 {
-//  VFCtx           *ctx = (VFCtx*)vfctx;
+  VFCtx           *ctx = (VFCtx*)voidctx;
   PetscErrorCode  ierr;
   PetscInt        xs,xm,nx;
   PetscInt        ys,ym,ny;

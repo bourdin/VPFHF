@@ -11,5 +11,6 @@
 
 
 extern PetscErrorCode VFFlow_FEM(VFCtx *ctx, VFFields *fields);
+extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx, VFFields *fields);
 
 #endif /* VFFLOW_FEM_H */

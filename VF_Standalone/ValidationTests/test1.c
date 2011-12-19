@@ -1,5 +1,5 @@
 /*
-  VFracture.c
+  test1.c: solves for the displacement in a pressurized penny crack in 3d
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 
@@ -47,6 +47,7 @@ int main(int argc,char **argv)
   ierr = DAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	
 	ierr = DAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
 	ierr = DAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);    
 
   switch (orientation) {
