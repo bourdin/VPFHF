@@ -81,26 +81,18 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
   PetscFunctionBegin;
   switch (ctx->flowsolver) {
     case FLOWSOLVER_FEM:       
-      ierr = VFFlow_FEM(ctx,fields);
+      ierr = VFFlow_FEM(ctx,fields);CHKERRQ(ierr);
+      break;
+	case FLOWSOLVER_SNES:
+	  //ierr = PetscPrintf(PETSC_COMM_WORLD,"No solver defined yet \n"); CHKERRQ(ierr);
+	  ierr = VFFlow_SNES_FEM(ctx,fields);CHKERRQ(ierr);
       break;
     case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:
-      ierr = VFFlow_DarcyMixedFEMSteadyState(ctx,fields);
+      ierr = VFFlow_DarcyMixedFEMSteadyState(ctx,fields);CHKERRQ(ierr);
       break;
     case FLOWSOLVER_FAKE:
-      ierr = VFFlow_Fake(ctx,fields);
-      break;
-
-/*  
-<<<<<<< mine
-    case FLOWSOLVER_DARCYSTEADYSTATE:
-      ierr = VFFlow_DarcySteadyState(ctx,fields);
-		break;
-    case FLOWSOLVER_DARCYTRANSIENT:
-      SETERRQ1(PETSC_ERR_SUP,"Flow solver %s not implemented yet",VFFlowSolverName[ctx->flowsolver]);
-      break;
-=======
->>>>>>> theirs
-*/
+      ierr = VFFlow_Fake(ctx,fields);CHKERRQ(ierr);
+      break; 
     case FLOWSOLVER_READFROMFILES:
       ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
       switch (ctx->fileformat) {
@@ -119,7 +111,8 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
           break;
       }
       ierr = PetscLogStagePop();CHKERRQ(ierr);
-    break;
+	// eventually replace FLOWSOLVER_FEM with this after confirming it provides the same results
+
   }
   PetscFunctionReturn(0);
 }

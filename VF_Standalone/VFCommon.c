@@ -223,7 +223,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->fileformat = FILEFORMAT_HDF5;
     ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
 
-    ctx->maxtimestep  = 6;
+    ctx->maxtimestep  = 2;
     ierr = PetscOptionsInt("-maxtimestep","\n\tMaximum number of timestep","",ctx->maxtimestep,&ctx->maxtimestep,PETSC_NULL);CHKERRQ(ierr);
     ctx->maxtimevalue  = 10.;
     ierr = PetscOptionsReal("-maxtimevalue","\n\tMaximum timevalue","",ctx->maxtimevalue,&ctx->maxtimevalue,PETSC_NULL);CHKERRQ(ierr);
@@ -620,6 +620,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) fields->vfperm,"Permeability from V-field");CHKERRQ(ierr);
   ierr = VecSet(fields->vfperm,1.0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
+
 }
 
 #undef __FUNCT__
