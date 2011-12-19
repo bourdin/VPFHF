@@ -112,12 +112,14 @@ static const char *VFUnilateralName[] = {
 };
 
 typedef enum {
+  FLOWSOLVER_SNES,
   FLOWSOLVER_FEM,
   FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE,
   FLOWSOLVER_FAKE,
   FLOWSOLVER_READFROMFILES,
   } VFFlowSolverType;
 static const char *VFFlowSolverName[] = {
+  "SNES",
   "FEM",
   "MixedFEM",
   "FAKE",
@@ -152,8 +154,8 @@ typedef struct {
   Vec pressure;
   Vec pressureRef;
   Vec pmult;
-	Vec VelnPress;
-	Vec vfperm;
+  Vec VelnPress;
+  Vec vfperm;
 } VFFields;
 
 static const char *VFFieldNames[] = {
@@ -198,7 +200,7 @@ typedef struct {
   PetscReal         relk;  /* Relative Permeability */
   PetscReal         visc;  /* Viscosity in cp */
   PetscReal         fdens; /* Fluid Density in specific density*/
-	PetscReal		      cf;	     /* Rock compressibility in field unit*/
+  PetscReal		    cf;	     /* Rock compressibility in field unit*/
   PetscReal         TCond_X; /* Thermal Conductivity in x-direction */
   PetscReal         TCond_Y; /* Thermal Conductivity in y-direction */
   PetscReal         TCond_Z; /* Thermal COnductivity in z-direction */
@@ -300,6 +302,11 @@ typedef struct {
   KSP                 kspT;
   Vec                 RHST;
 
+  /* 
+    SNES solver for Pressure (or flow - T&P)
+  */
+  SNES                snesF;
+  
   PetscReal           altmintol;
   PetscInt            altminmaxit;
   MatProp             *matprop;
