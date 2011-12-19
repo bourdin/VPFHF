@@ -765,7 +765,9 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx, VFFields *fields)
   ierr = DAGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);	  
   ierr = SNESSetJacobian(snes,J,J,VFFormJacobian_Flow,ctx);CHKERRQ(ierr);  
 
-	  // move to VFCommon later?
+  
+  
+  // move to VFCommon later?
   ierr = SNESSetFromOptions(snes);CHKERRQ(ierr);
   
   ierr = VFFormIBCondition_Flow(ctx,fields); CHKERRQ(ierr);
@@ -775,7 +777,14 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx, VFFields *fields)
   ierr = PetscLogStagePop();CHKERRQ(ierr);
   
   // TEST - explicitly calcualte the residual
-/*  PetscReal fnorm;
+  KSP           ksp;
+  MatNullSpace  nullsp;
+ 
+  ierr = SNESGetKSP(snes, &ksp); CHKERRQ(ierr);
+  ierr = MatNullSpaceCreate(PETSC_COMM_WORLD,PETSC_TRUE,0,PETSC_NULL,&nullsp); CHKERRQ(ierr);
+  ierr = KSPSetNullSpace(ksp,nullsp); CHKERRQ(ierr);
+  
+  /*  PetscReal fnorm;
   ierr = VFFormFunction_Flow(snes,fields->pressure,r,ctx);CHKERRQ(ierr);
   ierr = VecNorm(r,NORM_2,&fnorm);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"fnorm %g \n",fnorm);CHKERRQ(ierr);
