@@ -412,28 +412,6 @@ extern PetscErrorCode VFFlow_FEM(VFCtx *ctx, VFFields *fields)
   }
   PetscFunctionReturn(0);
 }
-/*
-#undef __FUNCT__
-#define __FUNCT__ "VFFormFunction_Flow_local"
-
-extern PetscErrorCode VFFormFunction_Flow_local(PetscReal *func_local,ResProp *resprop, PetscInt ek, PetscInt ej, PetscInt ei,CartFE_Element3D *e)
-{
-  PetscErrorCode ierr;
-  PetscInt       g,i1,i2,j1,j2,k1,k2,i,j,k,l;
-  
-  PetscFunctionBegin;
-  
-  for(g=0; g < e->ng; g+=) {
-    for(l=0,k=0; k < e->nphiz; k++) {
-	  for(j=0; j < e->nphiy; j++) {
-	    for(i=0; i < e->nphix; i++) {
-		  pressur[
-		  
-  
-  PetscFunctionReturn(0);
-}
-  
-  */
 
 #undef __FUNCT__
 #define __FUNCT__ "VFFormIBCondition_Flow"
@@ -500,6 +478,8 @@ extern PetscErrorCode VFFormIBCondition_Flow(VFCtx *ctx, VFFields *fields)
 	  }
 	}
   }  
+  ierr = DAVecRestoreArray(ctx->daScal,fields->pressure,&pressure_array);CHKERRQ(ierr);
+  
   PetscFunctionReturn(0);
 }
   
@@ -573,8 +553,33 @@ extern PetscErrorCode VFFormFunction_Flow(SNES snes, Vec pressure_Vec, Vec F, vo
         hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
         ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+		
+		// Test
+/*		if (ei == 0 && ctx->bcP[0].face[X0] == VALUE) {
+		  func_array[ek][ej][ei] = pressure_array[ek][ej][ei] - ctx->BCpres[X0];
+		}
+		else if (ei == nx-1 && ctx->bcP[0].face[X1] == VALUE) {
+		  func_array[ek][ej][ei] = pressure_array[ek][ej][ei] - ctx->BCpres[X1];
+		}
+		else if (ej == 0 && ctx->bcP[0].face[Y0] == VALUE) {
+		  func_array[ek][ej][ei] = pressure_array[ek][ej][ei] - ctx->BCpres[Y0];
+		}
+		else if (ej == ny-1 && ctx->bcP[0].face[Y1] == VALUE) {
+		  func_array[ek][ej][ei] = pressure_array[ek][ej][ei] - ctx->BCpres[Y1];
+		}
+		else if (ek == 0 && ctx->bcP[0].face[Z0] == VALUE) {
+		  func_array[ek][ej][ei] = pressure_array[ek][ej][ei] - ctx->BCpres[Z0];
+		}
+    	else if (ek == nz-1 && ctx->bcP[0].face[Z1] == VALUE) {
+		  func_array[ek][ej][ei] = pressure_array[ek][ej][ei] - ctx->BCpres[Z1];
+		}
+        else {
+		  func_array[ek][ej][ei] = hx * (pressure_array[ek][ej][ei]-pressure_array[ek][ej][ei-1]);
+		}
+		
+*/		
+		
 //		func_array[ek][ej][ei] = pressure_array[ek][ej][ei]*pressure_array[ek][ej][ei];
-//		func_array[ek][ej][ei] = 1.2345;
 //		pressure_array[ek][ej][ei] = 0.99;
 		for(g = 0; g < ctx->e3D.ng; g++) {
 		  for (k1 = 0; k1 < ctx->e3D.nphiz; k1++) {
@@ -583,19 +588,30 @@ extern PetscErrorCode VFFormFunction_Flow(SNES snes, Vec pressure_Vec, Vec F, vo
 			    for(k2 = 0; k2 < ctx->e3D.nphiz; k2++) {
 				  for(j2 = 0; j2 < ctx->e3D.nphiy; j2++) {
 				    for(i2 = 0; i2 < ctx->e3D.nphix; i2++) {					 
-					  /*
-					    Dirichlet Boundary Condition
-					  */
-					  if ((ei+i1 == 0 && ctx->bcP[0].face[X0] == VALUE) || (ei+i1 == nx-1 && ctx->bcP[0].face[X1] == VALUE) \
-					  ||  (ej+j1 == 0 && ctx->bcP[0].face[Y0] == VALUE) || (ej+j1 == ny-1 && ctx->bcP[0].face[Y1] == VALUE) \
-					  ||  (ek+k1 == 0 && ctx->bcP[0].face[Z0] == VALUE) || (ek+k1 == nz-1 && ctx->bcP[0].face[Z1] == VALUE)) {
-					    func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1];
+
+					  if (ei+i1 == 0 && ctx->bcP[0].face[X0] == VALUE) {
+					    func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1] - ctx->BCpres[X0];
+					  }
+					  else if (ei+i1 == nx-1 && ctx->bcP[0].face[X1] == VALUE) {
+					    func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1] - ctx->BCpres[X1];
+					  }
+					  else if (ej+j1 == 0 && ctx->bcP[0].face[Y0] == VALUE) {
+					    func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1] - ctx->BCpres[Y0];
+					  }
+					  else if (ej+j1 == ny-1 && ctx->bcP[0].face[Y1] == VALUE) {
+					  	func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1] - ctx->BCpres[Y1];
+					  }
+					  else if (ek+k1 == 0 && ctx->bcP[0].face[Z0] == VALUE) {
+					  	func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1] - ctx->BCpres[Z0];
+					  }
+					  else if (ek+k1 == nz-1 && ctx->bcP[0].face[Z1] == VALUE) {
+					    func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1] - ctx->BCpres[Z1];
 					  }
                       else {
-					    func_array[ek+k1][ej+j1][ei+i1] += ctx->e3D.weight[g] * pressure_array[ek+k2][ej+j2][ei+i2] *DCoef_P* pressure_array[ek+k2][ej+j2][ei+i2] *
+					    func_array[ek+k1][ej+j1][ei+i1] += ctx->e3D.weight[g] * pressure_array[ek+k2][ej+j2][ei+i2] * DCoef_P *
 					    ( kxx * ctx->e3D.dphi[k1][j1][i1][0][g] * ctx->e3D.dphi[k2][j2][i2][0][g]
 					    + kyy * ctx->e3D.dphi[k1][j1][i1][1][g] * ctx->e3D.dphi[k2][j2][i2][1][g]
-					    + kzz * ctx->e3D.dphi[k1][j1][i1][2][g] * ctx->e3D.dphi[k2][j2][i2][2][g] );
+					    + kzz * ctx->e3D.dphi[k1][j1][i1][2][g] * ctx->e3D.dphi[k2][j2][i2][2][g] );	
 					  } 
 					}
 				  }
@@ -603,16 +619,11 @@ extern PetscErrorCode VFFormFunction_Flow(SNES snes, Vec pressure_Vec, Vec F, vo
 			  }
 			}
 		  }
-		}
-//		PetscPrintf(PETSC_COMM_WORLD,"func_array[%d][%d][%d] = %e \n",ek,ej,ei,func_array[ek][ej][ei]);
+		} 
 	  }
 	}
   }
   
-  /*
-    (Dirichlet) Boundary Condition
-  */
-	
   /*	
     Clean up
   */
@@ -696,7 +707,6 @@ extern PetscErrorCode VFFormJacobian_Flow(SNES snes, Vec pressure_Vec, Mat *J, M
             }  
           }
         } 
-        
  
         ierr = MatSetValuesStencil(*J,nrow,row,nrow,row,J_local,ADD_VALUES);CHKERRQ(ierr);
 
@@ -753,44 +763,41 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx, VFFields *fields)
   
   ierr = SNESSetFunction(snes,r,VFFormFunction_Flow,ctx);CHKERRQ(ierr);
 
+  ierr = SNESSetFromOptions(snes);CHKERRQ(ierr);
+  
+  ierr = VFFormIBCondition_Flow(ctx,fields); CHKERRQ(ierr);
+  
   // create if-then based on Jacobian computation choise (numerical or analytical) later
 /*  ierr = DAGetColoring(ctx->daScal,IS_COLORING_GLOBAL,MATAIJ,&iscoloring);CHKERRQ(ierr);
   ierr = DAGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
   ierr = MatFDColoringCreate(J,iscoloring,&matfdcoloring);CHKERRQ(ierr);
   ierr = ISColoringDestroy(iscoloring);CHKERRQ(ierr);
-  ierr = MatFDColoringSetFunction(matfdcoloring,(PetscErrorCode (*)(void))VFFormFunction_Flow,&ctx);CHKERRQ(ierr);
+  ierr = MatFDColoringSetFunction(matfdcoloring,(PetscErrorCode (*)(void))VFFormFunction_Flow,ctx);CHKERRQ(ierr);
   ierr = MatFDColoringSetFromOptions(matfdcoloring);CHKERRQ(ierr);
   ierr = SNESSetJacobian(snes,J,J,SNESDefaultComputeJacobianColor,matfdcoloring);CHKERRQ(ierr);
 */
+  
   ierr = DAGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);	  
   ierr = SNESSetJacobian(snes,J,J,VFFormJacobian_Flow,ctx);CHKERRQ(ierr);  
 
   
-  
   // move to VFCommon later?
-  ierr = SNESSetFromOptions(snes);CHKERRQ(ierr);
-  
-  ierr = VFFormIBCondition_Flow(ctx,fields); CHKERRQ(ierr);
+
   
   ierr = PetscLogStagePush(ctx->vflog.VF_PSolverStage);CHKERRQ(ierr);
   ierr = SNESSolve(snes,PETSC_NULL,fields->pressure);CHKERRQ(ierr);
   ierr = PetscLogStagePop();CHKERRQ(ierr);
   
   // TEST - explicitly calcualte the residual
-  KSP           ksp;
-  MatNullSpace  nullsp;
- 
-  ierr = SNESGetKSP(snes, &ksp); CHKERRQ(ierr);
-  ierr = MatNullSpaceCreate(PETSC_COMM_WORLD,PETSC_TRUE,0,PETSC_NULL,&nullsp); CHKERRQ(ierr);
-  ierr = KSPSetNullSpace(ksp,nullsp); CHKERRQ(ierr);
+
   
-  /*  PetscReal fnorm;
+  PetscReal fnorm;
   ierr = VFFormFunction_Flow(snes,fields->pressure,r,ctx);CHKERRQ(ierr);
   ierr = VecNorm(r,NORM_2,&fnorm);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"fnorm %g \n",fnorm);CHKERRQ(ierr);
-  ierr = VecView(r,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-  ierr = VecView(fields->pressure,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-*/  
+//  ierr = VecView(r,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+//  ierr = VecView(fields->pressure,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+  
   if (ctx->verbose >1) {
     ierr = VecView(fields->pressure,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 //	ierr = VecView(fields->theta,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
