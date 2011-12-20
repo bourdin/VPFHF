@@ -46,7 +46,7 @@ int main(int argc,char **argv)
   }
   E  = ctx.matprop[0].E;
   nu = ctx.matprop[0].nu;
-  p  = ctx.resprop.Pinit;
+  p  = 1./3.14159;
   
   ierr = PetscOptionsGetReal(PETSC_NULL,"-length",&length,PETSC_NULL);CHKERRQ(ierr);
 
@@ -75,7 +75,7 @@ int main(int argc,char **argv)
           z = coords_array[k][ys][xs][2];
           for (j = ys; j < ys+ym; j++) {
             if (z < length) {
-              bcu_array[k][j][i][0] = 2.*(1-nu*nu)/E*length*p*sqrt(1.-(z/length)*(z/length));
+              bcu_array[k][j][i][0] = 2.*(1-nu*nu)/E*p*sqrt(length*length - z*z);
             }
           }
         }
@@ -84,7 +84,7 @@ int main(int argc,char **argv)
     case 1:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g with normal vector <1,0,0> along <0,0,1>\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=FIXED; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; 
+      ctx.bcU[0].face[X0]=FIXED; ctx.bcU[1].face[X0]=FIXED; ctx.bcU[2].face[X0]=FIXED; 
       ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=ZERO; ctx.bcU[2].face[X1]=ZERO; 
       ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; 
       ctx.bcU[0].face[Y1]=ZERO; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=ZERO; 
@@ -96,7 +96,7 @@ int main(int argc,char **argv)
           for (j = ys; j < ys+ym; j++) {
             y = coords_array[zs][j][xs][1];            
             if (y < length) {
-              bcu_array[k][j][i][0] =  2.*(1-nu*nu)/E*length*p*sqrt(1.-(y/length)*(y/length));
+              bcu_array[k][j][i][0] =  2.*(1-nu*nu)/E*p*sqrt(length*length - y*y);
             }
           }
         }
@@ -194,7 +194,7 @@ int main(int argc,char **argv)
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressure,ctx.resprop.Pinit);CHKERRQ(ierr);
+  //ierr = VecSet(fields.pressure,1);CHKERRQ(ierr);
   ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 
   //ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr);
