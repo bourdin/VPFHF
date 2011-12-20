@@ -18,7 +18,6 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 {
   PetscErrorCode ierr;
 
-  PetscTruth     printhelp;
   FILE           *file;
   char           filename[FILENAME_MAX];
   
@@ -39,7 +38,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 #endif
   
 
-  ierr = PetscOptionsHasName(PETSC_NULL,"-help",&printhelp);CHKERRQ(ierr);
+  ierr = PetscOptionsHasName(PETSC_NULL,"-help",&ctx->printhelp);CHKERRQ(ierr);
 
   ierr = VFLogInitialize(&ctx->vflog);CHKERRQ(ierr);
   ierr = VFCtxGet(ctx);CHKERRQ(ierr);
@@ -51,9 +50,8 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VFResPropGet(&ctx->resprop);CHKERRQ(ierr);
 
   
-  if (printhelp) {
-    ierr = PetscFinalize();
-    return(0);
+  if (ctx->printhelp) {
+    PetscFunctionReturn(0);
   }
   
 
@@ -143,12 +141,9 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
   PetscInt            nopt;
   PetscTruth          flg;
   int                 i; 
-  PetscTruth          hashelp;
   PetscReal           *buffer;
 
   PetscFunctionBegin;
-  ierr = PetscOptionsGetTruth(PETSC_NULL,"-help",&hashelp,&flg);CHKERRQ(ierr);
-  
   /* 
     Get options and register help message
   */
@@ -168,7 +163,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
       buffer[i]=0.;
     }
     ierr = PetscOptionsRealArray("-insitumin","\n\tIn-situ stresses in the lower z-section.\n\tUse Voigt notations (s11, s22, s33, s23, s13, s12)","",buffer,&nopt,&flg);CHKERRQ(ierr);    
-    if (nopt > 6 && !hashelp) {
+    if (nopt > 6 && !ctx->printhelp) {
       SETERRQ2(PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the insitu stresses, got %i in %s\n",nopt,__FUNCT__);
     }
     for (i = 0;i < 6;i++) {
@@ -183,7 +178,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
         ctx->insitumax[i]=ctx->insitumin[i];
       }
     } else {
-      if (nopt > 6 && !hashelp) {
+      if (nopt > 6 && !ctx->printhelp) {
         SETERRQ2(PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the insitu stresses, got %i in %s\n",nopt,__FUNCT__);
       }
       for (i = 0;i < 6;i++) {
@@ -192,6 +187,9 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     }
     if (ctx->hasInsitu || flg) ctx->hasInsitu = PETSC_TRUE;
     
+    /*
+      Move to geometry
+    */
     ctx->nlayer = 1;
     ierr = PetscOptionsInt("-nlayer","\n\tNumber of layers","",ctx->nlayer,&ctx->nlayer,PETSC_NULL);CHKERRQ(ierr);
     nopt = ctx->nlayer-1;
@@ -199,9 +197,12 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->layersep[0] = -1e+30;
     ctx->layersep[1] = 0.;    
     ierr = PetscOptionsRealArray("-layersep","\n\tComma separated list of (nlayer-1) layer interfaces","",&ctx->layersep[1],&nopt,PETSC_NULL);CHKERRQ(ierr);    
-    if (ctx->nlayer !=1 && nopt != ctx->nlayer-1 && !hashelp) {
+    if (ctx->nlayer !=1 && nopt != ctx->nlayer-1 && !ctx->printhelp) {
       SETERRQ3(PETSC_ERR_USER,"ERROR: Expecting %i layers separators, got only %i in %s\n",ctx->nlayer+1,nopt,__FUNCT__);
     }
+    /* 
+      end move to geometry
+    */
     ierr = PetscSNPrintf(ctx->prefix,FILENAME_MAX,"TEST");CHKERRQ(ierr);
     ierr = PetscOptionsString("-p","\n\tfile prefix","",ctx->prefix,ctx->prefix,PETSC_MAX_PATH_LEN-1,PETSC_NULL);CHKERRQ(ierr);
 
@@ -224,7 +225,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
    
     nopt = 6; 
     ierr = PetscOptionsRealArray("-BCpres", "\n\tPressure at Boundaries.\n\t (PX0,PX1,PY0,PY1,PZ0,PZ1) negative value if natural BC","",buffer,&nopt,PETSC_NULL);CHKERRQ(ierr);
-    if (nopt > 6 && !hashelp) {
+    if (nopt > 6 && !ctx->printhelp) {
       SETERRQ2(PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the Pressure BC, got %i in %s\n",nopt,__FUNCT__);
     }
     for (i = 0;i < 6;i++) {
@@ -232,7 +233,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     }
 	
     ierr = PetscOptionsRealArray("-BCtheta", "\n\tTemperature at Boundaries.\n\t (TX0,TX1,TY0,TY1,TZ0,TZ1) negative value if natural BC","",buffer,&nopt,PETSC_NULL);CHKERRQ(ierr);
-    if (nopt > 6 && !hashelp) {
+    if (nopt > 6 && !ctx->printhelp) {
       SETERRQ2(PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the Temperature BC, got %i in %s\n",nopt,__FUNCT__);
     }
     for (i = 0;i < 6;i++) {
@@ -276,8 +277,10 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   int                 i,j,k;
   int                 nval;
   PetscInt           *n,nx,ny,nz;
-  PetscReal          *l,lx,ly,lz;
+  PetscReal           *l,lx,ly,lz;
+  PetscTruth          flg;
   
+  PetscFunctionBegin;
   /*
     for some reasons, the following does not work. 
     Using nx,ny,nz and lx, ly, lz instead.
@@ -287,7 +290,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   {
     ierr = PetscMalloc(3 * sizeof(PetscReal),&l);CHKERRQ(ierr);
     for (i = 0; i < 3; i++) l[i] = 1.;
-    ierr = PetscOptionsRealArray("-l","\n\tDomain dimensions (default 1.), comma separated","",l,&nval,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-l","\n\tDomain dimensions (default 1.), comma separated","",l,&nval,&flg);CHKERRQ(ierr);
     if (nval != 3 && nval != 0) {
       SETERRQ4(PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-l",nval,__FUNCT__);
     }
@@ -298,7 +301,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 
     ierr = PetscMalloc(3 * sizeof(PetscInt),&n);CHKERRQ(ierr);
     for (i = 0; i < 3; i++) n[i] = 11;
-    ierr = PetscOptionsIntArray("-n","\n\tnumber of grid points (default 11), comma separated","",n,&nval,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsIntArray("-n","\n\tnumber of grid points (default 11), comma separated","",n,&nval,&flg);CHKERRQ(ierr);
     if (nval != 3 && nval != 0) {
       SETERRQ4(PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-n",nval,__FUNCT__);
     }
@@ -309,6 +312,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   */
+  
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: geometry options:","");CHKERRQ(ierr);
   {
     nx = 9;
@@ -326,6 +330,9 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   
+  if (ctx->printhelp) {
+    PetscFunctionReturn(0);
+  }
   
   ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVect);CHKERRQ(ierr);
   ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daScal);CHKERRQ(ierr);
@@ -436,6 +443,7 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
+  
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF: variational fracture model specific options:","");CHKERRQ(ierr);
   {
     vfprop->epsilon  = 2.e-1;
