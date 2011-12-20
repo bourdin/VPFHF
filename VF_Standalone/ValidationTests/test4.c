@@ -1,7 +1,7 @@
 /*
-  test2.c: 
-    solve for the displacement in a pressurized rectangular crack in 3d
-    uses symmetry to solve on 1/4 domain
+  test4.c: 
+  solves for the displacement in a pressurized rectangular crack in 3d
+  no symmetry used
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
@@ -60,12 +60,13 @@ int main(int argc,char **argv)
       ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
       ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
       ctx.bcU[0].face[Z1]=ZERO; ctx.bcU[1].face[Z1]=ZERO; ctx.bcU[2].face[Z1]=ZERO; ctx.bcV[0].face[Z1]=NONE;
-      if (xs == 0) { 
-        i = 0;
-        for (k = zs; k < zs+zm; k++) {
-          for (j = ys; j < ys+ym; j++) {
-            if ( coords_array[k][j][i][2] < length) {
-              v_array[k][j][i] = 0.;
+      for (i = xs; i < xs+xm; i++) { 
+        if (i == nx/2) {
+          for (k = zs; k < zs+zm; k++) {
+            for (j = ys; j < ys+ym; j++) {
+              if ( PetscAbs(coords_array[k][j][i][2]-(BBmin[2]+BBmax[2])/2.) < length) {
+                v_array[k][j][i] = 0.;
+              }
             }
           }
         }
@@ -74,18 +75,19 @@ int main(int argc,char **argv)
     case 1:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g with normal vector <1,0,0> along <0,0,1>\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
-      ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=ZERO; ctx.bcU[2].face[X1]=ZERO; ctx.bcV[0].face[X1]=NONE;
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
-      ctx.bcU[0].face[Y1]=ZERO; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=ZERO; ctx.bcV[0].face[Y1]=NONE;
+      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=ONE;
+      ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=ONE;
+      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=ONE;
+      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=ONE;
       ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
       ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=ZERO; ctx.bcV[0].face[Z1]=NONE;
-      if (xs == 0) { 
-        i = 0;
-        for (k = zs; k < zs+zm; k++) {
-          for (j = ys; j < ys+ym; j++) {
-            if ( coords_array[k][j][i][1] < length) {
-              v_array[k][j][i] = 0.;
+      for (i = xs; i < xs+xm; i++) { 
+        if (i == nx/2) {
+          for (k = zs; k < zs+zm; k++) {
+            for (j = ys; j < ys+ym; j++) {
+              if ( PetscAbs(coords_array[k][j][i][1]-(BBmin[1]+BBmax[1])/2.) < length) {
+                v_array[k][j][i] = 0.;
+              }
             }
           }
         }

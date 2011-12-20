@@ -253,6 +253,7 @@ typedef struct {
 } VFLog;
 
 typedef struct {
+  PetscTruth          printhelp;
   PetscInt            nlayer;
   PetscReal           *layersep;
   PetscInt            *layer;         /* dim=nz+1. gives the layer number of a cell  */

@@ -45,6 +45,14 @@ int main(int argc,char **argv)
 		case FLOWSOLVER_READFROMFILES:
 			break;
 	}
+	
+	if (ctx.printhelp){
+	  ierr = PetscFinalize();
+    return(0);
+  }
+	/* 
+	Now done with all initializations
+  */
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
     ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
