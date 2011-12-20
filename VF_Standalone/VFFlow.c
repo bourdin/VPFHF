@@ -84,7 +84,7 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
       ierr = VFFlow_FEM(ctx,fields);CHKERRQ(ierr);
       break;
 	case FLOWSOLVER_SNES:
-	  //ierr = PetscPrintf(PETSC_COMM_WORLD,"No solver defined yet \n"); CHKERRQ(ierr);
+//	  ierr = VFFlow_FEM(ctx,fields);CHKERRQ(ierr);
 	  ierr = VFFlow_SNES_FEM(ctx,fields);CHKERRQ(ierr);
       break;
     case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:
