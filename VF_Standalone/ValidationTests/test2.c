@@ -186,7 +186,7 @@ int main(int argc,char **argv)
   
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressure,ctx.resprop.Pinit);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressure,1.);CHKERRQ(ierr);
   ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 
   //ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr);
