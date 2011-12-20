@@ -1,7 +1,6 @@
 /*
-  test2.c: 
-    solve for the displacement in a pressurized rectangular crack in 3d
-    uses symmetry to solve on 1/4 domain
+  test5.c: 
+  solves for the displacement in brick subject to a pressure force in one of its faces
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
@@ -39,8 +38,6 @@ int main(int argc,char **argv)
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-length",&length,PETSC_NULL);CHKERRQ(ierr);
-
   ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
   ierr = DAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -52,19 +49,18 @@ int main(int argc,char **argv)
 
   switch (orientation) {
     case 0:
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g with normal vector <1,0,0> along <0,1,0>\n",
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face X0\n",
                          length);CHKERRQ(ierr);     
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
+      ctx.bcU[0].face[X0]=NONE; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
       ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=ZERO; ctx.bcU[2].face[X1]=ZERO; ctx.bcV[0].face[X1]=NONE;
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
-      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
-      ctx.bcU[0].face[Z1]=ZERO; ctx.bcU[1].face[Z1]=ZERO; ctx.bcU[2].face[Z1]=ZERO; ctx.bcV[0].face[Z1]=NONE;
-      if (xs == 0) { 
-        i = 0;
-        for (k = zs; k < zs+zm; k++) {
-          for (j = ys; j < ys+ym; j++) {
-            if ( coords_array[k][j][i][2] < length) {
+      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=NONE; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
+      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=NONE; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
+      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=NONE; ctx.bcV[0].face[Z0]=NONE;
+      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=NONE; ctx.bcV[0].face[Z1]=NONE;
+      for (i = xs; i < xs+xm; i++) { 
+        if (i == 0) {
+          for (k = zs; k < zs+zm; k++) {
+            for (j = ys; j < ys+ym; j++) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -72,19 +68,18 @@ int main(int argc,char **argv)
       }      
       break;
     case 1:
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g with normal vector <1,0,0> along <0,0,1>\n",
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face X1\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
-      ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=ZERO; ctx.bcU[2].face[X1]=ZERO; ctx.bcV[0].face[X1]=NONE;
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
-      ctx.bcU[0].face[Y1]=ZERO; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=ZERO; ctx.bcV[0].face[Y1]=NONE;
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
-      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=ZERO; ctx.bcV[0].face[Z1]=NONE;
-      if (xs == 0) { 
-        i = 0;
-        for (k = zs; k < zs+zm; k++) {
-          for (j = ys; j < ys+ym; j++) {
-            if ( coords_array[k][j][i][1] < length) {
+      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=ZERO; ctx.bcU[2].face[X0]=ZERO; ctx.bcV[0].face[X0]=NONE;
+      ctx.bcU[0].face[X1]=NONE; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
+      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=NONE; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
+      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=NONE; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
+      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=NONE; ctx.bcV[0].face[Z0]=NONE;
+      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=NONE; ctx.bcV[0].face[Z1]=NONE;
+      for (i = xs; i < xs+xm; i++) { 
+        if (i == nx-1) {
+          for (k = zs; k < zs+zm; k++) {
+            for (j = ys; j < ys+ym; j++) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -186,7 +181,7 @@ int main(int argc,char **argv)
   
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressure,ctx.resprop.Pinit);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressure,1.0);CHKERRQ(ierr);
   ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 
   //ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr);
