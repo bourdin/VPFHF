@@ -1,0 +1,89 @@
+$ ***************************************************
+$        PROGRAM DIMENSIONS
+$ ***************************************************
+
+NUMWELL = 0
+
+$ ***************************************************
+EndDim         $ End of program dimensions
+$ ***************************************************
+
+TITLE(1)="GEOMECHANICS PRESSURIZED SPHERE"
+
+DESCRIPTION()=
+"Sneddon comparison with VF"
+
+BLOCKMODEL(1)="SOLID_MODEL"
+
+TIMEEND = 0.     $ Final simulation time
+GRAVITY = 0.0
+
+$ ***********************************************
+$         PLOT INFORMATION
+$ ***********************************************
+
+ GRAPHICS = 1  
+ PLOTFILE = "sneddon1"            
+ GRIDPLOT = TRUE
+
+$ ***********************************************
+$         GRID DEFINITION
+$ ***********************************************
+
+NX(1) = 40  NY(1) = 40  NZ(1) = 5       $ Set grid dimensions for grid 1 
+
+DX() = 0.05  
+DY() = 0.05 
+DZ() = 0.05 
+
+$ Set the top corner of the reservoir
+XYZSTART() = 0. 0. 0.
+
+$ ***********************************************
+$      GRID PROPERTIES FOR GRID 1
+$ ***********************************************
+
+$ Elastic modulus
+MODULUS1() = 1.0[MPa]
+
+$ Poisson's ratio
+POISSON1() = 0.
+
+$ ***********************************************
+$     PRINT
+$ ***********************************************
+IPRINTDISP = 1
+PRINTDISP Block
+    EXTERNAL INODE,X,Y,Z,UY
+    IF((X.LT. 0.41).AND.(Y.LT. 0.01)) THEN
+       OPEN(10,'DISP_Y.txt','UNKNOWN')
+       WRITE(10,1) X,UY,INODE
+  1       FORMAT(2E15.6,F10.0)
+    ENDIF
+EndBlock
+
+
+
+$ ***********************************************
+$      GRID DISPLACEMENT AND TRACTION CONDITIONS
+$ ***********************************************
+
+DISPCON1(,,,) = 5
+
+$ X0 and X1
+DISPCON1(1,,) = 1
+DISPCON1(41,,) = 7
+
+$ Y0 and Y1
+DISPCON1(17 TO 41,1,) = 7
+DISPCON1(,41,1) = 7
+
+
+TRACTION1(1 TO 16,1,,2) = 1.0E-3[MPa]
+
+$ CELL INCREMENTS FOR PRINTING
+ISTEP() = 1   KSTEP() = 1
+OUT_DISP() = TRUE
+OUT_STRESS() = TRUE
+OUT_STRAIN() = TRUE
+EndInitial
