@@ -51,120 +51,62 @@ int main(int argc,char **argv)
     case 0:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face X0\n",
                          length);CHKERRQ(ierr);     
-      ctx.bcU[0].face[X0]=NONE; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
+      ctx.bcU[0].face[X0]=NONE; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=ZERO;
       ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=ZERO; ctx.bcU[2].face[X1]=ZERO; ctx.bcV[0].face[X1]=NONE;
       ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=NONE; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
       ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=NONE; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
       ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=NONE; ctx.bcV[0].face[Z0]=NONE;
       ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=NONE; ctx.bcV[0].face[Z1]=NONE;
-      for (i = xs; i < xs+xm; i++) { 
-        if (i == 0) {
-          for (k = zs; k < zs+zm; k++) {
-            for (j = ys; j < ys+ym; j++) {
-              v_array[k][j][i] = 0.;
-            }
-          }
-        }
-      }      
       break;
     case 1:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face X1\n",
                          length);CHKERRQ(ierr);      
       ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=ZERO; ctx.bcU[2].face[X0]=ZERO; ctx.bcV[0].face[X0]=NONE;
-      ctx.bcU[0].face[X1]=NONE; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
+      ctx.bcU[0].face[X1]=NONE; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=ZERO;
       ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=NONE; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
       ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=NONE; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
       ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=NONE; ctx.bcV[0].face[Z0]=NONE;
       ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=NONE; ctx.bcV[0].face[Z1]=NONE;
-      for (i = xs; i < xs+xm; i++) { 
-        if (i == nx-1) {
-          for (k = zs; k < zs+zm; k++) {
-            for (j = ys; j < ys+ym; j++) {
-              v_array[k][j][i] = 0.;
-            }
-          }
-        }
-      }      
       break;
     case 2:
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g with normal vector <0,1,0> along <1,0,0>\n",
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face Y0\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; 
-      ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; 
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; 
-      ctx.bcU[0].face[Y1]=ZERO; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=ZERO; 
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; 
-      ctx.bcU[0].face[Z1]=ZERO; ctx.bcU[1].face[Z1]=ZERO; ctx.bcU[2].face[Z1]=ZERO; 
-      if (ys == 0) { 
-        j = 0;
-        for (i = xs; i < xs+xm; i++) {
-          for (k = zs; k < zs+zm; k++) {
-            if ( coords_array[k][j][i][2] < length) {
-              v_array[k][j][i] = 0.;
-            }
-          }
-        }
-      }      
+      ctx.bcU[0].face[X0]=NONE; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE; 
+      ctx.bcU[0].face[X1]=NONE; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
+      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=NONE; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=ZERO;
+      ctx.bcU[0].face[Y1]=ZERO; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=ZERO; ctx.bcV[0].face[Y1]=NONE;
+      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=NONE; ctx.bcV[0].face[Z0]=NONE;
+      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=NONE; ctx.bcV[0].face[Z1]=NONE;
       break;
     case 3:
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g with normal vector <0,1,0> along <0,0,1>\n",
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face Y1\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; 
-      ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=ZERO; ctx.bcU[2].face[X1]=ZERO; 
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; 
-      ctx.bcU[0].face[Y1]=ZERO; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=ZERO; 
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; 
-      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=ZERO; 
-      if (ys ==0) { 
-        j = 0;
-        for (i = xs; i < xs+xm; i++) {
-          for (k = zs; k < zs+zm; k++) {
-            if ( coords_array[k][j][i][0] < length) {
-              v_array[k][j][i] = 0.;
-            }
-          }
-        }
-      }      
+      ctx.bcU[0].face[X0]=NONE; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE; 
+      ctx.bcU[0].face[X1]=NONE; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
+      ctx.bcU[0].face[Y0]=ZERO; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=ZERO; ctx.bcV[0].face[Y0]=NONE;
+      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=NONE; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=ZERO;
+      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=NONE; ctx.bcV[0].face[Z0]=NONE;
+      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=NONE; ctx.bcV[0].face[Z1]=NONE;
       break;
     case 4:
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g with normal vector <0,0,1> along <1,0,0>\n",
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face Z0\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; 
-      ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; 
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; 
-      ctx.bcU[0].face[Y1]=ZERO; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=ZERO; 
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; 
-      ctx.bcU[0].face[Z1]=ZERO; ctx.bcU[1].face[Z1]=ZERO; ctx.bcU[2].face[Z1]=ZERO; 
-      if (zs == 0) { 
-        k = 0;
-        for (j = ys; j < ys+ym; j++) {
-          for (i = xs; i < xs+xm; i++) {
-            if ( coords_array[k][j][i][1] < length) {
-              v_array[k][j][i] = 0.;
-            }
-          }
-        }
-      }      
+      ctx.bcU[0].face[X0]=NONE; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE; 
+      ctx.bcU[0].face[X1]=NONE; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
+      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=NONE; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
+      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=NONE; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
+      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=NONE; ctx.bcV[0].face[Z0]=ZERO;
+      ctx.bcU[0].face[Z1]=ZERO; ctx.bcU[1].face[Z1]=ZERO; ctx.bcU[2].face[Z1]=ZERO; ctx.bcV[0].face[Z1]=NONE;
       break;
     case 5:
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g with normal vector <0,0,1> along <0,1,0>\n",
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face Z1\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; 
-      ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=ZERO; ctx.bcU[2].face[X1]=ZERO; 
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; 
-      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=NONE; 
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; 
-      ctx.bcU[0].face[Z1]=ZERO; ctx.bcU[1].face[Z1]=ZERO; ctx.bcU[2].face[Z1]=ZERO; 
-      if (zs == 0) { 
-        k = 0;
-        for (j = ys; j < ys+ym; j++) {
-          for (i = xs; i < xs+xm; i++) {
-            if ( coords_array[k][j][i][0] < length) {
-              v_array[k][j][i] = 0.;
-            }
-          }
-        }
-      }    
+      ctx.bcU[0].face[X0]=NONE; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE; 
+      ctx.bcU[0].face[X1]=NONE; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
+      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=NONE; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
+      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=NONE; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
+      ctx.bcU[0].face[Z0]=ZERO; ctx.bcU[1].face[Z0]=ZERO; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
+      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=NONE; ctx.bcV[0].face[Z1]=ZERO;
       break;  
     default:
       SETERRQ1(PETSC_ERR_USER,"ERROR: Orientation should be between 0 and 5, got %i\n",orientation);
