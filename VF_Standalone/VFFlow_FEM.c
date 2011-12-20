@@ -753,15 +753,34 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx, VFFields *fields)
   Mat                  J;
   MatFDColoring        matfdcoloring;
   SNES                 snes;
+  KSP                  ksp;
+  PC                   pc;
   
   PetscFunctionBegin;
   
   //ierr = PetscPrintf(PETSC_COMM_WORLD,"No function is defined yet \n");CHKERRQ(ierr);
   
-  ierr = SNESCreate(PETSC_COMM_WORLD,&snes);CHKERRQ(ierr);
   ierr = VecDuplicate(fields->pressure,&r);CHKERRQ(ierr);
-  
+
+  /* 
+    Create SNES and set reasonable default options for its internal ksp and pc
+  */
+  ierr = DAGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);	  
+  ierr = SNESCreate(PETSC_COMM_WORLD,&snes);CHKERRQ(ierr);  
+  ierr = SNESAppendOptionsPrefix(snes,"P_");CHKERRQ(ierr);
   ierr = SNESSetFunction(snes,r,VFFormFunction_Flow,ctx);CHKERRQ(ierr);
+  ierr = SNESSetJacobian(snes,J,J,VFFormJacobian_Flow,ctx);CHKERRQ(ierr);  
+
+  ierr = SNESGetKSP(snes,&ksp);CHKERRQ(ierr);
+  ierr = KSPSetInitialGuessNonzero(ksp,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = KSPSetType(ksp,KSPBCGSL);CHKERRQ(ierr);
+  // TEST TO SEE IF THIS IS BETTER THAN CG
+  ierr = KSPSetTolerances(ksp,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+
+  //ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
+  ierr = KSPGetPC(ksp,&pc);CHKERRQ(ierr);
+  ierr = PCSetType(pc,PCBJACOBI);CHKERRQ(ierr);
+  //ierr = PCSetFromOptions(ctx->pcU);CHKERRQ(ierr);
 
   ierr = SNESSetFromOptions(snes);CHKERRQ(ierr);
   
@@ -777,8 +796,6 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx, VFFields *fields)
   ierr = SNESSetJacobian(snes,J,J,SNESDefaultComputeJacobianColor,matfdcoloring);CHKERRQ(ierr);
 */
   
-  ierr = DAGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);	  
-  ierr = SNESSetJacobian(snes,J,J,VFFormJacobian_Flow,ctx);CHKERRQ(ierr);  
 
   
   // move to VFCommon later?
