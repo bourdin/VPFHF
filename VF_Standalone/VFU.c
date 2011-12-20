@@ -784,7 +784,7 @@ extern PetscErrorCode VF_RHSUPressure3D_local(PetscReal *RHS_local,PetscReal ***
           for (g = 0; g < e->ng; g++) {
             RHS_local[l] += e->weight[g] * pressure_elem[g] 
                           * gradv_elem[c][g]            
-                          * e->phi[k][j][i][g] ;  
+                          * e->phi[k][j][i][g];  
           }
         }
       }
