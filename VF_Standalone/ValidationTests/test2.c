@@ -65,21 +65,21 @@ int main(int argc,char **argv)
   
   ierr = DAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);    
 
+  ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
+  ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
+  ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
+  ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
+  ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
+  ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=ZERO; ctx.bcV[0].face[Z1]=NONE;
+
   switch (orientation) {
     case 0:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g on face X0 along <0,1,0>\n",
                          length);CHKERRQ(ierr);     
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
-      ctx.bcU[0].face[X1]=NONE; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
-      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
-      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=NONE; ctx.bcV[0].face[Z1]=NONE;
-      if (xs == 0) { 
-        i = 0;
-        for (k = zs; k < zs+zm; k++) {
-          for (j = ys; j < ys+ym; j++) {
-            if ( coords_array[k][j][i][2] < length) {
+      for (k = zs; k < zs+zm; k++) {
+        for (j = ys; j < ys+ym; j++) {
+          for (i = xs; i < xs+xm; i++) { 
+            if ((i < 2) && (coords_array[k][j][i][2] < length)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -89,17 +89,10 @@ int main(int argc,char **argv)
     case 1:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g on face X0 along <0,0,1>\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
-      ctx.bcU[0].face[X1]=NONE; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
-      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=NONE; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
-      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=ZERO; ctx.bcV[0].face[Z1]=NONE;
-      if (xs == 0) { 
-        i = 0;
-        for (k = zs; k < zs+zm; k++) {
-          for (j = ys; j < ys+ym; j++) {
-            if ( coords_array[k][j][i][1] < length) {
+      for (k = zs; k < zs+zm; k++) {
+        for (j = ys; j < ys+ym; j++) {
+          for (i = xs; i < xs+xm; i++) { 
+            if ((i < 2) && (coords_array[k][j][i][1] < length)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -109,17 +102,10 @@ int main(int argc,char **argv)
     case 2:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g on face Y0 along <1,0,0>\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
-      ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
-      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=NONE; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
-      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=NONE; ctx.bcV[0].face[Z1]=NONE;
-      if (ys == 0) { 
-        j = 0;
-        for (i = xs; i < xs+xm; i++) {
-          for (k = zs; k < zs+zm; k++) {
-            if ( coords_array[k][j][i][2] < length) {
+      for (k = zs; k < zs+zm; k++) {
+        for (j = ys; j < ys+ym; j++) {
+          for (i = xs; i < xs+xm; i++) { 
+            if ((j < 2) && (coords_array[k][j][i][2] < length)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -129,17 +115,10 @@ int main(int argc,char **argv)
     case 3:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g on face Y1 along <0,0,1>\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
-      ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
-      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
-      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=ZERO; ctx.bcV[0].face[Z1]=NONE;
-      if (ys ==0) { 
-        j = 0;
-        for (i = xs; i < xs+xm; i++) {
-          for (k = zs; k < zs+zm; k++) {
-            if ( coords_array[k][j][i][0] < length) {
+      for (k = zs; k < zs+zm; k++) {
+        for (j = ys; j < ys+ym; j++) {
+          for (i = xs; i < xs+xm; i++) { 
+            if ((j < 2) && (coords_array[k][j][i][0] < length)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -149,17 +128,10 @@ int main(int argc,char **argv)
     case 4:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g on face Z0 along <1,0,0>\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
-      ctx.bcU[0].face[X1]=NONE; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
-      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
-      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=NONE; ctx.bcV[0].face[Z1]=NONE;
-      if (zs == 0) { 
-        k = 0;
+      for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
-          for (i = xs; i < xs+xm; i++) {
-            if ( coords_array[k][j][i][1] < length) {
+          for (i = xs; i < xs+xm; i++) { 
+            if ((k < 2) && (coords_array[k][j][i][1] < length)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -169,22 +141,15 @@ int main(int argc,char **argv)
     case 5:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g on face Z1 along <0,1,0>\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
-      ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
-      ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
-      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=NONE; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
-      ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=NONE; ctx.bcV[0].face[Z1]=NONE;
-      if (zs == 0) { 
-        k = 0;
+      for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
-          for (i = xs; i < xs+xm; i++) {
-            if ( coords_array[k][j][i][0] < length) {
+          for (i = xs; i < xs+xm; i++) { 
+            if ((k < 2) && (coords_array[k][j][i][0] < length)) {
               v_array[k][j][i] = 0.;
             }
           }
         }
-      }    
+      }      
       break;  
     default:
       SETERRQ1(PETSC_ERR_USER,"ERROR: Orientation should be between 0 and 5, got %i\n",orientation);
