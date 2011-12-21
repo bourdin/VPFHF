@@ -34,6 +34,7 @@ int main(int argc,char **argv)
   PetscReal           InsituWork = 0;
   PetscReal           SurfaceEnergy = 0;
   char                filename[FILENAME_MAX];
+  PetscReal           p = 1.;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -43,10 +44,25 @@ int main(int argc,char **argv)
 	ierr = DAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	
-	ierr = DAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-	ierr = DAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);    
 
+  ctx.matprop[0].E     = 1.;
+  ctx.matprop[0].nu    = 0.;
+  ctx.matprop[0].beta  = 0.;
+  ctx.matprop[0].alpha = 0.;
+  
+  ctx.timestep  = 0;
+  ctx.timevalue = 1.;
+
+  ierr = DAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+  ierr = VecSet(fields.V,0.0);CHKERRQ(ierr);
+  ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
+  ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
+  ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
+  ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
+  
+  ierr = DAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);    
   switch (orientation) {
     case 0:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face X0\n",
@@ -112,31 +128,24 @@ int main(int argc,char **argv)
       SETERRQ1(PETSC_ERR_USER,"ERROR: Orientation should be between 0 and 5, got %i\n",orientation);
       break;
   }  
-
-
-	ierr = DAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
-	ierr = DAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+  ierr = DAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
+  ierr = DAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 
   ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
+
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = VF_StepV(&fields,&ctx);
   
-  ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressure,1.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
-
-  //ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr);
   ctx.hasCrackPressure = PETSC_TRUE;
   ierr = VF_StepU(&fields,&ctx);
   ctx.ElasticEnergy=0;
   ctx.InsituWork=0;
   ctx.PressureWork = 0.;
   ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
+  ierr = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
   ctx.TotalEnergy = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork;
-  
-  
-  
+    
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
   if (ctx.hasCrackPressure) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:   %e\n",ctx.PressureWork);CHKERRQ(ierr);
@@ -144,25 +153,20 @@ int main(int argc,char **argv)
   if (ctx.hasInsitu) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
   }
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Total Mechanical energy:  %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 
-
-
-    /*
-      Save fields and write statistics about current run
-    */    
-    switch (ctx.fileformat) {
-      case FILEFORMAT_HDF5:       
-        ierr = FieldsH5Write(&ctx,&fields);
-        ctx.timestep++;
-        ctx.timevalue += 1.;
-        ierr = FieldsH5Write(&ctx,&fields);
-      break;
-      case FILEFORMAT_BIN:
-        ierr = FieldsBinaryWrite(&ctx,&fields);
-      break; 
-    } 
-
+  /*
+    Save fields and write statistics about current run
+  */    
+  switch (ctx.fileformat) {
+    case FILEFORMAT_HDF5:       
+      ierr = FieldsH5Write(&ctx,&fields);
+      ierr = FieldsH5Write(&ctx,&fields);
+    break;
+    case FILEFORMAT_BIN:
+      ierr = FieldsBinaryWrite(&ctx,&fields);
+    break; 
+  } 
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscFinalize();
   return(0);
