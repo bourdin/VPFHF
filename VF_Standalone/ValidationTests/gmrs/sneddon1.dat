@@ -56,7 +56,7 @@ IPRINTDISP = 1
 PRINTDISP Block
     EXTERNAL INODE,X,Y,Z,UY
     IF((X.LT. 0.41).AND.(Y.LT. 0.01).AND.(Z.GT.0.14).AND.(Z.LT.0.16)) THEN
-       OPEN(10,'DISP_Y.txt','UNKNOWN')
+       OPEN(10,'DISPY_sneddon1.txt','UNKNOWN')
        WRITE(10,1) X,Z,UY
   1       FORMAT(3E15.6)
     ENDIF
@@ -75,11 +75,11 @@ $DISPCON1(,,6) = 3
 
 $ X0 and X1
 DISPCON1(1,,) = 5
-DISPCON1(41,,) = 7
+$DISPCON1(41,,) = 7
 
 $ Y0 and Y1
 DISPCON1(18 TO 41,1,) = 6
-DISPCON1(,41,) = 6
+$DISPCON1(,41,) = 7
 
 
 TRACTION1(1 TO 17,1,,2) = 1.E-3[MPa]
