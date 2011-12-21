@@ -9,9 +9,9 @@ Working Directory: /data/etc_rpe_ucr/VF2/VF-Chevron/VF_Standalone/ValidationTest
  ***************************  All rights reserved  ***************************
  *****************************  Version 030311  ******************************
  *********************************  hltd334  *********************************
- ****************************  Process ID 32260  *****************************
+ *****************************  Process ID 550  ******************************
  **************************  Run Date: 20 Dec 2011  **************************
- *********************  Start Time: 16 hr 42 min 50 sec  *********************
+ *********************  Start Time: 17 hr 25 min 27 sec  *********************
  *********************  GEOMECHANICS PRESSURIZED SPHERE  *********************
  Sneddon comparison with VF                                                     
 
@@ -142,59 +142,59 @@ See GMRS Users Guide for details.
 
  MAJOR DIMENSIONS:
  BLOCK        X              Y              Z
-    1    2.00000        2.00000       0.250000    [ft]                
+    1    1.00000        1.00000       0.250000    [ft]                
 
  **********************  X INTERVAL LENGTHS FOR GRID 1  **********************
 
          1              2              3              4              5
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
          6              7              8              9             10
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         11             12             13             14             15
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         16             17             18             19             20
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         21             22             23             24             25
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         26             27             28             29             30
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         31             32             33             34             35
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         36             37             38             39             40
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
  **********************  Y INTERVAL LENGTHS FOR GRID 1  **********************
 
          1              2              3              4              5
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
          6              7              8              9             10
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         11             12             13             14             15
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         16             17             18             19             20
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         21             22             23             24             25
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         26             27             28             29             30
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         31             32             33             34             35
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         36             37             38             39             40
-  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
  **********************  Z INTERVAL LENGTHS FOR GRID 1  **********************
 
@@ -238,8 +238,8 @@ TOTAL NUMBER OF SURFACE ELEMENTS           4000
 TOTAL NUMBER OF SURFACE NODES              4002
 
  
-AVG CELL VOLUME =                                         0.12500E-03 [cu-ft]                       
-TOTAL GRID VOLUME =                                       0.10000E+01 [cu-ft]                       
+AVG CELL VOLUME =                                         0.31250E-04 [cu-ft]                       
+TOTAL GRID VOLUME =                                       0.25000E+00 [cu-ft]                       
 PROGRAM IS READING GEOMECHANICS DATA
 AVG ELASTIC MODULUS(Not weighted by cell-size) =          0.14504E+03 [psi]               
 PROGRAM SETTING UP CONNECTION INFO FOR NODES
@@ -275,18 +275,18 @@ PROGRAM DETERMINING STRUCTURE OF AMG FOR MECHANICS
    ****** ILEVEL =     1
     NUMBER OF NUNKNS =          5040
    ****** ILEVEL =     2
-    NUMBER OF NUNKNS =          2518
+    NUMBER OF NUNKNS =          2424
    ****** ILEVEL =     3
-    NUMBER OF NUNKNS =          1213
+    NUMBER OF NUNKNS =          1209
    ****** ILEVEL =     4
-    NUMBER OF NUNKNS =           595
-    DIRECT SOLVER,GRID,BYTES          1        1578312
-    TOTAL STORAGE IN BYTES FOR AMG SOLVER =        10212572
+    NUMBER OF NUNKNS =           593
+    DIRECT SOLVER,GRID,BYTES          1        1880496
+    TOTAL STORAGE IN BYTES FOR AMG SOLVER =        10979736
 PROGRAM SOLVING FOR INITIAL DISPLACEMENTS
 PROGRAM DETERMINING INITIAL STRESSES
- MAXIMUM STRAIN (PERCENT) AT INITIALIZATION IS          0.46
- CELL LOCATION OF STRAIN IS       3005
- POSITION OF CELL IS  0.775000     0.250000E-01 0.225000     [ft]                
+ MAXIMUM STRAIN (PERCENT) AT INITIALIZATION IS          0.49
+ CELL LOCATION OF STRAIN IS       3205
+ POSITION OF CELL IS  0.412500     0.125000E-01 0.225000     [ft]                
    
  ********************  GLOBAL ARRAYS FOR PRINT PROGRAMS  *********************
   I      GLOBAL      NAME          EXTRA DIM
@@ -294,7 +294,7 @@ PROGRAM DETERMINING INITIAL STRESSES
    
  ******************************  ARRAY STORAGE  ******************************
    
- STORAGE FOR GRID-BASED ARRAYS            40.5 MBYTES
+ STORAGE FOR GRID-BASED ARRAYS            41.2 MBYTES
 
  *****************************  STANDARD OUTPUT  *****************************
 
@@ -303,18 +303,17 @@ PROGRAM DETERMINING INITIAL STRESSES
 
  ************************  TIMER RESULTS IN SECONDS  *************************
  
- TOTAL TIME                                       0.98
- TOTAL INITIALIZATION                             0.98
+ TOTAL TIME                                       1.06
+ TOTAL INITIALIZATION                             1.06
  MECHANICS RESIDUAL SETUP                         0.00
- RESTART OUTPUT TIME                              0.00
- FACTOR LINEAR SOLVER FOR MECHANICS               0.02
- TOTAL LINEAR SOLVER FOR MECHANICS                0.42
+ FACTOR LINEAR SOLVER FOR MECHANICS               0.03
+ TOTAL LINEAR SOLVER FOR MECHANICS                0.51
  VARIABLE UPDATES                                 0.01
   
  DISPLACEMENT SOLVES =                          1
- DISPLACEMENT LINEAR ITERATIONS =               6
+ DISPLACEMENT LINEAR ITERATIONS =               7
  NONLINEAR ITERATIONS =                         0
  TIME STEPS =                                   0
  TOTAL NUMBER OF TIME STEP CUTS =               0
- LINEAR ITERS / DISPLACEMENT SOLVE =          6.0
+ LINEAR ITERS / DISPLACEMENT SOLVE =          7.0
   Normal program termination
