@@ -78,7 +78,7 @@ int main(int argc,char **argv)
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
-            if (((i == nx/2) || (i == nx/2-1)) && (PetscAbs(coords_array[k][j][i][2]-(BBmin[2]+BBmax[2])/2.) < length)) {
+            if (((i == nx/2) || (i == nx/2-1)) && (PetscAbs(coords_array[k][j][i][2]-(BBmin[2]+BBmax[2])/2.) < length/2.)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -104,7 +104,7 @@ int main(int argc,char **argv)
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
-            if (((j == ny/2) || (j == ny/1-2))  && (PetscAbs(coords_array[k][j][i][2]-(BBmin[2]+BBmax[2])/2.) < length)) {
+            if (((j == ny/2) || (j == ny/2-1))  && (PetscAbs(coords_array[k][j][i][2]-(BBmin[2]+BBmax[2])/2.) < length)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -117,7 +117,7 @@ int main(int argc,char **argv)
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
-            if (((j == ny/2) || (j == ny/1-2)) && (PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) < length)) {
+            if (((j == ny/2) || (j == ny/2-1)) && (PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) < length)) {
               v_array[k][j][i] = 0.;
             }
           }
