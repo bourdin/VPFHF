@@ -1,0 +1,22 @@
+#!/bin/ksh -p
+
+export LD_LIBRARY_PATH=/usr/lib:/vend/pgi/10.3/linux86-64/10.3/libso:/chap/libso
+export LIBPATH=/vend/pgi/10.3/linux86-64/10.3/libso
+export CXTC_LICENSE_FILE=27002@llin132
+
+# Input file name
+DATAIN=sneddon3.dat
+
+# Primary name for output and run files
+DATAOUT=sneddon3
+
+# Do not change anything pass this point
+cd /data/etc_rpe_ucr/VF2/VF-Chevron/VF_Standalone/ValidationTests/gmrs/   # this cd is done by run_appl
+
+EXEC=/chap/gmrs/v030311/bin/gmrs
+
+echo Running sneddon3.dat
+echo sneddon3.dat > ./temp
+echo sneddon3.out >> ./temp
+
+$EXEC < ./temp > ./sneddon3.run 
