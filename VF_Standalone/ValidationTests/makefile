@@ -44,7 +44,7 @@ runtest3: test3
 
 runtest4: test4
 	@echo "Running " $@
-	mpiexec -n 2 ./$< -nx 81 -ny 81 -nz 6 -lx 2 -ly 2 -lz .25 -length ${LENGTH} -orientation 3 -nu 0 -epsilon ${EPSILON} -eta 1e-8 -p runtest2
+	mpiexec -n 2 ./$< -nx 81 -ny 81 -nz 6 -lx 2 -ly 2 -lz .25 -length ${LENGTH} -orientation 3 -nu 0 -epsilon ${EPSILON} -eta 1e-8 -p runtest4
 	#$@ | tee $@.out
 	@diff $@.out results/$@-ref.out
 
