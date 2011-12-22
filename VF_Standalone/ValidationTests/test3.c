@@ -46,7 +46,7 @@ int main(int argc,char **argv)
   }
   E  = ctx.matprop[0].E;
   nu = ctx.matprop[0].nu;
-  p  = 1./3.14159;
+  p  = 1.e-3;
   
   ierr = PetscOptionsGetReal(PETSC_NULL,"-length",&length,PETSC_NULL);CHKERRQ(ierr);
 
@@ -84,11 +84,11 @@ int main(int argc,char **argv)
     case 1:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g with normal vector <1,0,0> along <0,0,1>\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[0].face[X0]=FIXED; ctx.bcU[1].face[X0]=FIXED; ctx.bcU[2].face[X0]=FIXED; 
+      ctx.bcU[0].face[X0]=FIXED; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; 
       ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=ZERO; ctx.bcU[2].face[X1]=ZERO; 
       ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; 
-      ctx.bcU[0].face[Y1]=ZERO; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=ZERO; 
-      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=FIXED; 
+      ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=NONE; ctx.bcU[2].face[Y1]=NONE; 
+      ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; 
       ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=ZERO; 
       if (xs == 0) { 
         i = 0;
