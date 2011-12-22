@@ -45,8 +45,6 @@ int main(int argc,char **argv)
   ierr = DAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	
 
-  ctx.matprop[0].E     = 1.;
-  ctx.matprop[0].nu    = 0.;
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
   
