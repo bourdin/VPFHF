@@ -48,11 +48,11 @@ int main(int argc,char **argv)
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
   
-  ctx.timestep  = 0;
+  ctx.timestep  = 1;
   ctx.timevalue = 1.;
 
   ierr = DAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = VecSet(fields.V,0.0);CHKERRQ(ierr);
+  ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
   ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
   ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);

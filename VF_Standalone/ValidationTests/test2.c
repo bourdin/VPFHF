@@ -1,7 +1,7 @@
 /*
-  test2.c: 
+  test4.c: 
     solve for the displacement in a pressurized rectangular crack in 3d
-    uses symmetry to solve on 1/4 domain
+    uses symmetry to solve on 1/2 domain
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
@@ -24,7 +24,7 @@ int main(int argc,char **argv)
   VFFields            fields;
   PetscErrorCode      ierr;
   
-  PetscReal           length = .4;
+  PetscReal           length = .2;
   PetscInt            orientation=2;
   PetscInt            nopts=3;
   PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
@@ -45,15 +45,15 @@ int main(int argc,char **argv)
   ierr = DAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-	
+  
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
   
-  ctx.timestep = 0;
+  ctx.timestep  = 1;
   ctx.timevalue = 1.;
 
   ierr = DAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = VecSet(fields.V,0.0);CHKERRQ(ierr);
+  ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
   ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
   ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
@@ -63,21 +63,15 @@ int main(int argc,char **argv)
   
   ierr = DAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);    
 
-  ctx.bcU[0].face[X0]=ZERO; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
-  ctx.bcU[0].face[X1]=ZERO; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
-  ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=ZERO; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
-  ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=ZERO; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
-  ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=ZERO; ctx.bcV[0].face[Z0]=NONE;
-  ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=ZERO; ctx.bcV[0].face[Z1]=NONE;
-
   switch (orientation) {
     case 0:
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g on face X0 along <0,1,0>\n",
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g parallel to faces X0/X1 along <0,1,0>\n",
                          length);CHKERRQ(ierr);     
+      ctx.bcU[0].face[X0]=ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
-            if ((i < 2) && (coords_array[k][j][i][2] < length)) {
+            if (((i == nx/2) || (i == nx/2-1)) && (coords_array[k][j][i][2] < length)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -85,12 +79,13 @@ int main(int argc,char **argv)
       }      
       break;
     case 1:
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g on face X0 along <0,0,1>\n",
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g parallel to faces X0/X1  along <0,0,1>\n",
                          length);CHKERRQ(ierr);      
+      ctx.bcU[0].face[X0]=ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
-            if ((i < 2) && (coords_array[k][j][i][1] < length)) {
+            if (((i == nx/2) || (i == nx/2-1)) && (coords_array[k][j][i][1]  < length)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -98,12 +93,13 @@ int main(int argc,char **argv)
       }      
       break;
     case 2:
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g on face Y0 along <1,0,0>\n",
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g parallel to faces Y0/Y1  along <1,0,0>\n",
                          length);CHKERRQ(ierr);      
+      ctx.bcU[1].face[Y0]=ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
-            if ((j < 2) && (coords_array[k][j][i][2] < length)) {
+            if (((j == ny/2) || (j == ny/2-1))  && (coords_array[k][j][i][2] < length)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -111,12 +107,13 @@ int main(int argc,char **argv)
       }      
       break;
     case 3:
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g on face Y1 along <0,0,1>\n",
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g parallel to faces Y0/Y1  along <0,0,1>\n",
                          length);CHKERRQ(ierr);      
+      ctx.bcU[1].face[Y0]=ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
-            if ((j < 2) && (coords_array[k][j][i][0] < length)) {
+            if (((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] < length)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -124,12 +121,13 @@ int main(int argc,char **argv)
       }      
       break;
     case 4:
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g on face Z0 along <1,0,0>\n",
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g parallel to faces Z0/Z1  along <1,0,0>\n",
                          length);CHKERRQ(ierr);      
+      ctx.bcU[2].face[Z0]=ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
-            if ((k < 2) && (coords_array[k][j][i][1] < length)) {
+            if (((k == nz/2) || (k == nz/2-1)) && (coords_array[k][j][i][1] < length)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -137,12 +135,13 @@ int main(int argc,char **argv)
       }      
       break;
     case 5:
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g on face Z1 along <0,1,0>\n",
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g parallel to faces Z0/Z1  along <0,1,0>\n",
                          length);CHKERRQ(ierr);      
+      ctx.bcU[2].face[Z0]=ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
-            if ((k < 2) && (coords_array[k][j][i][0] < length)) {
+            if (((k == nz/2) || (k == nz/2-1)) && (coords_array[k][j][i][0] < length)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -162,7 +161,7 @@ int main(int argc,char **argv)
   ierr = VF_StepV(&fields,&ctx);
   
   ctx.hasCrackPressure = PETSC_TRUE;
-  ierr = VF_StepU(&fields,&ctx);
+  //ierr = VF_StepU(&fields,&ctx);
   ctx.ElasticEnergy=0;
   ctx.InsituWork=0;
   ctx.PressureWork = 0.;
@@ -185,7 +184,6 @@ int main(int argc,char **argv)
   */    
   switch (ctx.fileformat) {
     case FILEFORMAT_HDF5:       
-      ierr = FieldsH5Write(&ctx,&fields);
       ierr = FieldsH5Write(&ctx,&fields);
     break;
     case FILEFORMAT_BIN:
