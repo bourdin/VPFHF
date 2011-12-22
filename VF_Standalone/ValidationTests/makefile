@@ -1,7 +1,7 @@
 include ../makefile.include	
 CFLAGS='-I..'
 
-all: test1 test2
+all: test1 test2 test3 test4 test5 test6
 runall: runtest1
 
 include ${PETSC_DIR}/conf/variables
@@ -21,6 +21,9 @@ test4: test4.o ${VFOBJ} chkopts
 	@${CLINKER} -o test4 test4.o ${VFOBJ} ${PETSC_LIB}
 
 test5: test5.o ${VFOBJ} chkopts
+	@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
+test6: test6.o ${VFOBJ} chkopts
 	@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 EPSILON =.1
@@ -48,6 +51,12 @@ runtest5: test5
 	mpiexec -n 2 ./$< -nx 21 -ny 21 -nz 21 -lx 1 -ly 1 -lz 1 -nu 0 -epsilon ${EPSILON} -eta 1e-8 -orientation $$or -p $@-$$or  | tee $@-$$or.out ;\
 	done
 	#@tail -20 $@.out | diff - results/$@-ref.out
+
+runtest6: test6
+	@echo "Running " $@
+	for or in 0 1 2; do \
+	mpiexec -n 2 ./$< -nx 21 -ny 21 -nz 21 -lx 1 -ly 1 -lz 1 -nu 0.3 -orientation $$or -p $@-$$or ;\
+	done
 
 clean::
 	-rm -f test1 test2 test3 test4 test5

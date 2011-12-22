@@ -46,8 +46,6 @@ int main(int argc,char **argv)
 	ierr = DAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	
-  ctx.matprop[0].E     = 1.;
-  ctx.matprop[0].nu    = 0.;
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
   
