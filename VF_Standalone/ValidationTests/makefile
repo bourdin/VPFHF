@@ -29,7 +29,7 @@ test6: test6.o ${VFOBJ} chkopts
 test7: test7.o ${VFOBJ} chkopts
 	@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
-EPSILON =.1
+EPSILON =.05
 LENGTH  =.4
 
 runtest2: test2
