@@ -2046,6 +2046,69 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "VF_NullSpaceElasticity3D"
+/*
+  VF_NullSpaceElasticity3D: Setup the null space corresponding to rigid motions 
+
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VF_NullSpaceElasticity3D(KSP ksp,VFCtx *ctx)
+{
+  PetscErrorCode      ierr;
+  MatNullSpace        nullsp;
+  int                 i,j,k,c;
+  int                 xs,xm,ys,ym,zs,zm,nullspacedim=6;
+  Vec                *nullspace;
+  PetscReal       ****coord_array;
+  PetscReal      *****nullspace_array;
+  
+  
+  PetscFunctionBegin;  
+  ierr = PetscMalloc(nullspacedim*sizeof(Vec),&nullspace);CHKERRQ(ierr);
+  ierr = PetscMalloc(nullspacedim*sizeof(PetscReal ****),&nullspace_array);CHKERRQ(ierr);
+  ierr = DAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  /*
+    Get coordinates and null space arrays
+  */
+  ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coord_array);CHKERRQ(ierr);
+  for (i = 0; i<nullspacedim; i++) {
+    ierr = DACreateGlobalVector(ctx->daVect,&nullspace[i]);CHKERRQ(ierr);
+    ierr = VecSet(nullspace[i],0.0);CHKERRQ(ierr);
+    ierr = DAVecGetArrayDOF(ctx->daVect,nullspace[i],&nullspace_array[i]);CHKERRQ(ierr);
+  }
+  ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coord_array);CHKERRQ(ierr);
+  for (k = zs; k < zs+zm; k++) {
+    for (j = ys; j < ys+ym; j++) {
+      for (i = xs; i < xs+xm; i++) {
+        nullspace_array[0][k][j][i][0] = 1;
+        nullspace_array[1][k][j][i][1] = 1;
+        nullspace_array[2][k][j][i][2] = 1;
+        nullspace_array[3][k][j][i][1] =  coord_array[k][j][i][2];
+        nullspace_array[3][k][j][i][2] = -coord_array[k][j][i][1];
+        nullspace_array[4][k][j][i][0] =  coord_array[k][j][i][2];
+        nullspace_array[4][k][j][i][2] = -coord_array[k][j][i][0];
+        nullspace_array[5][k][j][i][0] =  coord_array[k][j][i][1];
+        nullspace_array[5][k][j][i][1] = -coord_array[k][j][i][0];
+      }
+    }
+  }
+  
+  ierr = DAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coord_array);CHKERRQ(ierr);
+  for (i = 0; i<nullspacedim; i++) {
+    ierr = DAVecRestoreArrayDOF(ctx->daVect,nullspace[i],&nullspace_array[i]);CHKERRQ(ierr);
+  }
+  ierr = MatNullSpaceCreate(PETSC_COMM_WORLD,PETSC_FALSE,nullspacedim,nullspace,&nullsp);
+  for (i = 0; i<nullspacedim; i++) {
+    ierr = VecDestroy(nullspace[i]);CHKERRQ(ierr);
+  }
+  ierr = KSPSetNullSpace(ksp,nullsp);CHKERRQ(ierr);
+  ierr = MatNullSpaceDestroy(nullsp);CHKERRQ(ierr);
+  ierr = PetscFree(nullspace);CHKERRQ(ierr);
+  ierr = PetscFree(nullspace_array);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "VF_StepU"
 /*
   VF_StepU
