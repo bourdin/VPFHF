@@ -61,6 +61,27 @@ int main(int argc,char **argv)
   ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
   
   ierr = DAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);    
+  /*
+    Reset all BC for U and V
+  */
+  for (i = 0; i < 6; i++) {
+    ctx.bcV[0].face[i]=NONE;
+    for (j = 0; j < 3; j++) {
+      ctx.bcU[j].face[i] = NONE;
+    }
+  }
+  for (i = 0; i < 12; i++) {
+    ctx.bcV[0].edge[i]=NONE;
+    for (j = 0; j < 3; j++) {
+      ctx.bcU[j].edge[i] = NONE;
+    }
+  }
+  for (i = 0; i < 8; i++) {
+    ctx.bcV[0].vertex[i]=NONE;
+    for (j = 0; j < 3; j++) {
+      ctx.bcU[j].vertex[i] = NONE;
+    }
+  }
   switch (orientation) {
     case 0:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face X0\n",
