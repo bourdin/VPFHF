@@ -39,32 +39,33 @@ runtest2: test2
 
 runtest3: test3
 	@echo "Running " $@
-	mpiexec -n 2 ./$< -nx 41 -ny 41 -nz 6 -lx 2 -ly 2 -lz .25 -length .8 -orientation 1 -nu 0 -p $@ | tee $@-out 
+	mpiexec -n 2 ./$< -nx 41 -ny 41 -nz 6 -lx 2 -ly 2 -lz .25 -length .8 -orientation 1 -nu 0 -p $@ | tee $@.out 
 	@diff $@.out results/$@-ref.out
 
 runtest4: test4
 	@echo "Running " $@
-	mpiexec -n 2 ./$< -nx 81 -ny 81 -nz 6 -lx 2 -ly 2 -lz .25 -length ${LENGTH} -orientation 3 -nu 0 -epsilon ${EPSILON} -eta 1e-8 -p runtest4
-	#$@ | tee $@.out
+	mpiexec -n 2 ./$< -nx 81 -ny 81 -nz 6 -lx 2 -ly 2 -lz .25 -length ${LENGTH} -orientation 3 -nu 0 -epsilon ${EPSILON} -eta 1e-8 -p $@ | tee $@.out
 	@diff $@.out results/$@-ref.out
 
 runtest5: test5
 	@echo "Running " $@
 	for or in 0 1 2 3 4 5; do \
 	mpiexec -n 2 ./$< -nx 21 -ny 21 -nz 21 -lx 1 -ly 1 -lz 1 -nu 0 -epsilon ${EPSILON} -eta 1e-8 -orientation $$or -p $@-$$or  | tee $@-$$or.out ;\
+	@diff $@-$$or.out results/$@-$$or-ref.out ;\
 	done
-	#@tail -20 $@.out | diff - results/$@-ref.out
 
 runtest6: test6
 	@echo "Running " $@
 	for or in 0 1 2; do \
 	mpiexec -n 2 ./$< -nx 21 -ny 21 -nz 21 -lx 1 -ly 1 -lz 1 -nu 0.3 -orientation $$or -p $@-$$or ;\
+	@diff $@-$$or.out results/$@-$$or-ref.out ;\
 	done
 
 runtest7: test7
 	@echo "Running " $@
 	for or in 0 1 2; do \
 	mpiexec -n 2 ./$< -nx 21 -ny 21 -nz 21 -lx 1 -ly 1 -lz 1 -nu 0.3 -orientation $$or -p $@-$$or ;\
+	@diff $@-$$or.out results/$@-$$or-ref.out ;\
 	done
 
 clean::
