@@ -17,19 +17,15 @@
 extern PetscErrorCode VFFlow_Fake(VFCtx *ctx, VFFields *fields)
 {
 	PetscErrorCode ierr;
-	PetscReal     x,y,z;
-	PetscReal			radius_x,radius_y,radius_z;
-	PetscReal			dist;
 	PetscReal			incremnt = 3.;
 	PetscInt			xs,xm,nx;
 	PetscInt			ys,ym,ny;
 	PetscInt			zs,zm,nz;
 	PetscInt			ei,ej,ek;
-	PetscReal			p;
 	PetscReal			***pressure_array;
-	PetscReal			****coords_array;
-	PetscReal     BBmin[3],BBmax[3];
-	
+	PetscReal			****vel_array;
+	PetscReal			pi,hx,hy,hz;
+
 	
 	/*
 	  Fake flow where the pressure in the reservoir is 
@@ -47,30 +43,25 @@ extern PetscErrorCode VFFlow_Fake(VFCtx *ctx, VFFields *fields)
 	  /*
     Get bounding box from petsc DA
   */
-  ierr = DAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
 
-	ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DAVecGetArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DAVecGetArray(ctx->daScal,fields->pressure,&pressure_array);CHKERRQ(ierr);    
+	pi = 6.*asin(0.5);
+	hx = 1./(nx-1.);
+	hy = 1./(ny-1.);
+	hz = 1./(nz-1.);
 	
-  radius_x = (BBmax[0]-BBmin[0]) / 2. * (ctx->timevalue / ctx->maxtimevalue + .1);
-  radius_y = (BBmax[1]-BBmin[1]) / 20.;
-  radius_z = (BBmax[2]-BBmin[2]) / 4.;
 	for (ek = zs; ek < zs+zm; ek++) {
-    for (ej = ys; ej < ys+ym; ej++) {
+		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
-    		z = (coords_array[ek][ej][ei][2] - (BBmin[2] + BBmax[2]) * .5) / radius_z;
-        y = (coords_array[ek][ej][ei][1] - BBmin[1]) / radius_y;
-				x = (coords_array[ek][ej][ei][0] - BBmin[0]) / radius_x;
-				if ( x*x + y*y + z*z < 1.) {
-				  p = 2. * ctx->resprop.Pinit;
-				} else {
-				  p = ctx->resprop.Pinit * (1. + PetscExpScalar ( (1. - x*x - y*y - z*z) / 2. / ctx->vfprop.epsilon));
-				}
-				pressure_array[ek][ej][ei] = p;
+				pressure_array[ek][ej][ei] = cos(pi*ei*hx)*cos(pi*ej*hy)*cos(pi*ek*hz)/(3.*pi*pi);
+				vel_array[ek][ej][ei][0]=sin(pi*ei*hx)*cos(pi*ej*hy)*cos(pi*ek*hz)/(3.*pi);
+				vel_array[ek][ej][ei][1]=cos(pi*ei*hx)*sin(pi*ej*hy)*cos(pi*ek*hz)/(3.*pi);
+				vel_array[ek][ej][ei][2]=cos(pi*ei*hx)*cos(pi*ej*hy)*sin(pi*ek*hz)/(3.*pi);
 			}
 		}
 	}
-	ierr = DAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DAVecRestoreArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DAVecRestoreArray(ctx->daScal,fields->pressure,&pressure_array);CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);	

@@ -24,27 +24,13 @@ int main(int argc,char **argv)
   VFCtx               ctx;
   VFFields            fields;
   PetscErrorCode      ierr;
-  
   char                filename[FILENAME_MAX];
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  
-  /*
-    This will have to be moved into a FlowSolverInitialize in VF_Flow.c
-  */
-  switch (ctx.flowsolver) {
-		case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:       
-			ierr = FlowSolverInitialize(&ctx);CHKERRQ(ierr);
-			break;
-		case FLOWSOLVER_FEM:
-			break; 
-		case FLOWSOLVER_FAKE:
-			break; 
-		case FLOWSOLVER_READFROMFILES:
-			break;
-	}
+  ierr = FlowSolverInitialize(&ctx,&fields);CHKERRQ(ierr);
+
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
     ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
@@ -102,25 +88,10 @@ int main(int argc,char **argv)
     ierr = PetscLogPrintSummary(PETSC_COMM_WORLD,filename);CHKERRQ(ierr);
 
   }
-  /* end of time step */
-	
-	/*
-	  This will also have to move into a VF_FlowFinalize in VF_Flow.c
-    ctx.FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
-	*/
-	switch (ctx.flowsolver) {
-		case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:       
-			ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
-			break;
-		case FLOWSOLVER_FEM:
-			break; 
-		case FLOWSOLVER_FAKE:
-			break; 
-		case FLOWSOLVER_READFROMFILES:
-			break;
-	}
-  ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
-  ierr = PetscFinalize();
+
+	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
+	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
+	ierr = PetscFinalize();
   return(0);
 }
   

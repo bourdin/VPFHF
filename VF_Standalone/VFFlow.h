@@ -48,8 +48,11 @@ typedef struct {
 
 extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode GetFlowBC(FLOWBC *BC, FlowCases setbc);
+//extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields);
+//extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx);
+
+extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx);
 
 extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx);
 extern PetscErrorCode BCTInit(BC *BCT,VFCtx *ctx);
