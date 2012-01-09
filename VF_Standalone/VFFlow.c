@@ -19,6 +19,42 @@
    BCPInit
    Keita Yoshioka yoshk@chevron.com
 */
+extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
+{
+	PetscErrorCode ierr;
+	
+	PetscFunctionBegin;
+	switch (ctx->flowsolver) {
+		case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:       
+			ierr = MixedFEMFlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
+			break;
+		case FLOWSOLVER_FEM:
+			break; 
+		case FLOWSOLVER_FAKE:
+			break; 
+		case FLOWSOLVER_READFROMFILES:
+			break;
+	}
+	PetscFunctionReturn(0);
+}
+extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
+{
+	PetscErrorCode ierr;
+	
+	PetscFunctionBegin;
+	switch (ctx->flowsolver) {
+		case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:       
+			ierr = MixedFEMFlowSolverInitialize(ctx);CHKERRQ(ierr);
+			break;
+		case FLOWSOLVER_FEM:
+			break; 
+		case FLOWSOLVER_FAKE:
+			break; 
+		case FLOWSOLVER_READFROMFILES:
+			break;
+	}
+	PetscFunctionReturn(0);
+}
 extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx)
 {
   PetscErrorCode ierr;
@@ -27,7 +63,7 @@ extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx)
   ierr = BCInit(BCP,1);CHKERRQ(ierr);
 
 /*
-  When positive value is given, boundary condiction has a numecial value
+  When positive value is given, boundary condiction has a numerical value
 */
   if(ctx->BCpres[0] > -1.e-8) BCP[0].face[X0] = VALUE;
   if(ctx->BCpres[1] > -1.e-8) BCP[0].face[X1] = VALUE;

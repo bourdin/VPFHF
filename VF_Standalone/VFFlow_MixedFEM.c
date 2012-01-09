@@ -66,7 +66,21 @@ extern PetscErrorCode VFFlow_DarcyMixedFEMSteadyState(VFCtx *ctx, VFFields *fiel
 	ierr = DAVecRestoreArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);
 	ierr = DAVecRestoreArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DAVecRestoreArrayDOF(ctx->daFlow,fields->VelnPress,&VelnPress_array);CHKERRQ(ierr);
+
 	
+	/*
+	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrix.txt",&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	ierr = MatView(ctx->KVelP,viewer);CHKERRQ(ierr);
+	
+	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS.txt",&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	ierr = VecView( ctx->RHSVelP,viewer);CHKERRQ(ierr);
+
+	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Sol.txt",&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	ierr = VecView( fields->VelnPress,viewer);CHKERRQ(ierr);
+	*/
 	PetscFunctionReturn(0);
 }
 
@@ -187,18 +201,22 @@ extern PetscErrorCode VecApplyWellFlowBC(PetscReal *Ks_local, PetscReal ***sourc
 			for (i = 0; i < e->nphix; i++) {
 				for (eg = 0; eg < e->ng; eg++) {
 					loc_source[eg] += source_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
-				}
+				};
 			}
 		}
 	}
+	//for (eg = 0; eg < e->ng; eg++)
+	//	printf("K[%d] = %f\n",eg, loc_source[eg]);
+	
 	for(eg = 0; eg < e->ng; eg++)
 	for(l = 0, k = 0; k < e->nphiz; k++){
 		for(j = 0; j < e->nphiy; j++){
 			for(i = 0; i < e->nphix; i++, l++){
 				Ks_local[l] = 0.;
 				for(eg = 0; eg < e->ng; eg++){
-					Ks_local[l] += -loc_source[eg]* e->phi[k][j][i][eg] * e->weight[eg];
-				}
+					//Ks_local[l] += -source_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg] * e->weight[eg];
+					Ks_local[l] += -loc_source[eg] * e->phi[k][j][i][eg] * e->weight[eg];
+				};//printf("K[%d] = %f\n",l, Ks_local[l]);
 			}
 		}
 	}
@@ -211,8 +229,8 @@ extern PetscErrorCode BoundaryPressure(PetscReal *press, PetscInt i, PetscInt j,
 	PetscReal			pi;
 	PetscFunctionBegin;	
 	pi = 6.*asin(0.5);
-	*press = 0.;
-	//*press = resprop.Pinit;
+	*press = sin(2.*pi*k*hk)*sin(2.*pi*j*hj)*sin(2.*pi*i*hi);
+	//*press = 0.;
 	PetscFunctionReturn(0);
 }
 
@@ -236,7 +254,7 @@ extern PetscErrorCode BoundaryFlowRate(PetscReal *vel, PetscInt c, PetscInt i, P
 	mu = flowpropty.mu;
 	g = flowpropty.g[c];
 	*vel = 0.;
-	
+/*	
 	if(c == 0){
 		*vel = -beta_c/mu*(2.*pi*cos(2.*pi*i*hi)*sin(2.*pi*j*hj)*sin(2.*pi*k*hk) - gamma_c*rho*g);
 	}
@@ -246,6 +264,18 @@ extern PetscErrorCode BoundaryFlowRate(PetscReal *vel, PetscInt c, PetscInt i, P
 	if(c == 2){
 		*vel = -beta_c/mu*(2.*pi* sin(2.*pi*i*hi)*sin(2.*pi*j*hj)*cos(2.*pi*k*hk) - gamma_c*rho*g);
 	}
+*/
+	
+	if(c == 0){
+		*vel = beta_c/mu*(sin(pi*i*hi)*cos(pi*j*hj)*cos(pi*k*hk) - gamma_c*rho*g)/(3.*pi);
+	}
+	if(c == 1){
+		*vel = beta_c/mu*(cos(pi*i*hi)*sin(pi*j*hj)*cos(pi*k*hk) - gamma_c*rho*g)/(3.*pi);
+	}
+	if(c == 2){
+		*vel = beta_c/mu*(cos(pi*i*hi)*cos(pi*j*hj)*sin(pi*k*hk) - gamma_c*rho*g)/(3.*pi);
+	}
+	
 	PetscFunctionReturn(0);
 }
 
@@ -1139,7 +1169,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 	PetscInt		nrow = ctx->e3D.nphix * ctx->e3D.nphiy * ctx->e3D.nphiz;
 	MatStencil		*row, *row1;
 	PetscReal		***source_array;
-	//Vec				source_local;
+	Vec				source_local;
 	PetscReal		pi;
 
 	PetscFunctionBegin;
@@ -1163,7 +1193,13 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 
 	ierr = DACreateGlobalVector(ctx->daScal,&ctx->Source);CHKERRQ(ierr);
 	ierr = VecSet(ctx->Source,0.);CHKERRQ(ierr);
-	ierr = DAVecGetArray(ctx->daScal,ctx->Source,&source_array);CHKERRQ(ierr);
+	
+	
+	ierr = DAGetLocalVector(ctx->daScal,&source_local);CHKERRQ(ierr);
+	ierr = DAGlobalToLocalBegin(ctx->daScal,ctx->Source,INSERT_VALUES,source_local);CHKERRQ(ierr);
+	ierr = DAGlobalToLocalEnd(ctx->daScal,ctx->Source,INSERT_VALUES,source_local);CHKERRQ(ierr);
+	ierr = DAVecGetArray(ctx->daScal,source_local,&source_array);CHKERRQ(ierr); 
+	
 	/*
 	 get permeability values/mult
 	 */
@@ -1193,7 +1229,8 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 	for (ek = zs; ek < zs + zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
-				source_array[ek][ej][ei] = 4.*pi*pi*3.*beta_c/mu*sin(2.*pi*ek*hz)*sin(2.*pi*ej*hy)*sin(2.*pi*ei*hx);
+				source_array[ek][ej][ei] = beta_c/mu*cos(pi*ek*hz)*cos(pi*ej*hy)*cos(pi*ei*hx);
+			//	source_array[ek][ej][ei] = 4.*pi*pi*3.*beta_c/mu*sin(2.*pi*ek*hz)*sin(2.*pi*ej*hy)*sin(2.*pi*ei*hx);
 			}
 		}
 	}	
@@ -1279,6 +1316,11 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 	ierr = DAVecRestoreArrayDOF(ctx->daFlow,RHS_localVec,&RHS_array);CHKERRQ(ierr);
 	ierr = DALocalToGlobalBegin(ctx->daFlow,RHS_localVec,RHS);CHKERRQ(ierr);
 	ierr = DALocalToGlobalEnd(ctx->daFlow,RHS_localVec,RHS);CHKERRQ(ierr);
+	
+//	PetscViewer viewer;
+//	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSb.txt",&viewer);CHKERRQ(ierr);
+//	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+//	ierr = VecView(RHS,viewer);CHKERRQ(ierr);
 	
 	ierr = VecApplyFlowBC(RHS,&ctx->bcFlow[0], ctx);CHKERRQ(ierr);
 	
@@ -1401,8 +1443,7 @@ extern PetscErrorCode FLow_MatB(PetscReal *KB_ele, CartFE_Element3D *e,  PetscIn
 							KB_ele[l] = 0.;
 							for(eg = 0; eg < e->ng; eg++){
 								KB_ele[l] += -(e->phi[k][j][i][eg] * e->dphi[kk][jj][ii][c][eg] 
-										+ 0.5 * e->dphi[k][j][i][c][eg] * e->phi[kk][jj][ii][eg]) * e->weight[eg];
-
+											   + 0.5 * e->dphi[k][j][i][c][eg] * e->phi[kk][jj][ii][eg]) * e->weight[eg];
 							}
 						}
 					}
@@ -1433,7 +1474,7 @@ extern PetscErrorCode FLow_MatBTranspose(PetscReal *KB_ele, CartFE_Element3D *e,
 							KB_ele[l] = 0.;
 							for(eg = 0; eg < e->ng; eg++){
 								KB_ele[l] += -beta_c/mu * (e->phi[kk][jj][ii][eg] * e->dphi[k][j][i][c][eg] 
-										   + 0.5 * e->dphi[kk][jj][ii][c][eg] * e->phi[k][j][i][eg]) * e->weight[eg];						
+														   + 0.5 * e->dphi[kk][jj][ii][c][eg] * e->phi[k][j][i][eg]) * e->weight[eg];	
 							}
 						}
 					}
@@ -1473,8 +1514,8 @@ extern PetscErrorCode FLow_MatA(PetscReal *A_local, CartFE_Element3D *e,  PetscI
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "FlowSolverInitialize"
-extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx)
+#define __FUNCT__ "MixedFEMFlowSolverInitialize"
+extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx)
 {
 	PetscMPIInt    comm_size;
 	PetscErrorCode ierr;
@@ -1484,8 +1525,8 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx)
 		ctx->flowrate = 5.;														/*Flow rate, assumed to be consistent with whatever flow units used for now*/
 		ctx->units = FieldUnits;
 		ierr = PetscOptionsEnum("-flowunits","\n\tFlow solver","",FlowUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
-		ctx->flowcase = ALLPRESSUREBC;
-	//	ctx->flowcase = ALLNORMALFLOWBC;
+	//	ctx->flowcase = ALLPRESSUREBC;
+		ctx->flowcase = ALLNORMALFLOWBC;
 		ierr = PetscOptionsEnum("-flow boundary conditions","\n\tFlow solver","",FlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
 	}
 	ierr = PetscOptionsEnd();CHKERRQ(ierr);
@@ -1516,8 +1557,8 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "FlowSolverFinalize"
-extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
+#define __FUNCT__ "MixedFEMFlowSolverFinalize"
+extern PetscErrorCode MixedFEMFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 {
 	
 	PetscErrorCode ierr;
@@ -1537,28 +1578,28 @@ extern PetscErrorCode GetFlowProp(FlowProp *flowprop, FlowUnit flowunit, ResProp
 {
 	PetscFunctionBegin;
 	switch (flowunit) {
-		case FieldUnits:
-			flowprop->mu = resprop.visc;							/*viscosity in cp*/
-			flowprop->rho = 62.428*resprop.fdens;					/*density in lb/ft^3*/
-			flowprop->cf = resprop.cf;								/*compressibility in psi^{-1}*/
-			flowprop->beta = 1.127;									/*flow rate conversion constant*/
-			flowprop->gamma = 2.158e-4;								/*pressue conversion constant*/
-			flowprop->alpha = 5.615;								/*volume conversion constatnt*/
-			flowprop->g[0] = 0.;									/*x-componenet of gravity. unit is ft/s^2*/
-			flowprop->g[1] = 0.;									/*y-component of gravity. unit is ft/s^2*/
-			flowprop->g[2] = 0.;//32.17;									/*z-component of gravity. unit is ft/s^2*/
-			break;
 //		case FieldUnits:
-//			flowprop->mu = 1.;							/*viscosity in cp*/
-//			flowprop->rho = 1.;					/*density in lb/ft^3*/
-//			flowprop->cf = 1.;								/*compressibility in psi^{-1}*/
-//			flowprop->beta = 1;									/*flow rate conversion constant*/
-//			flowprop->gamma = 1;								/*pressue conversion constant*/
-//			flowprop->alpha = 1;								/*volume conversion constatnt*/
+//			flowprop->mu = resprop.visc;							/*viscosity in cp*/
+//			flowprop->rho = 62.428*resprop.fdens;					/*density in lb/ft^3*/
+//			flowprop->cf = resprop.cf;								/*compressibility in psi^{-1}*/
+//			flowprop->beta = 1.127;									/*flow rate conversion constant*/
+//			flowprop->gamma = 2.158e-4;								/*pressue conversion constant*/
+//			flowprop->alpha = 5.615;								/*volume conversion constatnt*/
 //			flowprop->g[0] = 0.;									/*x-componenet of gravity. unit is ft/s^2*/
 //			flowprop->g[1] = 0.;									/*y-component of gravity. unit is ft/s^2*/
 //			flowprop->g[2] = 0.;//32.17;									/*z-component of gravity. unit is ft/s^2*/
 //			break;
+		case FieldUnits:
+			flowprop->mu = 1.;							/*viscosity in cp*/
+			flowprop->rho = 1.;					/*density in lb/ft^3*/
+			flowprop->cf = 1.;								/*compressibility in psi^{-1}*/
+			flowprop->beta = 1;									/*flow rate conversion constant*/
+			flowprop->gamma = 1;								/*pressue conversion constant*/
+			flowprop->alpha = 1;								/*volume conversion constatnt*/
+			flowprop->g[0] = 0.;									/*x-componenet of gravity. unit is ft/s^2*/
+			flowprop->g[1] = 0.;									/*y-component of gravity. unit is ft/s^2*/
+			flowprop->g[2] = 0.;//32.17;									/*z-component of gravity. unit is ft/s^2*/
+			break;
 		case MetricUnits:
 			flowprop->mu = 0.001*resprop.visc;						/*viscosity in Pa.s*/
 			flowprop->rho = 1000*resprop.fdens;						/*density in kg/m^3*/
