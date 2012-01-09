@@ -254,7 +254,7 @@ extern PetscErrorCode BoundaryFlowRate(PetscReal *vel, PetscInt c, PetscInt i, P
 	mu = flowpropty.mu;
 	g = flowpropty.g[c];
 	*vel = 0.;
-/*	
+	
 	if(c == 0){
 		*vel = -beta_c/mu*(2.*pi*cos(2.*pi*i*hi)*sin(2.*pi*j*hj)*sin(2.*pi*k*hk) - gamma_c*rho*g);
 	}
@@ -264,18 +264,18 @@ extern PetscErrorCode BoundaryFlowRate(PetscReal *vel, PetscInt c, PetscInt i, P
 	if(c == 2){
 		*vel = -beta_c/mu*(2.*pi* sin(2.*pi*i*hi)*sin(2.*pi*j*hj)*cos(2.*pi*k*hk) - gamma_c*rho*g);
 	}
-*/
-	
+
+	/*
 	if(c == 0){
-		*vel = beta_c/mu*(sin(pi*i*hi)*cos(pi*j*hj)*cos(pi*k*hk) - gamma_c*rho*g)/(3.*pi);
+		*vel = -beta_c/mu*(2.*pi*cos(2.*pi*i*hi)*sin(2.*pi*j*hj)*sin(2.*pi*k*hk) - gamma_c*rho*g);
 	}
 	if(c == 1){
-		*vel = beta_c/mu*(cos(pi*i*hi)*sin(pi*j*hj)*cos(pi*k*hk) - gamma_c*rho*g)/(3.*pi);
+		*vel = -beta_c/mu*(2.*pi*sin(2.*pi*i*hi)*cos(2.*pi*j*hj)*sin(2.*pi*k*hk) - gamma_c*rho*g);
 	}
 	if(c == 2){
-		*vel = beta_c/mu*(cos(pi*i*hi)*cos(pi*j*hj)*sin(pi*k*hk) - gamma_c*rho*g)/(3.*pi);
+		*vel = -beta_c/mu*(2.*pi* sin(2.*pi*i*hi)*sin(2.*pi*j*hj)*cos(2.*pi*k*hk) - gamma_c*rho*g);
 	}
-	
+	*/
 	PetscFunctionReturn(0);
 }
 
@@ -1157,12 +1157,12 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 	PetscInt		i, j, k, l;
 	PetscInt		veldof = 3;
 	PetscInt		c;
-//	PetscReal		****perm_array;
+	PetscReal		****perm_array;
 	PetscReal		****coords_array;
 	PetscReal		****RHS_array;
 	PetscReal		*RHS_local;
 	Vec				RHS_localVec;
-//	Vec				perm_local;
+	Vec				perm_local;
 	PetscReal		hx,hy,hz;
 	PetscReal		*KA_local, *KB_local,*KD_local, *KBTrans_local;
 	PetscReal		beta_c, mu, gx, gy, gz;
@@ -1203,12 +1203,23 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 	/*
 	 get permeability values/mult
 	 */
-	/*
-	ierr = DAGetLocalVector(ctx->daFlow,&perm_local);CHKERRQ(ierr);
-	ierr = DAGlobalToLocalBegin(ctx->daFlow,fields->pmult,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DAGlobalToLocalEnd(ctx->daFlow,fields->pmult,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DAVecGetArray(ctx->daFlow,perm_local,&perm_array);CHKERRQ(ierr);   
-	*/
+	ierr = DAGetLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
+	ierr = DAGlobalToLocalBegin(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
+	ierr = DAGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
+	ierr = DAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr); 
+	
+	/*This zeroes out the off diagonal components of the permeability tensor. Eventually, will be removed since permeability 
+	 values are obtained from fracture mechanics part of code
+	 */
+	for (ek = zs; ek < zs + zm; ek++) {
+		for (ej = ys; ej < ys+ym; ej++) {
+			for (ei = xs; ei < xs+xm; ei++) {
+				for(c = 3; c < 6; c++){
+					perm_array[ek][ej][ei][c] = 0.;
+				}
+			}
+		}
+	}
 	
 	/*
 	 get local mat and RHS
@@ -1229,8 +1240,8 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 	for (ek = zs; ek < zs + zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
-				source_array[ek][ej][ei] = beta_c/mu*cos(pi*ek*hz)*cos(pi*ej*hy)*cos(pi*ei*hx);
-			//	source_array[ek][ej][ei] = 4.*pi*pi*3.*beta_c/mu*sin(2.*pi*ek*hz)*sin(2.*pi*ej*hy)*sin(2.*pi*ei*hx);
+			//	source_array[ek][ej][ei] = 4.*pi*pi*3.*beta_c/mu*cos(2.*pi*ek*hz)*cos(2.*pi*ej*hy)*cos(2.*pi*ei*hx);
+				source_array[ek][ej][ei] = 4.*pi*pi*3.*beta_c/mu*sin(2.*pi*ek*hz)*sin(2.*pi*ej*hy)*sin(2.*pi*ei*hx);
 			}
 		}
 	}	
@@ -1248,7 +1259,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 				ierr = FLow_MatA(KA_local, &ctx->e3D, ek, ej, ei);CHKERRQ(ierr);
 				for(c = 0; c < veldof; c++){
 					ierr = FLow_MatB(KB_local, &ctx->e3D, ek, ej, ei, c);CHKERRQ(ierr);
-					ierr = FLow_MatBTranspose(KBTrans_local, &ctx->e3D, ek, ej, ei, c, ctx->flowprop);CHKERRQ(ierr);
+					ierr = FLow_MatBTranspose(KBTrans_local, &ctx->e3D, ek, ej, ei, c, ctx->flowprop, perm_array);CHKERRQ(ierr);
 					for(l = 0, k = 0; k < ctx->e3D.nphiz; k++){
 						for(j = 0; j < ctx->e3D.nphiy; j++){
 							for(i = 0; i < ctx->e3D.nphix; i++, l++){
@@ -1261,7 +1272,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 					ierr = MatSetValuesStencil(K,nrow,row1,nrow,row,KB_local,ADD_VALUES);CHKERRQ(ierr);
 					ierr = MatSetValuesStencil(K,nrow,row,nrow,row1,KBTrans_local,ADD_VALUES);CHKERRQ(ierr);
 				}
-				ierr = FLow_MatD(KD_local, &ctx->e3D, ek, ej, ei, ctx->flowprop);CHKERRQ(ierr);
+				ierr = FLow_MatD(KD_local, &ctx->e3D, ek, ej, ei, ctx->flowprop, perm_array);CHKERRQ(ierr);
 				for(l = 0, k = 0; k < ctx->e3D.nphiz; k++){
 					for(j = 0; j < ctx->e3D.nphiy; j++){
 						for(i = 0; i < ctx->e3D.nphix; i++, l++){
@@ -1272,7 +1283,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KD_local,ADD_VALUES);CHKERRQ(ierr);
 				/*Assembling the righthand side vector f*/
 				for(c = 0; c < veldof; c++){
-					ierr = FLow_Vecf(RHS_local, &ctx->e3D, ek, ej, ei, c, ctx->flowprop);CHKERRQ(ierr);
+					ierr = FLow_Vecf(RHS_local, &ctx->e3D, ek, ej, ei, c, ctx->flowprop, perm_array);CHKERRQ(ierr);
 					for(l = 0, k = 0; k < ctx->e3D.nphiz; k++){
 						for(j = 0; j < ctx->e3D.nphiy; j++){
 							for(i = 0; i < ctx->e3D.nphix; i++, l++){
@@ -1282,7 +1293,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 					}
 				}
 				/*Assembling the righthand side vector g*/
-				ierr = FLow_Vecg(RHS_local, &ctx->e3D,  ek, ej, ei, ctx->flowprop);CHKERRQ(ierr);
+				ierr = FLow_Vecg(RHS_local, &ctx->e3D,  ek, ej, ei, ctx->flowprop, perm_array);CHKERRQ(ierr);
 				for(l = 0, k = 0; k < ctx->e3D.nphiz; k++){
 					for(j = 0; j < ctx->e3D.nphiy; j++){
 						for(i = 0; i < ctx->e3D.nphix; i++, l++){
@@ -1334,11 +1345,53 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 
 #undef __FUNCT__
 #define __FUNCT__ "FLow_Vecg"
-extern PetscErrorCode FLow_Vecg(PetscReal *Kg_local, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, FlowProp flowpropty)
+extern PetscErrorCode FLow_Vecg(PetscReal *Kg_local, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, FlowProp flowpropty, PetscReal ****perm_array)
 {
 	PetscInt		i, j, k, l;
 	PetscInt		eg;
 	PetscReal		beta_c, mu, rho, gamma_c, gx, gy, gz;
+	PetscReal		kx,ky,kz,kxy,kxz,kyz;
+
+	PetscFunctionBegin;
+	beta_c = flowpropty.beta;
+	gamma_c = flowpropty.gamma;
+	rho = flowpropty.rho;
+	mu = flowpropty.mu;
+	gx = flowpropty.g[0];
+	gy = flowpropty.g[1];
+	gz = flowpropty.g[2];
+	
+	kx = perm_array[ek][ej][ei][0];
+	ky = perm_array[ek][ej][ei][1];
+	kz = perm_array[ek][ej][ei][2];
+	kxy = perm_array[ek][ej][ei][3];
+	kxz = perm_array[ek][ej][ei][4];
+	kyz = perm_array[ek][ej][ei][5];
+	
+	for(l = 0, k = 0; k < e->nphiz; k++){
+		for(j = 0; j < e->nphiy; j++){
+			for(i = 0; i < e->nphix; i++, l++){
+				Kg_local[l] = 0.;
+				for(eg = 0; eg < e->ng; eg++){
+					/* Need to multiply by the permability when it is available*/
+					Kg_local[l] += -0.5 * rho * gamma_c *beta_c /mu * ((kx*gx + kxy*gy + kxz*gz) * e->dphi[k][j][i][0][eg] 
+																	   + (kxy*gx + ky*gy + kyz*gz) * e->dphi[k][j][i][1][eg]
+																	   + (kxz*gx + kyz*gy + kz*gz) * e->dphi[k][j][i][2][eg]) * e->weight[eg];				}
+			}
+		}
+	}
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "FLow_Vecf"
+extern PetscErrorCode FLow_Vecf(PetscReal *Kf_ele, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, PetscInt c, FlowProp flowpropty, PetscReal ****perm_array)
+{
+	PetscInt		i, j, k, l;
+	PetscInt		eg;
+	PetscReal		beta_c, mu, rho, gamma_c;
+	PetscReal		k1, k2, k3;
+	PetscReal		gx, gy, gz;
 	
 	PetscFunctionBegin;
 	beta_c = flowpropty.beta;
@@ -1348,42 +1401,28 @@ extern PetscErrorCode FLow_Vecg(PetscReal *Kg_local, CartFE_Element3D *e,  Petsc
 	gx = flowpropty.g[0];
 	gy = flowpropty.g[1];
 	gz = flowpropty.g[2];
-	for(l = 0, k = 0; k < e->nphiz; k++){
-		for(j = 0; j < e->nphiy; j++){
-			for(i = 0; i < e->nphix; i++, l++){
-				Kg_local[l] = 0.;
-				for(eg = 0; eg < e->ng; eg++){
-					/* Need to multiply by the permability when it is available*/
-					Kg_local[l] += -0.5 * rho * gamma_c *beta_c /mu * (gx * e->dphi[k][j][i][0][eg] + gy * e->dphi[k][j][i][1][eg] + gz * e->dphi[k][j][i][2][eg]) * e->weight[eg];
-				}
-			}
-		}
+	if(c == 0){
+		k1 = perm_array[ek][ej][ei][0];
+		k2 = perm_array[ek][ej][ei][3];
+		k3 = perm_array[ek][ej][ei][4];
 	}
-	PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "FLow_Vecf"
-extern PetscErrorCode FLow_Vecf(PetscReal *Kf_ele, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, PetscInt c, FlowProp flowpropty)
-{
-	PetscInt		i, j, k, l;
-	PetscInt		eg;
-	PetscReal		beta_c, mu, rho, gamma_c, g;
-	
-	PetscFunctionBegin;
-	beta_c = flowpropty.beta;
-	gamma_c = flowpropty.gamma;
-	rho = flowpropty.rho;
-	mu = flowpropty.mu;
-	g = flowpropty.g[c];
-
+	if(c == 1){
+		k1 = perm_array[ek][ej][ei][3];
+		k2 = perm_array[ek][ej][ei][1];
+		k3 = perm_array[ek][ej][ei][5];
+	}
+	if(c == 2){
+		k1 = perm_array[ek][ej][ei][4];
+		k2 = perm_array[ek][ej][ei][5];
+		k3 = perm_array[ek][ej][ei][2];
+	}
 	for(l = 0, k = 0; k < e->nphiz; k++){
 		for(j = 0; j < e->nphiy; j++){
 			for(i = 0; i < e->nphix; i++, l++){
 				Kf_ele[l] = 0.;
 				for(eg = 0; eg < e->ng; eg++){
 						/* Need to multiply by the permability when it is available*/
-					Kf_ele[l] += 0.5 * g * gamma_c * beta_c * rho / mu * e->phi[k][j][i][eg] * e->weight[eg];
+					Kf_ele[l] += 0.5 * (k1*gx + k2*gy + k3*gz) * gamma_c * beta_c * rho / mu * e->phi[k][j][i][eg] * e->weight[eg];
 				}
 			}
 		}
@@ -1393,16 +1432,24 @@ extern PetscErrorCode FLow_Vecf(PetscReal *Kf_ele, CartFE_Element3D *e,  PetscIn
 
 #undef __FUNCT__
 #define __FUNCT__ "FLow_MatD"
-extern PetscErrorCode FLow_MatD(PetscReal *Kd_ele, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, FlowProp flowpropty)
+extern PetscErrorCode FLow_MatD(PetscReal *Kd_ele, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, FlowProp flowpropty, PetscReal ****perm_array)
 {
 	PetscInt		i, j, k, l;
 	PetscInt		ii, jj, kk;
 	PetscInt		eg;
 	PetscReal		beta_c, mu;
-	
+	PetscReal		kx,ky,kz,kxy,kxz,kyz;
+
 	PetscFunctionBegin;
 	beta_c = flowpropty.beta;
 	mu = flowpropty.mu;
+	kx = perm_array[ek][ej][ei][0];
+	ky = perm_array[ek][ej][ei][1];
+	kz = perm_array[ek][ej][ei][2];
+	kxy = perm_array[ek][ej][ei][3];
+	kxz = perm_array[ek][ej][ei][4];
+	kyz = perm_array[ek][ej][ei][5];
+	
 	for(l = 0, k = 0; k < e->nphiz; k++){
 		for(j = 0; j < e->nphiy; j++){
 			for(i = 0; i < e->nphix; i++){
@@ -1413,9 +1460,9 @@ extern PetscErrorCode FLow_MatD(PetscReal *Kd_ele, CartFE_Element3D *e,  PetscIn
 							for(eg = 0; eg < e->ng; eg++){
 								/* Need to multiply by the permability when it is available*/
 								Kd_ele[l] += -0.5 * beta_c/mu * 
-								(e->dphi[k][j][i][0][eg] * e->dphi[kk][jj][ii][0][eg]
-								+ e->dphi[k][j][i][1][eg] * e->dphi[kk][jj][ii][1][eg]
-								+ e->dphi[k][j][i][2][eg] * e->dphi[kk][jj][ii][2][eg]) * e->weight[eg];
+								( (kx*e->dphi[k][j][i][0][eg] + kxy*e->dphi[k][j][i][1][eg]+ kxz*e->dphi[k][j][i][2][eg]) * e->dphi[kk][jj][ii][0][eg]
+								+ (kxy*e->dphi[k][j][i][0][eg] + ky*e->dphi[k][j][i][1][eg]+ kyz*e->dphi[k][j][i][2][eg]) * e->dphi[kk][jj][ii][1][eg]
+								+ (kxz*e->dphi[k][j][i][0][eg] + kyz*e->dphi[k][j][i][1][eg]+ kz*e->dphi[k][j][i][2][eg]) * e->dphi[kk][jj][ii][2][eg]) * e->weight[eg];
 							}
 						}
 					}
@@ -1456,15 +1503,32 @@ extern PetscErrorCode FLow_MatB(PetscReal *KB_ele, CartFE_Element3D *e,  PetscIn
 
 #undef __FUNCT__
 #define __FUNCT__ "FLow_MatBTranspose"
-extern PetscErrorCode FLow_MatBTranspose(PetscReal *KB_ele, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, PetscInt c, FlowProp flowpropty)
+extern PetscErrorCode FLow_MatBTranspose(PetscReal *KB_ele, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, PetscInt c, FlowProp flowpropty, PetscReal ****perm_array)
 {
 	PetscInt		i, j, k, l;
 	PetscInt		ii, jj, kk;
 	PetscInt		eg;
 	PetscReal		beta_c, mu;
+	PetscReal		k1, k2, k3;
 	PetscFunctionBegin;
 	beta_c = flowpropty.beta;
 	mu = flowpropty.mu;
+	
+	if(c == 0){
+		k1 = perm_array[ek][ej][ei][0];
+		k2 = perm_array[ek][ej][ei][3];
+		k3 = perm_array[ek][ej][ei][4];
+	}
+	if(c == 1){
+		k1 = perm_array[ek][ej][ei][3];
+		k2 = perm_array[ek][ej][ei][1];
+		k3 = perm_array[ek][ej][ei][5];
+	}
+	if(c == 2){
+		k1 = perm_array[ek][ej][ei][4];
+		k2 = perm_array[ek][ej][ei][5];
+		k3 = perm_array[ek][ej][ei][2];
+	}
 	for(l = 0, k = 0; k < e->nphiz; k++){
 		for(j = 0; j < e->nphiy; j++){
 			for(i = 0; i < e->nphix; i++){
@@ -1473,8 +1537,8 @@ extern PetscErrorCode FLow_MatBTranspose(PetscReal *KB_ele, CartFE_Element3D *e,
 						for(ii = 0; ii < e->nphix; ii++, l++){
 							KB_ele[l] = 0.;
 							for(eg = 0; eg < e->ng; eg++){
-								KB_ele[l] += -beta_c/mu * (e->phi[kk][jj][ii][eg] * e->dphi[k][j][i][c][eg] 
-														   + 0.5 * e->dphi[kk][jj][ii][c][eg] * e->phi[k][j][i][eg]) * e->weight[eg];	
+								KB_ele[l] += -beta_c/mu * (e->phi[kk][jj][ii][eg] * (k1*e->dphi[k][j][i][0][eg] + k2*e->dphi[k][j][i][1][eg] + k3*e->dphi[k][j][i][2][eg]) 
+														   + 0.5 * (k1*e->dphi[kk][jj][ii][0][eg] + k2*e->dphi[kk][jj][ii][1][eg] + k3*e->dphi[kk][jj][ii][2][eg]) * e->phi[k][j][i][eg]) * e->weight[eg];	
 							}
 						}
 					}
