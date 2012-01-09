@@ -218,10 +218,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->coupling = COUPLING_GMRSTOVF;
     ierr = PetscOptionsEnum("-coupling","\n\tCoupling type","",VFCouplingName,(PetscEnum)ctx->coupling,(PetscEnum*)&ctx->coupling,PETSC_NULL);CHKERRQ(ierr);
     */
-	 // ctx->flowsolver = FLOWSOLVER_FAKE;
-   // ctx->flowsolver = FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE;
-    //ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
-    ctx->fileformat = FILEFORMAT_HDF5;
+	ctx->fileformat = FILEFORMAT_HDF5;
     ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
 
     ctx->maxtimestep  = 1;
