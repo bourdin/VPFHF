@@ -1,7 +1,6 @@
 /*  
-test3.c Computes the elastic energy associated with boundary displacement 
-          given by Sneddon 
-          for a pressurized crack in a 2d domain
+test3.c:  Computes the elastic energy associated with boundary displacement 
+          given by Sneddon for a pressurized crack in a 2d domain
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
