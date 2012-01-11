@@ -285,11 +285,12 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
     for some reasons, the following does not work. 
     Using nx,ny,nz and lx, ly, lz instead.
   */
-  /*
+  
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: geometry options:","");CHKERRQ(ierr);
   {
     ierr = PetscMalloc(3 * sizeof(PetscReal),&l);CHKERRQ(ierr);
     for (i = 0; i < 3; i++) l[i] = 1.;
+    nval = 3;
     ierr = PetscOptionsRealArray("-l","\n\tDomain dimensions (default 1.), comma separated","",l,&nval,&flg);CHKERRQ(ierr);
     if (nval != 3 && nval != 0) {
       SETERRQ4(PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-l",nval,__FUNCT__);
@@ -301,6 +302,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 
     ierr = PetscMalloc(3 * sizeof(PetscInt),&n);CHKERRQ(ierr);
     for (i = 0; i < 3; i++) n[i] = 11;
+    nval = 3;
     ierr = PetscOptionsIntArray("-n","\n\tnumber of grid points (default 11), comma separated","",n,&nval,&flg);CHKERRQ(ierr);
     if (nval != 3 && nval != 0) {
       SETERRQ4(PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-n",nval,__FUNCT__);
@@ -309,24 +311,6 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
     ny = n[1];
     nz = n[2];
     ierr = PetscFree(n);CHKERRQ(ierr);
-  }
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
-  */
-  
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: geometry options:","");CHKERRQ(ierr);
-  {
-    nx = 9;
-    ierr = PetscOptionsInt("-nx","\n\tnumber of grid points in the x direction (default 11)","",nx,&nx,PETSC_NULL);CHKERRQ(ierr);
-    ny = nx;
-    ierr = PetscOptionsInt("-ny","\n\tnumber of grid points in the y direction (default nx)","",nx,&ny,PETSC_NULL);CHKERRQ(ierr);
-    nz = nx;
-    ierr = PetscOptionsInt("-nz","\n\tnumber of grid points in the x direction (default nx)","",nx,&nz,PETSC_NULL);CHKERRQ(ierr);
-    lx = 1.;
-    ierr = PetscOptionsReal("-lx","\n\tReservoir size along the x direction (default 1.)","",lx,&lx,PETSC_NULL);CHKERRQ(ierr);
-    ly = lx;
-    ierr = PetscOptionsReal("-ly","\n\tReservoir size along the y direction (default lx)","",lx,&ly,PETSC_NULL);CHKERRQ(ierr);
-    lz = lx;
-    ierr = PetscOptionsReal("-lz","\n\tReservoir size along the z direction (default lx)","",lx,&lz,PETSC_NULL);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   
