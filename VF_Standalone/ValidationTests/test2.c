@@ -1,7 +1,6 @@
 /*
-  test4.c: 
-    solve for the displacement in a pressurized rectangular crack in 3d
-    uses symmetry to solve on 1/2 domain
+test2.c:  Solve for the displacement in a pressurized rectangular crack in 3d
+          uses symmetry to solve on 1/2 domain
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
