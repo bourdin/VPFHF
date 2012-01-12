@@ -82,7 +82,7 @@ DISPCON1(,,,) = 3
 
 $ X0 and X1
 DISPCON1(1,,) = 5
-$DISPCON1(161,,) = 7
+DISPCON1(161,,) = 7
 
 $ Y0 and Y1
 DISPCON1(18 TO 161,1,) = 6
