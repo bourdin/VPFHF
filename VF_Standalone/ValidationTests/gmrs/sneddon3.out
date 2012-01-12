@@ -9,9 +9,9 @@ Working Directory: /data/etc_rpe_ucr/VF2/VF-Chevron/VF_Standalone/ValidationTest
  ***************************  All rights reserved  ***************************
  *****************************  Version 030311  ******************************
  *********************************  hltd828  *********************************
- ****************************  Process ID 30030  *****************************
+ ****************************  Process ID 31276  *****************************
  **************************  Run Date: 12 Jan 2012  **************************
- *********************  Start Time: 10 hr 26 min 49 sec  *********************
+ *********************  Start Time: 12 hr 00 min 54 sec  *********************
  *********************  GEOMECHANICS PRESSURIZED SPHERE  *********************
  Sneddon comparison with VF                                                     
 
@@ -364,7 +364,7 @@ See GMRS Users Guide for details.
  ***********************  ARRAY PRINTOUT INFORMATION  ************************
  PLOT FACTOR ADDED TO WELLS (ADDWELL)                 0.20
  NUMBER OF ARRAYS TO PRINT                              18
- PLOT OUTPUT FILE PREFIX (PLOTFILE)              sneddon2
+ PLOT OUTPUT FILE PREFIX (PLOTFILE)              sneddon3
  GRID PLOTS USE PLOTFILE PREFIX
  NO GRID VALUES ARE ARE PRINTED FOR THIS RUN (GRIDPRINT)
  NO TABLE PLOTS ARE GENERATED FOR THIS RUN (TABLEPLOT)
@@ -453,12 +453,11 @@ PROGRAM DETERMINING INITIAL STRESSES
 
  ************************  TIMER RESULTS IN SECONDS  *************************
  
- TOTAL TIME                                      15.21
- TOTAL INITIALIZATION                            15.21
+ TOTAL TIME                                      15.20
+ TOTAL INITIALIZATION                            15.20
  MECHANICS RESIDUAL SETUP                         0.02
- RESTART OUTPUT TIME                              0.00
  FACTOR LINEAR SOLVER FOR MECHANICS               0.05
- TOTAL LINEAR SOLVER FOR MECHANICS                7.85
+ TOTAL LINEAR SOLVER FOR MECHANICS                7.75
  VARIABLE UPDATES                                 0.09
   
  DISPLACEMENT SOLVES =                          1
