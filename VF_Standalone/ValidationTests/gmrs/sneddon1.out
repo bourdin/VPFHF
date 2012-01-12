@@ -9,9 +9,9 @@ Working Directory: /data/etc_rpe_ucr/VF2/VF-Chevron/VF_Standalone/ValidationTest
  ***************************  All rights reserved  ***************************
  *****************************  Version 030311  ******************************
  *********************************  hltd334  *********************************
- *****************************  Process ID 550  ******************************
- **************************  Run Date: 20 Dec 2011  **************************
- *********************  Start Time: 17 hr 25 min 27 sec  *********************
+ ****************************  Process ID 10436  *****************************
+ **************************  Run Date: 22 Dec 2011  **************************
+ *********************  Start Time: 16 hr 51 min 37 sec  *********************
  *********************  GEOMECHANICS PRESSURIZED SPHERE  *********************
  Sneddon comparison with VF                                                     
 
@@ -211,10 +211,10 @@ See GMRS Users Guide for details.
  ************************  PRINT PROGRAM (PRINTDISP)  ************************
 
     EXTERNAL INODE,X,Y,Z,UY
-    IF((X.LT. 0.41).AND.(Y.LT. 0.01)) THEN
-       OPEN(10,'DISP_Y.txt','UNKNOWN')
-       WRITE(10,1) X,UY,INODE
-  1       FORMAT(2E15.6,F10.0)
+    IF((X.LT. 0.41).AND.(Y.LT. 0.01).AND.(Z.GT.0.14).AND.(Z.LT.0.16)) THEN
+       OPEN(10,'DISPY_sneddon1.txt','UNKNOWN')
+       WRITE(10,1) X,Z,UY
+  1       FORMAT(3E15.6)
     ENDIF
 
  ***********************  ARRAY PRINTOUT INFORMATION  ************************
@@ -284,9 +284,9 @@ PROGRAM DETERMINING STRUCTURE OF AMG FOR MECHANICS
     TOTAL STORAGE IN BYTES FOR AMG SOLVER =        10979736
 PROGRAM SOLVING FOR INITIAL DISPLACEMENTS
 PROGRAM DETERMINING INITIAL STRESSES
- MAXIMUM STRAIN (PERCENT) AT INITIALIZATION IS          0.49
- CELL LOCATION OF STRAIN IS       3205
- POSITION OF CELL IS  0.412500     0.125000E-01 0.225000     [ft]                
+ MAXIMUM STRAIN (PERCENT) AT INITIALIZATION IS          0.36
+ CELL LOCATION OF STRAIN IS       3405
+ POSITION OF CELL IS  0.437500     0.125000E-01 0.225000     [ft]                
    
  ********************  GLOBAL ARRAYS FOR PRINT PROGRAMS  *********************
   I      GLOBAL      NAME          EXTRA DIM
@@ -303,17 +303,17 @@ PROGRAM DETERMINING INITIAL STRESSES
 
  ************************  TIMER RESULTS IN SECONDS  *************************
  
- TOTAL TIME                                       1.06
- TOTAL INITIALIZATION                             1.06
+ TOTAL TIME                                       1.21
+ TOTAL INITIALIZATION                             1.21
  MECHANICS RESIDUAL SETUP                         0.00
  FACTOR LINEAR SOLVER FOR MECHANICS               0.03
- TOTAL LINEAR SOLVER FOR MECHANICS                0.51
+ TOTAL LINEAR SOLVER FOR MECHANICS                0.63
  VARIABLE UPDATES                                 0.01
   
  DISPLACEMENT SOLVES =                          1
- DISPLACEMENT LINEAR ITERATIONS =               7
+ DISPLACEMENT LINEAR ITERATIONS =               9
  NONLINEAR ITERATIONS =                         0
  TIME STEPS =                                   0
  TOTAL NUMBER OF TIME STEP CUTS =               0
- LINEAR ITERS / DISPLACEMENT SOLVE =          7.0
+ LINEAR ITERS / DISPLACEMENT SOLVE =          9.0
   Normal program termination
