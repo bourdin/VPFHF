@@ -68,6 +68,16 @@ $ ***********************************************
 $      GRID DISPLACEMENT AND TRACTION CONDITIONS
 $ ***********************************************
 
+$ For 3D grids:
+$ = 0 ==> Node is unconstrained 
+$ = 1 ==> Node is constrained in the x-direction 
+$ = 2 ==> Node is constrained in the y-direction
+$ = 3 ==> Node is constrained in the z-direction
+$ = 4 ==> Node is constrained in the x and y-directions 
+$ = 5 ==> Node is constrained in the x and z-directions 
+$ = 6 ==> Node is constrained in the y and z-directions
+$ = 7 ==> Node is constrained in all directions
+
 DISPCON1(,,,) = 3
 
 $DISPCON1(,,1) = 3
