@@ -8,10 +8,10 @@ Working Directory: /data/etc_rpe_ucr/VF2/VF-Chevron/VF_Standalone/ValidationTest
  ********************  a division of Chevron U.S.A. Inc.  ********************
  ***************************  All rights reserved  ***************************
  *****************************  Version 030311  ******************************
- *********************************  hltd334  *********************************
- ****************************  Process ID 15576  *****************************
- **************************  Run Date: 21 Dec 2011  **************************
- *********************  Start Time: 10 hr 43 min 59 sec  *********************
+ *********************************  hltd828  *********************************
+ ****************************  Process ID 28721  *****************************
+ **************************  Run Date: 12 Jan 2012  **************************
+ *********************  Start Time: 08 hr 54 min 28 sec  *********************
  *********************  GEOMECHANICS PRESSURIZED SPHERE  *********************
  Sneddon comparison with VF                                                     
 
@@ -434,7 +434,7 @@ PROGRAM DETERMINING STRUCTURE OF AMG FOR MECHANICS
     TOTAL STORAGE IN BYTES FOR AMG SOLVER =       161415948
 PROGRAM SOLVING FOR INITIAL DISPLACEMENTS
 PROGRAM DETERMINING INITIAL STRESSES
- MAXIMUM STRAIN (PERCENT) AT INITIALIZATION IS          0.29
+ MAXIMUM STRAIN (PERCENT) AT INITIALIZATION IS          0.32
  CELL LOCATION OF STRAIN IS      13602
  POSITION OF CELL IS  0.437500     0.125000E-01 0.750000E-01 [ft]                
    
@@ -453,12 +453,13 @@ PROGRAM DETERMINING INITIAL STRESSES
 
  ************************  TIMER RESULTS IN SECONDS  *************************
  
- TOTAL TIME                                      28.44
- TOTAL INITIALIZATION                            28.44
- MECHANICS RESIDUAL SETUP                         0.06
- FACTOR LINEAR SOLVER FOR MECHANICS               0.07
- TOTAL LINEAR SOLVER FOR MECHANICS               19.70
- VARIABLE UPDATES                                 0.10
+ TOTAL TIME                                      15.91
+ TOTAL INITIALIZATION                            15.91
+ MECHANICS RESIDUAL SETUP                         0.02
+ RESTART OUTPUT TIME                              0.00
+ FACTOR LINEAR SOLVER FOR MECHANICS               0.05
+ TOTAL LINEAR SOLVER FOR MECHANICS                8.30
+ VARIABLE UPDATES                                 0.09
   
  DISPLACEMENT SOLVES =                          1
  DISPLACEMENT LINEAR ITERATIONS =              13
