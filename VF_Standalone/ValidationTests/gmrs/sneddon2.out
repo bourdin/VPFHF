@@ -9,9 +9,9 @@ Working Directory: /data/etc_rpe_ucr/VF2/VF-Chevron/VF_Standalone/ValidationTest
  ***************************  All rights reserved  ***************************
  *****************************  Version 030311  ******************************
  *********************************  hltd828  *********************************
- ****************************  Process ID 30024  *****************************
+ ****************************  Process ID 31272  *****************************
  **************************  Run Date: 12 Jan 2012  **************************
- *********************  Start Time: 10 hr 26 min 16 sec  *********************
+ *********************  Start Time: 12 hr 00 min 36 sec  *********************
  *********************  GEOMECHANICS PRESSURIZED SPHERE  *********************
  Sneddon comparison with VF                                                     
 
@@ -453,12 +453,12 @@ PROGRAM DETERMINING INITIAL STRESSES
 
  ************************  TIMER RESULTS IN SECONDS  *************************
  
- TOTAL TIME                                      13.86
- TOTAL INITIALIZATION                            13.86
+ TOTAL TIME                                      14.23
+ TOTAL INITIALIZATION                            14.23
  MECHANICS RESIDUAL SETUP                         0.02
  RESTART OUTPUT TIME                              0.00
  FACTOR LINEAR SOLVER FOR MECHANICS               0.05
- TOTAL LINEAR SOLVER FOR MECHANICS                6.52
+ TOTAL LINEAR SOLVER FOR MECHANICS                6.66
  VARIABLE UPDATES                                 0.09
   
  DISPLACEMENT SOLVES =                          1

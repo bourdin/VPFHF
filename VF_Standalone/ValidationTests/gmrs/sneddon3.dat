@@ -23,7 +23,7 @@ $         PLOT INFORMATION
 $ ***********************************************
 
  GRAPHICS = 1  
- PLOTFILE = "sneddon2"            
+ PLOTFILE = "sneddon3"            
  GRIDPLOT = TRUE
 
 $ ***********************************************
