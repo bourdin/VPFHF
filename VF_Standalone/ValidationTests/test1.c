@@ -34,6 +34,7 @@ int main(int argc,char **argv)
   PetscReal           InsituWork = 0;
   PetscReal           SurfaceEnergy = 0;
   char                filename[FILENAME_MAX];
+  PetscReal           p = 1e-3;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -75,13 +76,16 @@ int main(int argc,char **argv)
     case 1:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of radius %g at (%g,%g,%g) with normal vector <1,0,0>\n",
                          radius,center[0],center[1],center[2]);CHKERRQ(ierr);
-      i = (center[0] - BBmin[0]) / (BBmax[0] - BBmin[0]) * nx;      
-      if (i >= xs && i < (xs+xm)) { 
-        for (k = zs; k < zs+zm; k++) {
-          for (j = ys; j < ys+ym; j++) {
-            z = (coords_array[k][j][i][2] - center[2]) / radius;
-            y = (coords_array[k][j][i][1] - center[1]) / radius;
-            if ( z*z + y*y < 1.) {
+      ctx.bcU[1].face[Y0]= ZERO;
+      ctx.bcU[2].face[Z0]= ZERO;
+      ctx.bcU[0].face[Y1]= ZERO;
+      ctx.bcU[0].face[Z1]= ZERO;
+      for (k = zs; k < zs+zm; k++) {
+        for (j = ys; j < ys+ym; j++) {
+          for (i = xs; i < xs+xm; i++) { 
+            z = coords_array[k][j][i][2];
+            y = coords_array[k][j][i][1];
+            if (((i == nx/2) || (i == nx/2-1)) && (z*z + y*y < radius*radius)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -91,13 +95,16 @@ int main(int argc,char **argv)
     case 2:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of radius %g at (%g,%g,%g) with normal vector <0,1,0>\n",
                          radius,center[0],center[1],center[2]);CHKERRQ(ierr);
-      j = (center[1] - BBmin[1]) / (BBmax[1] - BBmin[1]) * ny;      
-      if (j >= ys && j < (ys+ym)) { 
-        for (k = zs; k < zs+zm; k++) {
-          for (i = xs; i < xs+xm; i++) {
-            z = (coords_array[k][j][i][2] - center[2]) / radius;
-            x = (coords_array[k][j][i][0] - center[0]) / radius;
-            if ( x*x + z*z < 1.) {
+      ctx.bcU[0].face[X0]= ZERO;
+      ctx.bcU[2].face[Z0]= ZERO;
+      ctx.bcU[1].face[X1]= ZERO;
+      ctx.bcU[1].face[Z1]= ZERO;
+      for (k = zs; k < zs+zm; k++) {
+        for (j = ys; j < ys+ym; j++) {
+          for (i = xs; i < xs+xm; i++) { 
+            z = coords_array[k][j][i][2];
+            x = coords_array[k][j][i][0];
+            if (((j == ny/2) || (j == ny/2-1)) && (x*x + z*z < radius*radius)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -107,13 +114,16 @@ int main(int argc,char **argv)
     case 3:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of radius %g at (%g,%g,%g) with normal vector <0,0,1>\n",
                          radius,center[0],center[1],center[2]);CHKERRQ(ierr);
-      k = (center[2] - BBmin[2]) / (BBmax[2] - BBmin[2]) * nz;      
-      if (k >= zs && k < (zs+zm)) { 
+      ctx.bcU[0].face[X0]= ZERO;
+      ctx.bcU[1].face[Y0]= ZERO;
+      ctx.bcU[2].face[X1]= ZERO;
+      ctx.bcU[2].face[Y1]= ZERO;
+      for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
-          for (i = xs; i < xs+xm; i++) {
-            y = (coords_array[k][j][i][1] - center[1]) / radius;
-            x = (coords_array[k][j][i][0] - center[0]) / radius;
-            if ( x*x + y*y < 1.) {
+          for (i = xs; i < xs+xm; i++) { 
+            y = coords_array[k][j][i][1];
+            x = coords_array[k][j][i][0];
+            if (((k == nz/2) || (k == nz/2-1)) && (x*x + y*y < radius*radius)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -135,10 +145,10 @@ int main(int argc,char **argv)
   
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressure,ctx.resprop.Pinit);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
   ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 
-  ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr);
+  //ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr);
   ctx.hasCrackPressure = PETSC_TRUE;
   ierr = VF_StepU(&fields,&ctx);
   ctx.ElasticEnergy=0;
