@@ -1,0 +1,24 @@
+
+
+VF:
+Numerical implementation of the variational approach to fracture.
+(c) 2010-2011 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu
+
+Option table:
+#PETSc Option Table entries:
+-epsilon .05
+-eta 1e-8
+-l 1,1,1
+-n 21,21,21
+-nu 0
+-orientation 3
+-p runtest5-3
+#End of PETSc Option Table entries
+Applying pressure force on face Y1
+      kspV converged in 6 iterations 3.
+      V min / max:     0.000000e+00 1.000000e+00
+      kspU converged in 70 iterations 2.
+Surface energy:            5.204165e-01
+Elastic Energy:            4.935478e-01
+Work of pressure forces:   9.870956e-01
+Total Mechanical energy:  -4.935478e-01

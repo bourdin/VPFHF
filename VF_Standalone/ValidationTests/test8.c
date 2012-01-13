@@ -1,5 +1,5 @@
 /*
-  test1.c: solves for the displacement in a pressurized penny crack in 3d
+  test8.c: solves for the displacement with several  pressurized penny crack in 3d
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
 
@@ -49,8 +49,8 @@ int main(int argc,char **argv)
 	
 	ierr = DAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-	ierr = DAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);    
-
+	ierr = DAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr); 
+	
   /*
     Reset all BC for U and V
   */
@@ -76,16 +76,21 @@ int main(int argc,char **argv)
     case 1:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of radius %g at (%g,%g,%g) with normal vector <1,0,0>\n",
                          radius,center[0],center[1],center[2]);CHKERRQ(ierr);
+      ctx.bcU[0].face[X0]= ZERO;
+      ctx.bcU[0].face[X1]= ZERO;
       ctx.bcU[1].face[Y0]= ZERO;
       ctx.bcU[2].face[Z0]= ZERO;
-      ctx.bcU[0].face[Y1]= ZERO;
-      ctx.bcU[0].face[Z1]= ZERO;
+      ctx.bcU[1].face[Y1]= ZERO;
+      ctx.bcU[2].face[Z1]= ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
             z = coords_array[k][j][i][2];
             y = coords_array[k][j][i][1];
             if (((i == nx/2) || (i == nx/2-1)) && (z*z + y*y < radius*radius)) {
+              v_array[k][j][i] = 0.;
+            }
+            if (((i == nx/2) || (i == nx/2-1)) && ((BBmax[2]-z)*(BBmax[2]-z) + (BBmax[1]-y)*(BBmax[1]-y) < radius*radius)) {
               v_array[k][j][i] = 0.;
             }
           }
@@ -116,15 +121,30 @@ int main(int argc,char **argv)
                          radius,center[0],center[1],center[2]);CHKERRQ(ierr);
       ctx.bcU[0].face[X0]= ZERO;
       ctx.bcU[1].face[Y0]= ZERO;
-      ctx.bcU[2].face[X1]= ZERO;
-      ctx.bcU[2].face[Y1]= ZERO;
+      ctx.bcU[0].face[X1]= ZERO;
+      ctx.bcU[1].face[Y1]= ZERO;
+      ctx.bcU[2].face[Z0]= ZERO;
+      ctx.bcU[2].face[Z1]= ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
-            y = coords_array[k][j][i][1];
             x = coords_array[k][j][i][0];
-            if (((k == nz/2) || (k == nz/2-1)) && (x*x + y*y < radius*radius)) {
-              v_array[k][j][i] = 0.;
+            y = coords_array[k][j][i][1];
+            z = coords_array[k][j][i][2];
+            if ((k == nz/2) || (k == nz/2-1)) {
+              if ( (x*x + y*y < radius*radius) || ((BBmax[0]-x)*(BBmax[0]-x) + (BBmax[1]-y)*(BBmax[1]-y) < radius*radius)) {
+                v_array[k][j][i] = 0.;
+              }
+            }
+            if ((k == nz/4) || (k == nz/4-1)) {
+              if ( (x*x + (BBmax[1]-y)*(BBmax[1]-y) < radius*radius/2.) || ((BBmax[0]-x)*(BBmax[0]-x) + y*y < radius*radius/2.)) {
+                v_array[k][j][i] = 0.;
+              }
+            }
+            if ((k == 3*nz/4) || (k == 3*nz/4+1)) {
+              if ( (x*x + (BBmax[1]-y)*(BBmax[1]-y) < radius*radius/2.) || ((BBmax[0]-x)*(BBmax[0]-x) + y*y < radius*radius/2.)) {
+                v_array[k][j][i] = 0.;
+              }
             }
           }
         }

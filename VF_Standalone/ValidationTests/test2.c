@@ -34,7 +34,7 @@ int main(int argc,char **argv)
   PetscReal           InsituWork = 0;
   PetscReal           SurfaceEnergy = 0;
   char                filename[FILENAME_MAX];
-  PetscReal           p = 1.;
+  PetscReal           p = 1.e-3;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -90,8 +90,9 @@ int main(int argc,char **argv)
                          length);CHKERRQ(ierr);     
       ctx.bcU[1].face[Y0]=ZERO;
       ctx.bcU[1].face[Y1]=ZERO;
+
       ctx.bcU[2].face[Z0]=ZERO;
-      ctx.bcU[0].edge[X0Z0]=ZERO;
+      ctx.bcU[0].face[Z1]=ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
@@ -107,8 +108,9 @@ int main(int argc,char **argv)
                          length);CHKERRQ(ierr);      
       ctx.bcU[2].face[Z0]=ZERO;
       ctx.bcU[2].face[Z1]=ZERO;
+      
       ctx.bcU[1].face[Y0]=ZERO;
-      ctx.bcU[0].edge[X0Y0]=ZERO;
+      ctx.bcU[0].face[Y1]=ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
@@ -124,8 +126,9 @@ int main(int argc,char **argv)
                          length);CHKERRQ(ierr);      
       ctx.bcU[0].face[X0]=ZERO;
       ctx.bcU[0].face[X1]=ZERO;
+      
       ctx.bcU[2].face[Z0]=ZERO;
-      ctx.bcU[1].edge[Y0Z0]=ZERO;
+      ctx.bcU[1].face[Z1]=ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
@@ -139,10 +142,12 @@ int main(int argc,char **argv)
     case 3:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g parallel to faces Y0/Y1  along <0,0,1>\n",
                          length);CHKERRQ(ierr);      
+      ctx.bcU[0].face[X0]=ZERO;
+
+      ctx.bcU[1].face[X1]=ZERO;
+
       ctx.bcU[2].face[Z0]=ZERO;
       ctx.bcU[2].face[Z1]=ZERO;
-      ctx.bcU[0].face[X0]=ZERO;
-      ctx.bcU[1].edge[X0Y0]=ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
@@ -158,8 +163,9 @@ int main(int argc,char **argv)
                          length);CHKERRQ(ierr);      
       ctx.bcU[0].face[X0]=ZERO;
       ctx.bcU[0].face[X1]=ZERO;
+      
       ctx.bcU[1].face[Y0]=ZERO;
-      ctx.bcU[2].edge[Y0Z0]=ZERO;
+      ctx.bcU[2].face[Y1]=ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
@@ -175,8 +181,9 @@ int main(int argc,char **argv)
                          length);CHKERRQ(ierr);      
       ctx.bcU[1].face[Y0]=ZERO;
       ctx.bcU[1].face[Y1]=ZERO;
+      
       ctx.bcU[0].face[X0]=ZERO;
-      ctx.bcU[2].edge[X0Z0]=ZERO;
+      ctx.bcU[2].face[X1]=ZERO;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
