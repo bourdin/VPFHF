@@ -34,7 +34,7 @@ int main(int argc,char **argv)
   PetscReal           InsituWork = 0;
   PetscReal           SurfaceEnergy = 0;
   char                filename[FILENAME_MAX];
-  PetscReal           p = 1.;
+  PetscReal           p = 1.e-3;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
