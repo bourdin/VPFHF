@@ -63,12 +63,27 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
 	ierr = DAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);    
 
-  ctx.bcU[0].face[X0]=NONE; ctx.bcU[1].face[X0]=NONE; ctx.bcU[2].face[X0]=NONE; ctx.bcV[0].face[X0]=NONE;
-  ctx.bcU[0].face[X1]=NONE; ctx.bcU[1].face[X1]=NONE; ctx.bcU[2].face[X1]=NONE; ctx.bcV[0].face[X1]=NONE;
-  ctx.bcU[0].face[Y0]=NONE; ctx.bcU[1].face[Y0]=NONE; ctx.bcU[2].face[Y0]=NONE; ctx.bcV[0].face[Y0]=NONE;
-  ctx.bcU[0].face[Y1]=NONE; ctx.bcU[1].face[Y1]=NONE; ctx.bcU[2].face[Y1]=NONE; ctx.bcV[0].face[Y1]=NONE;
-  ctx.bcU[0].face[Z0]=NONE; ctx.bcU[1].face[Z0]=NONE; ctx.bcU[2].face[Z0]=NONE; ctx.bcV[0].face[Z0]=NONE;
-  ctx.bcU[0].face[Z1]=NONE; ctx.bcU[1].face[Z1]=NONE; ctx.bcU[2].face[Z1]=NONE; ctx.bcV[0].face[Z1]=NONE;
+  /*
+    Reset all BC for U and V
+  */
+  for (i = 0; i < 6; i++) {
+    ctx.bcV[0].face[i]=NONE;
+    for (j = 0; j < 3; j++) {
+      ctx.bcU[j].face[i] = NONE;
+    }
+  }
+  for (i = 0; i < 12; i++) {
+    ctx.bcV[0].edge[i]=NONE;
+    for (j = 0; j < 3; j++) {
+      ctx.bcU[j].edge[i] = NONE;
+    }
+  }
+  for (i = 0; i < 8; i++) {
+    ctx.bcV[0].vertex[i]=NONE;
+    for (j = 0; j < 3; j++) {
+      ctx.bcU[j].vertex[i] = NONE;
+    }
+  }
   switch (orientation) {
     case 0:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying shear Dirichlet conditions on faces X0 X1 along the direction <0,1,1>\n");CHKERRQ(ierr);     

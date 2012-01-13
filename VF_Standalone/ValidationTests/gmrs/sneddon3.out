@@ -8,10 +8,10 @@ Working Directory: /data/etc_rpe_ucr/VF2/VF-Chevron/VF_Standalone/ValidationTest
  ********************  a division of Chevron U.S.A. Inc.  ********************
  ***************************  All rights reserved  ***************************
  *****************************  Version 030311  ******************************
- *********************************  hltd334  *********************************
- *****************************  Process ID 5523  *****************************
- **************************  Run Date: 22 Dec 2011  **************************
- *********************  Start Time: 10 hr 34 min 20 sec  *********************
+ *********************************  hltd828  *********************************
+ ****************************  Process ID 30030  *****************************
+ **************************  Run Date: 12 Jan 2012  **************************
+ *********************  Start Time: 10 hr 26 min 49 sec  *********************
  *********************  GEOMECHANICS PRESSURIZED SPHERE  *********************
  Sneddon comparison with VF                                                     
 
@@ -142,7 +142,7 @@ See GMRS Users Guide for details.
 
  MAJOR DIMENSIONS:
  BLOCK        X              Y              Z
-    1    1.00000        1.00000       0.250000    [ft]                
+    1    4.00000        4.00000       0.250000    [ft]                
 
  **********************  X INTERVAL LENGTHS FOR GRID 1  **********************
 
@@ -168,6 +168,78 @@ See GMRS Users Guide for details.
   0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
         36             37             38             39             40
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        41             42             43             44             45
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        46             47             48             49             50
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        51             52             53             54             55
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        56             57             58             59             60
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        61             62             63             64             65
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        66             67             68             69             70
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        71             72             73             74             75
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        76             77             78             79             80
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        81             82             83             84             85
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        86             87             88             89             90
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        91             92             93             94             95
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        96             97             98             99            100
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       101            102            103            104            105
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       106            107            108            109            110
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       111            112            113            114            115
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       116            117            118            119            120
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       121            122            123            124            125
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       126            127            128            129            130
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       131            132            133            134            135
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       136            137            138            139            140
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       141            142            143            144            145
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       146            147            148            149            150
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       151            152            153            154            155
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       156            157            158            159            160
   0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
  **********************  Y INTERVAL LENGTHS FOR GRID 1  **********************
@@ -196,23 +268,95 @@ See GMRS Users Guide for details.
         36             37             38             39             40
   0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
 
+        41             42             43             44             45
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        46             47             48             49             50
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        51             52             53             54             55
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        56             57             58             59             60
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        61             62             63             64             65
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        66             67             68             69             70
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        71             72             73             74             75
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        76             77             78             79             80
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        81             82             83             84             85
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        86             87             88             89             90
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        91             92             93             94             95
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        96             97             98             99            100
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       101            102            103            104            105
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       106            107            108            109            110
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       111            112            113            114            115
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       116            117            118            119            120
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       121            122            123            124            125
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       126            127            128            129            130
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       131            132            133            134            135
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       136            137            138            139            140
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       141            142            143            144            145
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       146            147            148            149            150
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       151            152            153            154            155
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+       156            157            158            159            160
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
  **********************  Z INTERVAL LENGTHS FOR GRID 1  **********************
 
          1              2              3              4              5
   0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
 
  GRID    1                                                   
-     NX =    40     NY =    40     NZ =     5
+     NX =   160     NY =   160     NZ =     5
      PRINT REGION  1:
-     FIRST, LAST, AND STEP I FOR OUTPUT (IFIRST,ILAST,ISTEP)    1   40    1
-     FIRST, LAST, AND STEP J FOR OUTPUT (JFIRST,JLAST,JSTEP)    1   40    7
+     FIRST, LAST, AND STEP I FOR OUTPUT (IFIRST,ILAST,ISTEP)    1  160    1
+     FIRST, LAST, AND STEP J FOR OUTPUT (JFIRST,JLAST,JSTEP)    1  160   27
      FIRST, LAST, AND STEP K FOR OUTPUT (KFIRST,KLAST,KSTEP)    1    5    1
 
  ************************  PRINT PROGRAM (PRINTDISP)  ************************
 
     EXTERNAL INODE,X,Y,Z,UY
     IF((X.LT. 0.41).AND.(Y.LT. 0.01).AND.(Z.GT.0.14).AND.(Z.LT.0.16)) THEN
-       OPEN(10,'DISPY_sneddon3.txt','UNKNOWN')
+       OPEN(10,'DISPY_sneddon2.txt','UNKNOWN')
        WRITE(10,1) X,Z,UY
   1       FORMAT(3E15.6)
     ENDIF
@@ -220,7 +364,7 @@ See GMRS Users Guide for details.
  ***********************  ARRAY PRINTOUT INFORMATION  ************************
  PLOT FACTOR ADDED TO WELLS (ADDWELL)                 0.20
  NUMBER OF ARRAYS TO PRINT                              18
- PLOT OUTPUT FILE PREFIX (PLOTFILE)              sneddon3
+ PLOT OUTPUT FILE PREFIX (PLOTFILE)              sneddon2
  GRID PLOTS USE PLOTFILE PREFIX
  NO GRID VALUES ARE ARE PRINTED FOR THIS RUN (GRIDPRINT)
  NO TABLE PLOTS ARE GENERATED FOR THIS RUN (TABLEPLOT)
@@ -232,16 +376,16 @@ See GMRS Users Guide for details.
  ****************************  GRID INFORMATION  *****************************
 
  GRID                 ACTIVE ELEMENTS         ACTIVE NODES
-   1                        8000                  10086
+   1                      128000                 155526
 
-TOTAL NUMBER OF SURFACE ELEMENTS           4000
-TOTAL NUMBER OF SURFACE NODES              4002
+TOTAL NUMBER OF SURFACE ELEMENTS          54400
+TOTAL NUMBER OF SURFACE NODES             54402
 
  
 AVG CELL VOLUME =                                         0.31250E-04 [cu-ft]                       
-TOTAL GRID VOLUME =                                       0.25000E+00 [cu-ft]                       
+TOTAL GRID VOLUME =                                       0.40000E+01 [cu-ft]                       
 PROGRAM IS READING GEOMECHANICS DATA
-AVG ELASTIC MODULUS(Not weighted by cell-size) =          0.14504E+03 [psi]               
+AVG ELASTIC MODULUS(Not weighted by cell-size) =          0.14510E+03 [psi]               
 PROGRAM SETTING UP CONNECTION INFO FOR NODES
 PROGRAM READING REFERENCE STRESSES
 PROGRAM READING TRACTIONS AND LOADS
@@ -273,20 +417,26 @@ PROGRAM IS PROCESSING GEOMECHANICS DATA
 PROGRAM SETTING UP STIFFNESS MATRIX
 PROGRAM DETERMINING STRUCTURE OF AMG FOR MECHANICS
    ****** ILEVEL =     1
-    NUMBER OF NUNKNS =          5040
+    NUMBER OF NUNKNS =         77742
    ****** ILEVEL =     2
-    NUMBER OF NUNKNS =          2424
+    NUMBER OF NUNKNS =         38352
    ****** ILEVEL =     3
-    NUMBER OF NUNKNS =          1209
+    NUMBER OF NUNKNS =         19138
    ****** ILEVEL =     4
-    NUMBER OF NUNKNS =           593
-    DIRECT SOLVER,GRID,BYTES          1        1880496
-    TOTAL STORAGE IN BYTES FOR AMG SOLVER =        10979736
+    NUMBER OF NUNKNS =          9514
+   ****** ILEVEL =     5
+    NUMBER OF NUNKNS =          4443
+   ****** ILEVEL =     6
+    NUMBER OF NUNKNS =          2187
+   ****** ILEVEL =     7
+    NUMBER OF NUNKNS =           991
+    DIRECT SOLVER,GRID,BYTES          1        3685536
+    TOTAL STORAGE IN BYTES FOR AMG SOLVER =       161415948
 PROGRAM SOLVING FOR INITIAL DISPLACEMENTS
 PROGRAM DETERMINING INITIAL STRESSES
- MAXIMUM STRAIN (PERCENT) AT INITIALIZATION IS          0.22
- CELL LOCATION OF STRAIN IS       3201
- POSITION OF CELL IS  0.412500     0.125000E-01 0.250000E-01 [ft]                
+ MAXIMUM STRAIN (PERCENT) AT INITIALIZATION IS          0.28
+ CELL LOCATION OF STRAIN IS      13601
+ POSITION OF CELL IS  0.437500     0.125000E-01 0.250000E-01 [ft]                
    
  ********************  GLOBAL ARRAYS FOR PRINT PROGRAMS  *********************
   I      GLOBAL      NAME          EXTRA DIM
@@ -294,7 +444,7 @@ PROGRAM DETERMINING INITIAL STRESSES
    
  ******************************  ARRAY STORAGE  ******************************
    
- STORAGE FOR GRID-BASED ARRAYS            41.2 MBYTES
+ STORAGE FOR GRID-BASED ARRAYS           635.4 MBYTES
 
  *****************************  STANDARD OUTPUT  *****************************
 
@@ -303,17 +453,18 @@ PROGRAM DETERMINING INITIAL STRESSES
 
  ************************  TIMER RESULTS IN SECONDS  *************************
  
- TOTAL TIME                                       1.08
- TOTAL INITIALIZATION                             1.08
- MECHANICS RESIDUAL SETUP                         0.00
- FACTOR LINEAR SOLVER FOR MECHANICS               0.03
- TOTAL LINEAR SOLVER FOR MECHANICS                0.50
- VARIABLE UPDATES                                 0.01
+ TOTAL TIME                                      15.21
+ TOTAL INITIALIZATION                            15.21
+ MECHANICS RESIDUAL SETUP                         0.02
+ RESTART OUTPUT TIME                              0.00
+ FACTOR LINEAR SOLVER FOR MECHANICS               0.05
+ TOTAL LINEAR SOLVER FOR MECHANICS                7.85
+ VARIABLE UPDATES                                 0.09
   
  DISPLACEMENT SOLVES =                          1
- DISPLACEMENT LINEAR ITERATIONS =               7
+ DISPLACEMENT LINEAR ITERATIONS =              12
  NONLINEAR ITERATIONS =                         0
  TIME STEPS =                                   0
  TOTAL NUMBER OF TIME STEP CUTS =               0
- LINEAR ITERS / DISPLACEMENT SOLVE =          7.0
+ LINEAR ITERS / DISPLACEMENT SOLVE =         12.0
   Normal program termination

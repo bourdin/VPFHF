@@ -18,8 +18,8 @@ Option table:
 Building a transverse rectangular crack of length 0.4 parallel to faces Y0/Y1  along <0,0,1>
       kspV converged in 10 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
-      kspU converged in 84 iterations 2.
+      kspU converged in 70 iterations 3.
 Surface energy:            2.667254e-01
-Elastic Energy:            1.094505e-01
-Work of pressure forces:   2.189009e-01
-Total Mechanical energy:  -1.094505e-01
+Elastic Energy:            1.094502e-07
+Work of pressure forces:   2.189006e-07
+Total Mechanical energy:  -1.094505e-07
