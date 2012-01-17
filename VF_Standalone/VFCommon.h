@@ -194,14 +194,14 @@ typedef struct {
 } VFProp;
 
 typedef struct {
-  PetscReal         perm;  /* Permeability in m^2 muliply by 1e12 */
-  PetscReal         por;   /* Porosity */
-  PetscReal         Pinit; /* Initial Pressure in MPa*/
-  PetscReal         Tinit; /* Initial Temperature in C*/ 
-  PetscReal         relk;  /* Relative Permeability */
-  PetscReal         visc;  /* Viscosity in cp */
-  PetscReal         fdens; /* Fluid Density in specific density*/
-  PetscReal		    cf;	     /* Rock compressibility in field unit*/
+  PetscReal         perm;    /* Permeability in m^2 muliply by 1e12 */
+  PetscReal         por;     /* Porosity */
+  PetscReal         Pinit;   /* Initial Pressure in MPa*/
+  PetscReal         Tinit;   /* Initial Temperature in C*/ 
+  PetscReal         relk;    /* Relative Permeability */
+  PetscReal         visc;    /* Viscosity in cp */
+  PetscReal         fdens;   /* Fluid Density in specific density*/
+  PetscReal		      cf;	     /* Rock compressibility in field unit*/
   PetscReal         TCond_X; /* Thermal Conductivity in x-direction */
   PetscReal         TCond_Y; /* Thermal Conductivity in y-direction */
   PetscReal         TCond_Z; /* Thermal COnductivity in z-direction */

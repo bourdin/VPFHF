@@ -1,8 +1,8 @@
 include ../makefile.include	
 CFLAGS='-I..'
 
-all: test1 test2 test3 test4 test5 test6 test7
-test: runtest2 runtest3 runtest4 ruuntest5 runtest6 runtest7
+all: test1 test2 test3 test4 test5 test6 test7 test8 test9
+test: runtest2 runtest3 runtest4 ruuntest5 runtest6 runtest7 runtest8
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
@@ -30,6 +30,9 @@ test7: test7.o ${VFOBJ} chkopts
 	-${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 test8: test8.o ${VFOBJ} chkopts
+	-${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
+test9: test9.o ${VFOBJ} chkopts
 	-${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 
