@@ -21,4 +21,6 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,MatProp *matprop,VFProp *vfpr
 extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFCtx *ctx);
 
 extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx);
+
+extern PetscReal DistanceToDisk(PetscReal *dist,PetscReal *x,PetscReal *xc,PetscReal phi,PetscReal theta,PetscReal r);
 #endif /* VFV_H */
