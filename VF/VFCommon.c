@@ -125,6 +125,8 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr = PetscOptionsEnum("-coupling","\n\tCoupling type","",VFCouplingName,(PetscEnum)ctx->coupling,(PetscEnum*)&ctx->coupling,PETSC_NULL);CHKERRQ(ierr);
     ctx->fileformat = FILEFORMAT_BIN;
     ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
+    ctx->hasCrackPressure = PETSC_FALSE;
+    ierr = PetscOptionsTruth("-pressurize","\n\tPressurize cracks","",ctx->hasCrackPressure,&ctx->hasCrackPressure,PETSC_NULL);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   ctx->timestep = 1;
@@ -594,7 +596,7 @@ extern PetscErrorCode VFElasticityTimeStep(VFCtx *ctx,VFFields *fields)
   ierr = VF_StepU(fields,ctx);CHKERRQ(ierr);
   ctx->ElasticEnergy=0;
   ctx->InsituWork=0;
-  ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
+  ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,&ctx->PressureWork,fields,ctx);CHKERRQ(ierr);
   ctx->TotalEnergy = ctx->ElasticEnergy - ctx->InsituWork;
   PetscFunctionReturn(0);
 }
@@ -639,7 +641,7 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
   
   ctx->ElasticEnergy=0;
   ctx->InsituWork=0;
-  ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,fields,ctx);CHKERRQ(ierr);
+  ierr = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,&ctx->PressureWork,fields,ctx);CHKERRQ(ierr);
   ctx->SurfaceEnergy=0;
   ierr = VF_VEnergy3D(&ctx->SurfaceEnergy,fields,ctx);CHKERRQ(ierr);
   ctx->TotalEnergy = ctx->ElasticEnergy + ctx->SurfaceEnergy - ctx->InsituWork;
