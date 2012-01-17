@@ -175,7 +175,9 @@ typedef struct {
   PetscReal           ElasticEnergy;
   PetscReal           SurfaceEnergy;
   PetscReal           InsituWork;
+  PetscReal           PressureWork;
   PetscReal           TotalEnergy;
+  PetscTruth          hasCrackPressure;
 } VFCtx;
 
 extern VFCtx          ctx;
