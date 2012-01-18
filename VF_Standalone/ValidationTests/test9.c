@@ -6,6 +6,7 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
+#include "VFCracks.h"
 #include "VFV.h"
 #include "VFU.h"
 #include "VFFlow.h"
@@ -25,19 +26,21 @@ int main(int argc,char **argv)
   PetscReal           center[3]={0.,0.,.5};
   PetscInt            orientation=2;
   PetscInt            nopts=3;
-  PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+  PetscInt            i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
   PetscReal       ****coords_array;
   PetscReal        ***v_array;  
   PetscReal           BBmin[3],BBmax[3];
-  //PetscReal           x,y,z;  
   PetscReal           ElasticEnergy = 0;
   PetscReal           InsituWork = 0;
   PetscReal           SurfaceEnergy = 0;
   char                filename[FILENAME_MAX];
   PetscReal           p = 1e-3;
   PetscReal           x[3],xc[3];
-  PetscReal           r,theta,phi;
-  PetscReal           dist;
+  PetscReal           dist,d;
+  VFPennyCrack       *crack;
+  PetscInt            nc=0;
+  char                prefix[PETSC_MAX_PATH_LEN+1];
+  
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -46,6 +49,7 @@ int main(int argc,char **argv)
   ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
 
   ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&nc,PETSC_NULL);CHKERRQ(ierr);
   ierr = DAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
@@ -53,13 +57,14 @@ int main(int argc,char **argv)
   /* 
     sample crack
   */
-  
-  theta = .7854;
-  phi = .7854;
-  r = .4;
-  xc[0] = (BBmax[0] + BBmin[0])/2.;
-  xc[1] = (BBmax[1] + BBmin[1])/2.;
-  xc[2] = (BBmax[2] + BBmin[2])/2.;
+  ierr = PetscMalloc(nc*sizeof(VFPennyCrack),&crack);CHKERRQ(ierr);
+  for (i = 0; i < nc; i++) {
+    ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
+    printf ("prefix: %s\n",prefix);
+    ierr = VFPennyCrackCreate(&crack[i]);CHKERRQ(ierr);
+    ierr = VFPennyCrackGet(prefix, &crack[i]);CHKERRQ(ierr);
+    ierr = VFPennyCrackView(&crack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+  }
 	
 	ierr = DAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
@@ -93,8 +98,12 @@ int main(int argc,char **argv)
         x[2] = coords_array[k][j][i][2];
         x[1] = coords_array[k][j][i][1];
         x[0] = coords_array[k][j][i][0];
-        ierr = DistanceToDisk(&dist,x,xc,phi,theta,r);CHKERRQ(ierr);
-        v_array[k][j][i] = 1.-exp(-dist/2/ctx.vfprop.epsilon);
+        d = 1e+30;
+        for (c = 0; c < nc; c++) {
+          ierr = VFDistanceToPennyCrack(&dist,x,&crack[c]);CHKERRQ(ierr);
+          d = PetscMin(d,dist);
+          v_array[k][j][i] = 1.-exp(-d/2/ctx.vfprop.epsilon);
+        }
       }
     }
   }      
