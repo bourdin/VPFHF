@@ -490,7 +490,6 @@ extern PetscErrorCode VF_MatU3D_local(PetscReal *Mat_local,PetscReal ***v_array,
                       
                       ierr = PetscLogFlops(15);CHKERRQ(ierr);
                     } else {
-// switched c1 and c2
                       Mat_local[l] += e->weight[g] * (lambda * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] 
                                                         + mu * e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g])
                                                    * (v_elem[g] * v_elem[g] + vfprop->eta);
@@ -1043,7 +1042,6 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
         /* 
           Compute and accumulate the contribution of the local stiffness matrix to the global stiffness matrix
         */
-        //printf("(%i,%i,%i) is in layer %i\n",ek,ej,ei,ctx->layer[ek]);
         for (l = 0; l < nrow * nrow; l++) K_local[l] = 0.;
         ierr = PetscLogEventBegin(ctx->vflog.VF_MatULocalEvent,0,0,0,0);CHKERRQ(ierr);
         switch (ctx->unilateral) {
@@ -1131,28 +1129,6 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                 }
               }
             }
-
-            
-/*            face = Z0;
-            stresscomp[0] = 4; stressdir[0] = 1.;
-            stresscomp[1] = 3; stressdir[1] = 1.;
-            stresscomp[2] = 2; stressdir[2] = -1.;
-            for (k = 0; k < ctx->e3D.nphiz; k++){
-              for (j = 0; j < ctx->e3D.nphiy; j++) {
-                for (i = 0; i < ctx->e3D.nphix; i++) {
-                  z = coords_array[ek+k][ej+j][ei+i][2];
-                  for (c = 0; c < 3; c++) {
-                    if (ctx->bcU[c].face[face] == NONE) {
-                      f_array[ek+k][ej+j][ei+i][c] = stressdir[c] * 
-                                                         (ctx->insitumin[stresscomp[c]] + 
-                                                          (z - BBmin[2]) / (BBmax[2] - BBmin[2]) * 
-                                                          (ctx->insitumax[stresscomp[c]] - ctx->insitumin[stresscomp[c]]));
-                   }
-                  }
-                }
-              }
-            }
-            */
             ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_RHSUInSituStresses3D_local(RHS_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
@@ -1542,7 +1518,6 @@ extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,Pets
                       e->ng,PetscReal,&u_elem[1],
                       e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);
 
-  //*PressureWork_local = 0.;
   /*
     Compute the projection of the fields in the local base functions basis
   */
@@ -1838,7 +1813,6 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                                            &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                            ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
         }
-        //myPressureWork += myPressureWorkLocal;
         ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
         
         if (ctx->hasInsitu) {
