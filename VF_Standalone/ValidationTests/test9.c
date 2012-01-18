@@ -137,6 +137,7 @@ int main(int argc,char **argv)
       break; 
     } 
 
+  ierr = PetscFree(crack);CHKERRQ(ierr);
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscFinalize();
   return(0);

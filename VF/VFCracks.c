@@ -43,7 +43,6 @@ extern PetscErrorCode VFPennyCrackCreate(VFPennyCrack *PennyCrack)
   int            i;
   
   PetscFunctionBegin;
-  //ierr = PetscMalloc(3*sizeof(PetscReal),&(PennyCrack->center));CHKERRQ(ierr);
   ierr = PetscStrcpy(PennyCrack->name,"PennyCrack");CHKERRQ(ierr);
   for (i=0; i<3; i++) PennyCrack->center[i] = 0.;
   PennyCrack->r        = 0.;
