@@ -124,6 +124,16 @@ runtest8-large: test8
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
+runtest9: test9
+	@echo "Running " $@
+	-@ARGS='-n 41,41,41 -epsilon .05 -nc 2 -c0_center .5,.5,.5 -c0_r .5 -c0_theta 45 -c0_phi 45 -c0_name crack1 -c1_r 0.5';\
+	echo ${MPIEXEC} -n 4 ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n 4 ./$< $${ARGS} -p $@ > $@.out 2>&1;\
+	if (${DIFF} -I '^#' results/$@.out $@.out) then true; \
+	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
+	${RM} -f $@.out
+
+
 clean::
 	-rm -f test1 test2 test3 test4 test5 test6
 	-rm -f runtest*
