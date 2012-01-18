@@ -22,14 +22,8 @@ int main(int argc,char **argv)
   VFFields            fields;
   PetscErrorCode      ierr;
   
-  PetscReal           radius = .2;
-  PetscReal           center[3]={0.,0.,.5};
-  PetscInt            orientation=2;
-  PetscInt            nopts=3;
   PetscInt            i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
   PetscReal       ****coords_array;
-  PetscReal        ***v_array;  
-  PetscReal           BBmin[3],BBmax[3];
   PetscReal           ElasticEnergy = 0;
   PetscReal           InsituWork = 0;
   PetscReal           SurfaceEnergy = 0;
@@ -40,35 +34,30 @@ int main(int argc,char **argv)
   VFPennyCrack       *crack;
   PetscInt            nc=0;
   char                prefix[PETSC_MAX_PATH_LEN+1];
+  Vec                 V;
   
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-radius",&radius,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
-
-  ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&nc,PETSC_NULL);CHKERRQ(ierr);
   ierr = DAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = DAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 
-  /* 
-    sample crack
-  */
   ierr = PetscMalloc(nc*sizeof(VFPennyCrack),&crack);CHKERRQ(ierr);
   for (i = 0; i < nc; i++) {
     ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
-    printf ("prefix: %s\n",prefix);
     ierr = VFPennyCrackCreate(&crack[i]);CHKERRQ(ierr);
     ierr = VFPennyCrackGet(prefix, &crack[i]);CHKERRQ(ierr);
     ierr = VFPennyCrackView(&crack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
 	
 	ierr = DAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-	ierr = DAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr); 
+	
+  ierr = DACreateGlobalVector(ctx.daScal,&V);CHKERRQ(ierr);
+  ierr = VecSet(V,1.0);CHKERRQ(ierr);
+
+	ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
 	
   /*
     Reset all BC for U and V
@@ -92,29 +81,19 @@ int main(int argc,char **argv)
     }
   }
   
-  for (k = zs; k < zs+zm; k++) {
-    for (j = ys; j < ys+ym; j++) {
-      for (i = xs; i < xs+xm; i++) { 
-        x[2] = coords_array[k][j][i][2];
-        x[1] = coords_array[k][j][i][1];
-        x[0] = coords_array[k][j][i][0];
-        d = 1e+30;
-        for (c = 0; c < nc; c++) {
-          ierr = VFDistanceToPennyCrack(&dist,x,&crack[c]);CHKERRQ(ierr);
-          d = PetscMin(d,dist);
-          v_array[k][j][i] = 1.-exp(-d/2/ctx.vfprop.epsilon);
-        }
-      }
-    }
-  }      
-
-	ierr = DAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
-	ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
-	ierr = DAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-
-  //ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
-  //ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-  //ierr = VF_StepV(&fields,&ctx);
+  ctx.bcU[0].face[X0] = ZERO;
+  ctx.bcU[0].face[X1] = ZERO;
+  ctx.bcU[1].face[Y0] = ZERO;
+  ctx.bcU[1].face[Y1] = ZERO;
+  ctx.bcU[2].face[Z0] = ZERO;
+  ctx.bcU[2].face[Z1] = ZERO;
+  
+  for (c = 0; c < nc; c++) {
+    ierr = VFPennyCrackBuildVAT2(V,&crack[c],&ctx);CHKERRQ(ierr);
+    ierr = VecPointwiseMin(fields.V,V,fields.V);CHKERRQ(ierr);
+  }
+  ierr = VecDestroy(V);CHKERRQ(ierr);
+	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
   
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
@@ -123,7 +102,7 @@ int main(int argc,char **argv)
 
   //ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr);
   ctx.hasCrackPressure = PETSC_TRUE;
-  //ierr = VF_StepU(&fields,&ctx);
+  ierr = VF_StepU(&fields,&ctx);
   ctx.ElasticEnergy=0;
   ctx.InsituWork=0;
   ctx.PressureWork = 0.;

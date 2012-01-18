@@ -1,12 +1,15 @@
 #include "petsc.h"
+#include "CartFE.h"
+#include "VFCommon.h"
 #include "VFCracks.h"
+
 
 #undef __FUNCT__
 #define __FUNCT__ "VFPennyCrackGet"
 /*
   
 
-  VFPennyCrackGet (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  VFPennyCrackGet (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFPennyCrackGet(const char prefix[],VFPennyCrack *PennyCrack)
 {
@@ -32,7 +35,7 @@ extern PetscErrorCode VFPennyCrackGet(const char prefix[],VFPennyCrack *PennyCra
 /*
   VFPennyCrackCreate: Allocates a PennyCrack data structure
   
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFPennyCrackCreate(VFPennyCrack *PennyCrack)
 {
@@ -54,7 +57,7 @@ extern PetscErrorCode VFPennyCrackCreate(VFPennyCrack *PennyCrack)
 /*
   VFPennyCrackDestroy: Frees a PennyCrack data structure
   
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFPennyCrackDestroy(VFPennyCrack *PennyCrack)
 {
@@ -70,7 +73,7 @@ extern PetscErrorCode VFPennyCrackDestroy(VFPennyCrack *PennyCrack)
 /*
   VFPennyCrackView 
   
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFPennyCrackView(VFPennyCrack *PennyCrack,PetscViewer viewer)
 {
@@ -90,7 +93,7 @@ extern PetscErrorCode VFPennyCrackView(VFPennyCrack *PennyCrack,PetscViewer view
 /*
   VFPennyCrackSetName 
   
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFPennyCrackSetName(VFPennyCrack *PennyCrack,const char name[])
 {
@@ -107,7 +110,7 @@ extern PetscErrorCode VFPennyCrackSetName(VFPennyCrack *PennyCrack,const char na
   VFDistanceToPennyCrack: Computes the distance between a point with coordinates x and a PennyCrack described by PennyCrack
   
   
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFDistanceToPennyCrack(PetscReal *d,PetscReal *x,VFPennyCrack *PennyCrack)
 {
@@ -145,5 +148,46 @@ extern PetscErrorCode VFDistanceToPennyCrack(PetscReal *d,PetscReal *x,VFPennyCr
                 pow(x[2] - PennyCrack->center[2] - tau[2] / l * PennyCrack->r,2));
     } 
   }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VFPennyCrackBuildVAT2"
+/*
+  VFPennyCrackBuildVAT2:  Build the V-field associated with the array of penny-shaped cracks 
+                          following the construction in Bourdin-Francfort-Marigo '08.
+  
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx)
+{
+  PetscErrorCode      ierr;
+  PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+  PetscReal       ****coords_array;
+  PetscReal        ***v_array;
+  PetscReal           x[3];
+  PetscReal           dist;  
+
+  PetscFunctionBegin;
+  ierr = DAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+
+	ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+
+	ierr = VecSet(V,1.0);CHKERRQ(ierr);
+	ierr = DAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  for (k = zs; k < zs+zm; k++) {
+    for (j = ys; j < ys+ym; j++) {
+      for (i = xs; i < xs+xm; i++) { 
+        x[2] = coords_array[k][j][i][2];
+        x[1] = coords_array[k][j][i][1];
+        x[0] = coords_array[k][j][i][0];
+        ierr = VFDistanceToPennyCrack(&dist,x,crack);CHKERRQ(ierr);
+        v_array[k][j][i] = 1.-exp(-dist/2/ctx->vfprop.epsilon);
+      }
+    }
+  }      
+	ierr = DAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  ierr = DAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

@@ -19,4 +19,6 @@ extern PetscErrorCode VFPennyCrackDestroy(VFPennyCrack *PennyCrack);
 extern PetscErrorCode VFPennyCrackView(VFPennyCrack *PennyCrack,PetscViewer viewer);
 extern PetscErrorCode VFPennyCrackSetName(VFPennyCrack *PennyCrack,const char name[]);
 extern PetscErrorCode VFDistanceToPennyCrack(PetscReal *d,PetscReal *x,VFPennyCrack *PennyCrack);
+
+extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx);
 #endif /* VFCRACKS_H */
