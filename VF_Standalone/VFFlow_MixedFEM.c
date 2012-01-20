@@ -205,8 +205,6 @@ extern PetscErrorCode VecApplyWellFlowBC(PetscReal *Ks_local, PetscReal ***sourc
 			}
 		}
 	}
-	//for (eg = 0; eg < e->ng; eg++)
-	//	printf("K[%d] = %f\n",eg, loc_source[eg]);
 	
 	for(eg = 0; eg < e->ng; eg++)
 	for(l = 0, k = 0; k < e->nphiz; k++){
@@ -214,9 +212,8 @@ extern PetscErrorCode VecApplyWellFlowBC(PetscReal *Ks_local, PetscReal ***sourc
 			for(i = 0; i < e->nphix; i++, l++){
 				Ks_local[l] = 0.;
 				for(eg = 0; eg < e->ng; eg++){
-					//Ks_local[l] += -source_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg] * e->weight[eg];
 					Ks_local[l] += -loc_source[eg] * e->phi[k][j][i][eg] * e->weight[eg];
-				};//printf("K[%d] = %f\n",l, Ks_local[l]);
+				};
 			}
 		}
 	}
@@ -229,7 +226,7 @@ extern PetscErrorCode BoundaryPressure(PetscReal *press, PetscInt i, PetscInt j,
 	PetscReal			pi;
 	PetscFunctionBegin;	
 	pi = 6.*asin(0.5);
-	*press = sin(2.*pi*k*hk)*sin(2.*pi*j*hj)*sin(2.*pi*i*hi);
+	*press = cos(pi*k*hk)*cos(pi*j*hj)*cos(pi*i*hi);
 	//*press = 0.;
 	PetscFunctionReturn(0);
 }
@@ -254,7 +251,7 @@ extern PetscErrorCode BoundaryFlowRate(PetscReal *vel, PetscInt c, PetscInt i, P
 	mu = flowpropty.mu;
 	g = flowpropty.g[c];
 	*vel = 0.;
-	
+/*	
 	if(c == 0){
 		*vel = -beta_c/mu*(2.*pi*cos(2.*pi*i*hi)*sin(2.*pi*j*hj)*sin(2.*pi*k*hk) - gamma_c*rho*g);
 	}
@@ -264,22 +261,18 @@ extern PetscErrorCode BoundaryFlowRate(PetscReal *vel, PetscInt c, PetscInt i, P
 	if(c == 2){
 		*vel = -beta_c/mu*(2.*pi* sin(2.*pi*i*hi)*sin(2.*pi*j*hj)*cos(2.*pi*k*hk) - gamma_c*rho*g);
 	}
-
-	/*
+*/
 	if(c == 0){
-		*vel = -beta_c/mu*(2.*pi*cos(2.*pi*i*hi)*sin(2.*pi*j*hj)*sin(2.*pi*k*hk) - gamma_c*rho*g);
+		*vel = beta_c/mu*(sin(pi*i*hi)*cos(pi*j*hj)*cos(pi*k*hk) - gamma_c*rho*g)/(3.*pi);
 	}
 	if(c == 1){
-		*vel = -beta_c/mu*(2.*pi*sin(2.*pi*i*hi)*cos(2.*pi*j*hj)*sin(2.*pi*k*hk) - gamma_c*rho*g);
+		*vel = beta_c/mu*(cos(pi*i*hi)*sin(pi*j*hj)*cos(pi*k*hk) - gamma_c*rho*g)/(3.*pi);
 	}
 	if(c == 2){
-		*vel = -beta_c/mu*(2.*pi* sin(2.*pi*i*hi)*sin(2.*pi*j*hj)*cos(2.*pi*k*hk) - gamma_c*rho*g);
+		*vel = beta_c/mu*(cos(pi*i*hi)*cos(pi*j*hj)*sin(pi*k*hk) - gamma_c*rho*g)/(3.*pi);
 	}
-	*/
 	PetscFunctionReturn(0);
 }
-
-
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyFlowBC"
@@ -1240,8 +1233,8 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields * fields, VFC
 	for (ek = zs; ek < zs + zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
-			//	source_array[ek][ej][ei] = 4.*pi*pi*3.*beta_c/mu*cos(2.*pi*ek*hz)*cos(2.*pi*ej*hy)*cos(2.*pi*ei*hx);
-				source_array[ek][ej][ei] = 4.*pi*pi*3.*beta_c/mu*sin(2.*pi*ek*hz)*sin(2.*pi*ej*hy)*sin(2.*pi*ei*hx);
+				source_array[ek][ej][ei] = beta_c/mu*cos(pi*ek*hz)*cos(pi*ej*hy)*cos(pi*ei*hx);
+			//	source_array[ek][ej][ei] = 4.*pi*pi*3.*beta_c/mu*sin(2.*pi*ek*hz)*sin(2.*pi*ej*hy)*sin(2.*pi*ei*hx);
 			}
 		}
 	}	
