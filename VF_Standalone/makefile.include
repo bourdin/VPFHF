@@ -1,4 +1,5 @@
 VFOBJ = ${VFDIR}/VF_Standalone/VFCommon.o                \
+        ${VFDIR}/VF_Standalone/VFCracks.o                \
         ${VFDIR}/VF_Standalone/VFU.o                     \
         ${VFDIR}/VF_Standalone/VFV.o                     \
         ${VFDIR}/VF_Standalone/VFWell.o                  \

@@ -1,0 +1,320 @@
+Working Directory: /data/etc_rpe_ucr/VF2/VF-Chevron/VF_Standalone/ValidationTests/gmrs
+ ****************  GMRS - GeoMechanical Reservoir Simulator  *****************
+ ****************  Chevron Confidential - Restricted Access  *****************
+ ************  Unauthorized and/or improper reproduction, use or  ************
+ *********************  disclosure of this information  **********************
+ *************************  is strictly prohibited  **************************
+ ****************  © 2011 Chevron Energy Technology Company,  ****************
+ ********************  a division of Chevron U.S.A. Inc.  ********************
+ ***************************  All rights reserved  ***************************
+ *****************************  Version 030311  ******************************
+ *********************************  hltd828  *********************************
+ ****************************  Process ID 31475  *****************************
+ **************************  Run Date: 12 Jan 2012  **************************
+ *********************  Start Time: 12 hr 15 min 48 sec  *********************
+ *********************  GEOMECHANICS PRESSURIZED SPHERE  *********************
+ Sneddon comparison with VF                                                     
+
+Program Dimensions:
+
+NUMWELL  =          0     Number of wells                                             
+MXWELE   =        100     Max open grid elements per well                             
+MXWELI   =          3     Max open intervals per well                                 
+MXWELEMD =         50     Max wellgeom modifications for all wells                    
+MXREAD   =          1     Variable no longer required in input data for GMRS          
+MXRELTAB =          5     This keyword replaced by MXRTAB                             
+MXRELVAL =         30     Max entries in a relative permeability table                
+MXRTAB   =          5     Max number rock property tables                             
+MXMTAB   =          6     Variable no longer required in input data for GMRS          
+MXTAB    =         50     Max number of tables (MXRTAB+Well Tables)                   
+MXTBVL   =        800     Max number of 1D table values (2 per data pair)             
+MXSBBK   =          5     Variable no longer required in input data for GMRS          
+MXTBBK   =         50     Variable no longer required in input data for GMRS          
+MXTBUF   =      80000     Variable no longer required in input data for GMRS          
+MXPTREG  =          5     Max number of print regions in a grid                       
+MXHISQ   =        130     Max well output values/time step/processor                  
+MXHIST   =         20     Max number of time steps between well output                
+MXPBUF   =       1200     Max entries in a print block (multiple of 12)               
+MXNUMEQ  =         10     Variable no longer required in input data for GMRS          
+MXCOMP   =         12     Max number of nonaqueous components                         
+MXPHASE  =          3     Max number of phases                                        
+MXINJ    =         10     Max number of different injection compositions              
+MXSEP    =          5     Max number of separators                                    
+MXSTAGE  =          5     Max number of stages in a separator                         
+MXTEMP   =         20     Max number of different temperatures for EOS tables         
+MXBAL    =         10     Variable no longer required in input data for GMRS          
+CMPPRG   =         50     Max number of user programs                                 
+CMPDAT   =        500     Max number of words in compiler data memory                 
+CMPCHR   =        500     Max characters in compiler string memory                    
+CMPSTG   =         50     Max number of strings in compiler string memory             
+CMPKOD   =       2000     Max instructions in compiler code memory                    
+CMPVAR   =        500     Max number of variables in compiler name memory             
+MXPROC   =          1     Variable no longer required in input data for GMRS          
+MXMPP    =          1     Variable no longer required in input data for GMRS          
+MXTMP    =          2     Variable no longer required in input data for GMRS          
+MXMGI    =          1     Variable no longer required in input data for GMRS          
+MXPVT    =          5     Max number of PVT tables                                    
+MXPVTVAL =         30     Max number of entries in each PVT table                     
+MXTVAL   =         30     Max number of entries in each thermal table                 
+MXDVAL   =         30     Max number of entries in each deposition table              
+MXEQVAL  =         30     Max number of entries for each equilibrium table            
+MXBSTRS  =          1     Variable no longer required in input data for GMRS          
+MXBTEMPR =        200     Max number of edges with prescribed temperatures            
+MXBPRES  =          1     Variable no longer required in input data for GMRS          
+MXDISP   =          1     Variable no longer required in input data for GMRS          
+MXHARDEN =         30     Max number of entries in each hardening table               
+MXPREG   =          0     Max number of pressure regions                              
+
+ BLOCK   1 SIMULATION MODEL                         SOLID_MODEL                   
+
+ Default units:
+   
+    MASS                (EXTMASS )                     [lbM]               
+    DISTANCE            (EXTDIST )                     [ft]                
+    BULK VOLUME         (EXTVOL  )                     [cu-ft]             
+    TIME                (EXTTIME )                     [day]               
+    TEMPERATURE         (EXTTEMP )                     [F]                 
+    PRESSURE            (EXTPRES )                     [psi]               
+    PERMEABILITY        (EXTPERM )                     [md]                
+    LIQUID RATE         (EXTWELL )                     [bbl/day]           
+    GAS RATE            (EXTWELG )                     [mscf/day]          
+    VISCOSITY           (EXTVISC )                     [cp]                
+    DENSITY             (EXTDENS )                     [lb/cu-ft]          
+    MOLAR CONCENTRATION (EXTCONC )                     [lbM/cu-ft]         
+    COMPRESSIBILITY     (EXTCOMP )                     [/psi]              
+    GAS DENSITY         (EXTDENG )                     [lb/mscf]           
+    GAS FVF             (EXTFVFG )                     [bbl/mscf]          
+    SOLUTION GOR        (EXTSOLG )                     [mscf/bbl]          
+    FORCE               (EXTFORC )                     [lbf]               
+    TRANSMISSIBILITY    (EXTTRANS)                     [md-ft]             
+   
+Externals available for user-defined programs:
+ 
+    TABLEX    TABLEY    DYDX      NGRD      IROCK
+    X         R         Y         Z         ICELL
+    TIME      FUNC      NSTEP     NEWT      POR
+    PORIN     XPERM     RPERM     YPERM     ZPERM
+    PMULT     BULK      EV        P         SXX
+    SYY       SZZ       SXY       SXZ       SYZ
+    SRR       STT       SRZ       SW        SO
+    SG        T         ITAB      CONC      XANGLE
+    YANGLE    ZANGLE    PREF      PMAX      T1
+    T2        T3        RE1       RE2       RE3
+    I1        I2        I3        I1E       I2E
+    I3E       J2        J3        BIOT      EFFP
+    DP        WIDTH     DEPOS     EMOD      EVERT
+    EHORZ     XNU       CR        BK        UX
+    UY        UZ        UR        INODE     LSTOP
+    LRST      LPRT      VAR1      VAR2      VAR3
+    VAR4      VAR5      SAVE1     SAVE2     SAVE3
+    SAVE4     SAVE5
+   
+Not all externals are available to all user-defined programs. 
+See GMRS Users Guide for details.
+
+ SIMULATION STOP TIME (TIMEEND)                 0.00000E+00 [day]               
+ RESTART FILES WILL NOT BE WRITTEN FOR THIS RUN
+ GRAVITY CONVERSION FACTOR (GRAVITY)           0.0000000000 [psi*cu-ft/lb*ft]
+
+ ************************  GEOMECHANICS SCALAR DATA  *************************
+
+ GEOMECHANICS OPTION TURNED ON FOR GRID          1
+ PROGRAM CHECKS FOR SEPARATED CELLS (SEPARATE_CELLS)
+ ISOTROPIC ELASTIC PROPERTIES FOR RESERVOIR
+ BOUNDARY TRACTION OPTION FOR GEOMECHANICS (BNDY_OPTION)       0
+ PROGRAM STOPS IF DISPLACEMENTS EXCEED               10000.0     [ft]
+ DENSITY OF SOLID MATERIAL (ROCKD) [lb/cu-ft]          
+     DEFAULT VALUES =       168.56    
+ TRACTIONS ENTERED FOR BOUNDARY FORCES
+ LINEAR ELASTIC MODEL USED FOR DEFORMATIONS
+ NUMBER OF LOAD INCREMENTS AT START (NLOADSTART)               1
+
+ ******************************  GEOMETRY DATA  ******************************
+ COORDINATE SYSTEM (KCOORD)                               0
+ DISCRETIZATION STENCIL (STENCIL)                         0
+ GRID IS NOT REORDERED (GRIDORDER)
+ NUMBER OF STRESS POINTS (NSTRESS)                        8
+ LIMIT FOR TRANS AND WELLBORE CONSTANTS (TRANS_LMT)     0.1000E+09 [md-ft]
+
+ COORDINATES OF GRID 1,1,1 CORNER:
+ BLOCK        X              Y              Z
+    1    0.00000        0.00000        0.00000    [ft]                
+
+ MAJOR DIMENSIONS:
+ BLOCK        X              Y              Z
+    1    1.00000        1.00000       0.250000    [ft]                
+
+ **********************  X INTERVAL LENGTHS FOR GRID 1  **********************
+
+         1              2              3              4              5
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+         6              7              8              9             10
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        11             12             13             14             15
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        16             17             18             19             20
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        21             22             23             24             25
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        26             27             28             29             30
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        31             32             33             34             35
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        36             37             38             39             40
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+ **********************  Y INTERVAL LENGTHS FOR GRID 1  **********************
+
+         1              2              3              4              5
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+         6              7              8              9             10
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        11             12             13             14             15
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        16             17             18             19             20
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        21             22             23             24             25
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        26             27             28             29             30
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        31             32             33             34             35
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+        36             37             38             39             40
+  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01  0.2500000E-01
+
+ **********************  Z INTERVAL LENGTHS FOR GRID 1  **********************
+
+         1              2              3              4              5
+  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01  0.5000000E-01
+
+ GRID    1                                                   
+     NX =    40     NY =    40     NZ =     5
+     PRINT REGION  1:
+     FIRST, LAST, AND STEP I FOR OUTPUT (IFIRST,ILAST,ISTEP)    1   40    1
+     FIRST, LAST, AND STEP J FOR OUTPUT (JFIRST,JLAST,JSTEP)    1   40    7
+     FIRST, LAST, AND STEP K FOR OUTPUT (KFIRST,KLAST,KSTEP)    1    5    1
+
+ ************************  PRINT PROGRAM (PRINTDISP)  ************************
+
+    EXTERNAL INODE,X,Y,Z,UY
+    IF((X.LT. 0.41).AND.(Y.LT. 0.01).AND.(Z.GT.0.14).AND.(Z.LT.0.16)) THEN
+       OPEN(10,'DISPY_sneddon3.txt','UNKNOWN')
+       WRITE(10,1) X,Z,UY
+  1       FORMAT(3E15.6)
+    ENDIF
+
+ ***********************  ARRAY PRINTOUT INFORMATION  ************************
+ PLOT FACTOR ADDED TO WELLS (ADDWELL)                 0.20
+ NUMBER OF ARRAYS TO PRINT                              18
+ PLOT OUTPUT FILE PREFIX (PLOTFILE)              sneddon3
+ GRID PLOTS USE PLOTFILE PREFIX
+ NO GRID VALUES ARE ARE PRINTED FOR THIS RUN (GRIDPRINT)
+ NO TABLE PLOTS ARE GENERATED FOR THIS RUN (TABLEPLOT)
+ NO WELL PLOTS ARE GENERATED FOR THIS RUN (WELLPLOT)
+
+ ****************************  EQUILIBRIUM DATA  *****************************
+ INITIAL STRESSES ENTERED FOR ALL GRID BLOCKS
+
+ ****************************  GRID INFORMATION  *****************************
+
+ GRID                 ACTIVE ELEMENTS         ACTIVE NODES
+   1                        8000                  10086
+
+TOTAL NUMBER OF SURFACE ELEMENTS           4000
+TOTAL NUMBER OF SURFACE NODES              4002
+
+ 
+AVG CELL VOLUME =                                         0.31250E-04 [cu-ft]                       
+TOTAL GRID VOLUME =                                       0.25000E+00 [cu-ft]                       
+PROGRAM IS READING GEOMECHANICS DATA
+AVG ELASTIC MODULUS(Not weighted by cell-size) =          0.14504E+03 [psi]               
+PROGRAM SETTING UP CONNECTION INFO FOR NODES
+PROGRAM READING REFERENCE STRESSES
+PROGRAM READING TRACTIONS AND LOADS
+PROGRAM READING DISPLACEMENT CONSTRAINTS
+
+ ************************  LINEAR SOLVER INFORMATION  ************************
+
+TYPE OF ACCELERATOR FOR MECHANICS ITERATIONS =                 3
+   GMRES for linear iterations
+ NUMBER OF ORTHOGONAL DIRECTIONS =                            50
+ SYMMETRIC LINEAR SOLVER FOR MECHANICS
+ TYPE OF PRECONDITIONER FOR MECHANICS ITERATIONS               3
+   AMG PRECONDITIONER
+   MAXIMUM AMG LEVELS                                         20
+   NUMBER OF MULTIGRID CYCLES                                  1
+   FULL MULTIGRID CYCLES USED FOR PRECONDITIONER
+   CONSTANT INTERPOLATION FOR GRIDS
+   AGGREGATE CLOSEST NODE
+   REMOVAL FRACTION FOR AMG COEFFICIENTS =          0.100000E-03
+   MAXIMUM COARSE ENTRIES =                                 1000
+   NUMBER OF PRE-SMOOTH ITERATIONS FOR MECHANICS               1
+   NUMBER OF POST-SMOOTH ITERATIONS FOR MECHANICS              1
+MERGE INDICATOR FOR ROCK TABLES =                              0
+PROGRAM HAS COMPLETED READING INITIAL DATA
+
+ *********************************  ******  **********************************
+ ************************  MISC INITIALIZATION DATA  *************************
+PROGRAM IS PROCESSING GEOMECHANICS DATA
+PROGRAM SETTING UP STIFFNESS MATRIX
+PROGRAM DETERMINING STRUCTURE OF AMG FOR MECHANICS
+   ****** ILEVEL =     1
+    NUMBER OF NUNKNS =          5040
+   ****** ILEVEL =     2
+    NUMBER OF NUNKNS =          2424
+   ****** ILEVEL =     3
+    NUMBER OF NUNKNS =          1209
+   ****** ILEVEL =     4
+    NUMBER OF NUNKNS =           593
+    DIRECT SOLVER,GRID,BYTES          1        1880496
+    TOTAL STORAGE IN BYTES FOR AMG SOLVER =        10979736
+PROGRAM SOLVING FOR INITIAL DISPLACEMENTS
+PROGRAM DETERMINING INITIAL STRESSES
+ MAXIMUM STRAIN (PERCENT) AT INITIALIZATION IS          0.22
+ CELL LOCATION OF STRAIN IS       3201
+ POSITION OF CELL IS  0.412500     0.125000E-01 0.250000E-01 [ft]                
+   
+ ********************  GLOBAL ARRAYS FOR PRINT PROGRAMS  *********************
+  I      GLOBAL      NAME          EXTRA DIM
+
+   
+ ******************************  ARRAY STORAGE  ******************************
+   
+ STORAGE FOR GRID-BASED ARRAYS            41.2 MBYTES
+
+ *****************************  STANDARD OUTPUT  *****************************
+
+ TIME =                                     0.000000     [day]               
+ TIME STEP NUMBER =                                    0
+
+ ************************  TIMER RESULTS IN SECONDS  *************************
+ 
+ TOTAL TIME                                       0.77
+ TOTAL INITIALIZATION                             0.77
+ MECHANICS RESIDUAL SETUP                         0.00
+ RESTART OUTPUT TIME                              0.00
+ FACTOR LINEAR SOLVER FOR MECHANICS               0.02
+ TOTAL LINEAR SOLVER FOR MECHANICS                0.27
+ VARIABLE UPDATES                                 0.01
+  
+ DISPLACEMENT SOLVES =                          1
+ DISPLACEMENT LINEAR ITERATIONS =               7
+ NONLINEAR ITERATIONS =                         0
+ TIME STEPS =                                   0
+ TOTAL NUMBER OF TIME STEP CUTS =               0
+ LINEAR ITERS / DISPLACEMENT SOLVE =          7.0
+  Normal program termination

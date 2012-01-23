@@ -1,0 +1,16 @@
+
+
+VF:
+Numerical implementation of the variational approach to fracture.
+(c) 2010-2011 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu
+
+Option table:
+-l 1,1,1
+-n 21,21,21
+-nu 0.3
+-orientation 2
+-p runtest7-2
+Applying shear Dirichlet conditions on faces Z0 Z1 along the direction <1,1,0>
+      kspU converged in 38 iterations 2.
+Elastic Energy:            6.500390e-02
+Total Mechanical energy:  6.500390e-02

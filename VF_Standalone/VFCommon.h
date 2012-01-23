@@ -112,12 +112,14 @@ static const char *VFUnilateralName[] = {
 };
 
 typedef enum {
+  FLOWSOLVER_SNES,
   FLOWSOLVER_FEM,
   FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE,
   FLOWSOLVER_FAKE,
   FLOWSOLVER_READFROMFILES,
   } VFFlowSolverType;
 static const char *VFFlowSolverName[] = {
+  "SNES",
   "FEM",
   "MixedFEM",
   "FAKE",
@@ -192,14 +194,14 @@ typedef struct {
 } VFProp;
 
 typedef struct {
-  PetscReal         perm;  /* Permeability in m^2 muliply by 1e12 */
-  PetscReal         por;   /* Porosity */
-  PetscReal         Pinit; /* Initial Pressure in MPa*/
-  PetscReal         Tinit; /* Initial Temperature in C*/ 
-  PetscReal         relk;  /* Relative Permeability */
-  PetscReal         visc;  /* Viscosity in cp */
-  PetscReal         fdens; /* Fluid Density in specific density*/
-  PetscReal		    cf;	     /* Rock compressibility in field unit*/
+  PetscReal         perm;    /* Permeability in m^2 muliply by 1e12 */
+  PetscReal         por;     /* Porosity */
+  PetscReal         Pinit;   /* Initial Pressure in MPa*/
+  PetscReal         Tinit;   /* Initial Temperature in C*/ 
+  PetscReal         relk;    /* Relative Permeability */
+  PetscReal         visc;    /* Viscosity in cp */
+  PetscReal         fdens;   /* Fluid Density in specific density*/
+  PetscReal		      cf;	     /* Rock compressibility in field unit*/
   PetscReal         TCond_X; /* Thermal Conductivity in x-direction */
   PetscReal         TCond_Y; /* Thermal Conductivity in y-direction */
   PetscReal         TCond_Z; /* Thermal COnductivity in z-direction */
@@ -251,6 +253,7 @@ typedef struct {
 } VFLog;
 
 typedef struct {
+  PetscTruth          printhelp;
   PetscInt            nlayer;
   PetscReal           *layersep;
   PetscInt            *layer;         /* dim=nz+1. gives the layer number of a cell  */
@@ -302,6 +305,11 @@ typedef struct {
   KSP                 kspT;
   Vec                 RHST;
 
+  /* 
+    SNES solver for Pressure (or flow - T&P)
+  */
+  SNES                snesF;
+  
   PetscReal           altmintol;
   PetscInt            altminmaxit;
   MatProp             *matprop;
