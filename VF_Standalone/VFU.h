@@ -26,6 +26,8 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal 
 extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx);
 extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *OverbdnWork,PetscReal *PressureWork,VFFields *fields,VFCtx *ctx);
 
+extern PetscErrorCode VF_AddNullSpaceElasticity(KSP ksp,VFCtx *ctx);
+
 extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx);
 extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx);
 #endif /* VFU_H */

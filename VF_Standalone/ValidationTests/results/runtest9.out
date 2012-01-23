@@ -1,0 +1,47 @@
+
+
+VF:
+Numerical implementation of the variational approach to fracture.
+(c) 2010-2011 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu
+
+
+
+      ##########################################################
+      #                                                        #
+      #                          WARNING!!!                    #
+      #                                                        #
+      #   This code was compiled with a debugging option,      #
+      #   For production runs, use a petsc compiled with       #
+      #   optimization, the performance will be generally      #
+      #   two or three times faster.                           #
+      #                                                        #
+      ##########################################################
+
+
+Option table:
+#PETSc Option Table entries:
+-c0_center .5,.5,.5
+-c0_name crack1
+-c0_phi 45
+-c0_r .5
+-c0_theta 45
+-c1_r 0.5
+-epsilon .05
+-n 41,41,41
+-nc 2
+-p runtest9
+#End of PETSc Option Table entries
+PennyCrack object "crack1":
+center:   	5.000000e-01 	5.000000e-01 	5.000000e-01
+radius:     	5.000000e-01
+polar angle:	4.500000e+01
+co-latitude:	4.500000e+01
+PennyCrack object "PennyCrack":
+center:   	0.000000e+00 	0.000000e+00 	0.000000e+00
+radius:     	5.000000e-01
+polar angle:	0.000000e+00
+co-latitude:	0.000000e+00
+      kspU converged in 48 iterations 3.
+Elastic Energy:            2.028906e-07
+Work of pressure forces:   4.057404e-07
+Total energy:              -2.028498e-07

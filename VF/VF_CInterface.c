@@ -1,6 +1,7 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
+#include "VFCracks.h"
 #include "VFU.h"
 #include "../Utils/xdmf.h"
 #include "../Utils/VFGMRS.h"
@@ -19,9 +20,13 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
 {
   PetscErrorCode ierr;
 
-  PetscTruth     printhelp;
+  PetscTruth      printhelp;
   FILE           *file;
-  char           filename[FILENAME_MAX];
+  char            filename[FILENAME_MAX];
+  Vec             V;
+  PetscInt        c,nc=0;
+  VFPennyCrack    crack;
+  char                prefix[PETSC_MAX_PATH_LEN+1];
   
   PetscFunctionBegin;
   ierr = PetscPrintf(PETSC_COMM_WORLD,banner);CHKERRQ(ierr);
@@ -62,6 +67,21 @@ extern PetscErrorCode VFInitialize(PetscInt nx,PetscInt ny,PetscInt nz,PetscReal
   ierr = VFFieldsInitialize(&ctx,&fields);CHKERRQ(ierr);
   ierr = VFBCInitialize(&ctx);CHKERRQ(ierr);
   ierr = VFSolversInitialize(&ctx);CHKERRQ(ierr);
+
+  /*
+    Create optional penny shaped cracks
+  */
+  ierr = DACreateGlobalVector(ctx.daScal,&V);CHKERRQ(ierr);
+  ierr = VecSet(V,1.0);CHKERRQ(ierr);
+  ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&nc,PETSC_NULL);CHKERRQ(ierr);
+  for (c = 0; c < nc; c++) {
+    ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",c);CHKERRQ(ierr);
+    ierr = VFPennyCrackCreate(&crack);CHKERRQ(ierr);
+    ierr = VFPennyCrackGet(prefix, &crack);CHKERRQ(ierr);
+    ierr = VFPennyCrackBuildVAT2(V,&crack,&ctx);CHKERRQ(ierr);
+    ierr = VecPointwiseMin(fields.VIrrev,V,fields.VIrrev);CHKERRQ(ierr);
+  }
+  ierr = VecDestroy(V);CHKERRQ(ierr);
 
   /*
     Save command line options to a file
