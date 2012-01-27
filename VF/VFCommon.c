@@ -143,6 +143,13 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 
     ctx->numWells = 0;
     ierr = PetscOptionsInt("-nw","\n\tNumber of wells to insert","",ctx->numWells,&ctx->numWells,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscMalloc(ctx->numWells*sizeof(VFWell),&ctx->well);CHKERRQ(ierr);
+    for (i = 0; i < ctx->numWells; i++) {
+      ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"w%d_",i);CHKERRQ(ierr);
+      ierr = VFWellCreate(&(ctx->well[i]));CHKERRQ(ierr);
+      ierr = VFWellGet(prefix, &(ctx->well[i]));CHKERRQ(ierr);
+      ierr = VFWellView(&(ctx->well[i]),PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+    }
     
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
@@ -440,6 +447,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
     Create optional penny shaped cracks
   */
   ierr = VecSet(fields->V,1.0);CHKERRQ(ierr);
+  ierr = VecSet(fields->VIrrev,1.0);CHKERRQ(ierr);
   for (c = 0; c < ctx->numCracks; c++) {
     ierr = VFPennyCrackBuildVAT2(fields->V,&(ctx->crack[c]),ctx);CHKERRQ(ierr);
     ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
