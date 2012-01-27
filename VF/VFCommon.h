@@ -77,6 +77,24 @@ static const char *VFFileFormatName[] = {
   "",
   0
 };
+
+typedef struct {
+  char         name[256];
+  PetscReal    top[3];
+  PetscReal    bottom[3];
+  /*
+  PetscReal    rate;
+  BCTYPE       BCV;
+  */
+} VFWell;
+
+typedef struct {
+  char          name[256];
+  PetscReal     center[3];
+  PetscReal     r,phi,theta;
+} VFPennyCrack;
+
+
 /* 
   all fields involved in the computations
 */
@@ -178,6 +196,10 @@ typedef struct {
   PetscReal           PressureWork;
   PetscReal           TotalEnergy;
   PetscTruth          hasCrackPressure;
+  PetscInt            numWells;
+  VFWell             *well;
+  PetscInt            numCracks;
+  VFPennyCrack       *crack;
 } VFCtx;
 
 extern VFCtx          ctx;
@@ -203,5 +225,6 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFLogInitialize(VFLog *vflog);
 
 extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx);
+
 
 #endif /* VFCOMMON_H */

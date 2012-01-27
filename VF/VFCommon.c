@@ -3,6 +3,8 @@
 #include "VFCommon.h"
 #include "VFV.h"
 #include "VFU.h"
+#include "VFCracks.h"
+#include "VFWell.h"
 #include "../Utils/xdmf.h"
 
 #undef __FUNCT__
@@ -55,7 +57,8 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
   PetscTruth          flg;
   int                 i; 
   PetscTruth          hashelp;
-  PetscReal           *buffer;
+  PetscReal          *buffer;
+  char                prefix[PETSC_MAX_PATH_LEN+1];
 
   PetscFunctionBegin;
   ierr = PetscOptionsGetTruth(PETSC_NULL,"-help",&hashelp,&flg);CHKERRQ(ierr);
@@ -127,6 +130,20 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
     ctx->hasCrackPressure = PETSC_FALSE;
     ierr = PetscOptionsTruth("-pressurize","\n\tPressurize cracks","",ctx->hasCrackPressure,&ctx->hasCrackPressure,PETSC_NULL);CHKERRQ(ierr);
+    
+    ctx->numCracks = 0;
+    ierr = PetscOptionsInt("-nc","\n\tNumber of penny-shaped cracks to insert","",ctx->numCracks,&ctx->numCracks,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscMalloc(ctx->numCracks*sizeof(VFPennyCrack),&ctx->crack);CHKERRQ(ierr);
+    for (i = 0; i < ctx->numCracks; i++) {
+      ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
+      ierr = VFPennyCrackCreate(&(ctx->crack[i]));CHKERRQ(ierr);
+      ierr = VFPennyCrackGet(prefix, &(ctx->crack[i]));CHKERRQ(ierr);
+      ierr = VFPennyCrackView(&(ctx->crack[i]),PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+    }
+
+    ctx->numWells = 0;
+    ierr = PetscOptionsInt("-nw","\n\tNumber of wells to insert","",ctx->numWells,&ctx->numWells,PETSC_NULL);CHKERRQ(ierr);
+    
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   ctx->timestep = 1;
@@ -401,7 +418,8 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx,PetscReal *dx,PetscReal *d
 */
 extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 {
-  PetscErrorCode ierr;
+  PetscErrorCode  ierr;
+  PetscInt        c; 
 
   PetscFunctionBegin;
   ierr = DACreateGlobalVector(ctx->daVect,&fields->U);CHKERRQ(ierr);
@@ -414,11 +432,26 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 
   ierr = DACreateGlobalVector(ctx->daScal,&fields->V);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->V,"Fracture");CHKERRQ(ierr);
-  ierr = VecSet(fields->V,1.0);CHKERRQ(ierr);
 
   ierr = DACreateGlobalVector(ctx->daScal,&fields->VIrrev);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->VIrrev,"VIrrev");CHKERRQ(ierr);
-  ierr = VecSet(fields->VIrrev,1.0);CHKERRQ(ierr);
+  
+  /*
+    Create optional penny shaped cracks
+  */
+  ierr = VecSet(fields->V,1.0);CHKERRQ(ierr);
+  for (c = 0; c < ctx->numCracks; c++) {
+    ierr = VFPennyCrackBuildVAT2(fields->V,&(ctx->crack[c]),ctx);CHKERRQ(ierr);
+    ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
+  }
+  /*
+    Create optional wells
+  */
+  for (c = 0; c < ctx->numWells; c++) {
+    ierr = VFWellBuildVAT2(fields->V,&(ctx->well[c]),ctx);CHKERRQ(ierr);
+    ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
+  }
+  ierr = VecCopy(fields->VIrrev,fields->V);CHKERRQ(ierr);
 
   ierr = DACreateGlobalVector(ctx->daScal,&fields->theta);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->theta,"Temperature");CHKERRQ(ierr);
@@ -660,7 +693,7 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
 extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 {
   PetscErrorCode ierr;
-  char           filename[FILENAME_MAX];
+  char            filename[FILENAME_MAX];
   
   PetscFunctionBegin;
   ierr = PetscFree(ctx->matprop);CHKERRQ(ierr);
@@ -689,6 +722,9 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(fields->pmult);CHKERRQ(ierr);
   
   ierr = PetscViewerDestroy(ctx->energyviewer);CHKERRQ(ierr);
+  
+  ierr = PetscFree(ctx->crack);CHKERRQ(ierr);
+  ierr = PetscFree(ctx->well);CHKERRQ(ierr);
   
   /*
     Close the xdmf multi-step file

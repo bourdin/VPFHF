@@ -20,9 +20,9 @@ extern PetscErrorCode VFWellGet(const char prefix[],VFWell *well)
     ierr = PetscOptionsRealArray("-top","\n\twell top coordinates (comma separated).","",well->top,&nval,PETSC_NULL);CHKERRQ(ierr);
     nval = 3;
     ierr = PetscOptionsRealArray("-bottom","\n\t well bottom coordinates  (comma separated).","",well->bottom,&nval,PETSC_NULL);CHKERRQ(ierr);
+    /*
     ierr = PetscOptionsEnum("-bcV","\n\t boundary condition on V field","",BCTYPE_NAME,(PetscEnum)well->BCV,(PetscEnum*)&(well->BCV),PETSC_NULL);CHKERRQ(ierr);
-    //ierr = PetscOptionsRealArray("-bottom","\n\tbottom","",well->bottom[0],&(well->bottom[0]),PETSC_NULL);CHKERRQ(ierr);
-  //ierr = PetscOptionsRealArray("-E","\n\tComma separated list of Young\'s modulii","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    */
 }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -41,27 +41,12 @@ extern PetscErrorCode VFWellCreate(VFWell *well)
   int            i;
   
   PetscFunctionBegin;
-  ierr = PetscMalloc2(3,PetscReal,&(well->top),3,PetscReal,&(well->bottom));CHKERRQ(ierr);
   ierr = PetscStrcpy(well->name,"well");CHKERRQ(ierr);
   for (i=0; i<3; i++) well->top[i] = 0.;
   for (i=0; i<3; i++) well->bottom[i] = 0.;
+  /*
   well->BCV = NONE;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "VFWellDestroy"
-/*
-  VFWellDestroy: Frees a well data structure
-  
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
-*/
-extern PetscErrorCode VFWellDestroy(VFWell *well)
-{
-  PetscErrorCode ierr;
-  
-  PetscFunctionBegin;
-  ierr = PetscFree2(well->top,well->bottom); 
+  */
   PetscFunctionReturn(0);
 }
 
@@ -80,7 +65,9 @@ extern PetscErrorCode VFWellView(VFWell *well,PetscViewer viewer)
   ierr = PetscViewerASCIIPrintf(viewer,"Well object \"%s\":\n",well->name);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(viewer,"top:    \t%e \t%e \t%e\n",well->top[0],well->top[1],well->top[2]);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(viewer,"bottom: \t%e \t%e \t%e\n",well->bottom[0],well->bottom[1],well->bottom[2]);CHKERRQ(ierr);
+  /*
   ierr = PetscViewerASCIIPrintf(viewer,"BCV:    \t%s\n",BCTYPE_NAME[well->BCV]);CHKERRQ(ierr);
+  */
   PetscFunctionReturn(0);
 }
 
@@ -163,5 +150,46 @@ extern PetscErrorCode VFDistanceToWell(PetscReal *d,PetscReal *x,VFWell *well)
     ierr = PetscPrintf(PETSC_COMM_SELF,"d(%f,%f,%f) = %e\n",x[0],x[1],x[2],*d);
   
   */
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VFWellBuildVAT2"
+/*
+  VFPennyCrackBuildVAT2:  Build the V-field associated with an array of wells 
+                          following the construction in Bourdin-Francfort-Marigo '08.
+  
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VFWellBuildVAT2(Vec V,VFWell *well,VFCtx *ctx)
+{
+  PetscErrorCode      ierr;
+  PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+  PetscReal       ****coords_array;
+  PetscReal        ***v_array;
+  PetscReal           x[3];
+  PetscReal           dist;  
+
+  PetscFunctionBegin;
+  ierr = DAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+
+	ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+
+	ierr = VecSet(V,1.0);CHKERRQ(ierr);
+	ierr = DAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  for (k = zs; k < zs+zm; k++) {
+    for (j = ys; j < ys+ym; j++) {
+      for (i = xs; i < xs+xm; i++) { 
+        x[2] = coords_array[k][j][i][2];
+        x[1] = coords_array[k][j][i][1];
+        x[0] = coords_array[k][j][i][0];
+        ierr = VFDistanceToWell(&dist,x,well);CHKERRQ(ierr);
+        v_array[k][j][i] = 1.-exp(-dist/2/ctx->vfprop.epsilon);
+      }
+    }
+  }      
+	ierr = DAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  ierr = DAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

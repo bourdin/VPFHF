@@ -3,15 +3,10 @@
     Initializers for various shaped cracks
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
+#include "VFCommon.h"
 
 #ifndef VFCRACKS_H
 #define VFCRACKS_H
-
-typedef struct {
-  char          name[256];
-  PetscReal     center[3];
-  PetscReal     r,phi,theta;
-} VFPennyCrack;
 
 extern PetscErrorCode VFPennyCrackGet(const char prefix[],VFPennyCrack *PennyCrack);
 extern PetscErrorCode VFPennyCrackCreate(VFPennyCrack *PennyCrack);
