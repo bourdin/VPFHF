@@ -90,6 +90,7 @@ runtest6: test6
 	@echo "Running " $@
 	-@for or in 0 1 2; do \
 	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -orientation $$or";\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or > $@-$$or.out 2>&1;\
 	if (${DIFF} -I '^#' results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
