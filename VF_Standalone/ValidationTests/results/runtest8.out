@@ -19,6 +19,6 @@ Building a penny-shaped crack of radius 0.75 at (0,0,0.5) with normal vector <0,
       kspV converged in 8 iterations 2.
       V min / max:     0.000000e+00 9.999984e-01
       kspU converged in 54 iterations 3.
-Elastic Energy:            7.427041e-07
+Elastic Energy:            7.427043e-07
 Work of pressure forces:   1.485274e-06
 Total energy:              -7.425700e-07

@@ -4,20 +4,6 @@ VF:
 Numerical implementation of the variational approach to fracture.
 (c) 2010-2011 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu
 
-
-
-      ##########################################################
-      #                                                        #
-      #                          WARNING!!!                    #
-      #                                                        #
-      #   This code was compiled with a debugging option,      #
-      #   For production runs, use a petsc compiled with       #
-      #   optimization, the performance will be generally      #
-      #   two or three times faster.                           #
-      #                                                        #
-      ##########################################################
-
-
 Option table:
 #PETSc Option Table entries:
 -c0_center .5,.5,.5
