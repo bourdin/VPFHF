@@ -14,9 +14,9 @@
 
 
 #undef __FUNCT__
-#define __FUNCT__ "BCPInit"
+#define __FUNCT__ "FlowSolverFinalize"
 /* 
-   BCPInit
+   FlowSolverFinalize
    Keita Yoshioka yoshk@chevron.com
 */
 extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
@@ -37,6 +37,9 @@ extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 	}
 	PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "FlowSolverInitialize"
 extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 {
 	PetscErrorCode ierr;
@@ -55,6 +58,9 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 	}
 	PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "BCPInit"
 extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx)
 {
   PetscErrorCode ierr;
@@ -136,14 +142,14 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
 #ifdef PETSC_HAVE_HDF5
           ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
           /*
-            ierr = VecLoadIntoVector(viewer,fields->theta);CHKERRQ(ierr);
+            ierr = VecLoad(viewer,fields->theta);CHKERRQ(ierr);
           */
-          ierr = VecLoadIntoVector(viewer,fields->pressure);CHKERRQ(ierr);
-          ierr = PetscViewerDestroy(viewer);CHKERRQ(ierr);    
+          ierr = VecLoad(fields->pressure,viewer);CHKERRQ(ierr);
+          ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);    
 #endif
           break;
         case FILEFORMAT_BIN:
-          SETERRQ(PETSC_ERR_SUP,"Reading from binary files not implemented yet");
+          SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"Reading from binary files not implemented yet");
           break;
       }
       ierr = PetscLogStagePop();CHKERRQ(ierr);

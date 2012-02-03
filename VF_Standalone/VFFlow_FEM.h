@@ -7,7 +7,6 @@
 
 #ifndef VFFLOW_FEM_H
 #define VFFLOW_FEM_H
-#include "PetscFixes.h"
 
 
 extern PetscErrorCode VFFlow_FEM(VFCtx *ctx, VFFields *fields);

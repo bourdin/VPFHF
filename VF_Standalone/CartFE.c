@@ -1,11 +1,10 @@
 #define CARTFE_C
 #include "petsc.h"
 #include "CartFE.h"
-#include "PetscFixes.h"
 
 PetscLogEvent CartFE_ElementInitEvent;
 PetscLogStage CartFE_ElementInitStage;
-PetscCookie   CartFE_Element;
+PetscClassId   CartFE_Element;
 
 
 #undef __FUNCT__
@@ -20,7 +19,7 @@ extern PetscErrorCode CartFE_Init()
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = PetscCookieRegister("CartFE_Element",&CartFE_Element);CHKERRQ(ierr);
+  ierr = PetscClassIdRegister("CartFE_Element",&CartFE_Element);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("CartFE_Elem Init",CartFE_Element,&CartFE_ElementInitEvent);CHKERRQ(ierr);
   ierr = PetscLogStageRegister("CartFE_Elem Init",&CartFE_ElementInitStage);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -113,7 +112,7 @@ extern PetscErrorCode CartFE_Element2DCreate(CartFE_Element2D *e)
 extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,PetscReal ly)
 {
   PetscErrorCode     ierr;
-  CartFE_Element1D ex,ey;
+  CartFE_Element1D   ex,ey;
   PetscInt           gi,gj,g;   /* local and lexicographic indices of the integration points */
   PetscInt           i,j;
   
@@ -259,26 +258,27 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
   PetscInt       i,j,k,c;
-  DA             da;
-  PetscReal      ****RHS_array;
-  PetscReal      ****BCU_array;
-  PetscInt       dim,dof;
+  DM             da;
+  PetscReal  ****RHS_array;
+  PetscReal  ****BCU_array;
+  PetscInt       dim,dof,s;
   
   PetscFunctionBegin;
-  ierr = PetscObjectQuery((PetscObject) RHS,"DA",(PetscObject *) &da); CHKERRQ(ierr);
-    if (!da) SETERRQ(PETSC_ERR_ARG_WRONG,"Vector not generated from a DA");
+  ierr = PetscObjectQuery((PetscObject) RHS,"DM",(PetscObject *) &da); CHKERRQ(ierr);
+    if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
   
-  ierr = DAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,&dof,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                    &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   
   if (dim == 2) {
     ierr = PetscMalloc(sizeof(PetscReal ***),&RHS_array);CHKERRQ(ierr);
     ierr = PetscMalloc(sizeof(PetscReal ***),&BCU_array);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
   } else {
-    ierr = DAVecGetArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
   }
   
   for (c = 0;c < dof;c++) {
@@ -489,13 +489,13 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
   }
   
   if (dim == 2) {
-    ierr = DAVecRestoreArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
-    ierr = DAVecRestoreArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
     ierr = PetscFree(RHS_array);CHKERRQ(ierr);
     ierr = PetscFree(BCU_array);CHKERRQ(ierr);
   } else {
-    ierr = DAVecRestoreArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
-    ierr = DAVecRestoreArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -508,14 +508,14 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode MatApplyDirichletBC(Mat K,DA da,BC *BC)
+extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
   PetscInt       i,j,k,c;
-  MatStencil     *row;
+  MatStencil    *row;
   PetscReal      one=1.;
   PetscInt       numBC=0,l=0;
   PetscInt       dim,dof;
@@ -526,11 +526,12 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DA da,BC *BC)
     This is only implemented in petsc-dev (as of petsc-3.1 days)
   */
   /*
-    ierr = PetscObjectQuery((PetscObject) K,"DA",(PetscObject *) &da); CHKERRQ(ierr);
-    if (!da) SETERRQ(PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
+    ierr = PetscObjectQuery((PetscObject) K,"DM",(PetscObject *) &da); CHKERRQ(ierr);
+    if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
   */
-  ierr = DAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,&dof,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                    &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
   /*
     Compute the number of boundary nodes on each processor. 
@@ -659,7 +660,7 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DA da,BC *BC)
     }
     
   }
-  ierr = MatZeroRowsStencil(K,numBC,row,one);CHKERRQ(ierr);
+  ierr = MatZeroRowsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscFree(row);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -671,7 +672,7 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DA da,BC *BC)
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode DAReadCoordinatesHDF5(DA da,const char filename[])
+extern PetscErrorCode DAReadCoordinatesHDF5(DM da,const char filename[])
 {
   PetscErrorCode ierr;
   Vec            Coords;
@@ -680,11 +681,11 @@ extern PetscErrorCode DAReadCoordinatesHDF5(DA da,const char filename[])
   PetscFunctionBegin;
 #ifdef PETSC_HAVE_HDF5
   ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_READ,&HDF5Viewer);
-  ierr = DAGetGlobalVector(da,&Coords);CHKERRQ(ierr);
-  ierr = VecLoadIntoVector(HDF5Viewer,Coords);CHKERRQ(ierr);
-  ierr = DASetCoordinates(da,Coords);CHKERRQ(ierr);
-  ierr = DARestoreGlobalVector(da,&Coords);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(HDF5Viewer);CHKERRQ(ierr);
+  ierr = DMGetGlobalVector(da,&Coords);CHKERRQ(ierr);
+  ierr = VecLoad(Coords,HDF5Viewer);CHKERRQ(ierr);
+  ierr = DMDASetCoordinates(da,Coords);CHKERRQ(ierr);
+  ierr = DMRestoreGlobalVector(da,&Coords);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&HDF5Viewer);CHKERRQ(ierr);
 #endif
   PetscFunctionReturn(0);
 }
@@ -860,26 +861,27 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,BC *BC,PetscReal *
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
   PetscInt       i,j,k,c;
-  DA             da;
-  PetscReal      ****RHS_array;
-  PetscReal      ****BCF_array;
+  DM             da;
+  PetscReal  ****RHS_array;
+  PetscReal  ****BCF_array;
   PetscInt       dim,dof;
   
   PetscFunctionBegin;
-  ierr = PetscObjectQuery((PetscObject) RHS,"DA",(PetscObject *) &da); CHKERRQ(ierr);
-    if (!da) SETERRQ(PETSC_ERR_ARG_WRONG,"Vector not generated from a DA");
+  ierr = PetscObjectQuery((PetscObject) RHS,"DM",(PetscObject *) &da); CHKERRQ(ierr);
+    if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
   
-  ierr = DAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,&dof,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                    &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   
   if (dim == 2) {
     ierr = PetscMalloc(sizeof(PetscReal ***),&RHS_array);CHKERRQ(ierr);
     ierr = PetscMalloc(sizeof(PetscReal ***),&BCF_array);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(da,BCF,&BCF_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,BCF,&BCF_array[0]);CHKERRQ(ierr);
   } else {
-    ierr = DAVecGetArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(da,BCF,&BCF_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,BCF,&BCF_array);CHKERRQ(ierr);
   }
   
   for (c = 0;c < dof;c++) {
@@ -1011,13 +1013,13 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,BC *BC,PetscReal *
   }
   
   if (dim == 2) {
-    ierr = DAVecRestoreArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
-    ierr = DAVecRestoreArrayDOF(da,BCF,&BCF_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,BCF,&BCF_array[0]);CHKERRQ(ierr);
     ierr = PetscFree(RHS_array);CHKERRQ(ierr);
     ierr = PetscFree(BCF_array);CHKERRQ(ierr);
   } else {
-    ierr = DAVecRestoreArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
-    ierr = DAVecRestoreArrayDOF(da,BCF,&BCF_array);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,BCF,&BCF_array);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }

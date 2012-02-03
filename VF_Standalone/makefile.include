@@ -8,5 +8,4 @@ VFOBJ = ${VFDIR}/VF_Standalone/VFCommon.o                \
         ${VFDIR}/VF_Standalone/VFFlow_FEM.o              \
         ${VFDIR}/VF_Standalone/VFFlow_MixedFEM.o         \
         ${VFDIR}/VF_Standalone/CartFE.o                  \
-        ${VFDIR}/VF_Standalone/PetscFixes.o              \
         ${VFDIR}/VF_Standalone/xdmf.o
