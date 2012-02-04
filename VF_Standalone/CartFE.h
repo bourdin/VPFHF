@@ -167,13 +167,13 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,Pets
 extern PetscErrorCode CartFE_Element3DCreate(CartFE_Element3D *e);
 extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,PetscReal ly,PetscReal lz);
 
-extern PetscErrorCode DAReadCoordinatesHDF5(DA da,const char filename[]);
+extern PetscErrorCode DAReadCoordinatesHDF5(DM da,const char filename[]);
 extern PetscErrorCode BCInit(BC *bc,PetscInt dof);
 extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof);
 extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof);
 
 extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC);
-extern PetscErrorCode MatApplyDirichletBC(Mat K,DA da,BC *BC);
+extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC);
 extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *BCpres);
 #endif
 #endif /* CARTFE_H */

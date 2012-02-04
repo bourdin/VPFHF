@@ -8,13 +8,13 @@ Option table:
 #PETSc Option Table entries:
 -eta 1e-8
 -l 2,2,.25
--length .8
+-length .4
 -n 41,41,6
 -nu 0
 -orientation 1
 -p runtest3
 #End of PETSc Option Table entries
-Building a transverse rectangular crack of length 0.8 with normal vector <1,0,0> along <0,0,1>
-      kspU converged in 46 iterations 3.
-Elastic Energy:            5.328225e-06
-Total energy:              5.328225e-06
+Building a transverse rectangular crack of length 0.4 with normal vector <1,0,0> along <0,0,1>
+      kspU converged in 42 iterations 3.
+Elastic Energy:            4.789020e-06
+Total energy:              4.789020e-06

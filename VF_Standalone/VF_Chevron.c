@@ -24,6 +24,7 @@ int main(int argc,char **argv)
   VFCtx               ctx;
   VFFields            fields;
   PetscErrorCode      ierr;
+  PetscViewer         logviewer;
   char                filename[FILENAME_MAX];
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -92,8 +93,9 @@ int main(int argc,char **argv)
       break; 
     } 
     ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
-    ierr = PetscLogPrintSummary(PETSC_COMM_WORLD,filename);CHKERRQ(ierr);
-
+    ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
+    ierr = PetscLogView(logviewer);CHKERRQ(ierr);
+    ierr = PetscViewerDestroy(&logviewer);
   }
 
 	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);

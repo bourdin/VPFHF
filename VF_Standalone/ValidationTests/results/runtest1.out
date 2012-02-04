@@ -9,21 +9,16 @@ Option table:
 -epsilon 0.05
 -eta 1e-8
 -l 1,1,2
--length .4
 -n 41,41,81
 -nu 0
 -orientation 3
 -p runtest1
+-radius .4
 #End of PETSc Option Table entries
-Building a penny-shaped crack of radius 0.2 at (0,0,0.5) with normal vector <0,0,1>
-      kspV converged in 8 iterations 2.
+Building a penny-shaped crack of radius 0.4 at (0,0,0.5) with normal vector <0,0,1>
+      kspV converged in 10 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
-      kspU converged in 60 iterations 3.
-Elastic Energy:            5.896877e-09
-Work of pressure forces:   1.179492e-08
-Total energy:              -5.898041e-09
-
-
-WARNING: 
-Some options were unused. Check the command line for typos.
-Option left: name:-length value: .4
+      kspU converged in 76 iterations 3.
+Elastic Energy:            4.796466e-08
+Work of pressure forces:   9.593355e-08
+Total energy:              -4.796889e-08
