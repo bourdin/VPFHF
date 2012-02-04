@@ -194,6 +194,22 @@ typedef struct {
 } VFProp;
 
 typedef struct {
+  char         name[256];
+  PetscReal    top[3];
+  PetscReal    bottom[3];
+  /*
+  PetscReal    rate;
+  BCTYPE       BCV;
+  */
+} VFWell;
+
+typedef struct {
+  char          name[256];
+  PetscReal     center[3];
+  PetscReal     r,phi,theta;
+} VFPennyCrack;
+
+typedef struct {
   PetscReal         perm;    /* Permeability in m^2 muliply by 1e12 */
   PetscReal         por;     /* Porosity */
   PetscReal         Pinit;   /* Initial Pressure in MPa*/
@@ -312,7 +328,7 @@ typedef struct {
   
   PetscReal           altmintol;
   PetscInt            altminmaxit;
-  MatProp             *matprop;
+  MatProp            *matprop;
   ResProp             resprop;
   VFProp              vfprop;
   VFLog               vflog;
@@ -339,6 +355,10 @@ typedef struct {
   PetscReal           InsituWork;
   PetscReal           PressureWork;
   PetscReal           TotalEnergy;
+  PetscInt            numWells;
+  VFWell             *well;
+  PetscInt            numCracks;
+  VFPennyCrack       *crack;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
