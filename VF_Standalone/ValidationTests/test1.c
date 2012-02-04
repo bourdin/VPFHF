@@ -26,8 +26,8 @@ int main(int argc,char **argv)
   PetscInt            orientation=2;
   PetscInt            nopts=3;
   PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-  PetscReal       ****coords_array;
-  PetscReal        ***v_array;  
+  PetscReal			  ****coords_array;
+  PetscReal			  ***v_array;  
   PetscReal           BBmin[3],BBmax[3];
   PetscReal           x,y,z;  
   PetscReal           ElasticEnergy = 0;
@@ -44,7 +44,7 @@ int main(int argc,char **argv)
 
   ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
   ierr = DAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = DAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	
 	ierr = DAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
