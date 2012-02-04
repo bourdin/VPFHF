@@ -8,7 +8,6 @@
 
 #ifndef VFFLOW_MIXEDFEM_H
 #define VFFLOW_MIXEDFEM_H
-#include "PetscFixes.h"
 
 extern PetscErrorCode VFFlow_DarcyMixedFEMSteadyState(VFCtx *ctx, VFFields *fields);
 
@@ -19,7 +18,7 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx);
 extern PetscErrorCode GetFlowProp(FlowProp *flowprop, 	FlowUnit flowunit, ResProp resprop);
 extern PetscErrorCode SETFlowBC(FLOWBC *BC, FlowCases flowcase);
 extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, VFCtx *ctx);
-extern PetscErrorCode MatApplyFlowBC(Mat K, DA da, FLOWBC *BC);
+extern PetscErrorCode MatApplyFlowBC(Mat K, DM da, FLOWBC *BC);
 extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields *fields, VFCtx *ctx);
 extern PetscErrorCode FLow_Vecg(PetscReal *Kg_local, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, FlowProp flowpropty, PetscReal ****perm_array);
 extern PetscErrorCode FLow_Vecf(PetscReal *Kf_ele, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, PetscInt c, FlowProp flowpropty, PetscReal ****perm_array);
