@@ -41,8 +41,9 @@ int main(int argc,char **argv)
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   
   ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&nc,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                    PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
   ierr = PetscMalloc(nc*sizeof(VFPennyCrack),&crack);CHKERRQ(ierr);
   for (i = 0; i < nc; i++) {
@@ -52,9 +53,9 @@ int main(int argc,char **argv)
     ierr = VFPennyCrackView(&crack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
 	
-	ierr = DAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	
-  ierr = DACreateGlobalVector(ctx.daScal,&V);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(ctx.daScal,&V);CHKERRQ(ierr);
   ierr = VecSet(V,1.0);CHKERRQ(ierr);
 
 	ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
@@ -92,7 +93,7 @@ int main(int argc,char **argv)
     ierr = VFPennyCrackBuildVAT2(V,&crack[c],&ctx);CHKERRQ(ierr);
     ierr = VecPointwiseMin(fields.V,V,fields.V);CHKERRQ(ierr);
   }
-  ierr = VecDestroy(V);CHKERRQ(ierr);
+  ierr = VecDestroy(&V);CHKERRQ(ierr);
 	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
   
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);

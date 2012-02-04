@@ -232,44 +232,44 @@ typedef struct {
   PetscLogStage VF_IOStage;
   
   PetscLogStage VF_UAssemblyStage;
-  PetscCookie   VF_MatULocalCookie;
+  PetscClassId   VF_MatULocalClassId;
   PetscLogEvent VF_MatULocalEvent;
-  PetscCookie   VF_VecULocalCookie;
+  PetscClassId   VF_VecULocalClassId;
   PetscLogEvent VF_VecULocalEvent;
   
   PetscLogStage VF_USolverStage;
 
   PetscLogStage VF_VAssemblyStage;
-  PetscCookie   VF_MatVLocalCookie;
+  PetscClassId   VF_MatVLocalClassId;
   PetscLogEvent VF_MatVLocalEvent;
-  PetscCookie   VF_VecVLocalCookie;
+  PetscClassId   VF_VecVLocalClassId;
   PetscLogEvent VF_VecVLocalEvent;
 
   PetscLogStage VF_VSolverStage;
 
   PetscLogStage VF_EnergyStage;
-  PetscCookie   VF_EnergyLocalCookie;
+  PetscClassId   VF_EnergyLocalClassId;
   PetscLogEvent VF_EnergyLocalEvent;
 
   PetscLogStage VF_PAssemblyStage;
-  PetscCookie   VF_MatPLocalCookie;
+  PetscClassId   VF_MatPLocalClassId;
   PetscLogEvent VF_MatPLocalEvent;
-  PetscCookie   VF_VecPLocalCookie;
+  PetscClassId   VF_VecPLocalClassId;
   PetscLogEvent VF_VecPLocalEvent;
 
   PetscLogStage VF_PSolverStage;
   
   PetscLogStage VF_TAssemblyStage;
-  PetscCookie   VF_MatTLocalCookie;
+  PetscClassId   VF_MatTLocalClassId;
   PetscLogEvent VF_MatTLocalEvent;
-  PetscCookie   VF_VecTLocalCookie;
+  PetscClassId   VF_VecTLocalClassId;
   PetscLogEvent VF_VecTLocalEvent;
   
   PetscLogStage VF_TSolverStage;
 } VFLog;
 
 typedef struct {
-  PetscTruth          printhelp;
+  PetscBool          printhelp;
   PetscInt            nlayer;
   PetscReal           *layersep;
   PetscInt            *layer;         /* dim=nz+1. gives the layer number of a cell  */
@@ -277,8 +277,8 @@ typedef struct {
   BC                  bcV[1];
   BC                  bcP[1];
   BC                  bcT[1];
-  DA                  daVect;
-  DA                  daScal;
+  DM                  daVect;
+  DM                  daScal;
   CartFE_Element3D    e3D;
   char                prefix[PETSC_MAX_PATH_LEN];
   Vec                 coordinates;
@@ -300,18 +300,18 @@ typedef struct {
   /* 
     Global variables for Mixed Darcy Flow
   */
-  Mat				  KVelP;
-  PC				  pcVelP;
-  KSP				  kspVelP;
-  FLOWBC			  bcFlow[4];
-  DA				  daFlow;
-  DA				  daVFperm;
-  FlowProp			  flowprop;
-  Vec				  RHSVelP;
-  FlowUnit			  units;
-  FlowCases			  flowcase;
-  PetscReal			  flowrate;
-  Vec				  Source;
+	Mat					        KVelP;
+	PC					        pcVelP;
+	KSP					        kspVelP;
+	FLOWBC				      bcFlow[4];
+	DM					        daFlow;
+	DM					        daVFperm;
+	FlowProp			      flowprop;
+	Vec					        RHSVelP;
+	FlowUnit			      units;
+	FlowCases			      flowcase;
+	PetscReal			      flowrate;
+	Vec							    Source;
 
   /*
     Global Variables for Heat Transfer
@@ -334,8 +334,8 @@ typedef struct {
   VFLog               vflog;
   PetscReal           insitumin[6];
   PetscReal           insitumax[6];
-  PetscTruth          hasInsitu;
-  PetscTruth          hasCrackPressure;
+  PetscBool           hasInsitu;
+  PetscBool           hasCrackPressure;
   PetscReal           BCpres[6];
   PetscReal           BCtheta[6];
   PetscInt            SrcLoc[3];

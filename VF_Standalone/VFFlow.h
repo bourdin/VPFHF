@@ -8,7 +8,6 @@
 
 #ifndef VFFLOW_H
 #define VFFLOW_H
-#include "PetscFixes.h"
 
 /*
 typedef enum {

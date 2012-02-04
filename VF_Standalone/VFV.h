@@ -5,7 +5,6 @@
 
 #ifndef VFV_H
 #define VFV_H
-#include "PetscFixes.h"
 
 extern PetscErrorCode BCVInit(BC *BC,VFPreset preset);
 extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset);
