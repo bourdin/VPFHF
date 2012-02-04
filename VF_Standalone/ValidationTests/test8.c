@@ -26,8 +26,8 @@ int main(int argc,char **argv)
   PetscInt            orientation=2;
   PetscInt            nopts=3;
   PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-  PetscReal       ****coords_array;
-  PetscReal        ***v_array;  
+  PetscReal			  ****coords_array;
+  PetscReal           ***v_array;  
   PetscReal           BBmin[3],BBmax[3];
   PetscReal           x,y,z;  
   PetscReal           ElasticEnergy = 0;

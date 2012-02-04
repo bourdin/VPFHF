@@ -154,9 +154,9 @@ typedef struct {
   Vec pressure;
   Vec pressureRef;
   Vec pmult;
-	Vec VelnPress;
-	Vec vfperm;
-	Vec velocity;
+  Vec VelnPress;
+  Vec vfperm;
+  Vec velocity;
 } VFFields;
 
 static const char *VFFieldNames[] = {
@@ -284,18 +284,18 @@ typedef struct {
   /* 
     Global variables for Mixed Darcy Flow
   */
-	Mat					        KVelP;
-	PC					        pcVelP;
-	KSP					        kspVelP;
-	FLOWBC				      bcFlow[4];
-	DA					        daFlow;
-	DA					        daVFperm;
-	FlowProp			      flowprop;
-	Vec					        RHSVelP;
-	FlowUnit			      units;
-	FlowCases			      flowcase;
-	PetscReal			      flowrate;
-	Vec							Source;
+  Mat				  KVelP;
+  PC				  pcVelP;
+  KSP				  kspVelP;
+  FLOWBC			  bcFlow[4];
+  DA				  daFlow;
+  DA				  daVFperm;
+  FlowProp			  flowprop;
+  Vec				  RHSVelP;
+  FlowUnit			  units;
+  FlowCases			  flowcase;
+  PetscReal			  flowrate;
+  Vec				  Source;
 
   /*
     Global Variables for Heat Transfer
