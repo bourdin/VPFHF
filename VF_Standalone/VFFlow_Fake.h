@@ -7,7 +7,6 @@
 
 #ifndef VFFLOW_FAKE_H
 #define VFFLOW_FAKE_H
-#include "PetscFixes.h"
 
 
 extern PetscErrorCode VFFlow_Fake(VFCtx *ctx, VFFields *fields);

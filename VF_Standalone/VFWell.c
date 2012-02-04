@@ -171,13 +171,14 @@ extern PetscErrorCode VFWellBuildVAT2(Vec V,VFWell *well,VFCtx *ctx)
   PetscReal           dist;  
 
   PetscFunctionBegin;
-  ierr = DAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                    PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
-	ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 
 	ierr = VecSet(V,1.0);CHKERRQ(ierr);
-	ierr = DAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
   for (k = zs; k < zs+zm; k++) {
     for (j = ys; j < ys+ym; j++) {
       for (i = xs; i < xs+xm; i++) { 
@@ -189,7 +190,7 @@ extern PetscErrorCode VFWellBuildVAT2(Vec V,VFWell *well,VFCtx *ctx)
       }
     }
   }      
-	ierr = DAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
-  ierr = DAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

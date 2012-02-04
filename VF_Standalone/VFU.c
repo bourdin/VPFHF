@@ -120,7 +120,7 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       ierr = BCGet(BC,"U",3);
       break;
     default:
-      SETERRQ2(PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
+      SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
       break;
   }
   PetscFunctionReturn(0);
@@ -199,7 +199,7 @@ extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
     case TEST_MANUAL:
       break;
     default:
-      SETERRQ2(PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
+      SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
       break;
   }
   PetscFunctionReturn(0);
@@ -963,8 +963,9 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   
   PetscFunctionBegin;
   ierr = PetscLogStagePush(ctx->vflog.VF_UAssemblyStage);CHKERRQ(ierr);
-  ierr = DAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                    PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   if (xs+xm == nx) xm--;
   if (ys+ym == ny) ym--;
   if (zs+zm == nz) zm--;
@@ -974,40 +975,40 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   /*
     Get coordinates
   */
-  ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   /*
     Get bounding box from petsc DA
   */
-  ierr = DAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
+  ierr = DMDAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
   /*
     get v_array
   */
-  ierr = DAGetLocalVector(ctx->daScal,&V_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,V_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,V_localVec);CHKERRQ(ierr);
-  ierr = DAVecGetArray(ctx->daScal,V_localVec,&v_array);CHKERRQ(ierr);    
+  ierr = DMGetLocalVector(ctx->daScal,&V_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,V_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,V_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,V_localVec,&v_array);CHKERRQ(ierr);    
   /*
     get theta_array, thetaRef_array
   */
-  ierr = DAGetLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
-  ierr = DAVecGetArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);    
-  ierr = DAGetLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DAVecGetArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);    
+  ierr = DMGetLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);    
+  ierr = DMGetLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);    
   /*
     get pressure_array, pressureRef_array
   */
-  ierr = DAGetLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
-  ierr = DAVecGetArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);    
-  ierr = DAGetLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
-  ierr = DAVecGetArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);    
+  ierr = DMGetLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);    
+  ierr = DMGetLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);    
   /*
     Allocating multi-dimensional vectors in C is a pain, so for the in-situ stresses / surface stresses, I get a 
     3 component Vec for the external forces, then get a full array. This is a bit wastefull since we never use the 
@@ -1015,8 +1016,8 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
     Note that we cannot fully initialize it since we need the normal direction to each face.
   */
   if (ctx->hasInsitu) {
-    ierr = DAGetLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr); 
+    ierr = DMGetLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr); 
   }
   
   /*
@@ -1024,9 +1025,9 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   */
   ierr = PetscMalloc(nrow * nrow * sizeof(PetscReal),&K_local);CHKERRQ(ierr);
   ierr = PetscMalloc(nrow * sizeof(MatStencil),&row);CHKERRQ(ierr);
-  ierr = DAGetLocalVector(ctx->daVect,&RHS_localVec);CHKERRQ(ierr);
+  ierr = DMGetLocalVector(ctx->daVect,&RHS_localVec);CHKERRQ(ierr);
   ierr = VecSet(RHS_localVec,0.);CHKERRQ(ierr);
-  ierr = DAVecGetArrayDOF(ctx->daVect,RHS_localVec,&RHS_array);CHKERRQ(ierr);    
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,RHS_localVec,&RHS_array);CHKERRQ(ierr);    
 
   ierr = PetscMalloc(nrow * sizeof(PetscReal),&RHS_local);CHKERRQ(ierr);
   /*
@@ -1356,27 +1357,27 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   
-  ierr = DAVecRestoreArrayDOF(ctx->daVect,RHS_localVec,&RHS_array);CHKERRQ(ierr);
-  ierr = DALocalToGlobalBegin(ctx->daVect,RHS_localVec,RHS);CHKERRQ(ierr);
-  ierr = DALocalToGlobalEnd(ctx->daVect,RHS_localVec,RHS);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,RHS_localVec,&RHS_array);CHKERRQ(ierr);
+  ierr = DMLocalToGlobalBegin(ctx->daVect,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
+  ierr = DMLocalToGlobalEnd(ctx->daVect,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
   ierr = VecApplyDirichletBC(RHS,fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
   /*
     Cleanup
   */
-  ierr = DAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = DAVecRestoreArrayDOF(ctx->daScal,V_localVec,&v_array);CHKERRQ(ierr);
-  ierr = DARestoreLocalVector(ctx->daScal,&V_localVec);CHKERRQ(ierr);
-  ierr = DAVecRestoreArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
-  ierr = DARestoreLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
-  ierr = DAVecRestoreArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
-  ierr = DARestoreLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DAVecRestoreArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
-  ierr = DARestoreLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
-  ierr = DAVecRestoreArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);
-  ierr = DARestoreLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daScal,V_localVec,&v_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&V_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
   if (ctx->hasInsitu) {
-    ierr = DAVecRestoreArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr);
-    ierr = DARestoreLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr);
+    ierr = DMRestoreLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
   }
   ierr = PetscFree3(RHS_local,K_local,row);CHKERRQ(ierr);
   ierr = PetscLogStagePop();CHKERRQ(ierr);
@@ -1689,9 +1690,9 @@ extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscRea
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_ElasticEnergy3D"
+#define __FUNCT__ "VF_UEnergy3D"
 /*
-  VF_ElasticEnergy3D
+  VF_UEnergy3D
 
   (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
 */
@@ -1727,8 +1728,9 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
 
   PetscFunctionBegin;
   ierr = PetscLogStagePush(ctx->vflog.VF_EnergyStage);CHKERRQ(ierr);
-  ierr = DAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                    PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   if (xs+xm == nx) xm--;
   if (ys+ym == ny) ym--;
   if (zs+zm == nz) zm--;
@@ -1736,47 +1738,47 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   /*
     Get coordinates
   */
-  ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   /*
     Get bounding box from petsc DA
   */
-  ierr = DAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
+  ierr = DMDAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
   /*
     get U_array
   */
-  ierr = DAGetLocalVector(ctx->daVect,&u_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,u_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,u_localVec);CHKERRQ(ierr);
-  ierr = DAVecGetArrayDOF(ctx->daVect,u_localVec,&u_array);CHKERRQ(ierr);
+  ierr = DMGetLocalVector(ctx->daVect,&u_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,u_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,u_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,u_localVec,&u_array);CHKERRQ(ierr);
   /*
     get v_array
   */
-  ierr = DAGetLocalVector(ctx->daScal,&v_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_localVec);CHKERRQ(ierr);
-  ierr = DAVecGetArray(ctx->daScal,v_localVec,&v_array);CHKERRQ(ierr);    
+  ierr = DMGetLocalVector(ctx->daScal,&v_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,v_localVec,&v_array);CHKERRQ(ierr);    
   /*
     get theta_array, thetaRef_array
   */
-  ierr = DAGetLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
-  ierr = DAVecGetArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);    
-  ierr = DAGetLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DAVecGetArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);    
+  ierr = DMGetLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);    
+  ierr = DMGetLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);    
   /*
     get pressure_array, pressureRef_array
   */
-  ierr = DAGetLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
-  ierr = DAVecGetArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);    
-  ierr = DAGetLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalBegin(ctx->daScal,fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
-  ierr = DAGlobalToLocalEnd(ctx->daScal,fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
-  ierr = DAVecGetArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);    
+  ierr = DMGetLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);    
+  ierr = DMGetLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);    
   /*
     Allocating multi-dimensional vectors in C is a pain, so for the in-situ stresses / surface stresses, 
     I get a 3 component Vec for the external forces, 
@@ -1784,8 +1786,8 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
     Note that we cannot fully initialize it since we need the normal direction to each face.
   */
   if (ctx->hasInsitu) {
-    ierr = DAGetLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr); 
+    ierr = DMGetLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr); 
   }
   
   *ElasticEnergy = 0;
@@ -2001,20 +2003,20 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   ierr = MPI_Reduce(&myPressureWork,PressureWork,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
   ierr = MPI_Reduce(&myInsituWork,InsituWork,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
   
-  ierr = DAVecRestoreArrayDOF(ctx->daVect,u_localVec,&u_array);CHKERRQ(ierr);
-  ierr = DARestoreLocalVector(ctx->daVect,&u_localVec);CHKERRQ(ierr);
-  ierr = DAVecRestoreArray(ctx->daScal,v_localVec,&v_array);CHKERRQ(ierr);
-  ierr = DARestoreLocalVector(ctx->daScal,&v_localVec);CHKERRQ(ierr);
-  ierr = DAVecRestoreArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
-  ierr = DAVecRestoreArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_localVec,&u_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daVect,&u_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,v_localVec,&v_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&v_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
   if (ctx->hasInsitu) {
-    ierr = DAVecRestoreArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr);
-    ierr = DARestoreLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr);
+    ierr = DMRestoreLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
   }
-  ierr = DARestoreLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
-  ierr = DARestoreLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DARestoreLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
-  ierr = DARestoreLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
   ierr = PetscLogStagePop();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -2040,17 +2042,17 @@ extern PetscErrorCode VF_NullSpaceElasticity3D(KSP ksp,VFCtx *ctx)
   PetscFunctionBegin;  
   ierr = PetscMalloc(nullspacedim*sizeof(Vec),&nullspace);CHKERRQ(ierr);
   ierr = PetscMalloc(nullspacedim*sizeof(PetscReal ****),&nullspace_array);CHKERRQ(ierr);
-  ierr = DAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   /*
     Get coordinates and null space arrays
   */
-  ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coord_array);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coord_array);CHKERRQ(ierr);
   for (i = 0; i<nullspacedim; i++) {
-    ierr = DACreateGlobalVector(ctx->daVect,&nullspace[i]);CHKERRQ(ierr);
+    ierr = DMCreateGlobalVector(ctx->daVect,&nullspace[i]);CHKERRQ(ierr);
     ierr = VecSet(nullspace[i],0.0);CHKERRQ(ierr);
-    ierr = DAVecGetArrayDOF(ctx->daVect,nullspace[i],&nullspace_array[i]);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(ctx->daVect,nullspace[i],&nullspace_array[i]);CHKERRQ(ierr);
   }
-  ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coord_array);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coord_array);CHKERRQ(ierr);
   for (k = zs; k < zs+zm; k++) {
     for (j = ys; j < ys+ym; j++) {
       for (i = xs; i < xs+xm; i++) {
@@ -2067,16 +2069,16 @@ extern PetscErrorCode VF_NullSpaceElasticity3D(KSP ksp,VFCtx *ctx)
     }
   }
   
-  ierr = DAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coord_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coord_array);CHKERRQ(ierr);
   for (i = 0; i<nullspacedim; i++) {
-    ierr = DAVecRestoreArrayDOF(ctx->daVect,nullspace[i],&nullspace_array[i]);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(ctx->daVect,nullspace[i],&nullspace_array[i]);CHKERRQ(ierr);
   }
   ierr = MatNullSpaceCreate(PETSC_COMM_WORLD,PETSC_FALSE,nullspacedim,nullspace,&nullsp);
   for (i = 0; i<nullspacedim; i++) {
-    ierr = VecDestroy(nullspace[i]);CHKERRQ(ierr);
+    ierr = VecDestroy(&nullspace[i]);CHKERRQ(ierr);
   }
   ierr = KSPSetNullSpace(ksp,nullsp);CHKERRQ(ierr);
-  ierr = MatNullSpaceDestroy(nullsp);CHKERRQ(ierr);
+  ierr = MatNullSpaceDestroy(&nullsp);CHKERRQ(ierr);
   ierr = PetscFree(nullspace);CHKERRQ(ierr);
   ierr = PetscFree(nullspace_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
