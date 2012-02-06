@@ -154,9 +154,9 @@ typedef struct {
   Vec pressure;
   Vec pressureRef;
   Vec pmult;
-	Vec VelnPress;
-	Vec vfperm;
-	Vec velocity;
+  Vec VelnPress;
+  Vec vfperm;
+  Vec velocity;
 } VFFields;
 
 static const char *VFFieldNames[] = {
@@ -192,6 +192,22 @@ typedef struct {
     permmax should be moved to resprop
   */
 } VFProp;
+
+typedef struct {
+  char         name[256];
+  PetscReal    top[3];
+  PetscReal    bottom[3];
+  /*
+  PetscReal    rate;
+  BCTYPE       BCV;
+  */
+} VFWell;
+
+typedef struct {
+  char          name[256];
+  PetscReal     center[3];
+  PetscReal     r,phi,theta;
+} VFPennyCrack;
 
 typedef struct {
   PetscReal         perm;    /* Permeability in m^2 muliply by 1e12 */
@@ -284,18 +300,18 @@ typedef struct {
   /* 
     Global variables for Mixed Darcy Flow
   */
-	Mat					        KVelP;
-	PC					        pcVelP;
-	KSP					        kspVelP;
-	FLOWBC				      bcFlow[4];
-	DA					        daFlow;
-	DA					        daVFperm;
-	FlowProp			      flowprop;
-	Vec					        RHSVelP;
-	FlowUnit			      units;
-	FlowCases			      flowcase;
-	PetscReal			      flowrate;
-	Vec							Source;
+  Mat				  KVelP;
+  PC				  pcVelP;
+  KSP				  kspVelP;
+  FLOWBC			  bcFlow[4];
+  DA				  daFlow;
+  DA				  daVFperm;
+  FlowProp			  flowprop;
+  Vec				  RHSVelP;
+  FlowUnit			  units;
+  FlowCases			  flowcase;
+  PetscReal			  flowrate;
+  Vec				  Source;
 
   /*
     Global Variables for Heat Transfer
@@ -312,7 +328,7 @@ typedef struct {
   
   PetscReal           altmintol;
   PetscInt            altminmaxit;
-  MatProp             *matprop;
+  MatProp            *matprop;
   ResProp             resprop;
   VFProp              vfprop;
   VFLog               vflog;
@@ -339,6 +355,10 @@ typedef struct {
   PetscReal           InsituWork;
   PetscReal           PressureWork;
   PetscReal           TotalEnergy;
+  PetscInt            numWells;
+  VFWell             *well;
+  PetscInt            numCracks;
+  VFPennyCrack       *crack;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

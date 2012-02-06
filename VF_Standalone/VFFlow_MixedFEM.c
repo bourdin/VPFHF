@@ -1674,7 +1674,3 @@ extern PetscErrorCode GetFlowProp(FlowProp *flowprop, FlowUnit flowunit, ResProp
 	}
 	PetscFunctionReturn(0);
 }
-
-
-
-

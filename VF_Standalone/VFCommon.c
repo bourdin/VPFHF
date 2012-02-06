@@ -4,6 +4,8 @@
 #include "VFV.h"
 #include "VFU.h"
 #include "VFFlow.h"
+#include "VFWell.h"
+#include "VFCracks.h"
 
 #include "xdmf.h"
 
@@ -141,7 +143,8 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
   PetscInt            nopt;
   PetscTruth          flg;
   int                 i; 
-  PetscReal           *buffer;
+  PetscReal          *buffer;
+  char                prefix[PETSC_MAX_PATH_LEN+1];
 
   PetscFunctionBegin;
   /* 
@@ -250,6 +253,31 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr = PetscOptionsReal("-SrcRate","\n\tStrength of the source in kg/s","",ctx->SrcRate,&ctx->SrcRate,PETSC_NULL);CHKERRQ(ierr);
     ctx->hasCrackPressure = PETSC_FALSE;
     ierr = PetscOptionsTruth("-pressurize","\n\tPressurize cracks","",ctx->hasCrackPressure,&ctx->hasCrackPressure,PETSC_NULL);CHKERRQ(ierr);
+    
+    ctx->numCracks = 0;
+    ierr = PetscOptionsInt("-nc","\n\tNumber of penny-shaped cracks to insert","",ctx->numCracks,&ctx->numCracks,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscMalloc(ctx->numCracks*sizeof(VFPennyCrack),&ctx->crack);CHKERRQ(ierr);
+    for (i = 0; i < ctx->numCracks; i++) {
+      ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
+      ierr = VFPennyCrackCreate(&(ctx->crack[i]));CHKERRQ(ierr);
+      ierr = VFPennyCrackGet(prefix, &(ctx->crack[i]));CHKERRQ(ierr);
+      if (ctx->verbose > 0) {
+        ierr = VFPennyCrackView(&(ctx->crack[i]),PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+      }
+    }
+
+    ctx->numWells = 0;
+    ierr = PetscOptionsInt("-nw","\n\tNumber of wells to insert","",ctx->numWells,&ctx->numWells,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscMalloc(ctx->numWells*sizeof(VFWell),&ctx->well);CHKERRQ(ierr);
+    for (i = 0; i < ctx->numWells; i++) {
+      ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"w%d_",i);CHKERRQ(ierr);
+      ierr = VFWellCreate(&(ctx->well[i]));CHKERRQ(ierr);
+      ierr = VFWellGet(prefix, &(ctx->well[i]));CHKERRQ(ierr);
+      if (ctx->verbose > 0) {
+        ierr = VFWellView(&(ctx->well[i]),PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+      }
+    }
+
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   ctx->timestep = 1;
@@ -558,7 +586,8 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop)
 */
 extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 {
-  PetscErrorCode ierr;
+  PetscErrorCode  ierr;
+  PetscInt        c;
 
   PetscFunctionBegin;
   fields->numfields = 9;
@@ -603,12 +632,30 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VecSet(fields->VelnPress,0.0);CHKERRQ(ierr);
 
   ierr = DACreateGlobalVector(ctx->daVFperm,&fields->vfperm);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) fields->vfperm,"Permeability from V-field");CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->vfperm,"Permeability_V-field");CHKERRQ(ierr);
   ierr = VecSet(fields->vfperm,1.0);CHKERRQ(ierr);
 	
 	ierr = DACreateGlobalVector(ctx->daVect,&fields->velocity);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject) fields->velocity,"Fluid Velocity");CHKERRQ(ierr);
 	ierr = VecSet(fields->velocity,0.0);CHKERRQ(ierr);
+	
+	 /*
+    Create optional penny shaped cracks
+  */
+  ierr = VecSet(fields->V,1.0);CHKERRQ(ierr);
+  ierr = VecSet(fields->VIrrev,1.0);CHKERRQ(ierr);
+  for (c = 0; c < ctx->numCracks; c++) {
+    ierr = VFPennyCrackBuildVAT2(fields->V,&(ctx->crack[c]),ctx);CHKERRQ(ierr);
+    ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
+  }
+  /*
+    Create optional wells
+  */
+  for (c = 0; c < ctx->numWells; c++) {
+    ierr = VFWellBuildVAT2(fields->V,&(ctx->well[c]),ctx);CHKERRQ(ierr);
+    ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
+  }
+  ierr = VecCopy(fields->VIrrev,fields->V);CHKERRQ(ierr);
 	
   PetscFunctionReturn(0);
 
@@ -989,8 +1036,9 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   ierr = DAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
   ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,H5filename,FILE_MODE_WRITE,&H5Viewer);
-	ierr = VecView(fields->U,H5Viewer);CHKERRQ(ierr);
-ierr = VecView(fields->velocity,H5Viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->U,H5Viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->velocity,H5Viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->vfperm,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->V,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->pmult,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->theta,H5Viewer);CHKERRQ(ierr);
@@ -1006,9 +1054,10 @@ ierr = VecView(fields->velocity,H5Viewer);CHKERRQ(ierr);
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,XDMFfilename,&XDMFViewer);CHKERRQ(ierr);
   ierr = XDMFuniformgridInitialize(XDMFViewer,ctx->timevalue,H5filename);CHKERRQ(ierr); 
   ierr = XDMFtopologyAdd (XDMFViewer,nx,ny,nz,H5coordfilename,"Coordinates");CHKERRQ(ierr);
-	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Displacement");CHKERRQ(ierr);
-	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Fluid Velocity");CHKERRQ(ierr);
-ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Fracture");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Displacement");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Fluid Velocity");CHKERRQ(ierr); 
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,6,"Tensor6","Node",H5filename,"Permeability_V-field");CHKERRQ(ierr); /*Cell*/
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Fracture");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Pressure");CHKERRQ(ierr);

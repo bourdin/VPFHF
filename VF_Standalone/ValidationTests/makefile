@@ -1,8 +1,8 @@
 include ../makefile.include	
 CFLAGS='-I..'
 
-all: test1 test2 test3 test4 test5 test6 test7 test8 test9
-test: runtest2 runtest3 runtest4 ruuntest5 runtest6 runtest7 runtest8
+all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10
+test: runtest2 runtest3 runtest4 ruuntest5 runtest6 runtest7 runtest8 runtest10
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
@@ -35,6 +35,8 @@ test8: test8.o ${VFOBJ} chkopts
 test9: test9.o ${VFOBJ} chkopts
 	-${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
+test10: test10.o ${VFOBJ} chkopts
+	-${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 runtest1: test1
 	@echo "Running " $@
@@ -90,6 +92,7 @@ runtest6: test6
 	@echo "Running " $@
 	-@for or in 0 1 2; do \
 	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -orientation $$or";\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or > $@-$$or.out 2>&1;\
 	if (${DIFF} -I '^#' results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
@@ -133,8 +136,16 @@ runtest9: test9
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
+runtest10: test10
+	@echo "Running " $@
+	-@for or in 0 1 2; do \
+	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -orientation $$or";\
+	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or > $@-$$or.out 2>&1;\
+	if (${DIFF} -I '^#' results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
+	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
+	${RM} -f $@-$$or.out;\
 
 clean::
-	-rm -f test1 test2 test3 test4 test5 test6
+	-rm -f test1 test2 test3 test4 test5 test6 test10
 	-rm -f runtest*
 	-rm -f TEST*
