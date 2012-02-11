@@ -9,8 +9,6 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
-#include "PetscFixes.h"
-#include "VFPermfield.h"
 
 /*
    VFPermfield.c
@@ -37,28 +35,29 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 	
   	PetscFunctionBegin;
 	
-	ierr = DAGetInfo(ctx->daFlow,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daFlow,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                    PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	
-	ierr = DAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 	
-	ierr = DAGetLocalVector(ctx->daVect,&displ_local);CHKERRQ(ierr);
-	ierr = DAGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,displ_local);CHKERRQ(ierr);
-	ierr = DAGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,displ_local);CHKERRQ(ierr);
-	ierr = DAVecGetArrayDOF(ctx->daVect,displ_local,&displ_array);CHKERRQ(ierr); 
+	ierr = DMGetLocalVector(ctx->daVect,&displ_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,displ_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,displ_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,displ_local,&displ_array);CHKERRQ(ierr); 
 	
-	ierr = DAGetLocalVector(ctx->daScal,&vfield_local);CHKERRQ(ierr);
-	ierr = DAGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,vfield_local);CHKERRQ(ierr);
-	ierr = DAGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,vfield_local);CHKERRQ(ierr);
-	ierr = DAVecGetArray(ctx->daScal,vfield_local,&vfield_array);CHKERRQ(ierr); 	
+	ierr = DMGetLocalVector(ctx->daScal,&vfield_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,vfield_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,vfield_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,vfield_local,&vfield_array);CHKERRQ(ierr); 	
 	
 	/*Setting all permeability field to zero*/
 	ierr = VecSet(fields->vfperm,0.);CHKERRQ(ierr);
 	
-	ierr = DAGetLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
-	ierr = DAGlobalToLocalBegin(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DAGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr); 
+	ierr = DMGetLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr); 
 	
 
 	if (xs+xm == nx) xm--;
@@ -81,13 +80,13 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 			}
 		}
 	}
-	ierr = DAVecRestoreArrayDOF(ctx->daVect,displ_local,&displ_array);CHKERRQ(ierr); 
-	ierr = DAVecRestoreArray(ctx->daScal,vfield_local,&vfield_array);CHKERRQ(ierr); 	
-	ierr = DAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = DAVecRestoreArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr); 
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,displ_local,&displ_array);CHKERRQ(ierr); 
+	ierr = DMDAVecRestoreArray(ctx->daScal,vfield_local,&vfield_array);CHKERRQ(ierr); 	
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr); 
 	
-	ierr = DALocalToGlobalBegin(ctx->daVFperm,perm_local,fields->vfperm);CHKERRQ(ierr);
-	ierr = DALocalToGlobalEnd(ctx->daVFperm,perm_local,fields->vfperm);CHKERRQ(ierr);
+	ierr = DMLocalToGlobalBegin(ctx->daVFperm,perm_local,ADD_VALUES,fields->vfperm);CHKERRQ(ierr);
+	ierr = DMLocalToGlobalEnd(ctx->daVFperm,perm_local,ADD_VALUES,fields->vfperm);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 	
