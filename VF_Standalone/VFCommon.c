@@ -638,7 +638,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) fields->VelnPress,"Velocity and Pressure");CHKERRQ(ierr);
   ierr = VecSet(fields->VelnPress,0.0);CHKERRQ(ierr);
 
-  ierr = DACreateGlobalVector(ctx->daVFperm,&fields->vfperm);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(ctx->daVFperm,&fields->vfperm);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->vfperm,"Permeability_V-field");CHKERRQ(ierr);
   ierr = VecSet(fields->vfperm,1.0);CHKERRQ(ierr);
 	
