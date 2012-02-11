@@ -156,6 +156,11 @@ extern PetscErrorCode vperm(PetscInt rank,PetscReal *pres,PetscReal *tempr,Petsc
     ierr = VecGMRSToPetsc(tempr,fields.theta);CHKERRQ(ierr);  
     ierr = VecGMRSToPetsc(pmult,fields.pmult);CHKERRQ(ierr);
     
+    /*
+	  Scaling pressure from GMRS - may need adjustment
+	*/
+    ierr = VecScale(fields.pressure, 1.e-6);CHKERRQ(ierr);	
+	
     if (ctx.verbose > 0) {
       ierr = VecMin(fields.theta,PETSC_NULL,&fieldmin);CHKERRQ(ierr);
       ierr = VecMax(fields.theta,PETSC_NULL,&fieldmax);CHKERRQ(ierr);
