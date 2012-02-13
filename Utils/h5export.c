@@ -6,7 +6,7 @@
 static const char banner[] = "h5export:\nconvert petsc binary files into hdf5 / xmf files\n(c) 2010-2011 Blaise Bourdin Louisiana State University bourdin@lsu.edu\n\n";
 
 #include "petsc.h"
-#include "../Utils/xdmf.h"
+#include "../xdmf.h"
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
@@ -15,7 +15,7 @@ int main(int argc,char **argv)
   char                h5filename[FILENAME_MAX],petscfilename[FILENAME_MAX],XDMFfilename[FILENAME_MAX];
   char                h5coordfilename[FILENAME_MAX],prefix[FILENAME_MAX];
   PetscViewer         viewer,h5viewer,XDMFviewer,XDMFviewer2;
-  DA                  daVect,daScal;
+  DM                  daVect,daScal;
   Vec                 coordinates,U,V,temp,pres,pmult;
   PetscInt            nx,ny,nz,step,maxstep;
   PetscErrorCode      ierr;
@@ -34,29 +34,29 @@ int main(int argc,char **argv)
   /*
     Load DA from files
     As of version 3.1, there is a bug in petsc preventing to save 2 DA with different number of degrees of freedoms
-    per node in a single file, so we read the Scalar DA, then recreate the Scal DA from the saved informations.
+    per node in a single file, so we read the Scalar DA, then recreate the Vect DA from the saved informations.
     Also, for some reason coordinates vectors obtained using DAGetCoordinates don't inherit from the proper layout 
     when saved in an hdf5 file. So instead of simply using the coordinate vector obtained from DAScal, we will 
     read it from the file a bit later
   */
   ierr = PetscSNPrintf(petscfilename,FILENAME_MAX,"%s.bin",prefix);CHKERRQ(ierr);
   ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,petscfilename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-  ierr = DALoad(viewer,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,&daScal);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(viewer);CHKERRQ(ierr);
+  ierr = DMCreate(PETSC_COMM_WORLD,&daScal);CHKERRQ(ierr);
+  ierr = DMLoad(daScal,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   
-  ierr = DAGetInfo(daScal,0,&nx,&ny,&nz,0,0,0,0,0,0,0);CHKERRQ(ierr);
-  ierr = DACreate3d(PETSC_COMM_WORLD,DA_NONPERIODIC,DA_STENCIL_BOX,nx,ny,nz,
-                    PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                    &(daVect));CHKERRQ(ierr);
+  ierr = DMDAGetReducedDA(daScal,3,&daVect);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                    PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   /* 
     Create Vecs from DA
   */
-  ierr = DACreateGlobalVector(daScal,&pres);CHKERRQ(ierr);
-  ierr = DACreateGlobalVector(daScal,&pmult);CHKERRQ(ierr);
-  ierr = DACreateGlobalVector(daScal,&temp);CHKERRQ(ierr);
-  ierr = DACreateGlobalVector(daVect,&U);CHKERRQ(ierr);
-  ierr = DACreateGlobalVector(daScal,&V);CHKERRQ(ierr);
-  ierr = DACreateGlobalVector(daVect,&coordinates);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(daScal,&pres);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(daScal,&pmult);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(daScal,&temp);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(daVect,&U);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(daScal,&V);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(daVect,&coordinates);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) pres,"Pressure");CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) pmult,"Permeability");CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) temp,"Temperature");CHKERRQ(ierr);
@@ -69,15 +69,15 @@ int main(int argc,char **argv)
   */
   ierr = PetscSNPrintf(h5coordfilename,FILENAME_MAX,"%s.bin",prefix);CHKERRQ(ierr);
   ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,h5coordfilename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-  ierr = VecLoadIntoVector(viewer,coordinates);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(viewer);CHKERRQ(ierr);
-  ierr = DASetCoordinates(daVect,coordinates);CHKERRQ(ierr);
-  ierr = DASetCoordinates(daScal,coordinates);CHKERRQ(ierr);
+  ierr = VecLoad(coordinates,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  ierr = DMDASetCoordinates(daVect,coordinates);CHKERRQ(ierr);
+  ierr = DMDASetCoordinates(daScal,coordinates);CHKERRQ(ierr);
   
   ierr = PetscSNPrintf(h5filename,FILENAME_MAX,"%s.h5",prefix);CHKERRQ(ierr);
   ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,h5filename,FILE_MODE_WRITE,&h5viewer);
   ierr = VecView(coordinates,h5viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(h5viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&h5viewer);CHKERRQ(ierr);
   
   /* 
     Open multistep XDMF file
@@ -106,23 +106,23 @@ int main(int argc,char **argv)
       ierr = PetscSNPrintf(h5filename,FILENAME_MAX,"%s.%.5i.h5",prefix,step);CHKERRQ(ierr);
       ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,h5filename,FILE_MODE_WRITE,&h5viewer);
   
-      ierr = VecLoadIntoVector(viewer,U);CHKERRQ(ierr);
+      ierr = VecLoad(U,viewer);CHKERRQ(ierr);
       ierr = VecView(U,h5viewer);CHKERRQ(ierr);
   
-      ierr = VecLoadIntoVector(viewer,V);CHKERRQ(ierr);
+      ierr = VecLoad(V,viewer);CHKERRQ(ierr);
       ierr = VecView(V,h5viewer);CHKERRQ(ierr);
   
-      ierr = VecLoadIntoVector(viewer,pmult);CHKERRQ(ierr);
+      ierr = VecLoad(pmult,viewer);CHKERRQ(ierr);
       ierr = VecView(pmult,h5viewer);CHKERRQ(ierr);
   
-      ierr = VecLoadIntoVector(viewer,temp);CHKERRQ(ierr);
+      ierr = VecLoad(temp,viewer);CHKERRQ(ierr);
       ierr = VecView(temp,h5viewer);CHKERRQ(ierr);
   
-      ierr = VecLoadIntoVector(viewer,pres);CHKERRQ(ierr);
+      ierr = VecLoad(pres,viewer);CHKERRQ(ierr);
       ierr = VecView(pres,h5viewer);CHKERRQ(ierr);
   
-      ierr = PetscViewerDestroy(viewer);CHKERRQ(ierr);
-      ierr = PetscViewerDestroy(h5viewer);CHKERRQ(ierr);
+      ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+      ierr = PetscViewerDestroy(&h5viewer);CHKERRQ(ierr);
       /*
         Write the XDMF Description
       */
@@ -138,20 +138,20 @@ int main(int argc,char **argv)
       ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Temperature");CHKERRQ(ierr);
       ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Pressure");CHKERRQ(ierr);
       ierr = XDMFuniformgridFinalize(XDMFviewer);CHKERRQ(ierr); 
-      ierr = PetscViewerDestroy(XDMFviewer);CHKERRQ(ierr);
+      ierr = PetscViewerDestroy(&XDMFviewer);CHKERRQ(ierr);
       
       ierr = XDMFmultistepAddstep(XDMFviewer2,XDMFfilename);CHKERRQ(ierr);
     }
   }  
 
   ierr = XDMFmultistepFinalize(XDMFviewer2);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(XDMFviewer2);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&XDMFviewer2);CHKERRQ(ierr);
 
-  ierr = VecDestroy(pres);CHKERRQ(ierr);
-  ierr = VecDestroy(pmult);CHKERRQ(ierr);
-  ierr = VecDestroy(temp);CHKERRQ(ierr);
-  ierr = VecDestroy(U);CHKERRQ(ierr);
-  ierr = VecDestroy(V);CHKERRQ(ierr);
-  ierr = VecDestroy(coordinates);CHKERRQ(ierr);
+  ierr = VecDestroy(&pres);CHKERRQ(ierr);
+  ierr = VecDestroy(&pmult);CHKERRQ(ierr);
+  ierr = VecDestroy(&temp);CHKERRQ(ierr);
+  ierr = VecDestroy(&U);CHKERRQ(ierr);
+  ierr = VecDestroy(&V);CHKERRQ(ierr);
+  ierr = VecDestroy(&coordinates);CHKERRQ(ierr);
   ierr = PetscFinalize();
 }

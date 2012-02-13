@@ -2,41 +2,41 @@ include ../makefile.include
 CFLAGS='-I..'
 
 all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10
-test: runtest2 runtest3 runtest4 ruuntest5 runtest6 runtest7 runtest8 runtest10
+test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
 
 
 test1: test1.o ${VFOBJ} chkopts
-	-${CLINKER} -o test1 test1.o ${VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o test1 test1.o ${VFOBJ} ${PETSC_LIB}
 
 test2: test2.o ${VFOBJ} chkopts
-	-${CLINKER} -o test2 test2.o ${VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o test2 test2.o ${VFOBJ} ${PETSC_LIB}
 
 test3: test3.o ${VFOBJ} chkopts
-	-${CLINKER} -o test3 test3.o ${VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o test3 test3.o ${VFOBJ} ${PETSC_LIB}
 
 test4: test4.o ${VFOBJ} chkopts
 	-@${CLINKER} -o test4 test4.o ${VFOBJ} ${PETSC_LIB}
 
 test5: test5.o ${VFOBJ} chkopts
-	-${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 test6: test6.o ${VFOBJ} chkopts
-	-${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 test7: test7.o ${VFOBJ} chkopts
-	-${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 test8: test8.o ${VFOBJ} chkopts
-	-${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 test9: test9.o ${VFOBJ} chkopts
-	-${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 test10: test10.o ${VFOBJ} chkopts
-	-${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 runtest1: test1
 	@echo "Running " $@
