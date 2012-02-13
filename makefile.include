@@ -1,0 +1,12 @@
+VFOBJ = ${VFDIR}/VFCommon.o                \
+        ${VFDIR}/VFCracks.o                \
+        ${VFDIR}/VFU.o                     \
+        ${VFDIR}/VFV.o                     \
+        ${VFDIR}/VFWell.o                  \
+        ${VFDIR}/VFFlow.o                  \
+        ${VFDIR}/VFFlow_Fake.o             \
+        ${VFDIR}/VFFlow_FEM.o              \
+        ${VFDIR}/VFFlow_MixedFEM.o         \
+        ${VFDIR}/VFPermfield.o             \
+        ${VFDIR}/CartFE.o                  \
+        ${VFDIR}/xdmf.o

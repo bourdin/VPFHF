@@ -1,1 +1,0 @@
-FAKEVFOBJ = ${VFDIR}/FakeVF/VF_Interface.o ${VFDIR}/FakeVF/VF_CInterface.o ${VFDIR}/FakeVF/VF_CInterfacef.o ${VFDIR}/FakeVF/fakepmult.o
