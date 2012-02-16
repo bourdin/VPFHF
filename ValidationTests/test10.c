@@ -143,7 +143,6 @@ int main(int argc,char **argv)
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Total Mechanical energy:  %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 
 	ierr = CrackOpeningDisplacement(&ctx, &fields);CHKERRQ(ierr);
-
   /*
     Save fields and write statistics about current run
   */    
