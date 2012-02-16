@@ -25,6 +25,7 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 	PetscInt		ys,ym,ny;
 	PetscInt		zs,zm,nz;
 	PetscReal		hx,hy,hz;
+	PetscReal		lx,ly,lz;
 	PetscReal		****coords_array;
 	PetscReal		****displ_array;
 	Vec				displ_local;
@@ -32,10 +33,12 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 	Vec				vfield_local;
 	PetscReal		****perm_array;
 	Vec				perm_local;
+    PetscReal       Vol_change_total1 = 0;
+    PetscReal       Vol_change_total2 = 0;
 	
   	PetscFunctionBegin;
 	
-  ierr = DMDAGetInfo(ctx->daFlow,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+    ierr = DMDAGetInfo(ctx->daFlow,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	
@@ -59,11 +62,19 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 	ierr = DMGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr); 
 	
+    lx = coords_array[0][0][nx-1][0];
+    ly = coords_array[0][ny-1][0][1];
+    lz = coords_array[nz-1][0][0][2];
+    printf("\n\n lx = %f\tnx= %d \n", lx,nx);
+    printf("\n\n ly = %f\tny= %d \n", ly,ny);
+    printf("\n\n lz = %f\tnz= %d \n", lz,nz);
 
-	if (xs+xm == nx) xm--;
-	if (ys+ym == ny) ym--;
-	if (zs+zm == nz) zm--;
+	if (xs+xm == nx)    xm--;
+	if (ys+ym == ny)    ym--;
+	if (zs+zm == nz)    zm--;
 	
+
+    
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -73,6 +84,8 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				ierr = ComputeXYZOpening(&ctx->e3D, ei, ej, ek, hx, hy, hz, displ_array, vfield_array, perm_array);CHKERRQ(ierr);
 				
+                Vol_change_total1 += perm_array[ek][ej][ei][0]; 
+                Vol_change_total2 += perm_array[ek][ej][ei][1]; 
 	//			if(ei == nx-5 && ek == 0){
 	//				printf("\n opening[%d][%d][%d] = %f\n", ek, ej, ei, perm_array[ek][ej][ei][0]);
 	//			}
@@ -80,6 +93,15 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 			}
 		}
 	}
+
+    printf("\n###################################################################\n\n\n");
+    printf("#        Volume change calculated gradv.u and volumetric strain     \n");
+    printf("#        Volume change using gradv .u = %f\t        \n", Vol_change_total1);
+    printf("#        Volume change using volumetric strain = %f\t       \n\n\n", Vol_change_total2);
+    printf("#        Actual crack volume change = %f\t      \n\n", (lz*ly*0.4) );
+    printf("\n###################################################################\n\n\n");
+
+    
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,displ_local,&displ_array);CHKERRQ(ierr); 
 	ierr = DMDAVecRestoreArray(ctx->daScal,vfield_local,&vfield_array);CHKERRQ(ierr); 	
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
@@ -104,6 +126,10 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 	PetscReal		*vdispl_loc;
 	PetscReal		*wdispl_loc;
 	PetscReal		dnorm;
+  
+    PetscReal		*du_loc;
+	PetscReal		*dv_loc;
+	PetscReal		*dw_loc;
 
 	PetscFunctionBegin;
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&udispl_loc);CHKERRQ(ierr);
@@ -113,6 +139,10 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dy_vfield_loc);CHKERRQ(ierr);
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dz_vfield_loc);CHKERRQ(ierr);
 
+    ierr = PetscMalloc(e->ng * sizeof(PetscReal),&du_loc);CHKERRQ(ierr);
+	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dv_loc);CHKERRQ(ierr);
+	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dw_loc);CHKERRQ(ierr);
+    
 	perm_array[ek][ej][ei][0] = 0.;	
 	perm_array[ek][ej][ei][1] = 0.;	
 	perm_array[ek][ej][ei][2] = 0.;	
@@ -127,6 +157,10 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 		dx_vfield_loc[eg] = 0.;
 		dy_vfield_loc[eg] = 0.;
 		dz_vfield_loc[eg] = 0.;
+	
+        du_loc[eg] = 0.;
+		dv_loc[eg] = 0.;
+		dw_loc[eg] = 0.;
 	}
 	
 	for (eg = 0; eg < e->ng; eg++) {
@@ -139,7 +173,11 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 					dx_vfield_loc[eg] += vfield_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][0][eg];
 					dy_vfield_loc[eg] += vfield_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][1][eg];
 					dz_vfield_loc[eg] += vfield_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][2][eg];
-				}
+
+					du_loc[eg] += displ_array[ek+k][ej+j][ei+i][0] * e->dphi[k][j][i][0][eg];
+					dv_loc[eg] += displ_array[ek+k][ej+j][ei+i][1] * e->dphi[k][j][i][1][eg];
+					dw_loc[eg] += displ_array[ek+k][ej+j][ei+i][2] * e->dphi[k][j][i][2][eg];
+                }
 			}
 		}
 		/* Normalizing gradient of the v-field */
@@ -154,7 +192,7 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 
 	for(eg = 1; eg < e->ng; eg++){
 		perm_array[ek][ej][ei][0] += (udispl_loc[eg]*dx_vfield_loc[eg] + vdispl_loc[eg]*dy_vfield_loc[eg] + wdispl_loc[eg]*dz_vfield_loc[eg])*e->weight[eg];
-		perm_array[ek][ej][ei][1] += dx_vfield_loc[eg]*e->weight[eg];
+		perm_array[ek][ej][ei][1] += (du_loc[eg]+dv_loc[eg]+dw_loc[eg])*e->weight[eg];
 		perm_array[ek][ej][ei][2] += dy_vfield_loc[eg]*e->weight[eg];
 		perm_array[ek][ej][ei][3] += dz_vfield_loc[eg]*e->weight[eg];
 	}
