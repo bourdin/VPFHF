@@ -48,7 +48,7 @@ int main(int argc,char **argv)
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	
-  lz = BBmax[0];
+  lz = BBmax[2];
   ly = BBmax[1];
   lx = BBmax[0];
     
