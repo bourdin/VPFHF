@@ -24,7 +24,7 @@ int main(int argc,char **argv)
   PetscErrorCode      ierr;
   
   PetscReal           length = .2;
-  PetscInt            orientation=2;
+  PetscInt            orientation=1;
   PetscInt            nopts=3;
   PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
   PetscReal       ****coords_array;
@@ -34,7 +34,7 @@ int main(int argc,char **argv)
   PetscReal           InsituWork = 0;
   PetscReal           SurfaceEnergy = 0;
   char                filename[FILENAME_MAX];
-  PetscReal           p = 1.e-3;
+  PetscReal           p = 0;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -107,11 +107,11 @@ int main(int argc,char **argv)
     case 1:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a transverse rectangular crack of length %g parallel to faces X0/X1  along <0,0,1>\n",
                          length);CHKERRQ(ierr);      
-      ctx.bcU[2].face[Z0]=ZERO;
-      ctx.bcU[2].face[Z1]=ZERO;
+     // ctx.bcU[2].face[Z0]=ZERO;
+      //ctx.bcU[2].face[Z1]=ZERO;
       
-      ctx.bcU[1].face[Y0]=ZERO;
-      ctx.bcU[0].face[Y1]=ZERO;
+      ctx.bcU[0].face[X0]=ONE;
+      ctx.bcU[0].face[X1]=ONE;
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
