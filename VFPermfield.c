@@ -25,7 +25,6 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 	PetscInt		ys,ym,ny;
 	PetscInt		zs,zm,nz;
 	PetscReal		hx,hy,hz;
-	PetscReal		lx,ly,lz;
 	PetscReal		****coords_array;
 	PetscReal		****displ_array;
 	Vec				displ_local;
@@ -62,13 +61,7 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 	ierr = DMGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr); 
 	
-    lx = coords_array[0][0][nx-1][0];
-    ly = coords_array[0][ny-1][0][1];
-    lz = coords_array[nz-1][0][0][2];
-    printf("\n\n lx = %f\tnx= %d \n", lx,nx);
-    printf("\n\n ly = %f\tny= %d \n", ly,ny);
-    printf("\n\n lz = %f\tnz= %d \n", lz,nz);
-
+  
 	if (xs+xm == nx)    xm--;
 	if (ys+ym == ny)    ym--;
 	if (zs+zm == nz)    zm--;
@@ -85,7 +78,7 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 				ierr = ComputeXYZOpening(&ctx->e3D, ei, ej, ek, hx, hy, hz, displ_array, vfield_array, perm_array);CHKERRQ(ierr);
 				
                 Vol_change_total1 += perm_array[ek][ej][ei][0]; 
-                Vol_change_total2 += perm_array[ek][ej][ei][1]; 
+                Vol_change_total2 += perm_array[ek][ej][ei][3]; 
 	//			if(ei == nx-5 && ek == 0){
 	//				printf("\n opening[%d][%d][%d] = %f\n", ek, ej, ei, perm_array[ek][ej][ei][0]);
 	//			}
@@ -96,10 +89,8 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 
     printf("\n###################################################################\n\n\n");
     printf("#        Volume change calculated gradv.u and volumetric strain     \n");
-    printf("#        Volume change using gradv .u = %f\t        \n", Vol_change_total1);
-    printf("#        Volume change using volumetric strain = %f\t       \n\n\n", Vol_change_total2);
-    printf("#        Actual crack volume change = %f\t      \n\n", (lz*ly*0.4) );
-    printf("\n###################################################################\n\n\n");
+    printf("#        Volume change using gradv .u = %f\t        \n", Vol_change_total1*hx*hy*hz);
+    printf("#        Volume change using volumetric strain = %f\t       \n\n", Vol_change_total2);
 
     
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,displ_local,&displ_array);CHKERRQ(ierr); 
@@ -182,20 +173,43 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 		}
 		/* Normalizing gradient of the v-field */
 		dnorm = sqrt(pow(dx_vfield_loc[eg],2)+pow(dy_vfield_loc[eg],2)+pow(dz_vfield_loc[eg],2));
-		if(dnorm != 0.){
+        if (ei == 2 && ek == 0) {
+          //  printf("\nnx1[%d] = %f\tny1[%d] = %f\t nz1[%d] = %f\t norm = %f\n", eg, dx_vfield_loc[eg], eg, dy_vfield_loc[eg], eg, dz_vfield_loc[eg], dnorm);
+        }
+        if(dnorm >= 1e-3){
+          //  printf("\nnx[%d] = %f\tny1[%d] = %f\t nz1[%d] = %f\t norm = %f\n", eg, dx_vfield_loc[eg], eg, dy_vfield_loc[eg], eg, dz_vfield_loc[eg], dnorm);
+
 			dx_vfield_loc[eg] = dx_vfield_loc[eg]/dnorm;
 			dy_vfield_loc[eg] = dy_vfield_loc[eg]/dnorm;
 			dz_vfield_loc[eg] = dz_vfield_loc[eg]/dnorm;
+            if (ei == 2 && ek == 0) {
+          //      printf("\nnx[%d] = %f\tny[%d] = %f\t nz[%d] = %f\t norm = %f\n", eg, dx_vfield_loc[eg], eg, dy_vfield_loc[eg], eg, dz_vfield_loc[eg], dnorm);
+            }
 		}
+        else{
+			dx_vfield_loc[eg] = 0.;
+			dy_vfield_loc[eg] = 0.;
+			dz_vfield_loc[eg] = 0.;        
+        }
 
 	}
 
 	for(eg = 1; eg < e->ng; eg++){
-		perm_array[ek][ej][ei][0] += (udispl_loc[eg]*dx_vfield_loc[eg] + vdispl_loc[eg]*dy_vfield_loc[eg] + wdispl_loc[eg]*dz_vfield_loc[eg])*e->weight[eg];
-		perm_array[ek][ej][ei][1] += (du_loc[eg]+dv_loc[eg]+dw_loc[eg])*e->weight[eg];
-		perm_array[ek][ej][ei][2] += dy_vfield_loc[eg]*e->weight[eg];
-		perm_array[ek][ej][ei][3] += dz_vfield_loc[eg]*e->weight[eg];
-	}
-	PetscFunctionReturn(0);
+		perm_array[ek][ej][ei][0] += (udispl_loc[eg]*dx_vfield_loc[eg] + vdispl_loc[eg]*dy_vfield_loc[eg] + wdispl_loc[eg]*dz_vfield_loc[eg])*e->weight[eg]; /* k_{11}    */
+		perm_array[ek][ej][ei][1] += dx_vfield_loc[eg]*e->weight[eg]; /* k_{12}    */
+		perm_array[ek][ej][ei][2] += dy_vfield_loc[eg]*e->weight[eg];   /* k_{13}    */
+        perm_array[ek][ej][ei][3] += (du_loc[eg]+dv_loc[eg]+dw_loc[eg])*e->weight[eg];  /* k_{22}    */
+        perm_array[ek][ej][ei][4] += dz_vfield_loc[eg]*e->weight[eg];   /* k_{23}    */
+
+    }
+    perm_array[ek][ej][ei][0] = perm_array[ek][ej][ei][0]/(hx*hy*hz);  
+//    perm_array[ek][ej][ei][1] = perm_array[ek][ej][ei][1]/(hx*hy*hz);
+    perm_array[ek][ej][ei][1] = perm_array[ek][ej][ei][0]*perm_array[ek][ej][ei][1]/(hx*hy*hz);
+//    perm_array[ek][ej][ei][2] = perm_array[ek][ej][ei][2]/(hx*hy*hz);  
+    perm_array[ek][ej][ei][2] = perm_array[ek][ej][ei][0]*perm_array[ek][ej][ei][2]/(hx*hy*hz);  
+//    perm_array[ek][ej][ei][4] = perm_array[ek][ej][ei][4]/(hx*hy*hz);
+    perm_array[ek][ej][ei][4] = perm_array[ek][ej][ei][0]*perm_array[ek][ej][ei][4]/(hx*hy*hz);
+    
+    PetscFunctionReturn(0);
 }
 

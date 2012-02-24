@@ -36,6 +36,8 @@ int main(int argc,char **argv)
   char                filename[FILENAME_MAX];
   PetscReal           bc = .2;
   PetscReal           ***v_array;  
+  PetscReal           lx,ly,lz;
+
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -46,6 +48,12 @@ int main(int argc,char **argv)
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	
+  lz = BBmax[0];
+  ly = BBmax[1];
+  lx = BBmax[0];
+    
+    printf("\nBounding box: lx = %f\tly = %f\tlz = %f\n", lx, ly, lz);
+    
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
   
@@ -97,7 +105,7 @@ int main(int argc,char **argv)
       for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) { 
-            if (((i == nx/2) || (i == nx/2-1)) ) {
+              if (((i == nx/2)) || (i == nx/2-1)) {
               v_array[k][j][i] = 0.;
             }
             if (i == 0) {
@@ -124,12 +132,14 @@ int main(int argc,char **argv)
 
   ierr = VF_StepU(&fields,&ctx);
   ctx.hasCrackPressure = PETSC_FALSE;
-  ierr = VF_StepU(&fields,&ctx);
+  ierr = VF_StepV(&fields,&ctx);
 	
   ctx.ElasticEnergy=0;
   ctx.InsituWork=0;
   ctx.PressureWork = 0.;
   ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
+    ierr = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
+
   ctx.TotalEnergy = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork;
 
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
@@ -155,6 +165,8 @@ int main(int argc,char **argv)
       ierr = FieldsBinaryWrite(&ctx,&fields);
     break; 
   } 
+    printf("#        Actual crack volume change = %f\t      \n\n", (lz*ly*0.4) );
+    printf("\n###################################################################\n\n\n");
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscFinalize();
   return(0);
