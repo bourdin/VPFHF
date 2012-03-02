@@ -1,20 +1,20 @@
 /*
-   VFFlow_DarcySteadyState.c
-   A mixed finite elements Darcy solver based on the method presented in
-    [Chukwudi, please add reference here]
-    
-   (c) 2011 B. Bourdin.C. Chukwudozie, LSU, K. Yoshioka, CHEVRON ETC
-*/
+ VFFlow_DarcySteadyState.c
+ A mixed finite elements Darcy solver based on the method presented in
+ [Chukwudi, please add reference here]
+ 
+ (c) 2011 B. Bourdin.C. Chukwudozie, LSU, K. Yoshioka, CHEVRON ETC
+ */
 
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
 
 /*
-   VFPermfield.c
-    
-   (c) 2011 B. Bourdin.C. Chukwudozie, LSU, K. Yoshioka, CHEVRON ETC
-*/
+ VFPermfield.c
+ 
+ (c) 2011 B. Bourdin.C. Chukwudozie, LSU, K. Yoshioka, CHEVRON ETC
+ */
 #undef __FUNCT__
 #define __FUNCT__ "CrackOpeningDisplacement"
 extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
@@ -38,7 +38,7 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
   	PetscFunctionBegin;
 	
     ierr = DMDAGetInfo(ctx->daFlow,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                    PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
@@ -61,12 +61,12 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 	ierr = DMGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr); 
 	
-  
+	
 	if (xs+xm == nx)    xm--;
 	if (ys+ym == ny)    ym--;
 	if (zs+zm == nz)    zm--;
 	
-
+	
     
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
@@ -79,19 +79,19 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 				
                 Vol_change_total1 += perm_array[ek][ej][ei][0]; 
                 Vol_change_total2 += perm_array[ek][ej][ei][3]; 
-	//			if(ei == nx-5 && ek == 0){
-	//				printf("\n opening[%d][%d][%d] = %f\n", ek, ej, ei, perm_array[ek][ej][ei][0]);
-	//			}
-			
+					//			if(ei == nx-5 && ek == 0){
+					//				printf("\n opening[%d][%d][%d] = %f\n", ek, ej, ei, perm_array[ek][ej][ei][0]);
+					//			}
+				
 			}
 		}
 	}
-
+	
     printf("\n###################################################################\n\n\n");
     printf("#        Volume change calculated gradv.u and volumetric strain     \n");
-    printf("#        Volume change using gradv .u = %f\t        \n", Vol_change_total1*hx*hy*hz);
+    printf("#        Volume change using gradv .u = %f\t        \n", Vol_change_total1);
     printf("#        Volume change using volumetric strain = %f\t       \n\n", Vol_change_total2);
-
+	
     
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,displ_local,&displ_array);CHKERRQ(ierr); 
 	ierr = DMDAVecRestoreArray(ctx->daScal,vfield_local,&vfield_array);CHKERRQ(ierr); 	
@@ -102,7 +102,7 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 	ierr = DMLocalToGlobalEnd(ctx->daVFperm,perm_local,ADD_VALUES,fields->vfperm);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
-	
+
 #undef __FUNCT__
 #define __FUNCT__ "ComputeXYZOpening"
 extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscInt ej, PetscInt ek, PetscReal hx, PetscReal hy, PetscReal hz, PetscReal ****displ_array, PetscReal ***vfield_array, PetscReal ****perm_array)
@@ -115,13 +115,11 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 	PetscReal		*dz_vfield_loc;
 	PetscReal		*udispl_loc;
 	PetscReal		*vdispl_loc;
-	PetscReal		*wdispl_loc;
-	PetscReal		dnorm;
-  
+	PetscReal		*wdispl_loc;  
     PetscReal		*du_loc;
 	PetscReal		*dv_loc;
 	PetscReal		*dw_loc;
-
+	
 	PetscFunctionBegin;
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&udispl_loc);CHKERRQ(ierr);
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&vdispl_loc);CHKERRQ(ierr);
@@ -129,7 +127,7 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dx_vfield_loc);CHKERRQ(ierr);
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dy_vfield_loc);CHKERRQ(ierr);
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dz_vfield_loc);CHKERRQ(ierr);
-
+	
     ierr = PetscMalloc(e->ng * sizeof(PetscReal),&du_loc);CHKERRQ(ierr);
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dv_loc);CHKERRQ(ierr);
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dw_loc);CHKERRQ(ierr);
@@ -148,7 +146,7 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 		dx_vfield_loc[eg] = 0.;
 		dy_vfield_loc[eg] = 0.;
 		dz_vfield_loc[eg] = 0.;
-	
+		
         du_loc[eg] = 0.;
 		dv_loc[eg] = 0.;
 		dw_loc[eg] = 0.;
@@ -164,52 +162,600 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 					dx_vfield_loc[eg] += vfield_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][0][eg];
 					dy_vfield_loc[eg] += vfield_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][1][eg];
 					dz_vfield_loc[eg] += vfield_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][2][eg];
-
+					
 					du_loc[eg] += displ_array[ek+k][ej+j][ei+i][0] * e->dphi[k][j][i][0][eg];
 					dv_loc[eg] += displ_array[ek+k][ej+j][ei+i][1] * e->dphi[k][j][i][1][eg];
 					dw_loc[eg] += displ_array[ek+k][ej+j][ei+i][2] * e->dphi[k][j][i][2][eg];
                 }
 			}
 		}
-		/* Normalizing gradient of the v-field */
-		dnorm = sqrt(pow(dx_vfield_loc[eg],2)+pow(dy_vfield_loc[eg],2)+pow(dz_vfield_loc[eg],2));
-        if (ei == 2 && ek == 0) {
-          //  printf("\nnx1[%d] = %f\tny1[%d] = %f\t nz1[%d] = %f\t norm = %f\n", eg, dx_vfield_loc[eg], eg, dy_vfield_loc[eg], eg, dz_vfield_loc[eg], dnorm);
-        }
-        if(dnorm >= 1e-3){
-          //  printf("\nnx[%d] = %f\tny1[%d] = %f\t nz1[%d] = %f\t norm = %f\n", eg, dx_vfield_loc[eg], eg, dy_vfield_loc[eg], eg, dz_vfield_loc[eg], dnorm);
-
-			dx_vfield_loc[eg] = dx_vfield_loc[eg]/dnorm;
-			dy_vfield_loc[eg] = dy_vfield_loc[eg]/dnorm;
-			dz_vfield_loc[eg] = dz_vfield_loc[eg]/dnorm;
-            if (ei == 2 && ek == 0) {
-          //      printf("\nnx[%d] = %f\tny[%d] = %f\t nz[%d] = %f\t norm = %f\n", eg, dx_vfield_loc[eg], eg, dy_vfield_loc[eg], eg, dz_vfield_loc[eg], dnorm);
-            }
-		}
-        else{
-			dx_vfield_loc[eg] = 0.;
-			dy_vfield_loc[eg] = 0.;
-			dz_vfield_loc[eg] = 0.;        
-        }
-
 	}
-
-	for(eg = 1; eg < e->ng; eg++){
+	
+	for(eg = 0; eg < e->ng; eg++){
 		perm_array[ek][ej][ei][0] += (udispl_loc[eg]*dx_vfield_loc[eg] + vdispl_loc[eg]*dy_vfield_loc[eg] + wdispl_loc[eg]*dz_vfield_loc[eg])*e->weight[eg]; /* k_{11}    */
 		perm_array[ek][ej][ei][1] += dx_vfield_loc[eg]*e->weight[eg]; /* k_{12}    */
 		perm_array[ek][ej][ei][2] += dy_vfield_loc[eg]*e->weight[eg];   /* k_{13}    */
         perm_array[ek][ej][ei][3] += (du_loc[eg]+dv_loc[eg]+dw_loc[eg])*e->weight[eg];  /* k_{22}    */
         perm_array[ek][ej][ei][4] += dz_vfield_loc[eg]*e->weight[eg];   /* k_{23}    */
-
+		
     }
-    perm_array[ek][ej][ei][0] = perm_array[ek][ej][ei][0]/(hx*hy*hz);  
-//    perm_array[ek][ej][ei][1] = perm_array[ek][ej][ei][1]/(hx*hy*hz);
-    perm_array[ek][ej][ei][1] = perm_array[ek][ej][ei][0]*perm_array[ek][ej][ei][1]/(hx*hy*hz);
-//    perm_array[ek][ej][ei][2] = perm_array[ek][ej][ei][2]/(hx*hy*hz);  
-    perm_array[ek][ej][ei][2] = perm_array[ek][ej][ei][0]*perm_array[ek][ej][ei][2]/(hx*hy*hz);  
-//    perm_array[ek][ej][ei][4] = perm_array[ek][ej][ei][4]/(hx*hy*hz);
-    perm_array[ek][ej][ei][4] = perm_array[ek][ej][ei][0]*perm_array[ek][ej][ei][4]/(hx*hy*hz);
-    
+    PetscFunctionReturn(0);
+}
+
+
+#undef __FUNCT__
+#define __FUNCT__ "NodeToCellInterpolation"
+extern PetscErrorCode NodeToCellInterpolation(DM dm, Vec node_vec, Vec cell_vec)
+{
+	PetscErrorCode ierr;
+	PetscInt		dof;
+	PetscInt        xs,xm,nx;
+	PetscInt        ys,ym,ny;
+	PetscInt        zs,zm,nz;
+	PetscInt        ek, ej, ei;
+	PetscInt        k, j, i;
+	PetscInt        c;
+	PetscReal   ****node_arraydof;
+	PetscReal   ****cell_arraydof;
+	PetscReal   ***node_array;
+	PetscReal   ***cell_array;
+	
+	PetscFunctionBegin;
+	ierr = DMDAGetInfo(dm,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+					   &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(dm,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	printf("\nThis is the dof = %d\n", dof);
+	
+	
+	if (dof == 1){
+		printf("\nInside dof equal to one one\n");
+		ierr = DMDAVecGetArrayDOF(dm, node_vec,&node_array);CHKERRQ(ierr);    
+		ierr = DMDAVecGetArrayDOF(dm, cell_vec,&cell_array);CHKERRQ(ierr);    
+	}		
+	else
+	{
+		printf("\nInside dof greater than one\n");
+		ierr = DMDAVecGetArrayDOF(dm, node_vec,&node_arraydof);CHKERRQ(ierr);    
+		ierr = DMDAVecGetArrayDOF(dm, cell_vec,&cell_arraydof);CHKERRQ(ierr);   
+	}
+	
+	
+	for (ek = zs; ek < zs + zm; ek++) {
+		for (ej = ys; ej < ys + ym; ej++) {
+			for (ei = xs; ei < xs + xm; ei++) {
+				/*	(Corner 1): ek = 0; ej = 0; ei = 0	*/
+				if(ek == 0 && ej == 0 && ei == 0){
+					for(k = 0; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 0.125*node_array[ek+k][ej+j][ei+i];
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 0.125*node_arraydof[ek+k][ej+j][ei+i][c];
+									}
+								}	
+							}
+						}
+					}
+				}
+				/*  (Corner 2):	ek = 0; ej = 0; ei = nx-1	*/
+				else if(ek == 0 && ej == 0 && ei == nx-1){
+					for(k = 0; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 0.125*node_array[ek+k][ej+j][ei-i];
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 0.125*node_arraydof[ek+k][ej+j][ei-i][c];
+									}
+								}	
+							}
+						}
+					}
+				}
+				/*	(Corner 3):	ek = 0; ej = ny-1; ei = 0	*/
+				else if(ek == 0 && ej == ny-1 && ei == 0){
+					for(k = 0; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 0.125*node_array[ek+k][ej-j][ei+i];
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 0.125*node_arraydof[ek+k][ej-j][ei+i][c];
+									}
+								}	
+							}
+						}
+					}
+				}								
+				/*	(Corner 4):	ek = nz-1; ej = 0; ei = 0		*/
+				else if(ek == nz-1 && ej == 0 && ei == 0){
+					for(k = 0; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 0.125*node_array[ek-k][ej+j][ei+i];
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 0.125*node_arraydof[ek-k][ej+j][ei+i][c];
+									}
+								}	
+							}
+						}
+					}
+				}				
+				/*	(Corner 5):	ek = 0; ej = ny-1; ei = nx-1	*/
+				else if(ek == 0 && ej == ny-1 && ei == nx-1){
+					for(k = 0; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 0.125*node_array[ek+k][ej-j][ei-i];
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 0.125*node_arraydof[ek+k][ej-j][ei-i][c];
+									}
+								}	
+							}
+						}
+					}
+				}
+				
+				/*	(Corner 6):	ek = nz-1; ej = 0; ei = nx-1	*/
+				else if(ek == nz-1 && ej == 0 && ei == nx-1){
+					for(k = 0; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 0.125*node_array[ek-k][ej+j][ei-i];
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 0.125*node_arraydof[ek-k][ej+j][ei-i][c];										
+									}
+								}	
+							}
+						}
+					}
+				}
+				/*	(Corner 7):	ek = nz-1; ej = ny-1; ei = 0	*/
+				else if(ek == nz-1 && ej == ny-1 && ei == 0){
+					for(k = 0; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 0.125*node_array[ek-k][ej-j][ei+i];
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 0.125*node_arraydof[ek-k][ej-j][ei+i][c];											
+									}
+								}	
+							}
+						}
+					}
+				}
+				/*	(Corner 8):	ek = nz-1; ej = ny-1; ei = nx-1		*/
+				else if(ek == nz-1 && ej == ny-1 && ei == nx-1){
+					for(k = 0; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 0.125*node_array[ek-k][ej-j][ei-i];
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 0.125*node_arraydof[ek-k][ej-j][ei-i][c];
+									}
+								}	
+							}
+						}
+					}
+				}				
+				/*	(Edge 1):	ei = 0; ek = 0		*/
+				else if(ei == 0 && ej != 0 && ej != ny-1 && ek == 0){
+					for(k = 0; k < 2; k++){
+						for(j = -1; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./12.*node_array[ek+k][ej+j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./12.*node_arraydof[ek+k][ej+j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}
+				
+				/*	(Edge 2):	ei = nx-1;	ek = 0	*/
+				else if(ei == nx-1 && ej != 0 && ej != ny-1 && ek == 0){
+					for(k = 0; k < 2; k++){
+						for(j = -1; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./12.*node_array[ek+k][ej+j][ei-i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./12.*node_arraydof[ek+k][ej+j][ei-i][c];
+									}
+								}
+							}
+						}
+					}
+				}				
+				
+				/*	(Edge 3):	ej = 0;		ek = 0		*/
+				else if(ei != 0 && ei != nx-1 && ej == 0 && ek == 0){
+					for(k = 0; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = -1; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./12.*node_array[ek+k][ej+j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./12.*node_arraydof[ek+k][ej+j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}
+				/*	(Edge 4):	ej = ny-1;		ek = 0		*/
+				else if(ei != 0 && ei != nx-1 && ej == ny-1 && ek == 0){
+					for(k = 0; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = -1; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./12.*node_array[ek+k][ej-j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./12.*node_arraydof[ek+k][ej-j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}				
+				/*	(Edge 5):	ei = 0; ek = nz-1	*/
+				else if(ei == 0 && ej != 0 && ej != ny-1 && ek == nz-1){
+					for(k = 0; k < 2; k++){
+						for(j = -1; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./12.*node_array[ek-k][ej+j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./12.*node_arraydof[ek-k][ej+j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}
+				
+				/*	(Edge 6):	ei = nx-1;	ek = nz-1	*/
+				else if(ei == nx-1 && ej != 0 && ej != ny-1 && ek == nz-1){
+					for(k = 0; k < 2; k++){
+						for(j = -1; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./12.*node_array[ek-k][ej+j][ei-i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./12.*node_arraydof[ek-k][ej+j][ei-i][c];
+									}
+								}
+							}
+						}
+					}
+				}				
+				
+				/*	(Edge 7):	ej = 0;		ek = nz-1	*/
+				else if(ei != 0 && ei != nx-1 && ej == 0 && ek == nz-1){
+					for(k = 0; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = -1; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./12.*node_array[ek-k][ej+j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./12.*node_arraydof[ek-k][ej+j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}
+				/*	(Edge 8):	ej = ny-1;		ek = nz-1	*/
+				else if(ei != 0 && ei != nx-1 && ej == ny-1 && ek == nz-1){
+					for(k = 0; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = -1; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./12.*node_array[ek-k][ej-j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./12.*node_arraydof[ek-k][ej-j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}				
+				/*	(Edge 9):	ei = 0;		ej = 0		*/
+				else if(ei == 0 && ej == 0 && ek != 0 && ek != nz-1){
+					for(k = -1; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./12.*node_array[ek+k][ej+j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./12.*node_arraydof[ek+k][ej+j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}
+				/*	(Edge 10):	ei = 0;		ej = ny-1	*/
+				else if(ei == 0 && ej == ny-1 && ek != 0 && ek != nz-1){
+					for(k = -1; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./12.*node_array[ek+k][ej-j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./12.*node_arraydof[ek+k][ej-j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}				
+				/*	(Edge 11):	ei = nx-1;	ej = 0		*/
+				else if(ei == nx-1 && ej == 0 && ek != 0 && ek != nz-1){
+					for(k = -1; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./12.*node_array[ek+k][ej+j][ei-i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./12.*node_arraydof[ek+k][ej+j][ei-i][c];
+									}
+								}
+							}
+						}
+					}
+				}				
+				/*	(Edge 12):	ei = nx-1;	ej = ny-1		*/
+				else if(ei == nx-1 && ej == ny-1 && ek != 0 && ek != nz-1){
+					for(k = -1; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./12.*node_array[ek+k][ej-j][ei-i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./12.*node_arraydof[ek+k][ej-j][ei-i][c];
+									}
+								}
+							}
+						}
+					}
+				}	
+				
+				/*	(Side 1):	ei = 0		*/
+				else if(ei == 0 && ej != 0 && ej != ny-1 && ek != 0 && ek != nz-1){
+					for(k = -1; k < 2; k++){
+						for(j = -1; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./18.*node_array[ek+k][ej+j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./18.*node_arraydof[ek+k][ej+j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}	
+				/*	(Side 2):	ei = nx-1		*/
+				else if(ei == nx-1 && ej != 0 && ej != ny-1 && ek != 0 && ek != nz-1){
+					for(k = -1; k < 2; k++){
+						for(j = -1; j < 2; j++){
+							for(i = 0; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./18.*node_array[ek+k][ej+j][ei-i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./18.*node_arraydof[ek+k][ej+j][ei-i][c];
+									}
+								}
+							}
+						}
+					}
+				}
+				/*	(Side 3):	ej = 0		*/
+				else if(ei != 0 && ei != nx-1 && ej == 0 && ek != 0 && ek != nz-1){
+					for(k = -1; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = -1; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./18.*node_array[ek+k][ej+j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./18.*node_arraydof[ek+k][ej+j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}
+				/*	(Side 4):	ej = ny-1		*/
+				else if(ei != 0 && ei != nx-1 && ej == ny-1 && ek != 0 && ek != nz-1){
+					for(k = -1; k < 2; k++){
+						for(j = 0; j < 2; j++){
+							for(i = -1; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./18.*node_array[ek+k][ej-j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./18.*node_arraydof[ek+k][ej-j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}
+				/*	(Side 5):	ek = 0		*/
+				else if(ei != 0 && ei != nx-1 && ej != 0 && ej != ny-1 && ek == 0 ){
+					for(k = 0; k < 2; k++){
+						for(j = -1; j < 2; j++){
+							for(i = -1; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./18.*node_array[ek+k][ej+j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./18.*node_arraydof[ek+k][ej+j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}
+				/*	(Side 6):	ek = nz-1	*/
+				else if(ei != 0 && ei != nx-1 && ej != 0 && ej != ny-1 && ek == nz-1 ){
+					for(k = 0; k < 2; k++){
+						for(j = -1; j < 2; j++){
+							for(i = -1; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./18.*node_array[ek-k][ej+j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./18.*node_arraydof[ek-k][ej+j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}
+				/*	Interior of domain		*/
+				else if (ei != 0 && ei != nx-1 && ej != 0 && ej != ny-1 && ek != 0 && ek != nz-1) {
+					for(k = -1; k < 2; k++){
+						for(j = -1; j < 2; j++){
+							for(i = -1; i < 2; i++){
+								if(dof == 1)
+								{
+									cell_array[ek][ej][ei] += 1./27.*node_array[ek+k][ej+j][ei+i]; 
+								}
+								else
+								{
+									for(c = 0; c < dof; c++){
+										cell_arraydof[ek][ej][ei][c] += 1./27.*node_arraydof[ek+k][ej+j][ei+i][c];
+									}
+								}
+							}
+						}
+					}
+				}								
+				
+			}
+		}
+	}
+	
+	if(dof == 1){
+		ierr = DMDAVecRestoreArray(dm, node_vec,&node_array);CHKERRQ(ierr);    
+		ierr = DMDAVecRestoreArray(dm, cell_vec,&cell_array);CHKERRQ(ierr);    
+	}		
+	else
+	{
+		ierr = DMDAVecRestoreArrayDOF(dm, node_vec,&node_arraydof);CHKERRQ(ierr);    
+		ierr = DMDAVecRestoreArrayDOF(dm, cell_vec,&cell_arraydof);CHKERRQ(ierr);    
+	}
     PetscFunctionReturn(0);
 }
 
