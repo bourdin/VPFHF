@@ -38,6 +38,9 @@ test9: test9.o ${VFOBJ} chkopts
 test10: test10.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
+test11: test11.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
 runtest1: test1
 	@echo "Running " $@
 	-@ARGS='-n 41,41,81 -l 1,1,2 -radius .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8';\
@@ -145,7 +148,22 @@ runtest10: test10
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@-$$or.out;\
 
+runtest11t: test11
+	@echo "Running " $@
+	-@ARGS='-n 41,41,6 -l 2,2,.25 -length .4 -nu 0 -epsilon .05 -eta 1e-8 -pinc 1e-6 -maxtimestep 1000 -Gc 4.e-9';\
+	${MPIEXEC} -n 8 ./$< $${ARGS} -p $@ 
+	
+runtest11s: test11
+	@echo "Running " $@
+	-@ARGS='-n 41,41,6 -l 2,2,.25 -length .4 -nu 0 -epsilon .05 -eta 1e-8 -pinc 1e-6 -maxtimestep 1000 -Gc 4.e-9';\
+	${MPIEXEC} -n 8 ./$< $${ARGS} -p Case2 	
+	
+runtest4v2: test4
+	@echo "Running " $@
+	-@ARGS='-n 81,81,6 -l 2,2,.25 -length .4 -orientation 3 -nu 0 -epsilon ${EPSILON} -eta 1e-8';\
+	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@
+	
 clean::
-	-rm -f test1 test2 test3 test4 test5 test6 test10
+	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11
 	-rm -f runtest*
 	-rm -f TEST*
