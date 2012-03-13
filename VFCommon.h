@@ -157,7 +157,7 @@ typedef struct {
 	Vec VelnPress;
 	Vec vfperm;
 	Vec velocity;
-		//Vec FVCelldof;
+	Vec FVCellndof;
 	Vec FVCell;
 } VFFields;
 
