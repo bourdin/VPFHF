@@ -1,8 +1,8 @@
 include ../makefile.include	
 CFLAGS='-I..'
 
-all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10
-test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10
+all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11
+test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
@@ -38,7 +38,10 @@ test9: test9.o ${VFOBJ} chkopts
 test10: test10.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
-test11: test11.o ${VFOBJ} chkopts
+test11: test1.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
+test12: test12.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 runtest1: test1
@@ -152,8 +155,16 @@ runtest11: test11
 	@echo "Running " $@
 	-@ARGS='-n 41,41,6 -l 2,2,.25 -length .4 -nu 0 -epsilon .05 -eta 1e-8 -pinc 1e-6 -maxtimestep 1000 -Gc 4.e-9';\
 	${MPIEXEC} -n 8 ./$< $${ARGS} -p Case2 	
-	
+
+runtest12: test12
+	@echo "Running " $@
+	-@ARGS='-n 41,41,81 -l 1,1,2 -radius .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ > $@.out 2>&1;\
+	if (${DIFF} -I '^#' results/$@.out $@.out) then true; \
+	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
+	${RM} -f $@.out
+
 clean::
-	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11
+	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12
 	-rm -f runtest*
 	-rm -f TEST*
