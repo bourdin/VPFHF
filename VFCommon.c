@@ -649,6 +649,11 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 	ierr = DMCreateGlobalVector(ctx->daVect,&fields->FVCell);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject) fields->FVCell,"FV Variable");CHKERRQ(ierr);
 	ierr = VecSet(fields->FVCell,0.0);CHKERRQ(ierr);
+	
+	ierr = DMCreateGlobalVector(ctx->daScal,&fields->FVCellndof);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) fields->FVCellndof,"FV Variablenodof");CHKERRQ(ierr);
+	ierr = VecSet(fields->FVCellndof,0.0);CHKERRQ(ierr);
+	
 	/*
 	 Create optional penny shaped cracks
 	 */
@@ -1059,6 +1064,7 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
 	ierr = VecView(fields->theta,H5Viewer);CHKERRQ(ierr);
 	ierr = VecView(fields->pressure,H5Viewer);CHKERRQ(ierr);
 	ierr = VecView(fields->FVCell,H5Viewer);CHKERRQ(ierr);
+	ierr = VecView(fields->FVCellndof,H5Viewer);CHKERRQ(ierr);
 	ierr = PetscViewerDestroy(&H5Viewer);CHKERRQ(ierr);
 	
 	/*
@@ -1078,6 +1084,7 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Pressure");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"FV Variable");CHKERRQ(ierr);
+	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"FV Variablenodof");CHKERRQ(ierr);
 	ierr = XDMFuniformgridFinalize(XDMFViewer);CHKERRQ(ierr); 
 	ierr = PetscViewerDestroy(&XDMFViewer);CHKERRQ(ierr);
 	/*

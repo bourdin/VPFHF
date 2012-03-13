@@ -32,6 +32,8 @@ extern PetscErrorCode VFFlow_DarcyMixedFEMSteadyState(VFCtx *ctx, VFFields *fiel
 	ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = GetFlowProp(&ctx->flowprop, ctx->units, ctx->resprop);CHKERRQ(ierr);
 	ierr = SETFlowBC(&ctx->bcFlow[0], ctx->flowcase);CHKERRQ(ierr);
+		/*from here below should be in a different function. so that it can be called in an independent test code. 
+		 Also, getflowprop should be in d new function, including the source assignment function, which will eventually become well function.*/
 	ierr = FlowMatnVecAssemble(ctx->KVelP, ctx->RHSVelP, fields, ctx);CHKERRQ(ierr);
 	ierr = KSPSolve(ctx->kspVelP,ctx->RHSVelP,fields->VelnPress);CHKERRQ(ierr);
 	ierr = KSPGetConvergedReason(ctx->kspVelP,&reason);CHKERRQ(ierr);

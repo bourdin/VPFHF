@@ -27,8 +27,8 @@ int main(int argc,char **argv)
 	PetscInt            orientation=0;
 	PetscInt            nopts=3;
 	PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-	PetscReal       ****coords_array;
-	PetscReal       ****bcu_array;  
+	PetscReal			****coords_array;
+	PetscReal			****bcu_array;  
 	PetscReal           BBmin[3],BBmax[3];
 	PetscReal           ElasticEnergy = 0;
 	PetscReal           InsituWork = 0;
@@ -156,21 +156,6 @@ int main(int argc,char **argv)
 	
 	ierr = CrackOpeningDisplacement(&ctx, &fields);CHKERRQ(ierr);
 	
-	
-
-	
-	/*
-	Vec FVCell;
-	
-	ierr = DMCreateGlobalVector(ctx.daVect,&FVCell);CHKERRQ(ierr);
-	ierr = PetscObjectSetName((PetscObject) FVCell,"FV Variable");CHKERRQ(ierr);
-	ierr = VecSet(FVCell,0.0);CHKERRQ(ierr);
-	 ierr = NodeToCellInterpolation(ctx.daVect, fields.U, FVCell);CHKERRQ(ierr);
-	*/
-	
-	ierr = NodeToCellInterpolation(ctx.daVect, fields.U, fields.FVCell);CHKERRQ(ierr);
-
-	
 	ierr = DMDAVecGetArray(ctx.daScal,fields.pmult,&pmult_array);CHKERRQ(ierr);    
 	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&vfperm_array);CHKERRQ(ierr);    
 	
@@ -185,6 +170,13 @@ int main(int argc,char **argv)
 	
 	ierr = DMDAVecRestoreArray(ctx.daScal,fields.pmult,&pmult_array);CHKERRQ(ierr);    
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&vfperm_array);CHKERRQ(ierr);
+
+		//	ierr = NodeToCellInterpolation1(ctx.daVect, fields.U, fields.FVCell);CHKERRQ(ierr);
+		//		ierr = NodeToCellInterpolation(ctx.daScal, fields.V, fields.pmult);CHKERRQ(ierr);
+		//		ierr = NodeToCellInterpolation(ctx.daScal, fields.V, fields.theta);CHKERRQ(ierr);
+	ierr = CellToNodeInterpolation(ctx.daScal, fields.pmult, fields.FVCellndof); CHKERRQ(ierr);
+
+	
 	/*
 	 Save fields and write statistics about current run
 	 */    
