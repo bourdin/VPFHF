@@ -18,6 +18,5 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscInt ej, PetscInt ek, PetscReal hx, PetscReal hy, PetscReal hz, PetscReal ****displ_array, PetscReal ***vfield_array, PetscReal ****perm_array);
 extern PetscErrorCode NodeToCellInterpolation(DM dm, Vec node_vec, Vec cell_vec);
 extern PetscErrorCode NodeToCellInterpolation1(DM dm, Vec node_vec, Vec cell_vec);
-extern PetscErrorCode CellToNodeInterpolation(DM dm, Vec node_vec, Vec cell_vec);
-
+extern PetscErrorCode CellToNodeInterpolation(DM dm, Vec node_vec, Vec cell_vec, VFCtx *ctx);
 #endif 
