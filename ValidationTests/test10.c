@@ -171,10 +171,7 @@ int main(int argc,char **argv)
 	ierr = DMDAVecRestoreArray(ctx.daScal,fields.pmult,&pmult_array);CHKERRQ(ierr);    
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&vfperm_array);CHKERRQ(ierr);
 
-		//	ierr = NodeToCellInterpolation1(ctx.daVect, fields.U, fields.FVCell);CHKERRQ(ierr);
-		//		ierr = NodeToCellInterpolation(ctx.daScal, fields.V, fields.pmult);CHKERRQ(ierr);
-		//		ierr = NodeToCellInterpolation(ctx.daScal, fields.V, fields.theta);CHKERRQ(ierr);
-	ierr = CellToNodeInterpolation(ctx.daScal, fields.pmult, fields.FVCellndof); CHKERRQ(ierr);
+	ierr = CellToNodeInterpolation(ctx.daScal, fields.FVCellndof, fields.pmult, &ctx); CHKERRQ(ierr);
 
 	
 	/*
