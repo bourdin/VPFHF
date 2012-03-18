@@ -12,12 +12,20 @@
 
 /*
  VFPermfield.c
+ Compute the total crack opening displacement (crack volume) by integrating u.\nabla v 
+ over the entire domain
  
  (c) 2011 B. Bourdin.C. Chukwudozie, LSU, K. Yoshioka, CHEVRON ETC
  */
 
 #undef __FUNCT__
 #define __FUNCT__ "CrackOpeningDisplacement"
+/*
+  Comments:
+    Rename TotalCrackOpening3D or something like that. 
+    Make calls to VolumetricCrackOpening3D_local below
+    Make sure to call MPI_AllReduce to summ across all MPI processes
+*/
 extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 {
 	PetscErrorCode  ierr;
@@ -28,7 +36,7 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 	PetscReal		    hx,hy,hz;
 	PetscReal			****coords_array;
 	PetscReal			****displ_array;
-	Vec					displ_local;
+	Vec					  displ_local;
 	PetscReal			***vfield_array;
 	Vec				    vfield_local;
 	PetscReal			****perm_array;
@@ -72,8 +80,6 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 	if (ys+ym == ny)    ym--;
 	if (zs+zm == nz)    zm--;
 	
-	
-    
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -98,9 +104,7 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
     printf("#        Volume change calculated gradv.u and volumetric strain     \n");
     printf("#        Volume change using gradv .u = %f\t        \n", Vol_change_total1);
     printf("#        Volume change using volumetric strain = %f\t       \n\n", Vol_change_total2);
-	
 
-    
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,displ_local,&displ_array);CHKERRQ(ierr); 
 	ierr = DMDAVecRestoreArray(ctx->daScal,vfield_local,&vfield_array);CHKERRQ(ierr); 	
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
@@ -113,6 +117,19 @@ extern PetscErrorCode CrackOpeningDisplacement(VFCtx *ctx, VFFields *fields)
 
 #undef __FUNCT__
 #define __FUNCT__ "ComputeXYZOpening"
+/*
+  Comments:
+    rename VolumetricCrackOpening_local. Return a C array containing the value of u.\nabla v at each of the gauss point of the local element
+    the interface should be :
+    PetscErrorCode VolumetricCrackOpening3D_local(PetscReal *VolumetricCrackOpening_local,
+                                                  PetscReal ****u_array,
+                                                  PetscReal ***v_array,
+                                                  PetscInt ek,
+                                                  PetscInt ej,
+                                                  PetscInt ei,
+                                                  CartFE_Element3D *e);
+    in order to match that of ElasticEnergyDensity3D_localin VFU.c
+*/
 extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscInt ej, PetscInt ek, PetscReal hx, PetscReal hy, PetscReal hz, PetscReal ****displ_array, PetscReal ***vfield_array, PetscReal ****perm_array)
 {
 	PetscErrorCode ierr;
@@ -124,7 +141,7 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 	PetscReal		*udispl_loc;
 	PetscReal		*vdispl_loc;
 	PetscReal		*wdispl_loc;  
-    PetscReal		*du_loc;
+  PetscReal		*du_loc;
 	PetscReal		*dv_loc;
 	PetscReal		*dw_loc;
 	PetscReal		dx_vfield = 0;
@@ -141,7 +158,7 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dx_vfield_loc);CHKERRQ(ierr);
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dy_vfield_loc);CHKERRQ(ierr);
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dz_vfield_loc);CHKERRQ(ierr);	
-    ierr = PetscMalloc(e->ng * sizeof(PetscReal),&du_loc);CHKERRQ(ierr);
+  ierr = PetscMalloc(e->ng * sizeof(PetscReal),&du_loc);CHKERRQ(ierr);
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dv_loc);CHKERRQ(ierr);
 	ierr = PetscMalloc(e->ng * sizeof(PetscReal),&dw_loc);CHKERRQ(ierr);
     
@@ -159,7 +176,7 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 		dx_vfield_loc[eg] = 0.;
 		dy_vfield_loc[eg] = 0.;
 		dz_vfield_loc[eg] = 0.;		
-        du_loc[eg] = 0.;
+    du_loc[eg] = 0.;
 		dv_loc[eg] = 0.;
 		dw_loc[eg] = 0.;
 	}
@@ -209,12 +226,28 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
     PetscFunctionReturn(0);
 }
 
+
+/*
+  Comments:
+    loop the other way around:
+      for cell = 0 to num_cell
+        compute int_cell cell_vec
+        compute patch area
+        for all vertex v of the current cell
+          add vec_node[global[v]] += int_cell cell_vec at vertex v    
+          add patch area [global[v]]patch area at vertex v
+          
+    for all vertices v
+      vec_node[v] <- vec_node[v] / patch area[v]
+      
+    When this works, renormalize so that the cell and node vectors have the same L1 norm
+*/      
 #undef __FUNCT__
 #define __FUNCT__ "CellToNodeInterpolation"
 extern PetscErrorCode CellToNodeInterpolation(DM dm, Vec node_vec, Vec cell_vec, VFCtx *ctx)
 {
 	PetscErrorCode ierr;
-	PetscInt		dof;
+	PetscInt		    dof;
 	PetscInt        xs,xm,nx;
 	PetscInt        ys,ym,ny;
 	PetscInt        zs,zm,nz;
