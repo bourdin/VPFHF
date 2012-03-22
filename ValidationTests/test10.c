@@ -163,7 +163,7 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) { 
-				pmult_array[k][j][i] = vfperm_array[k][j][i][0];
+				pmult_array[k][j][i] = vfperm_array[k][j][i][2];
 			}
 		}
 	} 
