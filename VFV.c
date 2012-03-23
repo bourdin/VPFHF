@@ -563,6 +563,7 @@ extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFC
   ierr = MPI_Reduce(&mySurfaceEnergy,SurfaceEnergy,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
 
   ierr = DMDAVecRestoreArray(ctx->daScal,v_localVec,&v_array);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&v_localVec);CHKERRQ(ierr);
   ierr = PetscLogStagePop();CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -627,9 +628,9 @@ extern PetscErrorCode VF_IrrevApplyEQ(Mat K,Vec RHS,Vec V,Vec VIrrev,VFProp *vfp
   ierr = MatZeroRowsStencil(K,myirrevnum,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscFree(row);CHKERRQ(ierr);
 
-  ierr = DMDAVecRestoreArrayDOF(ctx->daScal,V,&V_array);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx->daScal,VIrrev,&VIrrev_array);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx->daScal,RHS,&RHS_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,V,&V_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,VIrrev,&VIrrev_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,RHS,&RHS_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

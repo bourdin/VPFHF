@@ -222,7 +222,7 @@ typedef struct {
 	PetscReal		      cf;	     /* Rock compressibility in field unit*/
 	PetscReal         TCond_X; /* Thermal Conductivity in x-direction */
 	PetscReal         TCond_Y; /* Thermal Conductivity in y-direction */
-	PetscReal         TCond_Z; /* Thermal COnductivity in z-direction */
+	PetscReal         TCond_Z; /* Thermal Conductivity in z-direction */
 	/*
 	 change them to Vec later.
 	 Instead, I would suggest keeping the structure this way and add a pointer to a resprop in the main context
@@ -234,47 +234,47 @@ typedef struct {
 	PetscLogStage VF_IOStage;
 	
 	PetscLogStage VF_UAssemblyStage;
-	PetscClassId   VF_MatULocalClassId;
+	PetscClassId  VF_MatULocalClassId;
 	PetscLogEvent VF_MatULocalEvent;
-	PetscClassId   VF_VecULocalClassId;
+	PetscClassId  VF_VecULocalClassId;
 	PetscLogEvent VF_VecULocalEvent;
 	
 	PetscLogStage VF_USolverStage;
 	
 	PetscLogStage VF_VAssemblyStage;
-	PetscClassId   VF_MatVLocalClassId;
+	PetscClassId  VF_MatVLocalClassId;
 	PetscLogEvent VF_MatVLocalEvent;
-	PetscClassId   VF_VecVLocalClassId;
+	PetscClassId  VF_VecVLocalClassId;
 	PetscLogEvent VF_VecVLocalEvent;
 	
 	PetscLogStage VF_VSolverStage;
 	
 	PetscLogStage VF_EnergyStage;
-	PetscClassId   VF_EnergyLocalClassId;
+	PetscClassId  VF_EnergyLocalClassId;
 	PetscLogEvent VF_EnergyLocalEvent;
 	
 	PetscLogStage VF_PAssemblyStage;
-	PetscClassId   VF_MatPLocalClassId;
+	PetscClassId  VF_MatPLocalClassId;
 	PetscLogEvent VF_MatPLocalEvent;
-	PetscClassId   VF_VecPLocalClassId;
+	PetscClassId  VF_VecPLocalClassId;
 	PetscLogEvent VF_VecPLocalEvent;
 	
 	PetscLogStage VF_PSolverStage;
 	
 	PetscLogStage VF_TAssemblyStage;
-	PetscClassId   VF_MatTLocalClassId;
+	PetscClassId  VF_MatTLocalClassId;
 	PetscLogEvent VF_MatTLocalEvent;
-	PetscClassId   VF_VecTLocalClassId;
+	PetscClassId  VF_VecTLocalClassId;
 	PetscLogEvent VF_VecTLocalEvent;
 	
 	PetscLogStage VF_TSolverStage;
 } VFLog;
 
 typedef struct {
-	PetscBool          printhelp;
+	PetscBool           printhelp;
 	PetscInt            nlayer;
-	PetscReal           *layersep;
-	PetscInt            *layer;         /* dim=nz+1. gives the layer number of a cell  */
+	PetscReal          *layersep;
+	PetscInt           *layer;         /* dim=nz+1. gives the layer number of a cell  */
 	BC                  bcU[3];
 	BC                  bcV[1];
 	BC                  bcP[1];
