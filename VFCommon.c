@@ -196,7 +196,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 		ctx->nlayer = 1;
 		ierr = PetscOptionsInt("-nlayer","\n\tNumber of layers","",ctx->nlayer,&ctx->nlayer,PETSC_NULL);CHKERRQ(ierr);
 		nopt = ctx->nlayer-1;
-		ierr = PetscMalloc((ctx->nlayer) * sizeof(PetscReal),&ctx->layersep);CHKERRQ(ierr);
+		ierr = PetscMalloc((ctx->nlayer+1) * sizeof(PetscReal),&ctx->layersep);CHKERRQ(ierr);
 		ctx->layersep[0] = -1e+30;
 		ctx->layersep[1] = 0.;    
 		ierr = PetscOptionsRealArray("-layersep","\n\tComma separated list of (nlayer-1) layer interfaces","",&ctx->layersep[1],&nopt,PETSC_NULL);CHKERRQ(ierr);    
@@ -276,7 +276,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 				ierr = VFWellView(&(ctx->well[i]),PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 			}
 		}
-		
+		ierr = PetscFree(buffer);CHKERRQ(ierr);
 	}
 	ierr = PetscOptionsEnd();CHKERRQ(ierr);
 	ctx->timestep = 1;
@@ -986,6 +986,9 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	PetscFunctionBegin;
 	ierr = PetscFree(ctx->matprop);CHKERRQ(ierr);
 	ierr = PetscFree(ctx->layer);CHKERRQ(ierr);
+	ierr = PetscFree(ctx->layersep);CHKERRQ(ierr);
+	ierr = PetscFree(ctx->crack);CHKERRQ(ierr);
+	ierr = PetscFree(ctx->well);CHKERRQ(ierr);
 	
 	ierr = DMDestroy(&ctx->daVect);CHKERRQ(ierr);
 	ierr = DMDestroy(&ctx->daScal);CHKERRQ(ierr);
@@ -997,7 +1000,6 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = KSPDestroy(&ctx->kspV);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->KV);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSV);CHKERRQ(ierr); 
-	ierr = VecDestroy(&ctx->coordinates);CHKERRQ(ierr);
 	
 	ierr = VecDestroy(&fields->U);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->BCU);CHKERRQ(ierr);
