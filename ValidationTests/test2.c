@@ -24,7 +24,7 @@ int main(int argc,char **argv)
   PetscErrorCode      ierr;
   
   PetscReal           length = .2;
-  PetscInt            orientation=1;
+  PetscInt            orientation=3;
   PetscInt            nopts=3;
   PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
   PetscReal       ****coords_array;
