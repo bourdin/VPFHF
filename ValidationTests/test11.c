@@ -1,6 +1,6 @@
 /*
   test11.c: 
-  SPE Case2: Crack initiation est
+  SPE Case2: Crack initiation test
 
   (c) 2010-2012 Keita Yoshioka yoshk@chevron.com
 */

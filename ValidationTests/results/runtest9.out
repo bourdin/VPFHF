@@ -27,7 +27,6 @@ center:   	0.000000e+00 	0.000000e+00 	0.000000e+00
 radius:     	5.000000e-01
 polar angle:	0.000000e+00
 co-latitude:	0.000000e+00
-      kspU converged in 48 iterations 3.
-Elastic Energy:            2.028906e-07
-Work of pressure forces:   4.057404e-07
-Total energy:              -2.028498e-07
+       kspU converged in 46 iterations 3.
+ Elastic Energy:            2.028905e-07
+ Work of pressure forces:   4.057403e-07

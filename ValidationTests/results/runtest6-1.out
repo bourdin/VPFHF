@@ -5,11 +5,13 @@ Numerical implementation of the variational approach to fracture.
 (c) 2010-2011 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu
 
 Option table:
+#PETSc Option Table entries:
 -l 1,1,1
 -n 21,21,21
 -nu 0.3
 -orientation 1
 -p runtest6-1
+#End of PETSc Option Table entries
 Applying traction Dirichlet conditions on faces Y0 Y1
       kspU converged in 40 iterations 2.
 Elastic Energy:            5.000050e-01
