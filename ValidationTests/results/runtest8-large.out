@@ -1,8 +1,22 @@
-[0]0:Return code = 0, signaled with Interrupt: 2
-[0]1:Return code = 0, signaled with Interrupt: 2
-[0]2:Return code = 0, signaled with Interrupt: 2
-[0]3:Return code = 0, signaled with Interrupt: 2
-[0]4:Return code = 0, signaled with Interrupt: 2
-[0]5:Return code = 0, signaled with Killed: 9
-[0]6:Return code = 0, signaled with Interrupt: 2
-[0]7:Return code = 0, signaled with Interrupt: 2
+VF:
+Numerical implementation of the variational approach to fracture.
+(c) 2010-2011 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu
+
+Option table:
+#PETSc Option Table entries:
+-epsilon 0.025
+-eta 1e-8
+-l 1,1,2
+-n 81,81,161
+-nu 0.3
+-orientation 3
+-radius .75
+#End of PETSc Option Table entries
+Building a penny-shaped crack of radius 0.75 at (0,0,0.5) with normal vector <0,0,1>
+      kspV converged in 10 iterations 2.
+      V min / max:     0.000000e+00 1.000000e+00
+      kspU converged in 120 iterations 3.
+Elastic Energy:            5.792244e-07
+Work of pressure forces:   1.158338e-06
+Total energy:              -5.791139e-07
+
