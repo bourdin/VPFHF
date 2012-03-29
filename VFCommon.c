@@ -220,9 +220,9 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 		ctx->fileformat = FILEFORMAT_HDF5;
 		ierr = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
 		
-		ctx->maxtimestep  = 2;
+		ctx->maxtimestep  = 1;
 		ierr = PetscOptionsInt("-maxtimestep","\n\tMaximum number of timestep","",ctx->maxtimestep,&ctx->maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-		ctx->maxtimevalue  = 2.;
+		ctx->maxtimevalue  = 1.;
 		ierr = PetscOptionsReal("-maxtimevalue","\n\tMaximum timevalue","",ctx->maxtimevalue,&ctx->maxtimevalue,PETSC_NULL);CHKERRQ(ierr);
 		
 		nopt = 6; 
