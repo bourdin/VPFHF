@@ -38,7 +38,7 @@ test9: test9.o ${VFOBJ} chkopts
 test10: test10.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
-test11: test1.o ${VFOBJ} chkopts
+test11: test11.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 test12: test12.o ${VFOBJ} chkopts
@@ -153,6 +153,7 @@ runtest10: test10
 	if (${DIFF} -B  results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@-$$or.out;\
+	done
 
 runtest11: test11
 	@echo "Running " $@
