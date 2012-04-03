@@ -42,7 +42,7 @@ int main(int argc,char **argv)
   ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,petscfilename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
   ierr = DMCreate(PETSC_COMM_WORLD,&daScal);CHKERRQ(ierr);
   ierr = DMLoad(daScal,viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  //ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   
   ierr = DMDAGetReducedDA(daScal,3,&daVect);CHKERRQ(ierr);
   ierr = DMDAGetInfo(daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
