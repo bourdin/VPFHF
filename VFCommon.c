@@ -725,6 +725,10 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
 extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 {
 	PetscMPIInt    comm_size;
+	/*
+	MatNullSpace   matnull;
+	Vec            coordinates;
+  */
 	PetscErrorCode ierr;
 	
 	PetscFunctionBegin;
@@ -735,11 +739,25 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 		ierr = DMGetMatrix(ctx->daVect,MATMPIAIJ,&ctx->KU);CHKERRQ(ierr);
 	}
 	ierr = MatSetOption(ctx->KU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+	
+	
 	ierr = DMCreateGlobalVector(ctx->daVect,&ctx->RHSU);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject) ctx->RHSU,"RHSU");CHKERRQ(ierr);
 	
 	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspU);CHKERRQ(ierr);
-	
+
+	/*
+    At this point, it is not completely clear if setting the null space 
+    improves convergence.
+    Leaving it out for now
+  */
+  /*	
+	ierr = DMDAGetCoordinates(ctx->daVect,&coordinates);CHKERRQ(ierr);
+  ierr = MatNullSpaceCreateRigidBody(coordinates,&matnull);CHKERRQ(ierr);
+    //ierr = MatSetNearNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
+  ierr = KSPSetNullSpace(ctx->kspU,matnull);CHKERRQ(ierr);
+  ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
+  */
 	ierr = KSPSetTolerances(ctx->kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
 	ierr = KSPSetOperators(ctx->kspU,ctx->KU,ctx->KU,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
 	ierr = KSPSetInitialGuessNonzero(ctx->kspU,PETSC_TRUE);CHKERRQ(ierr);
