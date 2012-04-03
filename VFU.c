@@ -2070,3 +2070,91 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
   }
   PetscFunctionReturn(0);
 }
+
+/*@
+   MatNullSpaceCreateRigidBody - create rigid body modes from coordinates
+
+   Collective on Vec
+
+   Input Argument:
+.  coords - block of coordinates of each node, must have block size set
+
+   Output Argument:
+.  sp - the null space
+
+   Level: advanced
+
+.seealso: MatNullSpaceCreate()
+@*/
+PetscErrorCode MatNullSpaceCreateRigidBody(Vec coords,MatNullSpace *sp)
+{
+  const PetscScalar *x;
+  PetscScalar *v[6],dots[3];
+  Vec vec[6];
+  PetscInt n,N,dim,nmodes,i,j;
+
+  VecGetBlockSize(coords,&dim);
+  VecGetLocalSize(coords,&n);
+  VecGetSize(coords,&N);
+  
+  n /= dim;
+  N /= dim;
+  switch (dim) {
+  case 1:
+    MatNullSpaceCreate(((PetscObject)coords)->comm,PETSC_TRUE,0,PETSC_NULL,sp);
+    break;
+  case 2:
+  case 3:
+    nmodes = (dim == 2) ? 3 : 6;
+    VecCreate(((PetscObject)coords)->comm,&vec[0]);
+    VecSetSizes(vec[0],dim*n,dim*N);
+    VecSetBlockSize(vec[0],dim);
+    VecSetUp(vec[0]);
+    for (i=1; i<nmodes; i++) {VecDuplicate(vec[0],&vec[i]);}
+    for (i=0; i<nmodes; i++) {VecGetArray(vec[i],&v[i]);}
+    VecGetArrayRead(coords,&x);
+    for (i=0; i<n; i++) {
+      if (dim == 2) {
+        v[0][i*2+0] = 1./N;
+        v[0][i*2+1] = 0.;
+        v[1][i*2+0] = 0.;
+        v[1][i*2+1] = 1./N;
+        /* Rotations */
+        v[2][i*2+0] = -x[i*2+1];
+        v[2][i*2+1] = x[i*2+0];
+      } else {
+        v[0][i*3+0] = 1./N;
+        v[0][i*3+1] = 0.;
+        v[0][i*3+2] = 0.;
+        v[1][i*3+0] = 0.;
+        v[1][i*3+1] = 1./N;
+        v[1][i*3+2] = 0.;
+        v[2][i*3+0] = 0.;
+        v[2][i*3+1] = 0.;
+        v[2][i*3+2] = 1./N;
+
+        v[3][i*3+0] = x[i*3+1];
+        v[3][i*3+1] = -x[i*3+0];
+        v[3][i*3+2] = 0.;
+        v[4][i*3+0] = 0.;
+        v[4][i*3+1] = -x[i*3+2];
+        v[4][i*3+2] = x[i*3+1];
+        v[5][i*3+0] = x[i*3+2];
+        v[5][i*3+1] = 0.;
+        v[5][i*3+2] = -x[i*3+0];
+      }
+    }
+    for (i=0; i<nmodes; i++) {VecRestoreArray(vec[i],&v[i]);}
+    VecRestoreArrayRead(coords,&x);
+    for (i=dim; i<nmodes; i++) {
+      /* Orthonormalize vec[i] against vec[0:dim] */
+      VecMDot(vec[i],i,vec,dots);
+      for (j=0; j<i; j++) dots[j] *= -1.;
+      VecMAXPY(vec[i],i,dots,vec);
+      VecNormalize(vec[i],PETSC_NULL);
+    }
+    MatNullSpaceCreate(((PetscObject)coords)->comm,PETSC_FALSE,nmodes,vec,sp);
+    for (i=0; i<nmodes; i++) {VecDestroy(&vec[i]);}
+  }
+  return(0);
+}
