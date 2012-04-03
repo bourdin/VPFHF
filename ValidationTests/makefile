@@ -91,6 +91,7 @@ runtest5: test5
 	@echo "Running " $@
 	-@for or in 0 1 2 3 4 5; do \
 	ARGS="-n 21,21,21 -l 1,1,1 -nu 0 -epsilon .05 -eta 1e-8 -orientation $$or";\
+	echo "Running " ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or ;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
 	if (${DIFF} -B results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
