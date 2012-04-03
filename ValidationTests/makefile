@@ -50,38 +50,43 @@ test13: test13.o ${VFOBJ} chkopts
 runtest1: test1
 	@echo "Running " $@
 	-@ARGS='-n 41,41,81 -l 1,1,2 -radius .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
-	if (${DIFF} -B results/$@.out $@.out) then true; \
+	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest2: test2
 	@echo "Running " $@
 	-@ARGS='-n 41,81,6 -l 1,2,.25 -length .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
-	if (${DIFF} -B results/$@.out $@.out) then true; \
+	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest2-large: test2
 	@echo "Running " $@
 	-@ARGS='-n 161,321,6 -l 4,8,.25 -length .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 4 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
-	if (${DIFF} -B results/$@.out $@.out) then true; \
+	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest3: test3
 	@echo "Running" $@
 	-@ARGS='-n 41,41,6 -l 2,2,.25 -length .4 -orientation 1 -nu 0 -eta 1e-8' ;\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
-	if (${DIFF} -B results/$@.out $@.out) then true; \
+	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest4: test4
 	@echo "Running " $@
 	-@ARGS='-n 81,81,6 -l 2,2,.25 -length .4 -orientation 3 -nu 0 -epsilon ${EPSILON} -eta 1e-8';\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
