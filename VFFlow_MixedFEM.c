@@ -1331,12 +1331,12 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Vec RHS,VFFields * fields,VFCtx 
   ierr = DMGetLocalVector(ctx->daScal,&source_local);CHKERRQ(ierr);
 
   ierr = DMDAVecRestoreArray(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
-  ierr = DMrestoreLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
 
   ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,RHS_localVec,&RHS_array);CHKERRQ(ierr);
   ierr = DMLocalToGlobalBegin(ctx->daFlow,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
   ierr = DMLocalToGlobalEnd(ctx->daFlow,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
-  ierr = DMrestoreLocalVector(ctx->daFlow,&RHS_localVec);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daFlow,&RHS_localVec);CHKERRQ(ierr);
 
   ierr = VecApplyFlowBC(RHS,&ctx->bcFlow[0],ctx);CHKERRQ(ierr);
 
