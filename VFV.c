@@ -27,24 +27,6 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
     case NOSYM:
        BC[0].face[Z1] = ONE; 
       break;
-    case TEST_CLAMPEDX0:
-    case TEST_CLAMPEDX1:
-    case TEST_CLAMPEDX0X1:
-      BC[0].face[X0] = ONE; 
-      BC[0].face[X1] = ONE; 
-	  break;
-    case TEST_CLAMPEDY0:
-    case TEST_CLAMPEDY1:
-    case TEST_CLAMPEDY0Y1:
-      BC[0].face[Y0] = ONE; 
-      BC[0].face[Y1] = ONE; 
-	  break;
-    case TEST_CLAMPEDZ0:
-    case TEST_CLAMPEDZ1:
-    case TEST_CLAMPEDZ0Z1:
-      BC[0].face[Z0] = ONE; 
-      BC[0].face[Z1] = ONE; 
-      break;
     case TEST_MANUAL:
       ierr = BCGet(BC,"V",1);
       break;
@@ -96,15 +78,6 @@ extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset)
        BC[0].face[Z0] = ONE; 
        BC[0].face[Z1] = ONE; 
        break;
-    case TEST_CLAMPEDX0:
-    case TEST_CLAMPEDX1:
-    case TEST_CLAMPEDX0X1:
-    case TEST_CLAMPEDY0:
-    case TEST_CLAMPEDY1:
-    case TEST_CLAMPEDY0Y1:
-    case TEST_CLAMPEDZ0:
-    case TEST_CLAMPEDZ1:
-    case TEST_CLAMPEDZ0Z1:
     case TEST_MANUAL:
       break;
     default:
@@ -173,13 +146,6 @@ extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ***
                                       pressure_array,pressureRef_array,
                                       matprop,ek,ej,ei,e);CHKERRQ(ierr);
 
-  /*
-  PetscReal ElasticEnergyDensity = 0;
-  for (g = 0; g < e->ng; g++) {
-    ElasticEnergyDensity += ElasticEnergyDensity_local[g] * e->weight[g];
-  }
-  ierr = PetscPrintf(PETSC_COMM_SELF,"%sE[%i,%i,%i]=%e\n",__FUNCT__,ei,ej,ek,ElasticEnergyDensity);
-  */
   for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {
       for (i1 = 0; i1 < e->nphix; i1++) {
@@ -353,13 +319,13 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   /*
     get local mat and RHS
   */
-  ierr = PetscMalloc(nrow * nrow * sizeof(PetscReal),&K_local);CHKERRQ(ierr);
-  ierr = PetscMalloc(nrow * sizeof(MatStencil),&row);CHKERRQ(ierr);
+  ierr = PetscMalloc3(nrow,PetscReal,&RHS_local,
+                      nrow * nrow,PetscReal,&K_local,
+                      nrow,MatStencil,&row);CHKERRQ(ierr);
   ierr = DMGetLocalVector(ctx->daScal,&RHS_localVec);CHKERRQ(ierr);
   ierr = VecSet(RHS_localVec,0.);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,RHS_localVec,&RHS_array);CHKERRQ(ierr);    
 
-  ierr = PetscMalloc(nrow * sizeof(PetscReal),&RHS_local);CHKERRQ(ierr);
   /*
     loop through all elements (ei,ej)
   */
@@ -444,6 +410,7 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = DMDAVecRestoreArray(ctx->daScal,RHS_localVec,&RHS_array);CHKERRQ(ierr);
   ierr = DMLocalToGlobalBegin(ctx->daScal,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
   ierr = DMLocalToGlobalEnd(ctx->daScal,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&RHS_localVec);CHKERRQ(ierr);
   ierr = VecApplyDirichletBC(RHS,fields->V,&ctx->bcV[0]);CHKERRQ(ierr);
   /*
     Cleanup

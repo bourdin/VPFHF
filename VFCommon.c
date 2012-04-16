@@ -729,6 +729,10 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
 extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 {
 	PetscMPIInt    comm_size;
+	/*
+	MatNullSpace   matnull;
+	Vec            coordinates;
+  */
 	PetscErrorCode ierr;
 	
 	PetscFunctionBegin;
@@ -739,11 +743,25 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 		ierr = DMGetMatrix(ctx->daVect,MATMPIAIJ,&ctx->KU);CHKERRQ(ierr);
 	}
 	ierr = MatSetOption(ctx->KU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+	
+	
 	ierr = DMCreateGlobalVector(ctx->daVect,&ctx->RHSU);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject) ctx->RHSU,"RHSU");CHKERRQ(ierr);
 	
 	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspU);CHKERRQ(ierr);
-	
+
+	/*
+    At this point, it is not completely clear if setting the null space 
+    improves convergence.
+    Leaving it out for now
+  */
+  /*	
+	ierr = DMDAGetCoordinates(ctx->daVect,&coordinates);CHKERRQ(ierr);
+  ierr = MatNullSpaceCreateRigidBody(coordinates,&matnull);CHKERRQ(ierr);
+    //ierr = MatSetNearNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
+  ierr = KSPSetNullSpace(ctx->kspU,matnull);CHKERRQ(ierr);
+  ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
+  */
 	ierr = KSPSetTolerances(ctx->kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
 	ierr = KSPSetOperators(ctx->kspU,ctx->KU,ctx->KU,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
 	ierr = KSPSetInitialGuessNonzero(ctx->kspU,PETSC_TRUE);CHKERRQ(ierr);
@@ -996,6 +1014,8 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	
 	ierr = DMDestroy(&ctx->daVect);CHKERRQ(ierr);
 	ierr = DMDestroy(&ctx->daScal);CHKERRQ(ierr);
+	ierr = DMDestroy(&ctx->daFlow);CHKERRQ(ierr);
+	ierr = DMDestroy(&ctx->daVFperm);CHKERRQ(ierr);
 	
 	ierr = KSPDestroy(&ctx->kspU);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->KU);CHKERRQ(ierr);
@@ -1004,6 +1024,14 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = KSPDestroy(&ctx->kspV);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->KV);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSV);CHKERRQ(ierr); 
+	
+	ierr = KSPDestroy(&ctx->kspP);CHKERRQ(ierr);
+	ierr = MatDestroy(&ctx->KP);CHKERRQ(ierr);
+	ierr = VecDestroy(&ctx->RHSP);CHKERRQ(ierr); 
+	
+	ierr = KSPDestroy(&ctx->kspT);CHKERRQ(ierr);
+	ierr = MatDestroy(&ctx->KT);CHKERRQ(ierr);
+	ierr = VecDestroy(&ctx->RHST);CHKERRQ(ierr); 
 	
 	ierr = VecDestroy(&fields->U);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->BCU);CHKERRQ(ierr);
@@ -1014,7 +1042,11 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = VecDestroy(&fields->pressure);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->pressureRef);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->pmult);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->VelnPress);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->vfperm);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->velocity);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->FVCell);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->FVCellndof);CHKERRQ(ierr);
 	
 	ierr = PetscViewerDestroy(&ctx->energyviewer);CHKERRQ(ierr);
 	
