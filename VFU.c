@@ -68,54 +68,6 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       BC[1].vertex[X1Y0Z1] = ZERO;
       BC[2].face[Z1]       = ZERO;
       break;
-    case TEST_CLAMPEDX0:
-      for (c = 0; c < 3; c++) {
-        BC[c].face[X0] = FIXED;
-      }
-      break;
-    case TEST_CLAMPEDX1:
-      for (c = 0; c < 3; c++) {
-        BC[c].face[X1] = FIXED;
-      }
-      break;
-    case TEST_CLAMPEDX0X1:
-      for (c = 0; c < 3; c++) {
-        BC[c].face[X0] = FIXED;
-        BC[c].face[X1] = FIXED;
-      }
-      break;
-    case TEST_CLAMPEDY0:
-      for (c = 0; c < 3; c++) {
-        BC[c].face[Y0] = FIXED;
-      }
-      break;
-    case TEST_CLAMPEDY1:
-      for (c = 0; c < 3; c++) {
-        BC[c].face[Y1] = FIXED;
-      }
-      break;
-    case TEST_CLAMPEDY0Y1:
-      for (c = 0; c < 3; c++) {
-        BC[c].face[Y0] = FIXED;
-        BC[c].face[Y1] = FIXED;
-      }
-      break;
-    case TEST_CLAMPEDZ0:
-      for (c = 0; c < 3; c++) {
-        BC[c].face[Z0] = FIXED;
-      }
-      break;
-    case TEST_CLAMPEDZ1:
-      for (c = 0; c < 3; c++) {
-        BC[c].face[Z1] = FIXED;
-      }
-      break;
-    case TEST_CLAMPEDZ0Z1:
-      for (c = 0; c < 3; c++) {
-        BC[c].face[Z0] = FIXED;
-        BC[c].face[Z1] = FIXED;
-      }
-      break;
     case TEST_MANUAL:
       ierr = BCGet(BC,"U",3);
       break;
@@ -187,15 +139,6 @@ extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
          BC[c].face[Z1] = FIXED;
        }
        break;
-    case TEST_CLAMPEDX0:
-    case TEST_CLAMPEDX1:
-    case TEST_CLAMPEDX0X1:
-    case TEST_CLAMPEDY0:
-    case TEST_CLAMPEDY1:
-    case TEST_CLAMPEDY0Y1:
-    case TEST_CLAMPEDZ0:
-    case TEST_CLAMPEDZ1:
-    case TEST_CLAMPEDZ0Z1:
     case TEST_MANUAL:
       break;
     default:
@@ -308,26 +251,7 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
                                    + sigma13_elem[g] * epsilon13_elem[g];
   }
   ierr = PetscLogFlops(46 * e->ng);CHKERRQ(ierr);
-  /*
-  PetscReal e11=0.,e22=0.,e33=0.,e13=0.,e23=0.,e12=0.;
-  PetscReal s11=0.,s22=0.,s33=0.,s13=0.,s23=0.,s12=0.;
-  for (g = 0; g < e->ng; g++) {
-    e11 += epsilon11_elem[g];
-    e22 += epsilon22_elem[g];
-    e33 += epsilon33_elem[g];
-    e13 += epsilon13_elem[g];
-    e23 += epsilon23_elem[g];
-    e12 += epsilon12_elem[g];
-    s11 += sigma11_elem[g];
-    s22 += sigma22_elem[g];
-    s33 += sigma33_elem[g];
-    s13 += sigma13_elem[g];
-    s23 += sigma23_elem[g];
-    s12 += sigma12_elem[g];
-  }
-  ierr = PetscPrintf(PETSC_COMM_SELF,"%s,%i,%i,%i Strain: %e %e %e %e %e %e\n",__FUNCT__,ei,ej,ek,e11,e22,e33,e13,e23,e12);
-  ierr = PetscPrintf(PETSC_COMM_SELF,"%s,%i,%i,%i Stress: %e %e %e %e %e %e\n",__FUNCT__,ei,ej,ek,s11,s22,s33,s13,s23,s12);
-  */
+
   ierr = PetscFree3(sigma11_elem,sigma22_elem,sigma33_elem);CHKERRQ(ierr);
   ierr = PetscFree3(sigma12_elem,sigma23_elem,sigma13_elem);CHKERRQ(ierr);
   ierr = PetscFree3(epsilon11_elem,epsilon22_elem,epsilon33_elem);CHKERRQ(ierr);
@@ -1019,17 +943,17 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
     ierr = DMGetLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
     ierr = DMDAVecGetArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr); 
   }
-  
+  CHKMEMQ;
   /*
     get local mat and RHS
   */
-  ierr = PetscMalloc(nrow * nrow * sizeof(PetscReal),&K_local);CHKERRQ(ierr);
-  ierr = PetscMalloc(nrow * sizeof(MatStencil),&row);CHKERRQ(ierr);
+  ierr = PetscMalloc3(nrow,PetscReal,&RHS_local,
+                      nrow * nrow,PetscReal,&K_local,
+                      nrow,MatStencil,&row);CHKERRQ(ierr);
   ierr = DMGetLocalVector(ctx->daVect,&RHS_localVec);CHKERRQ(ierr);
   ierr = VecSet(RHS_localVec,0.);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx->daVect,RHS_localVec,&RHS_array);CHKERRQ(ierr);    
 
-  ierr = PetscMalloc(nrow * sizeof(PetscReal),&RHS_local);CHKERRQ(ierr);
   /*
     loop through all elements (ei,ej)
   */
@@ -1347,6 +1271,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
       }
     }
   }
+  CHKMEMQ;
   /*
     Global Assembly and Boundary Conditions
   */
@@ -1360,12 +1285,13 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,RHS_localVec,&RHS_array);CHKERRQ(ierr);
   ierr = DMLocalToGlobalBegin(ctx->daVect,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
   ierr = DMLocalToGlobalEnd(ctx->daVect,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daVect,&RHS_localVec);CHKERRQ(ierr);
   ierr = VecApplyDirichletBC(RHS,fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
   /*
     Cleanup
   */
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx->daScal,V_localVec,&v_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,V_localVec,&v_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&V_localVec);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
@@ -2003,84 +1929,27 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   ierr = MPI_Reduce(&myPressureWork,PressureWork,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
   ierr = MPI_Reduce(&myInsituWork,InsituWork,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
   
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_localVec,&u_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daVect,&u_localVec);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx->daScal,v_localVec,&v_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&v_localVec);CHKERRQ(ierr);
+
   ierr = DMDAVecRestoreArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
   if (ctx->hasInsitu) {
     ierr = DMDAVecRestoreArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr);
     ierr = DMRestoreLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
   }
-  ierr = DMRestoreLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
+
   ierr = PetscLogStagePop();CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "VF_NullSpaceElasticity3D"
-/*
-  VF_NullSpaceElasticity3D: Setup the null space corresponding to rigid motions 
-
-  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
-*/
-extern PetscErrorCode VF_NullSpaceElasticity3D(KSP ksp,VFCtx *ctx)
-{
-  PetscErrorCode      ierr;
-  MatNullSpace        nullsp;
-  int                 i,j,k,c;
-  int                 xs,xm,ys,ym,zs,zm,nullspacedim=6;
-  Vec                *nullspace;
-  PetscReal       ****coord_array;
-  PetscReal      *****nullspace_array;
-  
-  
-  PetscFunctionBegin;  
-  ierr = PetscMalloc(nullspacedim*sizeof(Vec),&nullspace);CHKERRQ(ierr);
-  ierr = PetscMalloc(nullspacedim*sizeof(PetscReal ****),&nullspace_array);CHKERRQ(ierr);
-  ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  /*
-    Get coordinates and null space arrays
-  */
-  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coord_array);CHKERRQ(ierr);
-  for (i = 0; i<nullspacedim; i++) {
-    ierr = DMCreateGlobalVector(ctx->daVect,&nullspace[i]);CHKERRQ(ierr);
-    ierr = VecSet(nullspace[i],0.0);CHKERRQ(ierr);
-    ierr = DMDAVecGetArrayDOF(ctx->daVect,nullspace[i],&nullspace_array[i]);CHKERRQ(ierr);
-  }
-  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coord_array);CHKERRQ(ierr);
-  for (k = zs; k < zs+zm; k++) {
-    for (j = ys; j < ys+ym; j++) {
-      for (i = xs; i < xs+xm; i++) {
-        nullspace_array[0][k][j][i][0] = 1;
-        nullspace_array[1][k][j][i][1] = 1;
-        nullspace_array[2][k][j][i][2] = 1;
-        nullspace_array[3][k][j][i][1] =  coord_array[k][j][i][2];
-        nullspace_array[3][k][j][i][2] = -coord_array[k][j][i][1];
-        nullspace_array[4][k][j][i][0] =  coord_array[k][j][i][2];
-        nullspace_array[4][k][j][i][2] = -coord_array[k][j][i][0];
-        nullspace_array[5][k][j][i][0] =  coord_array[k][j][i][1];
-        nullspace_array[5][k][j][i][1] = -coord_array[k][j][i][0];
-      }
-    }
-  }
-  
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coord_array);CHKERRQ(ierr);
-  for (i = 0; i<nullspacedim; i++) {
-    ierr = DMDAVecRestoreArrayDOF(ctx->daVect,nullspace[i],&nullspace_array[i]);CHKERRQ(ierr);
-  }
-  ierr = MatNullSpaceCreate(PETSC_COMM_WORLD,PETSC_FALSE,nullspacedim,nullspace,&nullsp);
-  for (i = 0; i<nullspacedim; i++) {
-    ierr = VecDestroy(&nullspace[i]);CHKERRQ(ierr);
-  }
-  ierr = KSPSetNullSpace(ksp,nullsp);CHKERRQ(ierr);
-  ierr = MatNullSpaceDestroy(&nullsp);CHKERRQ(ierr);
-  ierr = PetscFree(nullspace);CHKERRQ(ierr);
-  ierr = PetscFree(nullspace_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -2201,4 +2070,92 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
     ierr = BCView(&ctx->bcV[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
+}
+
+/*@
+   MatNullSpaceCreateRigidBody - create rigid body modes from coordinates
+
+   Collective on Vec
+
+   Input Argument:
+.  coords - block of coordinates of each node, must have block size set
+
+   Output Argument:
+.  sp - the null space
+
+   Level: advanced
+
+.seealso: MatNullSpaceCreate()
+@*/
+PetscErrorCode MatNullSpaceCreateRigidBody(Vec coords,MatNullSpace *sp)
+{
+  const PetscScalar *x;
+  PetscScalar *v[6],dots[3];
+  Vec vec[6];
+  PetscInt n,N,dim,nmodes,i,j;
+
+  VecGetBlockSize(coords,&dim);
+  VecGetLocalSize(coords,&n);
+  VecGetSize(coords,&N);
+  
+  n /= dim;
+  N /= dim;
+  switch (dim) {
+  case 1:
+    MatNullSpaceCreate(((PetscObject)coords)->comm,PETSC_TRUE,0,PETSC_NULL,sp);
+    break;
+  case 2:
+  case 3:
+    nmodes = (dim == 2) ? 3 : 6;
+    VecCreate(((PetscObject)coords)->comm,&vec[0]);
+    VecSetSizes(vec[0],dim*n,dim*N);
+    VecSetBlockSize(vec[0],dim);
+    VecSetUp(vec[0]);
+    for (i=1; i<nmodes; i++) {VecDuplicate(vec[0],&vec[i]);}
+    for (i=0; i<nmodes; i++) {VecGetArray(vec[i],&v[i]);}
+    VecGetArrayRead(coords,&x);
+    for (i=0; i<n; i++) {
+      if (dim == 2) {
+        v[0][i*2+0] = 1./N;
+        v[0][i*2+1] = 0.;
+        v[1][i*2+0] = 0.;
+        v[1][i*2+1] = 1./N;
+        /* Rotations */
+        v[2][i*2+0] = -x[i*2+1];
+        v[2][i*2+1] = x[i*2+0];
+      } else {
+        v[0][i*3+0] = 1./N;
+        v[0][i*3+1] = 0.;
+        v[0][i*3+2] = 0.;
+        v[1][i*3+0] = 0.;
+        v[1][i*3+1] = 1./N;
+        v[1][i*3+2] = 0.;
+        v[2][i*3+0] = 0.;
+        v[2][i*3+1] = 0.;
+        v[2][i*3+2] = 1./N;
+
+        v[3][i*3+0] = x[i*3+1];
+        v[3][i*3+1] = -x[i*3+0];
+        v[3][i*3+2] = 0.;
+        v[4][i*3+0] = 0.;
+        v[4][i*3+1] = -x[i*3+2];
+        v[4][i*3+2] = x[i*3+1];
+        v[5][i*3+0] = x[i*3+2];
+        v[5][i*3+1] = 0.;
+        v[5][i*3+2] = -x[i*3+0];
+      }
+    }
+    for (i=0; i<nmodes; i++) {VecRestoreArray(vec[i],&v[i]);}
+    VecRestoreArrayRead(coords,&x);
+    for (i=dim; i<nmodes; i++) {
+      /* Orthonormalize vec[i] against vec[0:dim] */
+      VecMDot(vec[i],i,vec,dots);
+      for (j=0; j<i; j++) dots[j] *= -1.;
+      VecMAXPY(vec[i],i,dots,vec);
+      VecNormalize(vec[i],PETSC_NULL);
+    }
+    MatNullSpaceCreate(((PetscObject)coords)->comm,PETSC_FALSE,nmodes,vec,sp);
+    for (i=0; i<nmodes; i++) {VecDestroy(&vec[i]);}
+  }
+  return(0);
 }

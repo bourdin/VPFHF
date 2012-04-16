@@ -5,7 +5,6 @@
  
  (c) 2011 B. Bourdin.C. Chukwudozie, LSU, K. Yoshioka, CHEVRON ETC
  */
-
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
@@ -46,7 +45,6 @@ extern PetscErrorCode VolumetricCrackOpening(VFCtx *ctx, VFFields *fields)
 	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr); 	
-
 	ierr = VecSet(fields->VolCrackOpening,0.);CHKERRQ(ierr);
 	ierr = DMGetLocalVector(ctx->daScal,&volcrackopening_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->VolCrackOpening,INSERT_VALUES,volcrackopening_local);CHKERRQ(ierr);
@@ -69,7 +67,6 @@ extern PetscErrorCode VolumetricCrackOpening(VFCtx *ctx, VFFields *fields)
 		}
 	}
 	ierr = MPI_Reduce(&MyVol_change_total1,&Vol_change_total1,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
-
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n###################################################################\n", Vol_change_total1);CHKERRQ(ierr);	
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n Crack volume calculated using gradv.u \t = %g\n", Vol_change_total1);CHKERRQ(ierr);	
 	
@@ -84,7 +81,6 @@ extern PetscErrorCode VolumetricCrackOpening(VFCtx *ctx, VFFields *fields)
 	ierr = DMLocalToGlobalEnd(ctx->daScal,volcrackopening_local,ADD_VALUES,fields->VolCrackOpening);CHKERRQ(ierr);
 	
 	ierr = CellToNodeInterpolation(ctx->daScal, fields->FVCellndof, fields->VolCrackOpening, ctx); CHKERRQ(ierr);
-
 	PetscFunctionReturn(0);
 }
 
@@ -141,9 +137,10 @@ extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal ***volcrackopenin
 	volcrackopening_array[ek][ej][ei] = volcrackopening_array[ek][ej][ei]/element_vol;
     PetscFunctionReturn(0);
 }     
+
 #undef __FUNCT__
 #define __FUNCT__ "CellToNodeInterpolation"
-extern PetscErrorCode CellToNodeInterpolation(DM dm, Vec node_vec, Vec cell_vec, VFCtx *ctx)
+extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VFCtx *ctx)
 {
 	PetscErrorCode ierr;
 	PetscInt		    dof;

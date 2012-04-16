@@ -43,7 +43,8 @@ int main(int argc,char **argv)
   ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,petscfilename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
   ierr = DMCreate(PETSC_COMM_WORLD,&daScal);CHKERRQ(ierr);
   ierr = DMLoad(daScal,viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  ierr = DMView(daScal,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+  //ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   
   ierr = DMDAGetReducedDA(daScal,3,&daVect);CHKERRQ(ierr);
   ierr = DMDAGetInfo(daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -67,8 +68,8 @@ int main(int argc,char **argv)
   /*
     Get coordinates from petsc binary files, set DA coordinates, and save coordinates in h5 file
   */
-  ierr = PetscSNPrintf(h5coordfilename,FILENAME_MAX,"%s.bin",prefix);CHKERRQ(ierr);
-  ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,h5coordfilename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+  //ierr = PetscSNPrintf(h5coordfilename,FILENAME_MAX,"%s.bin",prefix);CHKERRQ(ierr);
+  //ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,h5coordfilename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
   ierr = VecLoad(coordinates,viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   ierr = DMDASetCoordinates(daVect,coordinates);CHKERRQ(ierr);

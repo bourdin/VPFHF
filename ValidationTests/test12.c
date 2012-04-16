@@ -10,13 +10,14 @@
 #include "VFU.h"
 #include "VFFlow.h"
 
-VFCtx               ctx;
-VFFields            fields;
+VFCtx    ctx;
+VFFields fields;
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
 {
+<<<<<<< local
 	VFCtx               ctx;
 	VFFields            fields;
 	PetscErrorCode      ierr;
@@ -291,4 +292,3 @@ int main(int argc,char **argv)
 	ierr = PetscFinalize();
 	return(0);
 }
-
