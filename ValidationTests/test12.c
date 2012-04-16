@@ -17,7 +17,6 @@ VFFields fields;
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
 {
-<<<<<<< local
 	VFCtx               ctx;
 	VFFields            fields;
 	PetscErrorCode      ierr;
