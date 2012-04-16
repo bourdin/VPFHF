@@ -159,6 +159,7 @@ typedef struct {
 	Vec velocity;
 	Vec FVCellndof;
 	Vec FVCell;
+	Vec	VolCrackOpening;
 } VFFields;
 
 static const char *VFFieldNames[] = {

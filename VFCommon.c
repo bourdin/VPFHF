@@ -654,6 +654,10 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 	ierr = PetscObjectSetName((PetscObject) fields->FVCellndof,"FV Variablenodof");CHKERRQ(ierr);
 	ierr = VecSet(fields->FVCellndof,0.0);CHKERRQ(ierr);
 	
+	ierr = DMCreateGlobalVector(ctx->daScal,&fields->VolCrackOp);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) fields->VolCrackOp,"Volumetric Crack Opening");CHKERRQ(ierr);
+	ierr = VecSet(fields->VolCrackOp,0.0);CHKERRQ(ierr);
+	
 	/*
 	 Create optional penny shaped cracks
 	 */
