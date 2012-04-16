@@ -1,7 +1,7 @@
 include ../makefile.include	
 CFLAGS='-I..'
 
-all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test13
+all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13
 test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13
 
 include ${PETSC_DIR}/conf/variables
@@ -38,7 +38,7 @@ test9: test9.o ${VFOBJ} chkopts
 test10: test10.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
-test11: test1.o ${VFOBJ} chkopts
+test11: test11.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 test12: test12.o ${VFOBJ} chkopts
@@ -147,8 +147,8 @@ runtest9: test9
 
 runtest10: test10
 	@echo "Running " $@
-	-@for or in 0 1 2; do \
-	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -orientation $$or";\
+	-@for or in 0; do \
+	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -length .2 -orientation $$or";\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
 	if (${DIFF} -B  results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
@@ -165,7 +165,7 @@ runtest11: test11
 
 runtest12: test12
 	@echo "Running " $@
-	-@ARGS='-n 41,41,81 -l 1,1,2 -radius .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 21,21,21 -l 1,1,1 -height .2 -length .4 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -174,7 +174,7 @@ runtest12: test12
 
 runtest13: test13
 	@echo "Running " $@
-	-@ARGS='-n 41,41,81 -l 1,1,2 -radius .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 21,21,21 -l 1,1,1 -length .4 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ > $@.out 2>&1;\
 	if (${DIFF} -I '^#' results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\

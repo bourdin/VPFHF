@@ -176,7 +176,7 @@ extern PetscErrorCode ComputeXYZOpening(CartFE_Element3D *e, PetscInt ei, PetscI
 		dx_vfield_loc[eg] = 0.;
 		dy_vfield_loc[eg] = 0.;
 		dz_vfield_loc[eg] = 0.;		
-    du_loc[eg] = 0.;
+		du_loc[eg] = 0.;
 		dv_loc[eg] = 0.;
 		dw_loc[eg] = 0.;
 	}
@@ -263,7 +263,8 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm, Vec node_vec, Vec cell_vec,
 	PetscReal		****coords_array;
 	PetscReal		***vol_array;
 	Vec				volume;
-
+	PetscReal		nodal_sum = 0.;
+	PetscReal		cell_sum = 0.;
 	
 	PetscFunctionBegin;
 	ierr = DMDAGetInfo(dm,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -323,16 +324,22 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm, Vec node_vec, Vec cell_vec,
 				if(dof == 1)
 				{
 					node_array[ek][ej][ei] = node_array[ek][ej][ei]/vol_array[ek][ej][ei];
+					nodal_sum += PetscAbs(node_array[ek][ej][ei]);
+					cell_sum += PetscAbs(cell_array[ek][ej][ei]);
 				}
 				else
 				{
 					for(c = 0; c < dof; c++){
-					node_arraydof[ek][ej][ei][c] = cell_arraydof[ek][ej][ei][c]/vol_array[ek][ej][ei];
+						node_arraydof[ek][ej][ei][c] = node_arraydof[ek][ej][ei][c]/vol_array[ek][ej][ei];
+						nodal_sum += PetscAbs(node_arraydof[ek][ej][ei][c]);
+						cell_sum += PetscAbs(cell_arraydof[ek][ej][ei][c]);
 					}
 				}
 			}
 		}
 	}
+	printf("\nNodal sum = %f\n Cell sum = %f\n", nodal_sum, cell_sum);
+	
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx->daScal, volume,&vol_array);CHKERRQ(ierr);    
 	if(dof == 1){
