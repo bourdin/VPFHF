@@ -287,7 +287,7 @@ typedef struct {
 	PC                  pcP;
 	KSP                 kspP;
 	Vec                 RHSP;
-	
+	PetscReal			TotalCrackVolume;
 	/* 
 	 Global variables for Mixed Darcy Flow
 	 */
@@ -301,8 +301,8 @@ typedef struct {
 	Vec			        RHSVelP;
 	FlowUnit			units;
 	FlowCases			flowcase;
-	PetscReal			flowrate;
 	Vec				    Source;
+
 	
 	/*
 	 Global Variables for Heat Transfer

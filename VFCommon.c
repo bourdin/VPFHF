@@ -1047,6 +1047,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = VecDestroy(&fields->velocity);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->FVCell);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->FVCellndof);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->VolCrackOpening);CHKERRQ(ierr);
 	
 	ierr = PetscViewerDestroy(&ctx->energyviewer);CHKERRQ(ierr);
 	

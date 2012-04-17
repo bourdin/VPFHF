@@ -1592,7 +1592,6 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx)
 
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
   {
-    ctx->flowrate = 5.;                                                                                                                         /*Flow rate, assumed to be consistent with whatever flow units used for now*/
     ctx->units    = FieldUnits;
     ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",FlowUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
     /*	ctx->flowcase = ALLPRESSUREBC; */
