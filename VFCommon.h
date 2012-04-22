@@ -287,7 +287,7 @@ typedef struct {
 	PC                  pcP;
 	KSP                 kspP;
 	Vec                 RHSP;
-	PetscReal			TotalCrackVolume;
+	PetscReal			CrackVolume;
 	/* 
 	 Global variables for Mixed Darcy Flow
 	 */
