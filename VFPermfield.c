@@ -11,7 +11,7 @@
 
 #undef __FUNCT__
 #define __FUNCT__ "VolumetricCrackOpening"
-extern PetscErrorCode VolumetricCrackOpening(VFCtx *ctx, VFFields *fields)
+extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx, VFFields *fields)
 {
 	PetscErrorCode  ierr;
 	PetscInt		    ek, ej, ei;
@@ -66,9 +66,9 @@ extern PetscErrorCode VolumetricCrackOpening(VFCtx *ctx, VFFields *fields)
 			}
 		}
 	}
-	ierr = MPI_Reduce(&MyVol_change_total1,&Vol_change_total1,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
+	ierr = MPI_Reduce(&MyVol_change_total1,CrackVolume,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n###################################################################\n", Vol_change_total1);CHKERRQ(ierr);	
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n Crack volume calculated using gradv.u \t = %g\n", Vol_change_total1);CHKERRQ(ierr);	
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n Crack volume calculated using gradv.u \t = %g\n", *CrackVolume);CHKERRQ(ierr);	
 	
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr); 
@@ -134,7 +134,8 @@ extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal ***volcrackopenin
 		volcrackopening_array[ek][ej][ei] += (udispl_loc[eg]*dx_vfield_loc[eg] + vdispl_loc[eg]*dy_vfield_loc[eg] + wdispl_loc[eg]*dz_vfield_loc[eg])*e->weight[eg]; 
 		element_vol += e->weight[eg];
 	}
-	volcrackopening_array[ek][ej][ei] = volcrackopening_array[ek][ej][ei]/element_vol;
+//	volcrackopening_array[ek][ej][ei] = volcrackopening_array[ek][ej][ei]/element_vol;
+	volcrackopening_array[ek][ej][ei] = volcrackopening_array[ek][ej][ei];
     PetscFunctionReturn(0);
 }     
 
@@ -159,6 +160,7 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 	PetscReal		****coords_array;
 	PetscReal		***vol_array;
 	Vec				volume;
+	Vec				volume_local;
 	PetscReal		nodal_sum = 0.;
 	PetscReal		cell_sum = 0.;
 	
@@ -168,10 +170,15 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 	ierr = DMDAGetCorners(dm,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = VecSet(node_vec,0.);CHKERRQ(ierr);
+	
 	ierr = DMCreateGlobalVector(ctx->daScal, &volume);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject) volume,"Volume");CHKERRQ(ierr);
-	ierr = VecSet(volume,0.0);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScal,volume,&vol_array);CHKERRQ(ierr);
+	ierr = VecSet(volume,0.0);CHKERRQ(ierr);	
+	ierr = DMGetLocalVector(ctx->daScal,&volume_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScal,volume,INSERT_VALUES,volume_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScal,volume,INSERT_VALUES,volume_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,volume_local,&vol_array);CHKERRQ(ierr);	
+	
 	if (dof == 1){
 		ierr = DMDAVecGetArray(dm, node_vec,&node_array);CHKERRQ(ierr);    
 		ierr = DMDAVecGetArray(dm, cell_vec,&cell_array);CHKERRQ(ierr);    
@@ -235,9 +242,11 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 		}
 	}	
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"\nNodal sum\t= %g\nCell sum\t= %g\n", nodal_sum, cell_sum);CHKERRQ(ierr);	
-	
-	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArray(ctx->daScal, volume,&vol_array);CHKERRQ(ierr);    
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);	
+	ierr = DMDAVecRestoreArray(ctx->daScal,volume_local,&vol_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daScal,&volume_local);CHKERRQ(ierr); 
+	ierr = DMLocalToGlobalBegin(ctx->daScal,volume_local,ADD_VALUES,volume);CHKERRQ(ierr);
+	ierr = DMLocalToGlobalEnd(ctx->daScal,volume_local,ADD_VALUES,volume);CHKERRQ(ierr);
 	if(dof == 1){
 		ierr = DMDAVecRestoreArray(dm, node_vec,&node_array);CHKERRQ(ierr);    
 		ierr = DMDAVecRestoreArray(dm, cell_vec,&cell_array);CHKERRQ(ierr);    
