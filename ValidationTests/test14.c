@@ -281,11 +281,15 @@ int main(int argc,char **argv)
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Print pressure ................... = %g\n", p);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
 		
+		
+		ierr = VecScale(fields.U,p);CHKERRQ(ierr);
+		ierr = VecSet(fields.pressure,0);CHKERRQ(ierr);
+		/*
 		ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.U,&U_array);CHKERRQ(ierr);
 		for (ek = zs; ek < zs+zm; ek++) {
 			for (ej = ys; ej < ys+ym; ej++) {
 				for (ei = xs; ei < xs+xm; ei++) {
-					for(c = 0; c < 3; c++){
+					for (c = 0; c < 3; c++) {
 						U_array[ek][ej][ei][c] = U_array[ek][ej][ei][c] * p;
 					}
 				}
@@ -301,12 +305,13 @@ int main(int argc,char **argv)
 			}
 		}
 		ierr = DMDAVecRestoreArray(ctx.daScal,fields.pressure,&pressure_array);CHKERRQ(ierr);
+		*/
 		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
-		 ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
-		 ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
-		 ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
-		 altminit++;
-	 } while (errV > ctx.altmintol && altminit <= ctx.altminmaxit);
+		ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
+		ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
+		altminit++;
+	} while (errV > ctx.altmintol && altminit <= ctx.altminmaxit);
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
 				ierr = FieldsH5Write(&ctx,&fields);
