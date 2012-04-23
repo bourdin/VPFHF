@@ -35,7 +35,7 @@ int main(int argc,char **argv)
 	PetscReal           InsituWork = 0;
 	PetscReal           SurfaceEnergy = 0;
 	char                filename[FILENAME_MAX];
-	PetscReal           p = 1e-3;
+	PetscReal           p = 1.;
 	PetscReal           ***pmult_array;  
 	PetscReal           ****vfperm_array;
 	PetscInt			altminit=1;
@@ -44,6 +44,7 @@ int main(int argc,char **argv)
 	PetscReal			q = 2.67e-4;
 	PetscReal			****U_array;
 	PetscReal			***FVnodof_array;
+	PetscReal           ***pressure_array;  
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -259,7 +260,6 @@ int main(int argc,char **argv)
 	ctx.hasCrackPressure = PETSC_TRUE;
 	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
 
-	p = 1.;	
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
@@ -275,44 +275,38 @@ int main(int argc,char **argv)
 
 		ierr = VecSet(fields.pressure,1.);CHKERRQ(ierr);
 		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-		
+
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 		p = q*ctx.timestep/ctx.CrackVolume;
-		
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"Print pressure ................... = %g\n", p);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
+		
 		ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.U,&U_array);CHKERRQ(ierr);
 		for (ek = zs; ek < zs+zm; ek++) {
 			for (ej = ys; ej < ys+ym; ej++) {
 				for (ei = xs; ei < xs+xm; ei++) {
 					for(c = 0; c < 3; c++){
-						U_array[ek][ej][ei][c] = U_array[ek][ej][ei][c]*p;
+						U_array[ek][ej][ei][c] = U_array[ek][ej][ei][c] * p;
 					}
 				}
 			}
 		}
-		ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.U,&U_array);CHKERRQ(ierr);
-
-		ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
+		ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.U,&U_array);CHKERRQ(ierr);	
+		ierr = DMDAVecGetArray(ctx.daScal,fields.pressure,&pressure_array);CHKERRQ(ierr);
+		for (ek = zs; ek < zs+zm; ek++) {
+			for (ej = ys; ej < ys+ym; ej++) {
+				for (ei = xs; ei < xs+xm; ei++) {
+						pressure_array[ek][ej][ei] = p;
+				}
+			}
+		}
+		ierr = DMDAVecRestoreArray(ctx.daScal,fields.pressure,&pressure_array);CHKERRQ(ierr);
 		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
-
-
 		 ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
 		 ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
 		 ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
 		 altminit++;
 	 } while (errV > ctx.altmintol && altminit <= ctx.altminmaxit);
-		ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.U,&U_array);CHKERRQ(ierr);
-		for (ek = zs; ek < zs+zm; ek++) {
-			for (ej = ys; ej < ys+ym; ej++) {
-				for (ei = xs; ei < xs+xm; ei++) {
-					for(c = 0; c < 3; c++){
-						U_array[ek][ej][ei][c] = p * U_array[ek][ej][ei][c];
-					}
-				}
-			}
-		}
-		ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.U,&U_array);CHKERRQ(ierr);
-
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
 				ierr = FieldsH5Write(&ctx,&fields);
@@ -321,7 +315,6 @@ int main(int argc,char **argv)
 				ierr = FieldsBinaryWrite(&ctx,&fields);
 				break; 
 		}
-
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n Final Crack volume\t = %g, Pressure\t= %g\n\n", p*ctx.CrackVolume, p);CHKERRQ(ierr);	
 		ctx.ElasticEnergy=0;
 		ctx.InsituWork=0;
@@ -337,8 +330,7 @@ int main(int argc,char **argv)
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
 		}
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
-			//p = 1.;	
-		altminit = 0;
+		altminit = 0.;
 	}
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
