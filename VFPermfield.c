@@ -161,8 +161,12 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 	PetscReal		***vol_array;
 	Vec				volume;
 	Vec				volume_local;
-	PetscReal		nodal_sum = 0.;
-	PetscReal		cell_sum = 0.;
+	PetscReal		nodal_sum_local = 0.;
+	PetscReal		cell_sum_local = 0.;
+	PetscReal		TotalNodeSum = 0.;
+	PetscReal		TotalCellSum = 0.;
+	Vec				node_local;
+	Vec				cell_local;
 	
 	PetscFunctionBegin;
 	ierr = DMDAGetInfo(dm,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -179,13 +183,17 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 	ierr = DMGlobalToLocalEnd(ctx->daScal,volume,INSERT_VALUES,volume_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,volume_local,&vol_array);CHKERRQ(ierr);	
 	
+	ierr = DMGetLocalVector(dm,&node_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(dm,node_vec,INSERT_VALUES,node_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(dm,node_vec,INSERT_VALUES,node_local);CHKERRQ(ierr);
+	
 	if (dof == 1){
-		ierr = DMDAVecGetArray(dm, node_vec,&node_array);CHKERRQ(ierr);    
+		ierr = DMDAVecGetArray(dm, node_local,&node_array);CHKERRQ(ierr);    
 		ierr = DMDAVecGetArray(dm, cell_vec,&cell_array);CHKERRQ(ierr);    
 	}		
 	else
 	{
-		ierr = DMDAVecGetArrayDOF(dm, node_vec,&node_arraydof);CHKERRQ(ierr);    
+		ierr = DMDAVecGetArrayDOF(dm, node_local,&node_arraydof);CHKERRQ(ierr);    
 		ierr = DMDAVecGetArrayDOF(dm, cell_vec,&cell_arraydof);CHKERRQ(ierr);   
 	}
 	if (xs+xm == nx) xm--;
@@ -218,6 +226,33 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 			}
 		}
 	}
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);	
+	ierr = DMDAVecRestoreArray(ctx->daScal,volume_local,&vol_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daScal,&volume_local);CHKERRQ(ierr); 
+	ierr = DMLocalToGlobalBegin(ctx->daScal,volume_local,ADD_VALUES,volume);CHKERRQ(ierr);
+	ierr = DMLocalToGlobalEnd(ctx->daScal,volume_local,ADD_VALUES,volume);CHKERRQ(ierr);
+	if(dof == 1){
+		ierr = DMDAVecRestoreArray(dm, node_local,&node_array);CHKERRQ(ierr);    
+	}		
+	else
+	{
+		ierr = DMDAVecRestoreArrayDOF(dm, node_local,&node_arraydof);CHKERRQ(ierr);    
+	}
+	ierr = DMRestoreLocalVector(dm,&node_local);CHKERRQ(ierr); 
+	ierr = DMLocalToGlobalBegin(dm,node_local,ADD_VALUES,node_vec);CHKERRQ(ierr);
+	ierr = DMLocalToGlobalEnd(dm,node_local,ADD_VALUES,node_vec);CHKERRQ(ierr);
+	
+	
+	
+	if (dof == 1){
+		ierr = DMDAVecGetArray(dm, node_vec,&node_array);CHKERRQ(ierr);    
+	}		
+	else
+	{
+		ierr = DMDAVecGetArrayDOF(dm, node_vec,&node_arraydof);CHKERRQ(ierr);    
+	}
+	ierr = DMDAVecGetArray(ctx->daScal,volume,&vol_array);CHKERRQ(ierr);
+	
 	if (xs+xm == nx-1) xm++;
 	if (ys+ym == ny-1) ym++;
 	if (zs+zm == nz-1) zm++;	
@@ -227,26 +262,21 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 				if(dof == 1)
 				{
 					node_array[ek][ej][ei] = node_array[ek][ej][ei]/vol_array[ek][ej][ei];
-					nodal_sum += PetscAbs(node_array[ek][ej][ei]);
-					cell_sum += PetscAbs(cell_array[ek][ej][ei]);
+					nodal_sum_local += PetscAbs(node_array[ek][ej][ei]);
+					cell_sum_local += PetscAbs(cell_array[ek][ej][ei]);
 				}
 				else
 				{
 					for(c = 0; c < dof; c++){
 						node_arraydof[ek][ej][ei][c] = node_arraydof[ek][ej][ei][c]/vol_array[ek][ej][ei];
-						nodal_sum += PetscAbs(node_arraydof[ek][ej][ei][c]);
-						cell_sum += PetscAbs(cell_arraydof[ek][ej][ei][c]);
+						nodal_sum_local += PetscAbs(node_arraydof[ek][ej][ei][c]);
+						cell_sum_local += PetscAbs(cell_arraydof[ek][ej][ei][c]);
 					}
 				}
 			}
 		}
 	}	
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"\nNodal sum\t= %g\nCell sum\t= %g\n", nodal_sum, cell_sum);CHKERRQ(ierr);	
-	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);	
-	ierr = DMDAVecRestoreArray(ctx->daScal,volume_local,&vol_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScal,&volume_local);CHKERRQ(ierr); 
-	ierr = DMLocalToGlobalBegin(ctx->daScal,volume_local,ADD_VALUES,volume);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daScal,volume_local,ADD_VALUES,volume);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx->daScal,volume,&vol_array);CHKERRQ(ierr);
 	if(dof == 1){
 		ierr = DMDAVecRestoreArray(dm, node_vec,&node_array);CHKERRQ(ierr);    
 		ierr = DMDAVecRestoreArray(dm, cell_vec,&cell_array);CHKERRQ(ierr);    
@@ -256,5 +286,8 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 		ierr = DMDAVecRestoreArrayDOF(dm, node_vec,&node_arraydof);CHKERRQ(ierr);    
 		ierr = DMDAVecRestoreArrayDOF(dm, cell_vec,&cell_arraydof);CHKERRQ(ierr);    
 	}
+	ierr = MPI_Reduce(&nodal_sum_local,&TotalNodeSum,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
+	ierr = MPI_Reduce(&cell_sum_local,&TotalCellSum,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"\nNodal sum\t= %g\nCell sum\t= %g\n", TotalNodeSum, TotalCellSum);CHKERRQ(ierr);	
     PetscFunctionReturn(0);
 }
