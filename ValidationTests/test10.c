@@ -155,7 +155,7 @@ int main(int argc,char **argv)
   }
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Total Mechanical energy:  %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 
-  ierr = CrackOpeningDisplacement(&ctx,&fields);CHKERRQ(ierr);
+//  ierr = CrackOpeningDisplacement(&ctx,&fields);CHKERRQ(ierr);
 
   ierr = DMDAVecGetArray(ctx.daScal,fields.pmult,&pmult_array);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&vfperm_array);CHKERRQ(ierr);
@@ -172,7 +172,7 @@ int main(int argc,char **argv)
   ierr = DMDAVecRestoreArray(ctx.daScal,fields.pmult,&pmult_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&vfperm_array);CHKERRQ(ierr);
 
-  ierr = CellToNodeInterpolation(ctx.daScal,fields.FVCellndof,fields.pmult,&ctx);CHKERRQ(ierr);
+//  ierr = CellToNodeInterpolation(ctx.daScal,fields.FVCellndof,fields.pmult,&ctx);CHKERRQ(ierr);
 
 
   /*

@@ -281,26 +281,18 @@ int main(int argc,char **argv)
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Print pressure ................... = %g\n", p);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
 		
-		ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.U,&U_array);CHKERRQ(ierr);
-		for (ek = zs; ek < zs+zm; ek++) {
-			for (ej = ys; ej < ys+ym; ej++) {
-				for (ei = xs; ei < xs+xm; ei++) {
-					for(c = 0; c < 3; c++){
-						U_array[ek][ej][ei][c] = U_array[ek][ej][ei][c] * p;
-					}
-				}
-			}
-		}
-		ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.U,&U_array);CHKERRQ(ierr);	
-		ierr = DMDAVecGetArray(ctx.daScal,fields.pressure,&pressure_array);CHKERRQ(ierr);
-		for (ek = zs; ek < zs+zm; ek++) {
-			for (ej = ys; ej < ys+ym; ej++) {
-				for (ei = xs; ei < xs+xm; ei++) {
-						pressure_array[ek][ej][ei] = p;
-				}
-			}
-		}
-		ierr = DMDAVecRestoreArray(ctx.daScal,fields.pressure,&pressure_array);CHKERRQ(ierr);
+		
+/*
+		ierr = PetscSynchronizedPrintf(PETSC_COMM_WORLD,"\nCrack volume   ................... = %g\n",ctx.CrackVolume);CHKERRQ(ierr);
+		ierr = PetscSynchronizedPrintf(PETSC_COMM_WORLD,"Print pressure ................... = %g\n", p);CHKERRQ(ierr);
+		ierr = PetscSynchronizedPrintf(PETSC_COMM_WORLD,"Elastic Energy:   ................... = %g\n",ctx.ElasticEnergy);CHKERRQ(ierr);
+		ierr = PetscSynchronizedFlush(PETSC_COMM_WORLD);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
+*/
+		
+		ierr = VecScale(fields.U,p);CHKERRQ(ierr);
+		ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
+
 		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
 		 ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
 		 ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
