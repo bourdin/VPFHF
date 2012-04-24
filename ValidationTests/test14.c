@@ -281,15 +281,6 @@ int main(int argc,char **argv)
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Print pressure ................... = %g\n", p);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
 		
-		
-/*
-		ierr = PetscSynchronizedPrintf(PETSC_COMM_WORLD,"\nCrack volume   ................... = %g\n",ctx.CrackVolume);CHKERRQ(ierr);
-		ierr = PetscSynchronizedPrintf(PETSC_COMM_WORLD,"Print pressure ................... = %g\n", p);CHKERRQ(ierr);
-		ierr = PetscSynchronizedPrintf(PETSC_COMM_WORLD,"Elastic Energy:   ................... = %g\n",ctx.ElasticEnergy);CHKERRQ(ierr);
-		ierr = PetscSynchronizedFlush(PETSC_COMM_WORLD);CHKERRQ(ierr);
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
-*/
-		
 		ierr = VecScale(fields.U,p);CHKERRQ(ierr);
 		ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 
