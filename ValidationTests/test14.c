@@ -280,16 +280,14 @@ int main(int argc,char **argv)
 		p = q*ctx.timestep/ctx.CrackVolume;
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Print pressure ................... = %g\n", p);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
-		
 		ierr = VecScale(fields.U,p);CHKERRQ(ierr);
 		ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
-
 		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
-		 ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
-		 ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
-		 ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
-		 altminit++;
-	 } while (errV > ctx.altmintol && altminit <= ctx.altminmaxit);
+		ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
+		ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
+		altminit++;
+	} while (errV > ctx.altmintol && altminit <= ctx.altminmaxit);
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
 				ierr = FieldsH5Write(&ctx,&fields);

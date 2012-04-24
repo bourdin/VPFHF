@@ -623,8 +623,10 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
   ierr = VF_IrrevApplyEQ(ctx->KV,ctx->RHSV,fields->V,fields->VIrrev,&ctx->vfprop,ctx);CHKERRQ(ierr);
   
   if (ctx->verbose > 1) {
-    ierr = MatView(ctx->KV,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
     ierr = VecView(ctx->RHSV,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+    ierr = VecView(fields->U,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+    
+    //ierr = MatView(ctx->KV,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
   ierr = PetscLogStagePush(ctx->vflog.VF_VSolverStage);CHKERRQ(ierr);
   ierr = KSPSolve(ctx->kspV,ctx->RHSV,fields->V);CHKERRQ(ierr);
