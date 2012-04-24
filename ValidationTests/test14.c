@@ -278,7 +278,6 @@ int main(int argc,char **argv)
 
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 		p = q*ctx.timestep/ctx.CrackVolume;
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"Print pressure ................... = %g\n", p);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
 		ierr = VecScale(fields.U,p);CHKERRQ(ierr);
 		ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
