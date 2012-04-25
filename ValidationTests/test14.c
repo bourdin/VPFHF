@@ -17,6 +17,7 @@ VFFields fields;
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
 {
+	PetscViewer			viewer;
 	VFCtx               ctx;
 	VFFields            fields;
 	PetscErrorCode      ierr;
@@ -265,17 +266,23 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 
+	PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
+	PetscViewerSetType(viewer, PETSCVIEWERASCII);
+	PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);
+	PetscViewerFileSetName(viewer, "pressure.txt");
+	PetscViewerASCIIPrintf(viewer, "Time step \t Volume \t Pressure\n");
+
+	
+	
 	ctx.timevalue = 0;
-	q = 2.e-3;
-	ctx.maxtimestep = 20;
+	q = 1.e-3;
+	ctx.maxtimestep = 100;
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		p = 1.;
 	do {
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit, p);CHKERRQ(ierr);
-
 		ierr = VecSet(fields.pressure,1.);CHKERRQ(ierr);
 		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 		p = q*ctx.timestep/ctx.CrackVolume;
 		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
@@ -287,6 +294,7 @@ int main(int argc,char **argv)
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
 		altminit++;
 	} while (errV > ctx.altmintol && altminit <= ctx.altminmaxit);
+		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p);
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
 				ierr = FieldsH5Write(&ctx,&fields);
@@ -312,6 +320,8 @@ int main(int argc,char **argv)
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 		altminit = 0.;
 	}
+	PetscViewerFlush(viewer);CHKERRQ(ierr);
+	PetscViewerDestroy(&viewer);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
