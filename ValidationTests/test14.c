@@ -37,6 +37,8 @@ int main(int argc,char **argv)
 	PetscReal           SurfaceEnergy = 0;
 	char                filename[FILENAME_MAX];
 	PetscReal           p = 1.;
+	PetscReal           p_old = 1.;
+	PetscReal           p_epsilon = 1.e-6;
 	PetscReal           ***pmult_array;  
 	PetscReal           ****vfperm_array;
 	PetscInt			altminit=1;
@@ -276,10 +278,11 @@ int main(int argc,char **argv)
 	
 	ctx.timevalue = 0;
 	q = 1.e-3;
-	ctx.maxtimestep = 100;
+	ctx.maxtimestep = 10;
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		p = 1.;
 	do {
+		p_old = p;
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit, p);CHKERRQ(ierr);
 		ierr = VecSet(fields.pressure,1.);CHKERRQ(ierr);
 		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
@@ -292,8 +295,10 @@ int main(int argc,char **argv)
 		ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
 		ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on p: %e\n", PetscAbs(p-p_old));CHKERRQ(ierr);
 		altminit++;
-	} while (errV > ctx.altmintol && altminit <= ctx.altminmaxit);
+	} while (PetscAbs(p-p_old) >= 1e-6 && altminit <= ctx.altminmaxit);
+			/*	} while (errV > ctx.altmintol && altminit <= ctx.altminmaxit && PetscAbs(p-p_old) >= 1e-7);	*/
 		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p);
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
