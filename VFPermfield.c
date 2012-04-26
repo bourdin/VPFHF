@@ -135,7 +135,6 @@ extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal *CrackVolume_loca
 		volcrackopening_array[ek][ej][ei] += (udispl_loc[eg]*dx_vfield_loc[eg] + vdispl_loc[eg]*dy_vfield_loc[eg] + wdispl_loc[eg]*dz_vfield_loc[eg])*e->weight[eg]; 
 		element_vol += e->weight[eg];
 		*CrackVolume_local += (udispl_loc[eg]*dx_vfield_loc[eg] + vdispl_loc[eg]*dy_vfield_loc[eg] + wdispl_loc[eg]*dz_vfield_loc[eg])*e->weight[eg]; 
-		element_vol += e->weight[eg];
 	}
 	volcrackopening_array[ek][ej][ei] = volcrackopening_array[ek][ej][ei]/element_vol;
 	ierr = PetscFree3(dx_vfield_loc,dy_vfield_loc,dz_vfield_loc);CHKERRQ(ierr);
@@ -171,7 +170,6 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 	PetscReal		TotalNodeSum = 0.;
 	PetscReal		TotalCellSum = 0.;
 	Vec				node_local;
-	Vec				cell_local;
 	
 	PetscFunctionBegin;
 	ierr = DMDAGetInfo(dm,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -237,17 +235,15 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 	ierr = DMLocalToGlobalBegin(ctx->daScal,volume_local,ADD_VALUES,volume);CHKERRQ(ierr);
 	ierr = DMLocalToGlobalEnd(ctx->daScal,volume_local,ADD_VALUES,volume);CHKERRQ(ierr);
 	if(dof == 1){
-		ierr = DMDAVecRestoreArray(dm, node_local,&node_array);CHKERRQ(ierr);    
+		ierr = DMDAVecRestoreArray(dm, node_local,&node_array);CHKERRQ(ierr);  
 	}		
 	else
 	{
-		ierr = DMDAVecRestoreArrayDOF(dm, node_local,&node_arraydof);CHKERRQ(ierr);    
+		ierr = DMDAVecRestoreArrayDOF(dm, node_local,&node_arraydof);CHKERRQ(ierr); 
 	}
 	ierr = DMRestoreLocalVector(dm,&node_local);CHKERRQ(ierr); 
 	ierr = DMLocalToGlobalBegin(dm,node_local,ADD_VALUES,node_vec);CHKERRQ(ierr);
 	ierr = DMLocalToGlobalEnd(dm,node_local,ADD_VALUES,node_vec);CHKERRQ(ierr);
-	
-	
 	
 	if (dof == 1){
 		ierr = DMDAVecGetArray(dm, node_vec,&node_array);CHKERRQ(ierr);    
@@ -257,7 +253,6 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 		ierr = DMDAVecGetArrayDOF(dm, node_vec,&node_arraydof);CHKERRQ(ierr);    
 	}
 	ierr = DMDAVecGetArray(ctx->daScal,volume,&vol_array);CHKERRQ(ierr);
-	
 	if (xs+xm == nx-1) xm++;
 	if (ys+ym == ny-1) ym++;
 	if (zs+zm == nz-1) zm++;	
