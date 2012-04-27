@@ -204,7 +204,7 @@ runtest14: test14
 
 runtest15: test15
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .2 -length .4 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
