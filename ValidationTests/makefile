@@ -212,6 +212,6 @@ runtest15: test15
 	${RM} -f $@.out
 
 clean::
-	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15
+	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 pressure.txt
 	-rm -f runtest*
 	-rm -f TEST*
