@@ -201,6 +201,21 @@ typedef struct {
 } VFPennyCrack;
 
 typedef struct {
+	char          name[256];
+	PetscReal     corners[9];
+	/*
+	Corner allocation:
+	
+	[6,7,8]
+	   +---------------------+
+	   |                     |
+	   |                     |
+	   |                     |
+	   +---------------------+
+	[0,1,2]               [3,4,5]   
+} VFRectangularCrack;
+
+typedef struct {
 	PetscReal         perm;    /* Permeability in m^2 muliply by 1e12 */
 	PetscReal         por;     /* Porosity */
 	PetscReal         Pinit;   /* Initial Pressure in MPa*/
