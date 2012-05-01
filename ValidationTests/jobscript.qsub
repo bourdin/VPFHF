@@ -1,0 +1,15 @@
+#! /bin/bash
+#PBS -q 
+#PBS -M cchukw1@tigers.lsu.edu
+#PBS -m abe
+#PBS -l nodes=12:ppn=12
+#PBS -l walltime=50:00:00
+#PBS -V
+#PBS -N 2D_Hydraulicfrac
+
+export WORK_DIR=/Volumes/VTrak1/Users/cchukw1/vf-chevron/ValidationTests
+export NPROCS=`wc -l $PBS_NODEFILE |gawk '//{print $1}'`
+cd $WORK_DIR
+
+mpirun -machinefile $PBS_NODEFILE -np $NPROCS test15
+

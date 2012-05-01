@@ -34,13 +34,13 @@ int main(int argc,char **argv)
 	PetscReal           InsituWork = 0;
 	PetscReal           SurfaceEnergy = 0;
 	char                filename[FILENAME_MAX];
-	PetscReal           p;
+	PetscReal           p = 1.;
 	PetscReal           p_old;
-	PetscReal           p_epsilon = 1.e-6;
+	PetscReal           p_epsilon = 1.e-5;
 	PetscInt			altminit=1;
 	Vec					Vold;
 	PetscReal			errV=1e+10;
-	PetscReal			q=1.e-5;
+	PetscReal			q=1.e-3;
 	
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -221,10 +221,10 @@ int main(int argc,char **argv)
 	PetscViewerSetType(viewer, PETSCVIEWERASCII);
 	PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);
 	PetscViewerFileSetName(viewer, "pressure.txt");
-	PetscViewerASCIIPrintf(viewer, "Time step \t Volume \t Pressure\n");
+	PetscViewerASCIIPrintf(viewer, "Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \n");
 	
 	ctx.timevalue = 0;
-	ctx.maxtimestep = 2;
+	ctx.maxtimestep = 150;
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		p = 1.;
 		do {
@@ -244,11 +244,9 @@ int main(int argc,char **argv)
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on p: %e\n", PetscAbs(p-p_old));CHKERRQ(ierr);
 			altminit++;
-		} while (PetscAbs(p-p_old) >= 1e-6 && altminit <= ctx.altminmaxit);
+		} while (PetscAbs(p-p_old) >= p_epsilon && altminit <= ctx.altminmaxit);
 		/*	} while (errV > ctx.altmintol && altminit <= ctx.altminmaxit && PetscAbs(p-p_old) >= 1e-7);	*/
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n Final Crack volume\t = %g, Pressure\t= %g\n\n", p*ctx.CrackVolume, p);CHKERRQ(ierr);	
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
-		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p);
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
 				ierr = FieldsH5Write(&ctx,&fields);
@@ -262,7 +260,7 @@ int main(int argc,char **argv)
 		ctx.PressureWork = 0.;
 		ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
 		ctx.TotalEnergy = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork;
-		
+		/*
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
 		if (ctx.hasCrackPressure) {
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:   %e\n",ctx.PressureWork);CHKERRQ(ierr);
@@ -270,7 +268,9 @@ int main(int argc,char **argv)
 		if (ctx.hasInsitu) {
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
 		}
+		*/
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
+		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g \t %g \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p, ctx.InsituWork, ctx.ElasticEnergy, ctx.PressureWork);
 		altminit = 0.;
 	}
 	PetscViewerFlush(viewer);CHKERRQ(ierr);
