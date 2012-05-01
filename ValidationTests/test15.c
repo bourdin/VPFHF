@@ -221,7 +221,7 @@ int main(int argc,char **argv)
 	PetscViewerSetType(viewer, PETSCVIEWERASCII);
 	PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);
 	PetscViewerFileSetName(viewer, "pressure.txt");
-	PetscViewerASCIIPrintf(viewer, "Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \n");
+	PetscViewerASCIIPrintf(viewer, "Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \t TotalEnergy \n");
 	
 	ctx.timevalue = 0;
 	ctx.maxtimestep = 150;
@@ -268,9 +268,9 @@ int main(int argc,char **argv)
 		if (ctx.hasInsitu) {
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
 		}
-		*/
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
-		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g \t %g \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p, ctx.InsituWork, ctx.ElasticEnergy, ctx.PressureWork);
+		*/
+		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g \t %g \t %g \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p, ctx.InsituWork, ctx.ElasticEnergy, ctx.PressureWork, ctx.TotalEnergy);
 		altminit = 0.;
 	}
 	PetscViewerFlush(viewer);CHKERRQ(ierr);
