@@ -11,5 +11,5 @@ export WORK_DIR=/Volumes/VTrak1/Users/cchukw1/vf-chevron/ValidationTests
 export NPROCS=`wc -l $PBS_NODEFILE |gawk '//{print $1}'`
 cd $WORK_DIR
 
-mpirun -machinefile $PBS_NODEFILE -np $NPROCS test15
+mpirun -machinefile $PBS_NODEFILE -np $NPROCS ./test15 -n 401,401,2 -l 4.,4.,0.01 -epsilon 0.01
 
