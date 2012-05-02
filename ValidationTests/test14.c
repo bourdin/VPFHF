@@ -274,6 +274,7 @@ int main(int argc,char **argv)
 	ctx.timevalue = 0;
 	q = 1.e-3;
 	ctx.maxtimestep = 10;
+
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		p = 1.;
 	do {

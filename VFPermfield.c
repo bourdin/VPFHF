@@ -21,12 +21,12 @@ extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx,
 	PetscReal		    hx,hy,hz;
 	PetscReal			****coords_array;
 	PetscReal			****u_array;
-	Vec					  u_local;
+	Vec					u_local;
 	PetscReal			***v_array;
 	Vec				    v_local;
     PetscReal			MyVol_change_total1 = 0;
 	PetscReal			***volcrackopening_array;
-	Vec					  volcrackopening_local;   
+	Vec					volcrackopening_local;   
 	PetscReal			myCrackVolumeLocal = 0.,myCrackVolume = 0.;
 	
 	
@@ -147,8 +147,8 @@ extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal *CrackVolume_loca
 #define __FUNCT__ "CellToNodeInterpolation"
 extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VFCtx *ctx)
 {
-	PetscErrorCode ierr;
-	PetscInt		    dof;
+	PetscErrorCode  ierr;
+	PetscInt		dof;
 	PetscInt        xs,xm,nx;
 	PetscInt        ys,ym,ny;
 	PetscInt        zs,zm,nz;
