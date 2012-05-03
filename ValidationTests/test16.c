@@ -167,7 +167,7 @@ int main(int argc,char **argv)
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on p: %e\n", PetscAbs(p-p_old));CHKERRQ(ierr);
 		altminit++;
-		if (altminit >= 100){
+		if (altminit >= 200){
 		  vol_inj -= q;
 		  q = 0.5 * q;
 		  altminit = 0;
