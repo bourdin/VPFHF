@@ -214,6 +214,15 @@ runtest15: test15
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
+runtest16: test16
+	@echo "Running " $@
+	-@ARGS='-n 21,21,21 -l 1,1,1 -radius 0.1 -orientation 1 -nu 0.2 -epsilon 0.05 -eta 1e-8 -maxtimestep 1000 -rate 1e-10 -Gc 1.22e-13 -pinit 1e-6';\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n 8 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	if (${DIFF} -B results/$@.out $@.out) then true; \
+	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
+	${RM} -f $@.out
+
 clean::
 	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 pressure.txt
 	-rm -f runtest*
