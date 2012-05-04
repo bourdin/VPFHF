@@ -18,6 +18,7 @@ VFFields            fields;
 int main(int argc,char **argv)
 {
 	PetscViewer			viewer;
+	PetscViewer         logviewer;
 	VFCtx               ctx;
 	VFFields            fields;
 	PetscErrorCode      ierr;
@@ -34,14 +35,13 @@ int main(int argc,char **argv)
 	PetscReal           InsituWork = 0;
 	PetscReal           SurfaceEnergy = 0;
 	char                filename[FILENAME_MAX];
-	PetscReal           p = 1.;
+	PetscReal           p;
 	PetscReal           p_old;
 	PetscReal           p_epsilon = 1.e-5;
 	PetscInt			altminit=1;
 	Vec					Vold;
 	PetscReal			errV=1e+10;
-	PetscReal			q=1.e-3;
-	
+	PetscReal			q=2.e-4;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -212,10 +212,7 @@ int main(int argc,char **argv)
 	ctx.hasCrackPressure = PETSC_TRUE;
 	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
 	
-	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
-	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
+
 	
 	PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
 	PetscViewerSetType(viewer, PETSCVIEWERASCII);
@@ -223,15 +220,19 @@ int main(int argc,char **argv)
 	PetscViewerFileSetName(viewer, "pressure.txt");
 	PetscViewerASCIIPrintf(viewer, "Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \t TotalEnergy \n");
 	
+	p = 1.;
+	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
+	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
+	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
+	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 	ctx.timevalue = 0;
 	ctx.maxtimestep = 150;
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
-		p = 1.;
 		do {
 			p_old = p;
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit, p);CHKERRQ(ierr);
-			ierr = VecSet(fields.pressure,1.);CHKERRQ(ierr);
 			ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+			ierr = VecScale(fields.U,1./p);CHKERRQ(ierr);
 			ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 			p = q*ctx.timestep/ctx.CrackVolume;
 			ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
@@ -245,7 +246,6 @@ int main(int argc,char **argv)
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on p: %e\n", PetscAbs(p-p_old));CHKERRQ(ierr);
 			altminit++;
 		} while (PetscAbs(p-p_old) >= p_epsilon && altminit <= ctx.altminmaxit);
-		/*	} while (errV > ctx.altmintol && altminit <= ctx.altminmaxit && PetscAbs(p-p_old) >= 1e-7);	*/
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
@@ -255,21 +255,15 @@ int main(int argc,char **argv)
 				ierr = FieldsBinaryWrite(&ctx,&fields);
 				break; 
 		}
+		ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
+		ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
+		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
+		ierr = PetscViewerDestroy(&logviewer);
 		ctx.ElasticEnergy=0;
 		ctx.InsituWork=0;
 		ctx.PressureWork = 0.;
 		ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
 		ctx.TotalEnergy = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork;
-		/*
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
-		if (ctx.hasCrackPressure) {
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:   %e\n",ctx.PressureWork);CHKERRQ(ierr);
-		}
-		if (ctx.hasInsitu) {
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
-		}
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
-		*/
 		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g \t %g \t %g \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p, ctx.InsituWork, ctx.ElasticEnergy, ctx.PressureWork, ctx.TotalEnergy);
 		altminit = 0.;
 	}
