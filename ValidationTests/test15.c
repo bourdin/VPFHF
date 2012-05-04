@@ -218,7 +218,7 @@ int main(int argc,char **argv)
 	PetscViewerSetType(viewer, PETSCVIEWERASCII);
 	PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);
 	PetscViewerFileSetName(viewer, "pressure.txt");
-	PetscViewerASCIIPrintf(viewer, "Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \t TotalEnergy \n");
+	PetscViewerASCIIPrintf(viewer, "Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \t TotalMechEnergy \n");
 	
 	p = 1.;
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
@@ -263,8 +263,9 @@ int main(int argc,char **argv)
 		ctx.InsituWork=0;
 		ctx.PressureWork = 0.;
 		ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
+		ierr = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
 		ctx.TotalEnergy = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork;
-		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g \t %g \t %g \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p, ctx.InsituWork, ctx.ElasticEnergy, ctx.PressureWork, ctx.TotalEnergy);
+		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g \t %g \t %g \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p, ctx.SurfaceEnergy, ctx.ElasticEnergy, ctx.PressureWork, ctx.TotalEnergy);
 		altminit = 0.;
 	}
 	PetscViewerFlush(viewer);CHKERRQ(ierr);
