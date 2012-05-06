@@ -17,11 +17,9 @@ VFFields            fields;
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
 {
+	PetscErrorCode      ierr;
 	PetscViewer			viewer;
 	PetscViewer         logviewer;
-	VFCtx               ctx;
-	VFFields            fields;
-	PetscErrorCode      ierr;
 	PetscReal           length = .425;
 	PetscReal           center[3]={0.,0.,.5};
 	PetscInt            orientation=2;
@@ -270,6 +268,8 @@ int main(int argc,char **argv)
 	}
 	PetscViewerFlush(viewer);CHKERRQ(ierr);
 	PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+	PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
+	ierr = VecDestroy(&Vold);CHKERRQ(ierr);
 
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
