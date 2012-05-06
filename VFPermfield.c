@@ -138,7 +138,7 @@ extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal *CrackVolume_loca
 	}
 	volcrackopening_array[ek][ej][ei] = volcrackopening_array[ek][ej][ei]/element_vol;
 	ierr = PetscFree3(dx_vfield_loc,dy_vfield_loc,dz_vfield_loc);CHKERRQ(ierr);
-	ierr = PetscFree3(udispl_loc,udispl_loc,udispl_loc);CHKERRQ(ierr);
+	ierr = PetscFree3(udispl_loc,vdispl_loc,wdispl_loc);CHKERRQ(ierr);
 
     PetscFunctionReturn(0);
 }     
@@ -160,7 +160,6 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 	PetscReal		****cell_arraydof;
 	PetscReal		***node_array;
 	PetscReal		***cell_array;
-	PetscReal		***volsum_array;
 	PetscReal		****coords_array;
 	PetscReal		***vol_array;
 	Vec				volume;
