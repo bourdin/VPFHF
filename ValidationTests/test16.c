@@ -43,12 +43,17 @@ int main(int argc,char **argv)
 	PetscReal			q = 2.67e-4;
 	PetscReal           p_read, q_read;
 	PetscReal           vol_inj;
+	PetscReal           max_it, p_conv;
 
 	ctx.maxtimestep = 10;
+	max_it = 200;
+	p_conv = 1e-6;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-radius",&radius,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-max_it",&max_it,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-p_conv",&p_conv,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-pinit",&p_read,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-rate",&q_read,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
