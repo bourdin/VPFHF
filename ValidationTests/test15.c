@@ -224,7 +224,7 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 	ctx.timevalue = 0;
-	ctx.maxtimestep = 5;
+	ctx.maxtimestep = 150;
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		do {
 			p_old = p;
