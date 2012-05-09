@@ -1,7 +1,7 @@
 include ../makefile.include	
 CFLAGS='-I..'
 
-all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15
+all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16
 test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15
 
 include ${PETSC_DIR}/conf/variables
@@ -224,6 +224,6 @@ runtest16: test16
 	${RM} -f $@.out
 
 clean::
-	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 pressure.txt
+	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 pressure.txt
 	-rm -f runtest*
 	-rm -f TEST*
