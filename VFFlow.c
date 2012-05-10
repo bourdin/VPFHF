@@ -30,6 +30,8 @@ extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 			break;
 		case FLOWSOLVER_FEM:
 			break; 
+		case FLOWSOLVER_TS:
+		    break;
 		case FLOWSOLVER_FAKE:
 			break; 
 		case FLOWSOLVER_READFROMFILES:
@@ -49,6 +51,8 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 		case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:       
 			ierr = MixedFEMFlowSolverInitialize(ctx);CHKERRQ(ierr);
 			break;
+		case FLOWSOLVER_TS:
+		    break;
 		case FLOWSOLVER_FEM:
 			break; 
 		case FLOWSOLVER_FAKE:
@@ -122,6 +126,9 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
 
   PetscFunctionBegin;
   switch (ctx->flowsolver) {
+    case FLOWSOLVER_TS:
+	  ierr = VFFlow_TS_FEM(ctx,fields);CHKERRQ(ierr);
+	  break;
     case FLOWSOLVER_FEM:       
       ierr = VFFlow_FEM(ctx,fields);CHKERRQ(ierr);
       break;

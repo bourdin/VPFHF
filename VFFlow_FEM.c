@@ -841,3 +841,106 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx,VFFields *fields)
 
   PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "VFFormIFunction_Flow"
+
+extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Vec Pdot,Vec F,void *voidctx)
+{
+  PetscFunctionBegin;
+  
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VFFormIJacobian_Flow"
+
+extern PetscErrorCode VFFormIJacobian_Flow(TS ts,PetscReal t,Vec pressure_Vec,Vec Pdot,PetscReal a,Mat *J,Mat *Jpre,MatStructure *str,void *voidctx)
+{
+  PetscFunctionBegin;
+  
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VFFlow_TS_FEM"
+
+extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
+{
+  PetscErrorCode  ierr;
+  PetscInt        itsP;
+  TS              ts;
+  SNES            snes;
+  Vec             r;
+  Mat             J;
+  PetscReal       dt,ftime;
+  
+  PetscFunctionBegin;
+  
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"TS_FEM is not defined yet \n");CHKERRQ(ierr);
+  
+  ierr = VecDuplicate(fields->pressure,&r);CHKERRQ(ierr);
+  
+  /*
+    Create TS and set default options (not yet)
+  */
+  ierr = TSAppendOptionsPrefix(ts,"P_");CHKERRQ(ierr);
+  ierr = DMGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSSetProblemType(ts,TS_NONLINEAR);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSBEULER);CHKERRQ(ierr);
+  ierr = TSSetIFunction(ts,r,VFFormIFunction_Flow,ctx);CHKERRQ(ierr);
+  
+  /*
+    Set initial and boundary condition
+  */
+  ierr = VFFormIBCondition_Flow(ctx,fields);CHKERRQ(ierr);
+  ierr = TSSetSolution(ts,fields->pressure);CHKERRQ(ierr);
+  dt    = .01;
+  ftime = .05;
+  ierr = TSSetInitialTimeStep(ts,0.0,dt);CHKERRQ(ierr);
+  
+  /*
+    Set user provided Jacobian evaluation routine
+  */
+  ierr = TSSetIJacobian(ts,J,J,VFFormIJacobian_Flow,ctx);CHKERRQ(ierr);
+  
+  /*
+    Set various TS parameters from user options
+  */
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+  
+  ierr = TSSolve(ts,fields->pressure,&ftime);CHKERRQ(ierr);
+  
+  /*
+    clean up
+  */
+  
+  ierr = MatDestroy(&J);CHKERRQ(ierr);
+  ierr = VecDestroy(&r);CHKERRQ(ierr);
+  ierr = TSDestroy(&ts);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
