@@ -100,6 +100,7 @@ static const char *VFUnilateralName[] = {
 };
 
 typedef enum {
+    FLOWSOLVER_TS,
 	FLOWSOLVER_SNES,
 	FLOWSOLVER_FEM,
 	FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE,
@@ -107,6 +108,7 @@ typedef enum {
 	FLOWSOLVER_READFROMFILES,
 } VFFlowSolverType;
 static const char *VFFlowSolverName[] = {
+    "TS",
 	"SNES",
 	"FEM",
 	"MixedFEM",

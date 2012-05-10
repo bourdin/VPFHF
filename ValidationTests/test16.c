@@ -151,7 +151,7 @@ int main(int argc,char **argv)
 	q = q_read;
 	vol_inj = 0;
 
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"rate\n",q);CHKERRQ(ierr);
+
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 	  p = p_read;
 	  vol_inj += q;
