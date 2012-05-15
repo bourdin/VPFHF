@@ -1,8 +1,8 @@
 include ../makefile.include	
 CFLAGS='-I..'
 
-all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18
-test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17 runtest18
+all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20
+test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17 runtest18 runtest19 runtest20
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
@@ -60,6 +60,12 @@ test17: test17.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 test18: test18.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
+test19: test19.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
+test20: test20.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 	
 runtest1: test1
@@ -240,6 +246,25 @@ runtest17: test17
 
 runtest18: test18
 	@echo "Running " $@
+	-@ARGS='-n 21,21,21 -l 1,1,1 -length 1. -length1 .5 -orientation 2 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	if (${DIFF} -B results/$@.out $@.out) then true; \
+	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
+	${RM} -f $@.out
+
+runtest19: test19
+	@echo "Running " $@
+	-@for or in 0; do \
+	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -length .2 -orientation $$or";\
+	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
+	if (${DIFF} -B  results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
+	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
+	${RM} -f $@-$$or.out;\
+	done
+
+runtest20: test20
+	@echo "Running " $@
 	-@for or in 0; do \
 	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -length .2 -orientation $$or";\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
@@ -249,6 +274,6 @@ runtest18: test18
 	done
 
 clean::
-	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 pressure.txt
+	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20 pressure.txt
 	-rm -f runtest*
 	-rm -f TEST*

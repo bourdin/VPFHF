@@ -77,65 +77,7 @@ int main(int argc,char **argv)
 							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
 			/*	face X0	*/
 			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[1].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-			ctx.bcU[1].face[Y0]= ZERO;
-			ctx.bcU[2].face[Y0]= ZERO;
-			/*	face Y1	*/
-			ctx.bcU[2].face[Y1]= ZERO;		  
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && coords_array[k][j][i][0] <= length ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
-			break;
-		case 2:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[1].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-			ctx.bcU[1].face[Y0]= ZERO;
-			ctx.bcU[2].face[Y0]= ZERO;
-			/*	face Y1	*/
-			ctx.bcU[1].face[Y1]= ZERO;
-			ctx.bcU[2].face[Y1]= ZERO;		  
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && coords_array[k][j][i][0] <= length ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
-			break;
-		case 3:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
+			ctx.bcU[1].face[X0]= ZERO;
 			ctx.bcU[2].face[X0]= ZERO;
 			/*	face X1	*/
 			ctx.bcU[0].face[X1]= ZERO;
@@ -156,7 +98,67 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && coords_array[k][j][i][0] <= length ) {
+						if ( ((j == ny/2) || (j == ny/2-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
+							v_array[k][j][i] = 0.;
+						}
+					}
+				}
+			}      
+			break;
+		case 2:
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
+							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
+			/*	face X0	*/
+			ctx.bcU[0].face[X0]= ZERO;
+			ctx.bcU[2].face[X0]= ZERO;
+			/*	face X1	*/
+			ctx.bcU[0].face[X1]= ZERO;
+			ctx.bcU[2].face[X1]= ZERO;
+			/*	face Y0	*/
+			ctx.bcU[1].face[Y0]= ZERO;
+			ctx.bcU[2].face[Y0]= ZERO;
+			/*	face Y1	*/
+			ctx.bcU[1].face[Y1]= ZERO;
+			ctx.bcU[2].face[Y1]= ZERO;		  
+			/*	face Z0	*/
+			ctx.bcU[2].face[Z0]= ZERO;
+			/*	face Z1	*/
+			ctx.bcU[2].face[Z1]= ZERO;
+			for (k = zs; k < zs+zm; k++) {
+				for (j = ys; j < ys+ym; j++) {
+					for (i = xs; i < xs+xm; i++) { 
+						if ( ((j == ny/2) || (j == ny/2-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
+							v_array[k][j][i] = 0.;
+						}
+					}
+				}
+			}      
+			break;
+		case 3:
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
+							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
+			/*	face X0	*/
+			ctx.bcU[0].face[X0]= ZERO;
+			ctx.bcU[1].face[X0]= ZERO;
+			ctx.bcU[2].face[X0]= ZERO;
+			/*	face X1	*/
+			ctx.bcU[0].face[X1]= ZERO;
+			ctx.bcU[1].face[X1]= ZERO;
+			ctx.bcU[2].face[X1]= ZERO;
+			/*	face Y0	*/
+			ctx.bcU[1].face[Y0]= ZERO;
+			ctx.bcU[2].face[Y0]= ZERO;
+			/*	face Y1	*/
+			ctx.bcU[1].face[Y1]= ZERO;		  
+			ctx.bcU[2].face[Y1]= ZERO;		  
+			/*	face Z0	*/
+			ctx.bcU[2].face[Z0]= ZERO;
+			/*	face Z1	*/
+			ctx.bcU[2].face[Z1]= ZERO;
+			for (k = zs; k < zs+zm; k++) {
+				for (j = ys; j < ys+ym; j++) {
+					for (i = xs; i < xs+xm; i++) { 
+						if ( ((j == ny/2) || (j == ny/2-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -173,9 +175,11 @@ int main(int argc,char **argv)
 			ctx.bcU[0].face[X1]= ZERO;
 			ctx.bcU[2].face[X1]= ZERO;
 			/*	face Y0	*/
+			ctx.bcU[0].face[Y0]= ZERO;
 			ctx.bcU[1].face[Y0]= ZERO;
 			ctx.bcU[2].face[Y0]= ZERO;
 			/*	face Y1	*/
+			ctx.bcU[0].face[Y1]= ZERO;		  
 			ctx.bcU[1].face[Y1]= ZERO;		  
 			ctx.bcU[2].face[Y1]= ZERO;		  
 			/*	face Z0	*/
@@ -185,7 +189,63 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && coords_array[k][j][i][0] <= length ) {
+						if ( ((j == ny/2) || (j == ny/2-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
+							v_array[k][j][i] = 0.;
+						}
+					}
+				}
+			}      
+			break;
+		case 5:
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
+							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
+			/*	face X0	*/
+			ctx.bcU[0].face[X0]= ZERO;
+			ctx.bcU[2].face[X0]= ZERO;
+			/*	face X1	*/
+			ctx.bcU[0].face[X1]= ZERO;
+			ctx.bcU[2].face[X1]= ZERO;
+			/*	face Y0	*/
+			/*.....FREE.......*/
+			/*	face Y1	*/
+			/*.....FREE.......*/
+			/*	face Z0	*/
+			ctx.bcU[2].face[Z0]= ZERO;
+			/*	face Z1	*/
+			ctx.bcU[2].face[Z1]= ZERO;
+			for (k = zs; k < zs+zm; k++) {
+				for (j = ys; j < ys+ym; j++) {
+					for (i = xs; i < xs+xm; i++) { 
+						if ( ((j == ny/2) || (j == ny/2-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
+							v_array[k][j][i] = 0.;
+						}
+					}
+				}
+			}      
+			break;
+		case 6:
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
+							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
+			/*	face X0	*/
+			ctx.bcU[0].face[X0]= ZERO;
+			ctx.bcU[1].face[X0]= ZERO;
+			ctx.bcU[2].face[X0]= ZERO;
+			/*	face X1	*/
+			ctx.bcU[0].face[X1]= ZERO;
+			ctx.bcU[1].face[X1]= ZERO;
+			ctx.bcU[2].face[X1]= ZERO;
+			/*	face Y0	*/
+			/*.....FREE.......*/
+			/*	face Y1	*/
+			/*.....FREE.......*/
+			/*	face Z0	*/
+			ctx.bcU[2].face[Z0]= ZERO;
+			/*	face Z1	*/
+			ctx.bcU[2].face[Z1]= ZERO;
+			for (k = zs; k < zs+zm; k++) {
+				for (j = ys; j < ys+ym; j++) {
+					for (i = xs; i < xs+xm; i++) { 
+						if ( ((j == ny/2) || (j == ny/2-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -193,9 +253,9 @@ int main(int argc,char **argv)
 			}      
 			break;
 		default:
-			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be one of {1,2,3}, got %i\n",orientation);
+			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be one of {1,2,3,4,5,6}, got %i\n",orientation);
 			break;
-	}  
+	} 
 	ierr = DMDAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	
