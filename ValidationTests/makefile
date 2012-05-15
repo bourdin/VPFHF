@@ -1,8 +1,8 @@
 include ../makefile.include	
 CFLAGS='-I..'
 
-all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17
-test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17
+all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18
+test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17 runtest18
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
@@ -57,6 +57,9 @@ test16: test16.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 test17: test17.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
+test18: test18.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 	
 runtest1: test1
@@ -235,7 +238,17 @@ runtest17: test17
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
+runtest18: test18
+	@echo "Running " $@
+	-@for or in 0; do \
+	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -length .2 -orientation $$or";\
+	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
+	if (${DIFF} -B  results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
+	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
+	${RM} -f $@-$$or.out;\
+	done
+
 clean::
-	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 pressure.txt
+	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 pressure.txt
 	-rm -f runtest*
 	-rm -f TEST*
