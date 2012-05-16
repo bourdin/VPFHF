@@ -150,17 +150,16 @@ int main(int argc,char **argv)
 	ctx.timevalue = 0;
 	q = q_read;
 	vol_inj = 0;
-
-
+	p = p_read;
+    ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
-	  p = p_read;
 	  vol_inj += q;
 	  do {
 	    beginning:
 		p_old = p;
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, alt min step %i with pressure %g rate %g\n",ctx.timestep,altminit, p,q);CHKERRQ(ierr);
-		ierr = VecSet(fields.pressure,1.);CHKERRQ(ierr);
-		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+        ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+		ierr = VecScale(fields.U,1./p);CHKERRQ(ierr);		
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 		p = vol_inj/ctx.CrackVolume;
 		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
