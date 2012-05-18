@@ -2,7 +2,7 @@ include ../makefile.include
 CFLAGS='-I..'
 
 all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20 test21
-test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17 runtest18 runtest19 runtest20 runtest21
+test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17 runtest18 runtest19 runtest20
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
@@ -71,6 +71,9 @@ test20: test20.o ${VFOBJ} chkopts
 test21: test21.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 	
+test22: test22.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
 runtest1: test1
 	@echo "Running " $@
 	-@ARGS='-n 41,41,81 -l 1,1,2 -radius .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8';\
