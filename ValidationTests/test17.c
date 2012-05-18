@@ -21,7 +21,7 @@ int main(int argc,char **argv)
 	PetscViewer			viewer;
 	PetscViewer         logviewer;
 	PetscReal           length = .3;
-	PetscReal           length1 = .1;
+	PetscReal           length1 = .15;
 	PetscReal           center[3]={0.,0.,.5};
 	PetscInt            orientation=2;
 	PetscInt            nopts=3;
@@ -106,10 +106,10 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == 3*ny/4) || (j == 3*ny/4-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
+						if ( ((j == 3*ny/5) || (j == 3*ny/5-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
 							v_array[k][j][i] = 0.;
 						}
-						if ( ((j == ny/4) || (j == ny/4-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length1 ) {
+						if ( ((j == 2*ny/5) || (j == 2*ny/5-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length1 ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -138,10 +138,10 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == 3*ny/4) || (j == 3*ny/4-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
+						if ( ((j == 3*ny/5) || (j == 3*ny/5-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
 							v_array[k][j][i] = 0.;
 						}
-						if ( ((j == ny/4) || (j == ny/4-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length1 ) {
+						if ( ((j == 2*ny/5) || (j == 2*ny/5-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length1 ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -172,10 +172,10 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == 3*ny/4) || (j == 3*ny/4-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
+						if ( ((j == 3*ny/5) || (j == 3*ny/5-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
 							v_array[k][j][i] = 0.;
 						}
-						if ( ((j == ny/4) || (j == ny/4-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length1 ) {
+						if ( ((j == 2*ny/5) || (j == 2*ny/5-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length1 ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -206,10 +206,10 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == 3*ny/4) || (j == 3*ny/4-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
+						if ( ((j == 3*ny/5) || (j == 3*ny/5-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
 							v_array[k][j][i] = 0.;
 						}
-						if ( ((j == ny/4) || (j == ny/4-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length1 ) {
+						if ( ((j == 2*ny/5) || (j == 2*ny/5-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length1 ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -236,10 +236,10 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == 3*ny/4) || (j == 3*ny/4-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
+						if ( ((j == 3*ny/5) || (j == 3*ny/5-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
 							v_array[k][j][i] = 0.;
 						}
-						if ( ((j == ny/4) || (j == ny/4-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length1 ) {
+						if ( ((j == 2*ny/5) || (j == 2*ny/5-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length1 ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -268,10 +268,10 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == 3*ny/4) || (j == 3*ny/4-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
+						if ( ((j == 3*ny/5) || (j == 3*ny/5-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
 							v_array[k][j][i] = 0.;
 						}
-						if ( ((j == ny/4) || (j == ny/4-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length1 ) {
+						if ( ((j == 2*ny/5) || (j == 2*ny/5-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length1 ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
