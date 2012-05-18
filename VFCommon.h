@@ -219,17 +219,18 @@ typedef struct {
 } VFRectangularCrack;
 
 typedef struct {
-	PetscReal         perm;    /* Permeability in m^2 muliply by 1e12 */
-	PetscReal         por;     /* Porosity */
-	PetscReal         Pinit;   /* Initial Pressure in MPa*/
-	PetscReal         Tinit;   /* Initial Temperature in C*/ 
-	PetscReal         relk;    /* Relative Permeability */
-	PetscReal         visc;    /* Viscosity in cp */
-	PetscReal         fdens;   /* Fluid Density in specific density*/
-	PetscReal		      cf;	     /* Rock compressibility in field unit*/
-	PetscReal         TCond_X; /* Thermal Conductivity in x-direction */
-	PetscReal         TCond_Y; /* Thermal Conductivity in y-direction */
-	PetscReal         TCond_Z; /* Thermal Conductivity in z-direction */
+	PetscReal         perm;     /* Permeability in m^2 muliply by 1e12 */
+	PetscReal         por;      /* Porosity */
+	PetscReal         Pinit;    /* Initial Pressure in MPa*/
+	PetscReal         Tinit;    /* Initial Temperature in C*/ 
+	PetscReal         relk;     /* Relative Permeability */
+	PetscReal         visc;     /* Viscosity in cp */
+	PetscReal         fdens;    /* Fluid Density in specific density*/
+	PetscReal         rock_comp; /* Rock compressibility in 1/MPa */
+	PetscReal		  wat_comp; /* Water compressibility in 1/MPa */
+	PetscReal         TCond_X;  /* Thermal Conductivity in x-direction */
+	PetscReal         TCond_Y;  /* Thermal Conductivity in y-direction */
+	PetscReal         TCond_Z;  /* Thermal Conductivity in z-direction */
 	/*
 	 change them to Vec later.
 	 Instead, I would suggest keeping the structure this way and add a pointer to a resprop in the main context

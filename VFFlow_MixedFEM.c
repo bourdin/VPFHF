@@ -1673,7 +1673,7 @@ extern PetscErrorCode GetFlowProp(FlowProp *flowprop,FlowUnit flowunit,ResProp r
   case MetricUnits:
     flowprop->mu    = 0.001*resprop.visc;     /*viscosity in Pa.s*/
     flowprop->rho   = 1000*resprop.fdens;     /*density in kg/m^3*/
-    flowprop->cf    = 1.450e-4*resprop.cf;    /*compressibility in Pa^{-1}*/
+    flowprop->cf    = 1.450e-4*resprop.wat_comp;    /*compressibility in Pa^{-1}*/
     flowprop->beta  = 86.4e-6;                /*flow rate conversion constant*/
     flowprop->gamma = 1e-3;                   /*pressue conversion constant*/
     flowprop->alpha = 1;                      /*volume conversion constatnt*/

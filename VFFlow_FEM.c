@@ -845,10 +845,130 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx,VFFields *fields)
 #undef __FUNCT__
 #define __FUNCT__ "VFFormIFunction_Flow"
 
-extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Vec Pdot,Vec F,void *voidctx)
+extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Vec Pdot_Vec,Vec F,void *voidctx)
 {
+  VFCtx          *ctx = (VFCtx*)voidctx;
+  PetscErrorCode ierr;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       ei,ej,ek;
+  PetscInt       i1,j1,k1,i2,j2,k2,g;
+  PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
+  Vec            Pdot_localVec,pressure_localVec,func_localVec;
+  PetscReal      ***pressure_array,***func_array,***Pdot_array;
+  PetscReal      ****coords_array;
+  PetscReal      hx,hy,hz;
+  PetscReal      fdens,por,wat_comp,rock_comp,relk,visc;
+  PetscReal      kxx,kyy,kzz,kxy,kxz,kyz;
+  PetscReal      DCoef_P,ACoef_P;
+
   PetscFunctionBegin;
+
+  fdens     = ctx->resprop.fdens;
+  por       = ctx->resprop.por;
+  wat_comp  = ctx->resprop.wat_comp;
+  rock_comp = ctx->resprop.rock_comp;
+  relk      = ctx->resprop.relk;
+  visc      = ctx->resprop.visc;
+  kxx       = ctx->resprop.perm;
+  kyy       = ctx->resprop.perm;
+  kzz       = ctx->resprop.perm;
+  DCoef_P   = fdens*relk/visc;
+  ACoef_P   = fdens*por*(wat_comp+rock_comp);
+
+
+  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  if (xs+xm == nx) xm--;
+  if (ys+ym == ny) ym--;
+  if (zs+zm == nz) zm--;
+
+  /*
+    get coordinates
+  */
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+
+  /*
+    get Pdot, pressure and function array
+  */
+  ierr = DMGetLocalVector(ctx->daScal,&Pdot_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,Pdot_Vec,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,Pdot_Vec,INSERT_VALUES,Pdot_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,Pdot_localVec,&Pdot_array);CHKERRQ(ierr);
   
+  ierr = DMGetLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,pressure_Vec,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,pressure_Vec,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
+
+  ierr = DMGetLocalVector(ctx->daScal,&func_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,F,INSERT_VALUES,func_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,F,INSERT_VALUES,func_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,func_localVec,&func_array);CHKERRQ(ierr);
+
+
+  /*
+    loop through all the elements
+  */
+  for (ek = zs; ek < zs+zm; ek++) {
+    for (ej = ys; ej < ys+ym; ej++) {
+      for (ei = xs; ei < xs+xm; ei++) {
+        hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+        hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+        hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        for (g = 0; g < ctx->e3D.ng; g++) {
+          for (k1 = 0; k1 < ctx->e3D.nphiz; k1++) {
+            for (j1 = 0; j1 < ctx->e3D.nphiy; j1++) {
+              for (i1 = 0; i1 < ctx->e3D.nphix; i1++) {
+                for (k2 = 0; k2 < ctx->e3D.nphiz; k2++) {
+                  for (j2 = 0; j2 < ctx->e3D.nphiy; j2++) {
+                    for (i2 = 0; i2 < ctx->e3D.nphix; i2++) {
+                      if (ei+i1 == 0 && ctx->bcP[0].face[X0] == VALUE) {
+                        func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[X0];
+                      }else if (ei+i1 == nx-1 && ctx->bcP[0].face[X1] == VALUE) {
+                        func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[X1];
+                      }else if (ej+j1 == 0 && ctx->bcP[0].face[Y0] == VALUE) {
+                        func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Y0];
+                      }else if (ej+j1 == ny-1 && ctx->bcP[0].face[Y1] == VALUE) {
+                        func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Y1];
+                      }else if (ek+k1 == 0 && ctx->bcP[0].face[Z0] == VALUE) {
+                        func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Z0];
+                      }else if (ek+k1 == nz-1 && ctx->bcP[0].face[Z1] == VALUE) {
+                        func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Z1];
+                      }         else{
+                        func_array[ek+k1][ej+j1][ei+i1] += ctx->e3D.weight[g]* ( Pdot_array[ek+k2][ej+j2][ei+i2]*ACoef_P*ctx->e3D.phi[k1][j1][i1][g]*ctx->e3D.phi[k2][j2][i2][g]
+                                    						- pressure_array[ek+k2][ej+j2][ei+i2]*DCoef_P*
+                                                           (kxx*ctx->e3D.dphi[k1][j1][i1][0][g]*ctx->e3D.dphi[k2][j2][i2][0][g]
+                                                            +kyy*ctx->e3D.dphi[k1][j1][i1][1][g]*ctx->e3D.dphi[k2][j2][i2][1][g]
+                                                            +kzz*ctx->e3D.dphi[k1][j1][i1][2][g]*ctx->e3D.dphi[k2][j2][i2][2][g]) );
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /*
+    Clean up
+  */
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+
+  ierr = DMDAVecRestoreArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+
+  ierr = DMDAVecRestoreArray(ctx->daScal,func_localVec,&func_array);CHKERRQ(ierr);
+  ierr = DMLocalToGlobalBegin(ctx->daScal,func_localVec,ADD_VALUES,F);CHKERRQ(ierr);
+  ierr = DMLocalToGlobalEnd(ctx->daScal,func_localVec,ADD_VALUES,F);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&func_localVec);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
 

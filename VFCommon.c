@@ -30,7 +30,6 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                                                        #\n");CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                          WARNING!!!                    #\n");CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                                                        #\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   This code was compiled with a debugging option,      #\n");CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   For production runs, use a petsc compiled with       #\n");CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   optimization, the performance will be generally      #\n");CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   two or three times faster.                           #\n");CHKERRQ(ierr);
@@ -573,7 +572,8 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop)
 		resprop->relk = 1.0;   /* fraction */
 		resprop->visc = 1.0;   /* cp */
 		resprop->fdens = 1.0;  /* specific density */
-		resprop->cf = 1e-6;  /* Rock Compressibility */
+		resprop->rock_comp = 0.5e-4;  /* Rock Compressibility */
+		resprop->wat_comp =5e-4;  /* Water Compressibility */
 		resprop->TCond_X = 0.6; /* Water thermal conductivity in W/m-K */
 		resprop->TCond_Y = resprop->TCond_X;
 		resprop->TCond_Z = resprop->TCond_X;

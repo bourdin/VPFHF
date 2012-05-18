@@ -1,5 +1,5 @@
 /*
- test16.c: test for hydraulic fracturing in 3D with no leakoff
+ test16.c: test for Multiple hydraulic fractures in 3D with no leakoff
 */
 
 #include "petsc.h"
@@ -21,7 +21,8 @@ int main(int argc,char **argv)
 	VFFields            fields;
 	PetscErrorCode      ierr;
 	PetscReal           radius = .1;
-	PetscReal           center[3]={0.5,0.5,0.5};
+	PetscReal           center1[3]={0.5,0.5,0.5};
+	PetscReal           center2[3]={1.5,1.5,0.5};	
 	PetscInt            orientation=1;
 	PetscInt            nopts=3;
 	PetscInt			ek,ej,ei,c;
@@ -56,8 +57,9 @@ int main(int argc,char **argv)
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-p_conv",&p_conv,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-pinit",&p_read,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-rate",&q_read,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr); 	
+	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center1",&center1[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
+ 	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center2",&center2[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr); 	
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -90,8 +92,8 @@ int main(int argc,char **argv)
 	} 
 	switch (orientation) {
 		case 1:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of radius %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   radius,center[0],center[1],center[2]);CHKERRQ(ierr);	  
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building penny-shaped cracks of radius %g at (%g,%g,%g) and (%g,%g,%g) with normal vector <0,1,0>\n",
+							   radius,center1[0],center1[1],center1[2],center2[0],center2[1],center2[2]);CHKERRQ(ierr);	  
 			/*	face X0	*/
 			ctx.bcU[0].face[X0]= ZERO;
 			/*	face X1	*/
@@ -115,7 +117,10 @@ int main(int argc,char **argv)
 						x = coords_array[k][j][i][0];
 						y = coords_array[k][j][i][1];
                         z = coords_array[k][j][i][2];						
-						if ( ((j == ny/2) || (j == ny/2+1)) && ((x-center[0])*(x-center[0])+(z-center[2])*(z-center[2])) <= radius*radius ) {
+						if ( ((j == ny/4) || (j == ny/4+1)) && ((x-center1[0])*(x-center1[0])+(z-center1[2])*(z-center1[2])) <= radius*radius ) {
+							v_array[k][j][i] = 0.;
+						}
+						if ( ((j == 3*ny/4) || (j == 3*ny/4+1)) && ((x-center2[0])*(x-center2[0])+(z-center2[2])*(z-center2[2])) <= radius*radius ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
