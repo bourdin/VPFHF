@@ -85,19 +85,19 @@ int main(int argc,char **argv)
   for (i = 0; i < 6; i++) {
     ctx.bcV[0].face[i] = NONE;
     for (j = 1; j < 3; j++) {
-      ctx.bcU[j].face[i] = ZERO;
+      ctx.bcU[j].face[i] = NONE;
     }
   }
   for (i = 0; i < 12; i++) {
     ctx.bcV[0].edge[i] = NONE;
     for (j = 1; j < 3; j++) {
-      ctx.bcU[j].edge[i] = ZERO;
+      ctx.bcU[j].edge[i] = NONE;
     }
   }
   for (i = 0; i < 8; i++) {
     ctx.bcV[0].vertex[i] = NONE;
     for (j = 1; j < 3; j++) {
-      ctx.bcU[j].vertex[i] = ZERO;
+      ctx.bcU[j].vertex[i] = NONE;
     }
   }
   switch (orientation) {
@@ -123,7 +123,74 @@ int main(int argc,char **argv)
       }
     }
     break;
-
+	  case 1:
+		  ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces X0 X1\n");CHKERRQ(ierr);
+		  ctx.bcU[0].face[X0] = ZERO;ctx.bcU[0].face[X1] = ZERO;
+		  ctx.bcU[1].face[X0] = FIXED;ctx.bcU[1].face[X1] = FIXED;
+		  ctx.bcU[2].face[X0] = ZERO;ctx.bcU[2].face[X1] = ZERO;
+		  
+		  for (k = zs; k < zs+zm; k++) {
+			  for (j = ys; j < ys+ym; j++) {
+				  for (i = xs; i < xs+xm; i++) {
+					  if (((i == nx/2)) || (i == nx/2-1)) {
+						  v_array[k][j][i] = 0.;
+					  }
+					  if (i == 0) {
+						  bcu_array[k][j][i][1] = -bc;
+					  }
+					  if (i == nx-1) {
+						  bcu_array[k][j][i][1] = bc;
+					  }
+				  }
+			  }
+		  }
+		  break;
+	  case 2:
+		  ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces X0 X1\n");CHKERRQ(ierr);
+		  ctx.bcU[0].face[X0] = ZERO;ctx.bcU[0].face[X1] = ZERO;
+		  ctx.bcU[1].face[X0] = ZERO;ctx.bcU[1].face[X1] = ZERO;
+		  ctx.bcU[2].face[X0] = FIXED;ctx.bcU[2].face[X1] = FIXED;
+		  
+		  for (k = zs; k < zs+zm; k++) {
+			  for (j = ys; j < ys+ym; j++) {
+				  for (i = xs; i < xs+xm; i++) {
+					  if (((i == nx/2)) || (i == nx/2-1)) {
+						  v_array[k][j][i] = 0.;
+					  }
+					  if (i == 0) {
+						  bcu_array[k][j][i][2] = -bc;
+					  }
+					  if (i == nx-1) {
+						  bcu_array[k][j][i][2] = bc;
+					  }
+				  }
+			  }
+		  }
+		  break;
+	  case 3:
+		  ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces X0 X1\n");CHKERRQ(ierr);
+		  ctx.bcU[0].face[X0] = FIXED;ctx.bcU[0].face[X1] = FIXED;
+		  ctx.bcU[1].face[X0] = FIXED;ctx.bcU[1].face[X1] = FIXED;
+		  ctx.bcU[2].face[X0] = ZERO;ctx.bcU[2].face[X1] = ZERO;
+		  
+		  for (k = zs; k < zs+zm; k++) {
+			  for (j = ys; j < ys+ym; j++) {
+				  for (i = xs; i < xs+xm; i++) {
+					  if (((i == nx/2)) || (i == nx/2-1)) {
+						  v_array[k][j][i] = 0.;
+					  }
+					  if (i == 0) {
+						  bcu_array[k][j][i][0] = -bc;
+						  bcu_array[k][j][i][1] = -bc;
+					  }
+					  if (i == nx-1) {
+						  bcu_array[k][j][i][0] = bc;
+						  bcu_array[k][j][i][1] = bc;
+					  }
+				  }
+			  }
+		  }
+		  break;
   default:
     SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be between 0 and 2, got %i\n",orientation);
     break;
@@ -140,6 +207,7 @@ int main(int argc,char **argv)
 		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
 		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
+		ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
 		ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
 		ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
@@ -163,14 +231,8 @@ int main(int argc,char **argv)
   }
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Total Mechanical energy:  %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 
-
-
 	ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 
-
-  /*
-   Save fields and write statistics about current run
-   */
   switch (ctx.fileformat) {
   case FILEFORMAT_HDF5:
     ierr = FieldsH5Write(&ctx,&fields);
@@ -184,7 +246,7 @@ int main(int argc,char **argv)
 
 
 	printf("\n###################################################################\n");
-  printf("#        Actual crack volume change = %f\t      \n\n\n\n",(lz*ly*0.4));
+  printf("#        Actual crack volume change = %f\t      \n\n\n\n",(lz*ly*bc*2));
 	printf("#        VF crack volume change = %f\t      \n",ctx.CrackVolume);
   printf("###################################################################\n\n\n");
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
