@@ -23,10 +23,10 @@ int main(int argc,char **argv)
 	VFFields       fields;
 	PetscErrorCode ierr;
 	
-	PetscReal length      = .2;
+	PetscReal length      = .1;
 	PetscInt  orientation = 0;
 	PetscInt  nopts       = 3;
-	PetscInt  t,i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+	PetscInt  i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
 	PetscReal ****coords_array;
 	PetscReal ****bcu_array;
 	PetscReal BBmin[3],BBmax[3];
@@ -34,33 +34,33 @@ int main(int argc,char **argv)
 	PetscReal InsituWork    = 0;
 	PetscReal SurfaceEnergy = 0;
 	char      filename[FILENAME_MAX];
-	PetscReal bc = .05;
+	PetscReal bc = .02;
 	PetscReal ***v_array;
 	PetscReal lx,ly,lz;
-	PetscReal ***pmult_array;
-	PetscReal ****vfperm_array;
 	PetscInt			altminit=1;
 	Vec					Vold;
 	PetscReal			errV=1e+10;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-
+	
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-bcU",&bc,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
+	
 	lz = BBmax[2];
 	ly = BBmax[1];
-	lx = BBmax[0];	
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"Bounding box: %e, %e, %e\n",lx,ly,lz);CHKERRQ(ierr);
+	lx = BBmax[0];
+	
+	printf("\nBounding box: lx = %f\tly = %f\tlz = %f\n",lx,ly,lz);
+	
 	ctx.matprop[0].beta  = 0.;
 	ctx.matprop[0].alpha = 0.;
-	ctx.timestep  = 1;
-	ctx.maxtimestep = 50;
+	
+	ctx.timevalue = 1.;
 	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
@@ -71,6 +71,9 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.pressure,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
+	/*
+	 Reset all BC for U and V
+	 */
 	for (i = 0; i < 6; i++) {
 		ctx.bcV[0].face[i] = NONE;
 		for (j = 1; j < 3; j++) {
@@ -89,54 +92,67 @@ int main(int argc,char **argv)
 			ctx.bcU[j].vertex[i] = NONE;
 		}
 	}
+	
+	/*Initializing the v-field*/
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) { 
+				if ( ((j == ny/2) || (j == ny/2-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
+					v_array[k][j][i] = 0.;
+				}
+			}
+		}
+	}
 	ierr = DMDAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+    ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
 	ctx.hasCrackPressure = PETSC_FALSE;
-	ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
+	
+	ctx.timestep = 1;	
+	ctx.maxtimestep = 50;
 	for(ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){	
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i\n",ctx.timestep);CHKERRQ(ierr);
 		ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
 		ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
 		switch (orientation) {
 			case 0:
 				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Y0 Y1 to simulate crack opening: Mode I\n");CHKERRQ(ierr);
-				ctx.bcU[0].face[Y0] = ZERO;ctx.bcU[0].face[Y1] = ZERO;
-				ctx.bcU[1].face[Y0] = FIXED;ctx.bcU[1].face[Y1] = FIXED;
-				ctx.bcU[2].face[Y0] = ZERO;ctx.bcU[2].face[Y1] = ZERO;
-				
+				/*	face Y0	*/
+				ctx.bcU[0].face[Y0]= ZERO;
+				ctx.bcU[1].face[Y0]= FIXED;
+				ctx.bcU[2].face[Y0]= ZERO;
+				/*	face Y1	*/
+				ctx.bcU[0].face[Y1]= ZERO;		  
+				ctx.bcU[1].face[Y1]= FIXED;		  
+				ctx.bcU[2].face[Y1]= ZERO;		  
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
-						for (i = xs; i < xs+xm; i++) {
-							if (j == 0) {
+						for (i = xs; i < xs+xm; i++) { 
+							if ( j == 0 ) {
 								bcu_array[k][j][i][1] = -ctx.timestep*bc;
-							}							
-							if (j == ny-1) {
-								bcu_array[k][j][i][1] = ctx.timestep*bc;
 							}
-							if ((j == ny/2) || (j == ny/2-1) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length) {
-								v_array[k][j][i] = 0.;
+							if ( j == ny-1 ) {
+								bcu_array[k][j][i][1] = ctx.timestep*bc;
 							}
 						}
 					}
 				}
 				break;
 			case 1:
-				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Y0 Y1 to simulate in-plane shear: Mode II\n");CHKERRQ(ierr);
-				ctx.bcU[0].face[Y0] = FIXED;ctx.bcU[0].face[Y1] = FIXED;
-				ctx.bcU[1].face[Y0] = ZERO;ctx.bcU[1].face[Y1] = ZERO;
-				ctx.bcU[2].face[Y0] = ZERO;ctx.bcU[2].face[Y1] = ZERO;
-				
+				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Y0 Y1 to simulate in-plane shear: Mode II\n");CHKERRQ(ierr);			/*	face Y0	*/
+				ctx.bcU[0].face[Y0]= FIXED;
+				ctx.bcU[1].face[Y0]= ZERO;
+				ctx.bcU[2].face[Y0]= ZERO;
+				/*	face Y1	*/
+				ctx.bcU[0].face[Y1]= FIXED;		  
+				ctx.bcU[1].face[Y1]= ZERO;		  
+				ctx.bcU[2].face[Y1]= ZERO;		  
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
-						for (i = xs; i < xs+xm; i++) {
-							if (j == 0) {
+						for (i = xs; i < xs+xm; i++) { 
+							if ( j == 0 ) {
 								bcu_array[k][j][i][0] = -ctx.timestep*bc;
-							}							
-							if (j == ny-1) {
-								bcu_array[k][j][i][0] = ctx.timestep*bc;
 							}
-							if ((j == ny/2) || (j == ny/2-1) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length) {
-								v_array[k][j][i] = 0.;
+							if ( j == ny-1 ) {
+								bcu_array[k][j][i][0] = ctx.timestep*bc;
 							}
 						}
 					}
@@ -144,21 +160,22 @@ int main(int argc,char **argv)
 				break;
 			case 2:
 				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on face X0 to simulate out-of-plane shear: Mode III\n");CHKERRQ(ierr);
-				ctx.bcU[0].face[X0] = ZERO;ctx.bcU[0].face[X1] = ZERO;
-				ctx.bcU[1].face[X0] = ZERO;ctx.bcU[1].face[X1] = ZERO;
-				ctx.bcU[2].face[X0] = FIXED;ctx.bcU[2].face[X1] = FIXED;
-				
+				/*	face Y0	*/
+				ctx.bcU[0].face[Y0]= ZERO;
+				ctx.bcU[1].face[Y0]= ZERO;
+				ctx.bcU[2].face[Y0]= FIXED;
+				/*	face Y1	*/
+				ctx.bcU[0].face[Y1]= ZERO;		  
+				ctx.bcU[1].face[Y1]= ZERO;		  
+				ctx.bcU[2].face[Y1]= FIXED;		  
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
-						for (i = xs; i < xs+xm; i++) {
-							if (j == 0) {
+						for (i = xs; i < xs+xm; i++) { 
+							if ( j == 0 ) {
 								bcu_array[k][j][i][2] = -ctx.timestep*bc;
-							}							
-							if (j == ny-1) {
-								bcu_array[k][j][i][2] = ctx.timestep*bc;
 							}
-							if ((j == ny/2) || (j == ny/2-1) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length) {
-								v_array[k][j][i] = 0.;
+							if ( j == ny-1 ) {
+								bcu_array[k][j][i][2] = ctx.timestep*bc;
 							}
 						}
 					}
@@ -166,34 +183,35 @@ int main(int argc,char **argv)
 				break;
 			case 3:
 				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on face X0 to simulate mixed mode: Mode I & II\n");CHKERRQ(ierr);
-				ctx.bcU[0].face[X0] = FIXED;ctx.bcU[0].face[X1] = FIXED;
-				ctx.bcU[1].face[X0] = FIXED;ctx.bcU[1].face[X1] = FIXED;
-				ctx.bcU[2].face[X0] = ZERO;ctx.bcU[2].face[X1] = ZERO;
-				
+				/*	face Y0	*/
+				ctx.bcU[0].face[Y0]= FIXED;
+				ctx.bcU[1].face[Y0]= FIXED;
+				ctx.bcU[2].face[Y0]= ZERO;
+				/*	face Y1	*/
+				ctx.bcU[0].face[Y1]= FIXED;		  
+				ctx.bcU[1].face[Y1]= FIXED;		  
+				ctx.bcU[2].face[Y1]= ZERO;		  
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
-						for (i = xs; i < xs+xm; i++) {
-							if (j == 0) {
+						for (i = xs; i < xs+xm; i++) { 
+							if ( j == 0 ) {
 								bcu_array[k][j][i][0] = -ctx.timestep*bc;
 								bcu_array[k][j][i][1] = -ctx.timestep*bc;
-							}							
-							if (j == ny-1) {
+							}
+							if ( j == ny-1 ) {
 								bcu_array[k][j][i][0] = ctx.timestep*bc;
 								bcu_array[k][j][i][1] = ctx.timestep*bc;
-							}
-							if ((j == ny/2) || (j == ny/2-1) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length) {
-								v_array[k][j][i] = 0.;
 							}
 						}
 					}
 				}
 				break;
 			default:
-				SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be between 0, got %i\n",orientation);
+				SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be between 0 and 2, got %i\n",orientation);
 				break;
 		}
-		ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
 		ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
+		ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
 		do {
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"alt min step %i\n",altminit);CHKERRQ(ierr);
 			ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
@@ -205,12 +223,15 @@ int main(int argc,char **argv)
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
 			altminit++;
 		} while (errV > ctx.altmintol && altminit <= ctx.altminmaxit);
+		
 		ctx.ElasticEnergy = 0;
 		ctx.InsituWork    = 0;
 		ctx.PressureWork  = 0.;
 		ierr              = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
 		ierr              = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
+		
 		ctx.TotalEnergy = ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork;
+		
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
 		if (ctx.hasCrackPressure) {
@@ -221,6 +242,9 @@ int main(int argc,char **argv)
 		}
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Total Mechanical energy:  %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
+		/*
+		 Save fields and write statistics about current run
+		 */
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:
 				ierr = FieldsH5Write(&ctx,&fields);
@@ -231,12 +255,12 @@ int main(int argc,char **argv)
 				ierr = FieldsBinaryWrite(&ctx,&fields);
 				break;
 		}
-		altminit = 1;
 		printf("\n###################################################################\n");
-//		printf("#        Actual crack volume change = %f\t      \n\n\n\n",(lz*ly*2 * bc));
+		printf("#        Actual crack volume change = %f\t      \n\n\n\n",(lz*ly*bc*2));
 		printf("#        VF crack volume change = %f\t      \n",ctx.CrackVolume);
 		printf("###################################################################\n\n\n");
 	}
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
