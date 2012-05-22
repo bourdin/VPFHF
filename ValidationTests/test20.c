@@ -34,7 +34,7 @@ int main(int argc,char **argv)
 	PetscReal InsituWork    = 0;
 	PetscReal SurfaceEnergy = 0;
 	char      filename[FILENAME_MAX];
-	PetscReal bc = .05;
+	PetscReal bc = .005;
 	PetscReal ***v_array;
 	PetscReal lx,ly,lz;
 	PetscReal ***pmult_array;
@@ -101,8 +101,14 @@ int main(int argc,char **argv)
 			case 0:
 				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces X0 X1\n");CHKERRQ(ierr);
 				ctx.bcU[0].face[X0] = ZERO;ctx.bcU[0].face[X1] = ZERO;
-				ctx.bcU[1].face[X0] = FIXED;ctx.bcU[1].face[X1] = ZERO;
+				ctx.bcU[1].face[X0] = FIXED;ctx.bcU[1].face[X1] = FIXED;
 				ctx.bcU[2].face[X0] = ZERO;ctx.bcU[2].face[X1] = ZERO;
+
+				ctx.bcU[0].face[Y0] = ZERO;ctx.bcU[0].face[Y1] = ZERO;
+				ctx.bcU[2].face[Y0] = ZERO;ctx.bcU[2].face[Y1] = ZERO;
+				
+				ctx.bcU[0].face[Z0] = ZERO;ctx.bcU[0].face[Z1] = ZERO;
+				ctx.bcU[2].face[Z0] = ZERO;ctx.bcU[2].face[Z1] = ZERO;
 				
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
@@ -119,9 +125,15 @@ int main(int argc,char **argv)
 				break;
 			case 1:
 				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on face X0 to simulate in-plane shear\n");CHKERRQ(ierr);
-				ctx.bcU[0].face[X0] = FIXED;ctx.bcU[0].face[X1] = ZERO;
+				ctx.bcU[0].face[X0] = FIXED;ctx.bcU[0].face[X1] = FIXED;
 				ctx.bcU[1].face[X0] = ZERO;ctx.bcU[1].face[X1] = ZERO;
 				ctx.bcU[2].face[X0] = ZERO;ctx.bcU[2].face[X1] = ZERO;
+				
+				ctx.bcU[1].face[Y0] = ZERO;ctx.bcU[1].face[Y1] = ZERO;
+				ctx.bcU[2].face[Y0] = ZERO;ctx.bcU[2].face[Y1] = ZERO;
+				
+				ctx.bcU[1].face[Z0] = ZERO;ctx.bcU[1].face[Z1] = ZERO;
+				ctx.bcU[2].face[Z0] = ZERO;ctx.bcU[2].face[Z1] = ZERO;
 				
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
@@ -140,7 +152,13 @@ int main(int argc,char **argv)
 				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on face X0 to simulate out-of-plane shear\n");CHKERRQ(ierr);
 				ctx.bcU[0].face[X0] = ZERO;ctx.bcU[0].face[X1] = ZERO;
 				ctx.bcU[1].face[X0] = ZERO;ctx.bcU[1].face[X1] = ZERO;
-				ctx.bcU[2].face[X0] = FIXED;ctx.bcU[2].face[X1] = ZERO;
+				ctx.bcU[2].face[X0] = FIXED;ctx.bcU[2].face[X1] = FIXED;
+
+				ctx.bcU[0].face[Y0] = ZERO;ctx.bcU[0].face[Y1] = ZERO;
+				ctx.bcU[1].face[Y0] = ZERO;ctx.bcU[1].face[Y1] = ZERO;
+				
+				ctx.bcU[0].face[Z0] = ZERO;ctx.bcU[0].face[Z1] = ZERO;
+				ctx.bcU[1].face[Z0] = FIXED;ctx.bcU[1].face[Z1] = ZERO;
 				
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
