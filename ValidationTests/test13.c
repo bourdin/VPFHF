@@ -291,9 +291,6 @@ int main(int argc,char **argv)
     switch (ctx.fileformat) {
 		case FILEFORMAT_HDF5:       
 			ierr = FieldsH5Write(&ctx,&fields);
-			ctx.timestep++;
-			ctx.timevalue += 1.;
-			ierr = FieldsH5Write(&ctx,&fields);
 			break;
 		case FILEFORMAT_BIN:
 			ierr = FieldsBinaryWrite(&ctx,&fields);
