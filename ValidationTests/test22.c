@@ -21,8 +21,8 @@ int main(int argc,char **argv)
 	VFFields            fields;
 	PetscErrorCode      ierr;
 	PetscReal           radius = .1;
-	PetscReal           center1[3]={0.5,0.5,0.5};
-	PetscReal           center2[3]={1.5,1.5,0.5};	
+	PetscReal           center1[3]={0.75,0.75,0.5};
+	PetscReal           center2[3]={1.25,1.25,0.5};	
 	PetscInt            orientation=1;
 	PetscInt            nopts=3;
 	PetscInt			ek,ej,ei,c;
@@ -117,10 +117,10 @@ int main(int argc,char **argv)
 						x = coords_array[k][j][i][0];
 						y = coords_array[k][j][i][1];
                         z = coords_array[k][j][i][2];						
-						if ( ((j == ny/4) || (j == ny/4+1)) && ((x-center1[0])*(x-center1[0])+(z-center1[2])*(z-center1[2])) <= radius*radius ) {
+						if ( ((j == ny*3/8) || (j == ny*3/8+1)) && ((x-center1[0])*(x-center1[0])+(z-center1[2])*(z-center1[2])) <= radius*radius ) {
 							v_array[k][j][i] = 0.;
 						}
-						if ( ((j == 3*ny/4) || (j == 3*ny/4+1)) && ((x-center2[0])*(x-center2[0])+(z-center2[2])*(z-center2[2])) <= radius*radius ) {
+						if ( ((j == ny*5/8) || (j == ny*5/8+1)) && ((x-center2[0])*(x-center2[0])+(z-center2[2])*(z-center2[2])) <= 0.05*0.05 ) {
 							v_array[k][j][i] = 0.;
 						}
 					}

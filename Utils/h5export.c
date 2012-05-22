@@ -16,7 +16,7 @@ int main(int argc,char **argv)
   char                h5coordfilename[FILENAME_MAX],prefix[FILENAME_MAX];
   PetscViewer         viewer,h5viewer,XDMFviewer,XDMFviewer2;
   DM                  daVect,daScal;
-  Vec                 coordinates,U,V,temp,pres,pmult,FVel;
+  Vec                 coordinates,U,V,temp,pres,pmult,FVel,FVCellndof;
   PetscInt            nx,ny,nz,step,maxstep;
   PetscErrorCode      ierr;
   FILE                *file;
@@ -49,7 +49,7 @@ int main(int argc,char **argv)
   //ierr = DMDAGetReducedDA(daScal,1,&daVect);CHKERRQ(ierr);
   ierr = DMDAGetInfo(daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
+  ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
 						DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,
 						PETSC_NULL,PETSC_NULL,PETSC_NULL,&daVect);CHKERRQ(ierr);
   /* 
@@ -61,6 +61,7 @@ int main(int argc,char **argv)
   ierr = DMCreateGlobalVector(daVect,&U);CHKERRQ(ierr);
   ierr = DMCreateGlobalVector(daScal,&V);CHKERRQ(ierr);
   ierr = DMCreateGlobalVector(daVect,&FVel);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(daScal,&FVCellndof);CHKERRQ(ierr);  
   ierr = DMCreateGlobalVector(daVect,&coordinates);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) pres,"Pressure");CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) pmult,"Permeability");CHKERRQ(ierr);
@@ -68,6 +69,7 @@ int main(int argc,char **argv)
   ierr = PetscObjectSetName((PetscObject) U,"Displacement");CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) V,"Fracture");CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) FVel,"Fluid_Velocity");CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) FVCellndof,"FVCellndof");CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) coordinates,"Coordinates");CHKERRQ(ierr);
   
   /*
@@ -129,7 +131,10 @@ int main(int argc,char **argv)
   
       ierr = VecLoad(pres,viewer);CHKERRQ(ierr);
       ierr = VecView(pres,h5viewer);CHKERRQ(ierr);
-  
+
+      ierr = VecLoad(FVCellndof,viewer);CHKERRQ(ierr);
+      ierr = VecView(FVCellndof,h5viewer);CHKERRQ(ierr);
+	  
       ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
       ierr = PetscViewerDestroy(&h5viewer);CHKERRQ(ierr);
       /*
@@ -147,6 +152,7 @@ int main(int argc,char **argv)
       ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Permeability");CHKERRQ(ierr);
       ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Temperature");CHKERRQ(ierr);
       ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"Pressure");CHKERRQ(ierr);
+      ierr = XDMFattributeAdd(XDMFviewer,nx,ny,nz,1,"Scalar","Node",h5filename,"FVCellndof");CHKERRQ(ierr);	  
       ierr = XDMFuniformgridFinalize(XDMFviewer);CHKERRQ(ierr); 
       ierr = PetscViewerDestroy(&XDMFviewer);CHKERRQ(ierr);
       
@@ -163,6 +169,7 @@ int main(int argc,char **argv)
   ierr = VecDestroy(&U);CHKERRQ(ierr);
   ierr = VecDestroy(&V);CHKERRQ(ierr);
   ierr = VecDestroy(&FVel);CHKERRQ(ierr);
+  ierr = VecDestroy(&FVCellndof);CHKERRQ(ierr);  
   ierr = VecDestroy(&coordinates);CHKERRQ(ierr);
   ierr = PetscFinalize();
 }
