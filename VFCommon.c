@@ -210,7 +210,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 		ctx->altmintol  = 1.e-4;
 		ierr = PetscOptionsReal("-altmintol","\n\tTolerance for alternate minimizations algorithm","",ctx->altmintol,&ctx->altmintol,PETSC_NULL);CHKERRQ(ierr);
 		ctx->altminmaxit= 10000;
-		ierr = PetscOptionsInt("-altminmaxit","\n\tMaximum number of altername minimizations iterations","",ctx->altminmaxit,&ctx->altminmaxit,PETSC_NULL);CHKERRQ(ierr);
+		ierr = PetscOptionsInt("-altminmaxit","\n\tMaximum number of alternate minimizations iterations","",ctx->altminmaxit,&ctx->altminmaxit,PETSC_NULL);CHKERRQ(ierr);
 		ctx->preset = SYMXY;
 		ierr = PetscOptionsEnum("-preset","\n\tPreset simulation type","",VFPresetName,(PetscEnum)ctx->preset,(PetscEnum*)&ctx->preset,PETSC_NULL);CHKERRQ(ierr);
 		ctx->unilateral = UNILATERAL_NONE;
