@@ -39,7 +39,7 @@ typedef struct {
 
 typedef enum {
 	FieldUnits,			/* Flow computation in field units						*/
-	MetricUnits        /* Flow computation in metric units						*/
+	MetricUnits         /* Flow computation in metric units						*/
 } FlowUnit; 
 
 static const char *FlowUnitName[] = {
