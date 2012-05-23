@@ -102,7 +102,7 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] <= lx/2.-length || coords_array[k][j][i][0] >= lx/2.+length ) <= length ) {
+						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] >= lx/2.-length) && (coords_array[k][j][i][0] <= lx/2.+length ) ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -131,7 +131,7 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] <= lx/2.-length || coords_array[k][j][i][0] >= lx/2.+length ) <= length ) {
+						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] >= lx/2.-length) && (coords_array[k][j][i][0] <= lx/2.+length ) ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -162,7 +162,7 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] <= lx/2.-length || coords_array[k][j][i][0] >= lx/2.+length ) <= length ) {
+						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] >= lx/2.-length) && (coords_array[k][j][i][0] <= lx/2.+length ) ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -193,7 +193,7 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] <= lx/2.-length || coords_array[k][j][i][0] >= lx/2.+length ) <= length ) {
+						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] >= lx/2.-length) && (coords_array[k][j][i][0] <= lx/2.+length ) ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -220,7 +220,7 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] <= lx/2.-length || coords_array[k][j][i][0] >= lx/2.+length ) <= length ) {
+						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] >= lx/2.-length) && (coords_array[k][j][i][0] <= lx/2.+length ) ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -249,7 +249,7 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] <= lx/2.-length || coords_array[k][j][i][0] >= lx/2.+length ) <= length ) {
+						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] >= lx/2.-length) && (coords_array[k][j][i][0] <= lx/2.+length ) ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
