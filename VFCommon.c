@@ -1158,6 +1158,7 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
 	ierr = VecView(fields->pmult,viewer);CHKERRQ(ierr);
 	ierr = VecView(fields->theta,viewer);CHKERRQ(ierr);
 	ierr = VecView(fields->pressure,viewer);CHKERRQ(ierr);
+	ierr = VecView(fields->FVCellndof,viewer);CHKERRQ(ierr);	
 	PetscFunctionReturn(0);
 }
 
@@ -1172,7 +1173,7 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
 extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx)
 {
 	PetscErrorCode ierr;
-	PetscReal      pmult,v;
+	PetscReal      pmult,  v;
 	PetscInt       xs,xm;
 	PetscInt       ys,ym;
 	PetscInt       zs,zm;
