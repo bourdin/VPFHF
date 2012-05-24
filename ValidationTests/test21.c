@@ -113,7 +113,7 @@ int main(int argc,char **argv)
 		ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
 		ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
 		switch (orientation) {
-			case 0:
+			case 1:
 				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Z0 Z1 to simulate crack opening: Mode I\n");CHKERRQ(ierr);
 				/*	face Z0	*/
 				ctx.bcU[0].face[Z0]= ZERO;
@@ -136,7 +136,7 @@ int main(int argc,char **argv)
 					}
 				}
 				break;
-			case 1:
+			case 2:
 				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Z0 Z1 to simulate in-plane shear: Mode II\n");CHKERRQ(ierr);			/*	face Y0	*/
 				ctx.bcU[0].face[Z0]= FIXED;
 				ctx.bcU[1].face[Z0]= ZERO;
@@ -158,8 +158,8 @@ int main(int argc,char **argv)
 					}
 				}
 				break;
-			case 2:
-				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on face X0 to simulate out-of-plane shear: Mode III\n");CHKERRQ(ierr);
+			case 3:
+				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Z0 Z1 to simulate out-of-plane shear: Mode III\n");CHKERRQ(ierr);
 				/*	face Y0	*/
 				ctx.bcU[0].face[Z0]= ZERO;
 				ctx.bcU[1].face[Z0]= FIXED;
@@ -181,33 +181,33 @@ int main(int argc,char **argv)
 					}
 				}
 				break;
-			case 3:
-				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on face X0 to simulate mixed mode: Mode I & II\n");CHKERRQ(ierr);
+			case 4:
+				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions faces Z0 Z1 to simulate mixed mode: Mode I & II\n");CHKERRQ(ierr);
 				/*	face Y0	*/
-				ctx.bcU[0].face[Y0]= FIXED;
-				ctx.bcU[1].face[Y0]= FIXED;
-				ctx.bcU[2].face[Y0]= ZERO;
+				ctx.bcU[0].face[Z0]= ZERO;
+				ctx.bcU[1].face[Z0]= FIXED;
+				ctx.bcU[2].face[Z0]= FIXED;
 				/*	face Y1	*/
-				ctx.bcU[0].face[Y1]= FIXED;		  
-				ctx.bcU[1].face[Y1]= FIXED;		  
-				ctx.bcU[2].face[Y1]= ZERO;		  
+				ctx.bcU[0].face[Z1]= ZERO;		  
+				ctx.bcU[1].face[Z1]= FIXED;		  
+				ctx.bcU[2].face[Z1]= FIXED;		  
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
 						for (i = xs; i < xs+xm; i++) { 
-							if ( j == 0 ) {
+							if (k == 0) {
 								bcu_array[k][j][i][0] = -ctx.timestep*bc;
-								bcu_array[k][j][i][1] = -ctx.timestep*bc;
+								bcu_array[k][j][i][2] = -ctx.timestep*bc;
 							}
-							if ( j == ny-1 ) {
+							if (k == nz-1) {
 								bcu_array[k][j][i][0] = ctx.timestep*bc;
-								bcu_array[k][j][i][1] = ctx.timestep*bc;
+								bcu_array[k][j][i][2] = ctx.timestep*bc;
 							}
 						}
 					}
 				}
 				break;
 			default:
-				SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be either 1,2 or 3 but got %i\n",orientation);
+				SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be either 1,2,3 or 4 but got %i\n",orientation);
 				break;
 		}
 		ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
