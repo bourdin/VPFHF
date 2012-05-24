@@ -34,7 +34,7 @@ int main(int argc,char **argv)
 	PetscReal InsituWork    = 0;
 	PetscReal SurfaceEnergy = 0;
 	char      filename[FILENAME_MAX];
-	PetscReal bc = .02;
+	PetscReal bc = .01;
 	PetscReal ***v_array;
 	PetscReal lx,ly,lz;
 	PetscInt			altminit=1;
@@ -44,18 +44,18 @@ int main(int argc,char **argv)
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-length",&length,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
-	
 	lz = BBmax[2];
 	ly = BBmax[1];
 	lx = BBmax[0];
 	
-	printf("\nBounding box: lx = %f\tly = %f\tlz = %f\n",lx,ly,lz);
+/*	printf("\nBounding box: lx = %f\tly = %f\tlz = %f\n",lx,ly,lz);	*/
 	
 	ctx.matprop[0].beta  = 0.;
 	ctx.matprop[0].alpha = 0.;
@@ -97,7 +97,7 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) { 
-				if ( ((j == ny/2) || (j == ny/2-1)) && PetscAbs(coords_array[k][j][i][0]-(BBmin[0]+BBmax[0])/2.) <= length ) {
+				if ( ((k == nz/2) || (k == nz/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
 					v_array[k][j][i] = 0.;
 				}
 			}
@@ -114,44 +114,44 @@ int main(int argc,char **argv)
 		ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
 		switch (orientation) {
 			case 0:
-				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Y0 Y1 to simulate crack opening: Mode I\n");CHKERRQ(ierr);
-				/*	face Y0	*/
-				ctx.bcU[0].face[Y0]= ZERO;
-				ctx.bcU[1].face[Y0]= FIXED;
-				ctx.bcU[2].face[Y0]= ZERO;
-				/*	face Y1	*/
-				ctx.bcU[0].face[Y1]= ZERO;		  
-				ctx.bcU[1].face[Y1]= FIXED;		  
-				ctx.bcU[2].face[Y1]= ZERO;		  
+				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Z0 Z1 to simulate crack opening: Mode I\n");CHKERRQ(ierr);
+				/*	face Z0	*/
+				ctx.bcU[0].face[Z0]= ZERO;
+				ctx.bcU[1].face[Z0]= ZERO;
+				ctx.bcU[2].face[Z0]= FIXED;
+				/*	face Z1	*/
+				ctx.bcU[0].face[Z1]= ZERO;		  
+				ctx.bcU[1].face[Z1]= ZERO;		  
+				ctx.bcU[2].face[Z1]= FIXED;		  
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
 						for (i = xs; i < xs+xm; i++) { 
-							if ( j == 0 ) {
-								bcu_array[k][j][i][1] = -ctx.timestep*bc;
+							if (k == 0) {
+								bcu_array[k][j][i][2] = -ctx.timestep*bc;
 							}
-							if ( j == ny-1 ) {
-								bcu_array[k][j][i][1] = ctx.timestep*bc;
+							if (k == nz-1) {
+								bcu_array[k][j][i][2] = ctx.timestep*bc;
 							}
 						}
 					}
 				}
 				break;
 			case 1:
-				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Y0 Y1 to simulate in-plane shear: Mode II\n");CHKERRQ(ierr);			/*	face Y0	*/
-				ctx.bcU[0].face[Y0]= FIXED;
-				ctx.bcU[1].face[Y0]= ZERO;
-				ctx.bcU[2].face[Y0]= ZERO;
+				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Z0 Z1 to simulate in-plane shear: Mode II\n");CHKERRQ(ierr);			/*	face Y0	*/
+				ctx.bcU[0].face[Z0]= FIXED;
+				ctx.bcU[1].face[Z0]= ZERO;
+				ctx.bcU[2].face[Z0]= ZERO;
 				/*	face Y1	*/
-				ctx.bcU[0].face[Y1]= FIXED;		  
-				ctx.bcU[1].face[Y1]= ZERO;		  
-				ctx.bcU[2].face[Y1]= ZERO;		  
+				ctx.bcU[0].face[Z1]= FIXED;		  
+				ctx.bcU[1].face[Z1]= ZERO;		  
+				ctx.bcU[2].face[Z1]= ZERO;		  
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
 						for (i = xs; i < xs+xm; i++) { 
-							if ( j == 0 ) {
+							if (k == 0) {
 								bcu_array[k][j][i][0] = -ctx.timestep*bc;
 							}
-							if ( j == ny-1 ) {
+							if (k == nz-1) {
 								bcu_array[k][j][i][0] = ctx.timestep*bc;
 							}
 						}
@@ -161,21 +161,21 @@ int main(int argc,char **argv)
 			case 2:
 				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on face X0 to simulate out-of-plane shear: Mode III\n");CHKERRQ(ierr);
 				/*	face Y0	*/
-				ctx.bcU[0].face[Y0]= ZERO;
-				ctx.bcU[1].face[Y0]= ZERO;
-				ctx.bcU[2].face[Y0]= FIXED;
+				ctx.bcU[0].face[Z0]= ZERO;
+				ctx.bcU[1].face[Z0]= FIXED;
+				ctx.bcU[2].face[Z0]= ZERO;
 				/*	face Y1	*/
-				ctx.bcU[0].face[Y1]= ZERO;		  
-				ctx.bcU[1].face[Y1]= ZERO;		  
-				ctx.bcU[2].face[Y1]= FIXED;		  
+				ctx.bcU[0].face[Z1]= ZERO;		  
+				ctx.bcU[1].face[Z1]= FIXED;		  
+				ctx.bcU[2].face[Z1]= ZERO;		  
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
 						for (i = xs; i < xs+xm; i++) { 
-							if ( j == 0 ) {
-								bcu_array[k][j][i][2] = -ctx.timestep*bc;
+							if (k == 0) {
+								bcu_array[k][j][i][1] = -ctx.timestep*bc;
 							}
-							if ( j == ny-1 ) {
-								bcu_array[k][j][i][2] = ctx.timestep*bc;
+							if (k == nz-1) {
+								bcu_array[k][j][i][1] = ctx.timestep*bc;
 							}
 						}
 					}
@@ -207,7 +207,7 @@ int main(int argc,char **argv)
 				}
 				break;
 			default:
-				SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be between 0 and 2, got %i\n",orientation);
+				SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be either 1,2 or 3 but got %i\n",orientation);
 				break;
 		}
 		ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
