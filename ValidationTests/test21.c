@@ -24,7 +24,7 @@ int main(int argc,char **argv)
 	PetscErrorCode ierr;
 	
 	PetscReal length      = .1;
-	PetscInt  orientation = 0;
+	PetscInt  orientation = 1;
 	PetscInt  nopts       = 3;
 	PetscInt  i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
 	PetscReal ****coords_array;
@@ -97,7 +97,7 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) { 
-				if ( ((k == nz/2) || (k == nz/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
+				if ( ((i == nx/2) || (i == nx/2-1)) && (coords_array[k][j][i][2] > lz/2.-length) && (coords_array[k][j][i][2] < lz/2.+length ) ) {
 					v_array[k][j][i] = 0.;
 				}
 			}
@@ -114,67 +114,68 @@ int main(int argc,char **argv)
 		ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
 		switch (orientation) {
 			case 1:
-				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Z0 Z1 to simulate crack opening: Mode I\n");CHKERRQ(ierr);
-				/*	face Z0	*/
-				ctx.bcU[0].face[Z0]= ZERO;
-				ctx.bcU[1].face[Z0]= ZERO;
-				ctx.bcU[2].face[Z0]= FIXED;
-				/*	face Z1	*/
-				ctx.bcU[0].face[Z1]= ZERO;		  
-				ctx.bcU[1].face[Z1]= ZERO;		  
-				ctx.bcU[2].face[Z1]= FIXED;		  
+				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying normal displacement boundary condition on faces X0 X1 to simulate crack opening: Mode I \n");CHKERRQ(ierr);
+				/*	face X0	*/
+				ctx.bcU[0].face[X0]= FIXED;
+				ctx.bcU[1].face[X0]= ZERO;
+				ctx.bcU[2].face[X0]= ZERO;
+				/*	face X1	*/
+				ctx.bcU[0].face[X1]= FIXED;		  
+				ctx.bcU[1].face[X1]= ZERO;		  
+				ctx.bcU[2].face[X1]= ZERO;		  
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
 						for (i = xs; i < xs+xm; i++) { 
-							if (k == 0) {
-								bcu_array[k][j][i][2] = -ctx.timestep*bc;
-							}
-							if (k == nz-1) {
-								bcu_array[k][j][i][2] = ctx.timestep*bc;
-							}
-						}
-					}
-				}
-				break;
-			case 2:
-				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Z0 Z1 to simulate in-plane shear: Mode II\n");CHKERRQ(ierr);			/*	face Y0	*/
-				ctx.bcU[0].face[Z0]= FIXED;
-				ctx.bcU[1].face[Z0]= ZERO;
-				ctx.bcU[2].face[Z0]= ZERO;
-				/*	face Y1	*/
-				ctx.bcU[0].face[Z1]= FIXED;		  
-				ctx.bcU[1].face[Z1]= ZERO;		  
-				ctx.bcU[2].face[Z1]= ZERO;		  
-				for (k = zs; k < zs+zm; k++) {
-					for (j = ys; j < ys+ym; j++) {
-						for (i = xs; i < xs+xm; i++) { 
-							if (k == 0) {
+							if (i == 0) {
 								bcu_array[k][j][i][0] = -ctx.timestep*bc;
 							}
-							if (k == nz-1) {
+							if (i == nx-1) {
 								bcu_array[k][j][i][0] = ctx.timestep*bc;
 							}
 						}
 					}
 				}
 				break;
-			case 3:
-				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Z0 Z1 to simulate out-of-plane shear: Mode III\n");CHKERRQ(ierr);
-				/*	face Y0	*/
-				ctx.bcU[0].face[Z0]= ZERO;
-				ctx.bcU[1].face[Z0]= FIXED;
-				ctx.bcU[2].face[Z0]= ZERO;
-				/*	face Y1	*/
-				ctx.bcU[0].face[Z1]= ZERO;		  
-				ctx.bcU[1].face[Z1]= FIXED;		  
-				ctx.bcU[2].face[Z1]= ZERO;		  
+			case 2:
+				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying tangential displacement boundary condition on faces X0 X1 to simulate in-plane shear: Mode II \n");CHKERRQ(ierr);
+				/*	face X0	*/
+				ctx.bcU[0].face[X0]= ZERO;
+				ctx.bcU[1].face[X0]= ZERO;
+				ctx.bcU[2].face[X0]= FIXED;
+				/*	face X1	*/
+				ctx.bcU[0].face[X1]= ZERO;		  
+				ctx.bcU[1].face[X1]= ZERO;		  
+				ctx.bcU[2].face[X1]= FIXED;		  
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
 						for (i = xs; i < xs+xm; i++) { 
-							if (k == 0) {
+							if (i == 0) {
+								bcu_array[k][j][i][2] = -ctx.timestep*bc;
+							}
+							if (i == nx-1) {
+								bcu_array[k][j][i][2] = ctx.timestep*bc;
+							}
+						}
+					}
+				}
+				break;
+			case 3:
+				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying tangential displacement boundary condition on faces X0 X1 to simulate out-of-plane shear: Mode III \n");CHKERRQ(ierr);
+				/*	face X0	*/
+				ctx.bcU[0].face[X0]= ZERO;
+				ctx.bcU[1].face[X0]= FIXED;
+				ctx.bcU[2].face[X0]= ZERO;
+				/*	face Y1	*/
+				ctx.bcU[0].face[X1]= ZERO;		  
+				ctx.bcU[1].face[X1]= FIXED;		  
+				ctx.bcU[2].face[X1]= ZERO;		  
+				for (k = zs; k < zs+zm; k++) {
+					for (j = ys; j < ys+ym; j++) {
+						for (i = xs; i < xs+xm; i++) { 
+							if (i == 0) {
 								bcu_array[k][j][i][1] = -ctx.timestep*bc;
 							}
-							if (k == nz-1) {
+							if (i == nx-1) {
 								bcu_array[k][j][i][1] = ctx.timestep*bc;
 							}
 						}
@@ -182,23 +183,23 @@ int main(int argc,char **argv)
 				}
 				break;
 			case 4:
-				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions faces Z0 Z1 to simulate mixed mode: Mode I & II\n");CHKERRQ(ierr);
-				/*	face Y0	*/
-				ctx.bcU[0].face[Z0]= ZERO;
-				ctx.bcU[1].face[Z0]= FIXED;
-				ctx.bcU[2].face[Z0]= FIXED;
+				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying displacement boundary condition on faces X0 X1 to simulate mixed mode: Mode I & II\n");CHKERRQ(ierr);
+				/*	face X0	*/
+				ctx.bcU[0].face[X0]= FIXED;
+				ctx.bcU[1].face[X0]= ZERO;
+				ctx.bcU[2].face[X0]= FIXED;
 				/*	face Y1	*/
-				ctx.bcU[0].face[Z1]= ZERO;		  
-				ctx.bcU[1].face[Z1]= FIXED;		  
-				ctx.bcU[2].face[Z1]= FIXED;		  
+				ctx.bcU[0].face[X1]= FIXED;		  
+				ctx.bcU[1].face[X1]= ZERO;		  
+				ctx.bcU[2].face[X1]= FIXED;		  
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
 						for (i = xs; i < xs+xm; i++) { 
-							if (k == 0) {
+							if (i == 0) {
 								bcu_array[k][j][i][0] = -ctx.timestep*bc;
 								bcu_array[k][j][i][2] = -ctx.timestep*bc;
 							}
-							if (k == nz-1) {
+							if (i == nx-1) {
 								bcu_array[k][j][i][0] = ctx.timestep*bc;
 								bcu_array[k][j][i][2] = ctx.timestep*bc;
 							}

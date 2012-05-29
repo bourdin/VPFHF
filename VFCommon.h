@@ -38,11 +38,13 @@ typedef struct {
 } FlowProp; 
 
 typedef enum {
+	UnitaryUnits,			/* All variables are unitary, for testing purposes						*/
 	FieldUnits,			/* Flow computation in field units						*/
 	MetricUnits         /* Flow computation in metric units						*/
 } FlowUnit; 
 
 static const char *FlowUnitName[] = {
+	"UnitaryUnit",
 	"FieldUnit",
 	"MetricUnit",
 	"FlowUnitName",
@@ -150,6 +152,7 @@ typedef struct {
 	Vec FVCellndof;
 	Vec FVCell;
 	Vec	VolCrackOpening;
+	Vec FlowBCArray;
 } VFFields;
 
 static const char *VFFieldNames[] = {
