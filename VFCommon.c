@@ -657,6 +657,14 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 	ierr = PetscObjectSetName((PetscObject) fields->VolCrackOpening,"Volumetric Crack Opening");CHKERRQ(ierr);
 	ierr = VecSet(fields->VolCrackOpening,0.0);CHKERRQ(ierr);
 	
+	ierr = DMCreateGlobalVector(ctx->daFlow,&fields->FlowBCArray);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) fields->FlowBCArray,"Velocity and Pressure Boundary Values");CHKERRQ(ierr);
+	ierr = VecSet(fields->FlowBCArray,0.0);CHKERRQ(ierr);
+	
+	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->Source);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) ctx->Source,"Source Term");CHKERRQ(ierr);
+	ierr = VecSet(ctx->Source,0.0);CHKERRQ(ierr);
+		
 	/*
 	 Create optional penny shaped cracks
 	 */
@@ -1047,7 +1055,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = VecDestroy(&fields->FVCell);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->FVCellndof);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->VolCrackOpening);CHKERRQ(ierr);
-	
+
 	ierr = PetscViewerDestroy(&ctx->energyviewer);CHKERRQ(ierr);
 	
 	/*

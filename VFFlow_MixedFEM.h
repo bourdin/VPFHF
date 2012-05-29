@@ -14,10 +14,11 @@ extern PetscErrorCode VFFlow_DarcyMixedFEMSteadyState(VFCtx *ctx, VFFields *fiel
 /* 
   Rename and check if all these need to be public
 */
-extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx);
+extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode GetFlowProp(FlowProp *flowprop, 	FlowUnit flowunit, ResProp resprop);
 extern PetscErrorCode SETFlowBC(FLOWBC *BC, FlowCases flowcase);
-extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, VFCtx *ctx);
+//extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, VFCtx *ctx);
+extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal ****UnPre_array);
 extern PetscErrorCode MatApplyFlowBC(Mat K, DM da, FLOWBC *BC);
 extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields *fields, VFCtx *ctx);
 extern PetscErrorCode FLow_Vecg(PetscReal *Kg_local, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, FlowProp flowpropty, PetscReal ****perm_array);
@@ -32,5 +33,8 @@ extern PetscErrorCode BoundaryPressure(PetscReal *press, PetscInt i, PetscInt j,
 extern PetscErrorCode FLow_MatBTranspose(PetscReal *KB_ele, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, PetscInt c, FlowProp flowpropty, PetscReal ****perm_array);
 extern PetscErrorCode VecApplyWellFlowBC(PetscReal *Ks_local, PetscReal ***source_array, CartFE_Element3D *e, PetscInt ek, PetscInt ej, PetscInt ei, VFCtx *ctx);
 extern PetscErrorCode SETSourceTerms(Vec Src, FlowProp flowpropty);
+extern PetscErrorCode SETBoundaryTerms(VFCtx *ctx, VFFields *fields);
+
+
 
 #endif /* VFFLOW_MIXEDFEM_H */

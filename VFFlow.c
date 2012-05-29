@@ -49,7 +49,7 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 	PetscFunctionBegin;
 	switch (ctx->flowsolver) {
 		case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:       
-			ierr = MixedFEMFlowSolverInitialize(ctx);CHKERRQ(ierr);
+			ierr = MixedFEMFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
 			break;
 		case FLOWSOLVER_TS:
 		    break;
