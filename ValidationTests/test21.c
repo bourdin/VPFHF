@@ -34,7 +34,7 @@ int main(int argc,char **argv)
 	PetscReal InsituWork    = 0;
 	PetscReal SurfaceEnergy = 0;
 	char      filename[FILENAME_MAX];
-	PetscReal bc = .01;
+	PetscReal bc = .005;
 	PetscReal ***v_array;
 	PetscReal lx,ly,lz;
 	PetscInt			altminit=1;
@@ -108,8 +108,9 @@ int main(int argc,char **argv)
 	ctx.hasCrackPressure = PETSC_FALSE;
 	
 	ctx.timestep = 1;	
-	ctx.maxtimestep = 50;
+	ctx.maxtimestep = 2;
 	for(ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){	
+		altminit = 0.;
 		ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
 		ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
 		switch (orientation) {
@@ -122,7 +123,11 @@ int main(int argc,char **argv)
 				/*	face X1	*/
 				ctx.bcU[0].face[X1]= FIXED;		  
 				ctx.bcU[1].face[X1]= ZERO;		  
-				ctx.bcU[2].face[X1]= ZERO;		  
+				ctx.bcU[2].face[X1]= ZERO;	
+				/*	face Y0	*/
+				ctx.bcU[1].face[Y0]= ZERO;		  
+				/*	face Y1	*/
+				ctx.bcU[1].face[Y1]= ZERO;		  
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
 						for (i = xs; i < xs+xm; i++) { 
@@ -145,7 +150,11 @@ int main(int argc,char **argv)
 				/*	face X1	*/
 				ctx.bcU[0].face[X1]= ZERO;		  
 				ctx.bcU[1].face[X1]= ZERO;		  
-				ctx.bcU[2].face[X1]= FIXED;		  
+				ctx.bcU[2].face[X1]= FIXED;	
+				/*	face Y0	*/
+				ctx.bcU[1].face[Y0]= ZERO;
+				/*	face Y1	*/
+				ctx.bcU[1].face[Y1]= ZERO;				
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
 						for (i = xs; i < xs+xm; i++) { 
@@ -160,6 +169,35 @@ int main(int argc,char **argv)
 				}
 				break;
 			case 3:
+				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying displacement boundary condition on faces X0 X1 to simulate mixed mode: Mode I & II\n");CHKERRQ(ierr);
+				/*	face X0	*/
+				ctx.bcU[0].face[X0]= FIXED;
+				ctx.bcU[1].face[X0]= ZERO;
+				ctx.bcU[2].face[X0]= FIXED;
+				/*	face X1	*/
+				ctx.bcU[0].face[X1]= FIXED;		  
+				ctx.bcU[1].face[X1]= ZERO;		  
+				ctx.bcU[2].face[X1]= FIXED;		 
+				/*	face Y0	*/
+				ctx.bcU[1].face[Y0]= ZERO;		  
+				/*	face Y1	*/
+				ctx.bcU[1].face[Y1]= ZERO;		  
+				for (k = zs; k < zs+zm; k++) {
+					for (j = ys; j < ys+ym; j++) {
+						for (i = xs; i < xs+xm; i++) { 
+							if (i == 0) {
+								bcu_array[k][j][i][0] = -ctx.timestep*(bc+0.001);
+								bcu_array[k][j][i][2] = -ctx.timestep*bc;
+							}
+							if (i == nx-1) {
+								bcu_array[k][j][i][0] = ctx.timestep*(bc+0.001);
+								bcu_array[k][j][i][2] = ctx.timestep*bc;
+							}
+						}
+					}
+				}
+				break;
+			case 4:
 				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying tangential displacement boundary condition on faces X0 X1 to simulate out-of-plane shear: Mode III \n");CHKERRQ(ierr);
 				/*	face X0	*/
 				ctx.bcU[0].face[X0]= ZERO;
@@ -168,7 +206,13 @@ int main(int argc,char **argv)
 				/*	face Y1	*/
 				ctx.bcU[0].face[X1]= ZERO;		  
 				ctx.bcU[1].face[X1]= FIXED;		  
-				ctx.bcU[2].face[X1]= ZERO;		  
+				ctx.bcU[2].face[X1]= ZERO;
+				/*	face Y0	*/
+				ctx.bcU[0].face[Y0]= ZERO;		  
+				ctx.bcU[2].face[Y0]= ZERO;
+				/*	face Y1	*/
+				ctx.bcU[0].face[Y1]= ZERO;		  
+				ctx.bcU[2].face[Y1]= ZERO;				
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
 						for (i = xs; i < xs+xm; i++) { 
@@ -182,31 +226,6 @@ int main(int argc,char **argv)
 					}
 				}
 				break;
-			case 4:
-				ierr                = PetscPrintf(PETSC_COMM_WORLD,"Applying displacement boundary condition on faces X0 X1 to simulate mixed mode: Mode I & II\n");CHKERRQ(ierr);
-				/*	face X0	*/
-				ctx.bcU[0].face[X0]= FIXED;
-				ctx.bcU[1].face[X0]= ZERO;
-				ctx.bcU[2].face[X0]= FIXED;
-				/*	face Y1	*/
-				ctx.bcU[0].face[X1]= FIXED;		  
-				ctx.bcU[1].face[X1]= ZERO;		  
-				ctx.bcU[2].face[X1]= FIXED;		  
-				for (k = zs; k < zs+zm; k++) {
-					for (j = ys; j < ys+ym; j++) {
-						for (i = xs; i < xs+xm; i++) { 
-							if (i == 0) {
-								bcu_array[k][j][i][0] = -ctx.timestep*bc;
-								bcu_array[k][j][i][2] = -ctx.timestep*bc;
-							}
-							if (i == nx-1) {
-								bcu_array[k][j][i][0] = ctx.timestep*bc;
-								bcu_array[k][j][i][2] = ctx.timestep*bc;
-							}
-						}
-					}
-				}
-				break;
 			default:
 				SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be either 1,2,3 or 4 but got %i\n",orientation);
 				break;
@@ -214,7 +233,7 @@ int main(int argc,char **argv)
 		ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 		ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
 		do {
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"alt min step %i\n",altminit);CHKERRQ(ierr);
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, alt min step %i\n",ctx.timestep,altminit);CHKERRQ(ierr);
 			ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
 			ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
 			ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
@@ -262,6 +281,12 @@ int main(int argc,char **argv)
 		printf("###################################################################\n\n\n");
 	}
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+	PetscViewer		viewer;
+/*
+	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"solution.txt",&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	ierr = VecView(fields.U,viewer);CHKERRQ(ierr); 
+*/
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);

@@ -38,9 +38,9 @@ typedef struct {
 } FlowProp; 
 
 typedef enum {
-	UnitaryUnits,			/* All variables are unitary, for testing purposes						*/
-	FieldUnits,			/* Flow computation in field units						*/
-	MetricUnits         /* Flow computation in metric units						*/
+	UnitaryUnits,			/* All variables are unitary, for testing purposes		*/
+	FieldUnits,				/* Flow computation in field units						*/
+	MetricUnits				/* Flow computation in metric units						*/
 } FlowUnit; 
 
 static const char *FlowUnitName[] = {
