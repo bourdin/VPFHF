@@ -1281,13 +1281,14 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = MatApplyDirichletBC(K,ctx->daVect,&ctx->bcU[0]);CHKERRQ(ierr);
   ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  
+ 
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,RHS_localVec,&RHS_array);CHKERRQ(ierr);
   ierr = DMLocalToGlobalBegin(ctx->daVect,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
   ierr = DMLocalToGlobalEnd(ctx->daVect,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daVect,&RHS_localVec);CHKERRQ(ierr);
   ierr = VecApplyDirichletBC(RHS,fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
-  /*
+ 	
+/*
     Cleanup
   */
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
