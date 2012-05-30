@@ -108,7 +108,7 @@ int main(int argc,char **argv)
 	ctx.hasCrackPressure = PETSC_FALSE;
 	
 	ctx.timestep = 1;	
-	ctx.maxtimestep = 2;
+	ctx.maxtimestep = 10;
 	for(ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){	
 		altminit = 0.;
 		ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
@@ -186,11 +186,11 @@ int main(int argc,char **argv)
 					for (j = ys; j < ys+ym; j++) {
 						for (i = xs; i < xs+xm; i++) { 
 							if (i == 0) {
-								bcu_array[k][j][i][0] = -ctx.timestep*(bc+0.001);
+								bcu_array[k][j][i][0] = -ctx.timestep*bc;
 								bcu_array[k][j][i][2] = -ctx.timestep*bc;
 							}
 							if (i == nx-1) {
-								bcu_array[k][j][i][0] = ctx.timestep*(bc+0.001);
+								bcu_array[k][j][i][0] = ctx.timestep*bc;
 								bcu_array[k][j][i][2] = ctx.timestep*bc;
 							}
 						}
