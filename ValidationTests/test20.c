@@ -174,7 +174,7 @@ int main(int argc,char **argv)
 				}
 				break;
 			default:
-				SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be between 0, got %i\n",orientation);
+				SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be between 1 & 3, got %i\n",orientation);
 				break;
 		}
 		ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
@@ -210,9 +210,7 @@ int main(int argc,char **argv)
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:
 				ierr = FieldsH5Write(&ctx,&fields);
-				ierr = FieldsH5Write(&ctx,&fields);
 				break;
-				
 			case FILEFORMAT_BIN:
 				ierr = FieldsBinaryWrite(&ctx,&fields);
 				break;
