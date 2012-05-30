@@ -67,6 +67,50 @@ extern PetscErrorCode VFFlow_FEM_MatPAssembly3D_local(PetscReal *Mat_local,ResPr
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "VFFlow_FEM_MassMatPAssembly3D_local"
+/*
+   VFFlow_FEM_MassMatPAssembly3D_local
+*/
+
+extern PetscErrorCode VFFlow_FEM_MassMatPAssembly3D_local(PetscReal *Mat_local,ResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+{
+  PetscInt       g,i1,i2,j1,j2,k1,k2,l;
+  PetscReal      fdens,por,wat_comp,rock_comp;
+  PetscReal      ACoef_P;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+/*
+  The following properties should be changed to a function of pressure and temperature (and saturation for multi-phase)
+*/
+  fdens     = resprop->fdens;
+  por       = resprop->por;
+  wat_comp  = resprop->wat_comp;
+  rock_comp = resprop->rock_comp;
+  ACoef_P   = fdens*por*(wat_comp+rock_comp);
+
+  for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
+    for (j1 = 0; j1 < e->nphiy; j1++) {
+      for (i1 = 0; i1 < e->nphix; i1++) {
+        for (k2 = 0; k2 < e->nphiz; k2++) {
+          for (j2 = 0; j2 < e->nphiy; j2++) {
+            for (i2 = 0; i2 < e->nphix; i2++,l++) {
+              Mat_local[l] = 0.;
+              for (g = 0; g < e->ng; g++) {
+                Mat_local[l] += e->weight[g]*ACoef_P*e->phi[k1][j1][i1][g]*e->phi[k2][j2][i2][g];
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  PetscFunctionReturn(0);
+}
+
+
 
 #undef __FUNCT__
 #define __FUNCT__ "VFFlow_FEM_MatPAssembly3D"

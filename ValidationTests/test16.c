@@ -122,7 +122,39 @@ int main(int argc,char **argv)
 				}
 			}      
 			break;
+		case 2:
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of radius %g at (%g,%g,%g) with normal vector <0,1,0>\n",
+							   radius,center[0],center[1],center[2]);CHKERRQ(ierr);	  
+			/*	face X0	*/
+			ctx.bcU[0].face[X0]= ZERO;
+			/*	face X1	*/
+			ctx.bcU[0].face[X1]= ZERO;
+			/*	face Y0	*/
+			ctx.bcU[1].face[Y0]= ZERO;
+			/*	face Y1	*/
+			ctx.bcU[1].face[Y1]= ZERO;
+			/*	face Z0	*/
+			ctx.bcU[2].face[Z0]= ZERO;
+			/*	face Z1	*/
+			ctx.bcU[2].face[Z1]= ZERO;
 
+            ctx.bcU[0].vertex[X0Y0Z1] = ZERO;		
+            ctx.bcU[1].vertex[X0Y0Z1] = ZERO;	
+            ctx.bcU[2].vertex[X0Y0Z1] = ZERO;	
+			
+			for (k = zs; k < zs+zm; k++) {
+				for (j = ys; j < ys+ym; j++) {
+					for (i = xs; i < xs+xm; i++) { 
+						x = coords_array[k][j][i][0];
+						y = coords_array[k][j][i][1];
+                        z = coords_array[k][j][i][2];						
+						if ( ((j == ny/2) || (j == ny/2+1)) && ((x-center[0])*(x-center[0])+(z-center[2])*(z-center[2])) <= radius*radius ) {
+							v_array[k][j][i] = 0.;
+						}
+					}
+				}
+			}      
+			break;
 		default:
 			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation specified is not defined yet, got %i\n",orientation);
 			break;
