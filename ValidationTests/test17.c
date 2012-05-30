@@ -319,6 +319,7 @@ int main(int argc,char **argv)
 			ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 			p = q*ctx.timestep/ctx.CrackVolume;
 			ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
+			ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
 			ierr = VecScale(fields.U,p);CHKERRQ(ierr);
 			ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 			ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
