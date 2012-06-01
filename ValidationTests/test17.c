@@ -41,7 +41,8 @@ int main(int argc,char **argv)
 	Vec					Vold;
 	PetscReal			errV=1e+10;
 	PetscReal			lx,ly,lz;
-	PetscReal			q=2.e-4;
+//	PetscReal			q=2.e-4;
+	PetscReal			q=8.e-3;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -317,7 +318,9 @@ int main(int argc,char **argv)
 			ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
 			ierr = VecScale(fields.U,1./p);CHKERRQ(ierr);
 			ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
-			p = q*ctx.timestep/ctx.CrackVolume;
+//			p = q*ctx.timestep/ctx.CrackVolume;
+			q = q + 2e-4;
+			p = q/ctx.CrackVolume;
 			ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
 			ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
 			ierr = VecScale(fields.U,p);CHKERRQ(ierr);

@@ -242,13 +242,11 @@ int main(int argc,char **argv)
   case FILEFORMAT_BIN:
     ierr = FieldsBinaryWrite(&ctx,&fields);
     break;
-  }
-
-
-	printf("\n###################################################################\n");
-  printf("#        Actual crack volume change = %f\t      \n\n\n\n",(lz*ly*bc*2));
-	printf("#        VF crack volume change = %f\t      \n",ctx.CrackVolume);
-  printf("###################################################################\n\n\n");
+  }	
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"###################################################################\n\n\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"#        Actual crack volume change = %f\t      \n\n\n\n", (lz*ly*bc*2));CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"#        VF crack volume change = %e\t      \n", ctx.CrackVolume);CHKERRQ(ierr);
+	
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscFinalize();
   return(0);
