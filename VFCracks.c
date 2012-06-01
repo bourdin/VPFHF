@@ -98,7 +98,7 @@ extern PetscErrorCode VFPennyCrackSetName(VFPennyCrack *PennyCrack,const char na
 extern PetscErrorCode VFDistanceToPennyCrack(PetscReal *d,PetscReal *x,VFPennyCrack *PennyCrack)
 {
   PetscErrorCode      ierr;
-  PetscReal           n[3],tau[3],l,xdotn;
+  PetscReal           n[3],tau[3],l,xdotn, taumag;
 
   PetscFunctionBegin;
   /*
@@ -119,16 +119,12 @@ extern PetscErrorCode VFDistanceToPennyCrack(PetscReal *d,PetscReal *x,VFPennyCr
   tau[2] = (x[2]-PennyCrack->center[2]) - xdotn*n[2];
   l = sqrt(tau[0]*tau[0] + tau[1]*tau[1] + tau[2]*tau[2]);
   if (PennyCrack->r == 0.) {
-    *d = sqrt(pow(x[0] - PennyCrack->center[0],2) +  
-              pow(x[1] - PennyCrack->center[1],2) + 
-              pow(x[2] - PennyCrack->center[2],2));
+	  *d = 0.;
   } else {
-    if (l < PennyCrack->r) {
+    if (l <= PennyCrack->r) {
       *d = sqrt(xdotn*xdotn);
-    } else {
-      *d = sqrt(pow(x[0] - PennyCrack->center[0] - tau[0] / l * PennyCrack->r,2) +  
-                pow(x[1] - PennyCrack->center[1] - tau[1] / l * PennyCrack->r,2) + 
-                pow(x[2] - PennyCrack->center[2] - tau[2] / l * PennyCrack->r,2));
+    } else {		
+	  *d = sqrt(pow(xdotn,2)+pow((l-PennyCrack->r),2));
     } 
   }
   PetscFunctionReturn(0);
@@ -167,7 +163,15 @@ extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx
         x[1] = coords_array[k][j][i][1];
         x[0] = coords_array[k][j][i][0];
         ierr = VFDistanceToPennyCrack(&dist,x,crack);CHKERRQ(ierr);
-        v_array[k][j][i] = 1.-exp(-dist/2/ctx->vfprop.epsilon);
+		  if(crack->r == 0){
+			  v_array[k][j][i] = 1.;
+		  }
+		  if(dist == 0){
+			  v_array[k][j][i] = 0.;
+		  }
+		  else{
+			  v_array[k][j][i] = 1.-exp(-dist/2/ctx->vfprop.epsilon);
+		  }
       }
     }
   }      
@@ -175,7 +179,7 @@ extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
+//
 // #undef __FUNCT__
 // #define __FUNCT__ "VFRectangularCrackGet"
 // /*
@@ -192,7 +196,7 @@ extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx
 //   {
 //     ierr = PetscOptionsString("-name","\n\tRectangular-shaped crack name","",RectangularCrack->name,RectangularCrack->name,sizeof(RectangularCrack->name),PETSC_NULL);CHKERRQ(ierr);
 //     nval = 9;    
-//     ierr = PetscOptionsRealArray("-corners","\n\tRectangular-shaped crack corners coordinates (x0,y0,z0, x1,y1,z1, x2,y2,z2)  (comma separated).","",RectangularCrack->center,&nval,PETSC_NULL);CHKERRQ(ierr);
+//     ierr = PetscOptionsRealArray("-corners","\n\tRectangular-shaped crack corners coordinates (x0,y0,z0, x1,y1,z1, x2,y2,z2)  (comma separated).","",RectangularCrack->corner,&nval,PETSC_NULL);CHKERRQ(ierr);
 //   }
 //   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 //   PetscFunctionReturn(0);
