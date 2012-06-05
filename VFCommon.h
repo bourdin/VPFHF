@@ -245,38 +245,38 @@ typedef struct {
 	PetscLogStage VF_IOStage;
 	
 	PetscLogStage VF_UAssemblyStage;
-	PetscClassId  VF_MatULocalClassId;
-	PetscLogEvent VF_MatULocalEvent;
-	PetscClassId  VF_VecULocalClassId;
-	PetscLogEvent VF_VecULocalEvent;
+  //PetscClassId  VF_MatULocalClassId;
+  //PetscLogEvent VF_MatULocalEvent;
+  //PetscClassId  VF_VecULocalClassId;
+  //PetscLogEvent VF_VecULocalEvent;
 	
 	PetscLogStage VF_USolverStage;
 	
 	PetscLogStage VF_VAssemblyStage;
-	PetscClassId  VF_MatVLocalClassId;
-	PetscLogEvent VF_MatVLocalEvent;
-	PetscClassId  VF_VecVLocalClassId;
-	PetscLogEvent VF_VecVLocalEvent;
+	//PetscClassId  VF_MatVLocalClassId;
+	//PetscLogEvent VF_MatVLocalEvent;
+	//PetscClassId  VF_VecVLocalClassId;
+	//PetscLogEvent VF_VecVLocalEvent;
 	
 	PetscLogStage VF_VSolverStage;
 	
 	PetscLogStage VF_EnergyStage;
-	PetscClassId  VF_EnergyLocalClassId;
-	PetscLogEvent VF_EnergyLocalEvent;
+	//PetscClassId  VF_EnergyLocalClassId;
+	//PetscLogEvent VF_EnergyLocalEvent;
 	
 	PetscLogStage VF_PAssemblyStage;
-	PetscClassId  VF_MatPLocalClassId;
-	PetscLogEvent VF_MatPLocalEvent;
-	PetscClassId  VF_VecPLocalClassId;
-	PetscLogEvent VF_VecPLocalEvent;
+	//PetscClassId  VF_MatPLocalClassId;
+	//PetscLogEvent VF_MatPLocalEvent;
+	//PetscClassId  VF_VecPLocalClassId;
+	//PetscLogEvent VF_VecPLocalEvent;
 	
 	PetscLogStage VF_PSolverStage;
 	
 	PetscLogStage VF_TAssemblyStage;
-	PetscClassId  VF_MatTLocalClassId;
-	PetscLogEvent VF_MatTLocalEvent;
-	PetscClassId  VF_VecTLocalClassId;
-	PetscLogEvent VF_VecTLocalEvent;
+	//PetscClassId  VF_MatTLocalClassId;
+	//PetscLogEvent VF_MatTLocalEvent;
+	//PetscClassId  VF_VecTLocalClassId;
+	//PetscLogEvent VF_VecTLocalEvent;
 	
 	PetscLogStage VF_TSolverStage;
 } VFLog;
