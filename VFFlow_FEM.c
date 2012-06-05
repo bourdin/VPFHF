@@ -835,8 +835,6 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx,VFFields *fields)
   ierr = SNESSetJacobian(snes,J,J,SNESDefaultComputeJacobianColor,matfdcoloring);CHKERRQ(ierr);
 */
 
-
-
   /* move to VFCommon later? */
 
 
@@ -938,7 +936,7 @@ extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
     get Pdot, pressure and function array
   */
   ierr = DMGetLocalVector(ctx->daScal,&Pdot_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daScal,Pdot_Vec,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,Pdot_Vec,INSERT_VALUES,Pdot_localVec);CHKERRQ(ierr);
   ierr = DMGlobalToLocalEnd(ctx->daScal,Pdot_Vec,INSERT_VALUES,Pdot_localVec);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,Pdot_localVec,&Pdot_array);CHKERRQ(ierr);
   
@@ -984,7 +982,7 @@ extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Z1];
                       }         else{
                         func_array[ek+k1][ej+j1][ei+i1] += ctx->e3D.weight[g]* ( Pdot_array[ek+k2][ej+j2][ei+i2]*ACoef_P*ctx->e3D.phi[k1][j1][i1][g]*ctx->e3D.phi[k2][j2][i2][g]
-                                    						- pressure_array[ek+k2][ej+j2][ei+i2]*DCoef_P*
+                                    						+ pressure_array[ek+k2][ej+j2][ei+i2]*DCoef_P*
                                                            (kxx*ctx->e3D.dphi[k1][j1][i1][0][g]*ctx->e3D.dphi[k2][j2][i2][0][g]
                                                             +kyy*ctx->e3D.dphi[k1][j1][i1][1][g]*ctx->e3D.dphi[k2][j2][i2][1][g]
                                                             +kzz*ctx->e3D.dphi[k1][j1][i1][2][g]*ctx->e3D.dphi[k2][j2][i2][2][g]) );
@@ -1005,6 +1003,9 @@ extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
   */
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 
+  ierr = DMDAVecRestoreArray(ctx->daScal,Pdot_localVec,&Pdot_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&Pdot_localVec);CHKERRQ(ierr);
+  
   ierr = DMDAVecRestoreArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
 
@@ -1017,12 +1018,143 @@ extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "VFFlow_FEM_IJacobPAssembly3D_local"
+/*
+   VFFlow_FEM_IJacobPAssembly3D_local
+*/
+
+extern PetscErrorCode VFFlow_FEM_IJacobPAssembly3D_local(PetscReal a, PetscReal *Mat_local,ResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+{
+  PetscInt       g,i1,i2,j1,j2,k1,k2,l;
+  PetscReal      fdens,por,wat_comp,rock_comp,relk,visc;
+  PetscReal      kxx,kyy,kzz;
+  PetscReal      ACoef_P,DCoef_P;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+/*
+  The following properties should be changed to a function of pressure and temperature (and saturation for multi-phase)
+*/
+  fdens     = resprop->fdens;
+  por       = resprop->por;
+  wat_comp  = resprop->wat_comp;
+  rock_comp = resprop->rock_comp;
+  relk      = resprop->relk;
+  visc      = resprop->visc;
+  kxx       = resprop->perm;
+  kyy       = resprop->perm;
+  kzz       = resprop->perm;
+  DCoef_P   = fdens*relk/visc; 
+  ACoef_P   = fdens*por*(wat_comp+rock_comp);
+
+  for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
+    for (j1 = 0; j1 < e->nphiy; j1++) {
+      for (i1 = 0; i1 < e->nphix; i1++) {
+        for (k2 = 0; k2 < e->nphiz; k2++) {
+          for (j2 = 0; j2 < e->nphiy; j2++) {
+            for (i2 = 0; i2 < e->nphix; i2++,l++) {
+              Mat_local[l] = 0.;
+              for (g = 0; g < e->ng; g++) {
+                Mat_local[l] += a*e->weight[g]*(ACoef_P*e->phi[k1][j1][i1][g]*e->phi[k2][j2][i2][g]
+				                + DCoef_P*(kxx*e->dphi[k1][j1][i1][0][g]*e->dphi[k2][j2][i2][0][g]
+								          +kyy*e->dphi[k1][j1][i1][1][g]*e->dphi[k2][j2][i2][1][g]
+										  +kzz*e->dphi[k1][j1][i1][2][g]*e->dphi[k2][j2][i2][2][g]));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "VFFormIJacobian_Flow"
 
 extern PetscErrorCode VFFormIJacobian_Flow(TS ts,PetscReal t,Vec pressure_Vec,Vec Pdot,PetscReal a,Mat *J,Mat *Jpre,MatStructure *str,void *voidctx)
 {
+  VFCtx          *ctx = (VFCtx*)voidctx;
+  PetscErrorCode ierr;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       ei,ej,ek,i,j,k,l;
+  PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
+  PetscReal      *J_local;
+  MatStencil     *row;
+  PetscReal      hx,hy,hz;
+  PetscReal      ****coords_array;
+
   PetscFunctionBegin;
+  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  if (xs+xm == nx) xm--;
+  if (ys+ym == ny) ym--;
+  if (zs+zm == nz) zm--;
+
+  ierr = MatZeroEntries(*J);CHKERRQ(ierr);
+
+  /*
+    Get coordinates
+  */
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  /*
+   Get local Jacobian
+  */
+  ierr = PetscMalloc2(nrow*nrow,PetscReal,&J_local,nrow,MatStencil,&row);CHKERRQ(ierr);
+
+  /*
+    loop through all elements
+  */
+  for (ek = zs; ek < zs+zm; ek++) {
+    for (ej = ys; ej < ys+ym; ej++) {
+      for (ei = xs; ei < xs+xm; ei++) {
+        hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+        hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+        hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        /*
+          Accumulate Jacobian matrix
+        */
+        for (l = 0; l < nrow*nrow; l++) J_local[l] = 0.;
+          ierr = VFFlow_FEM_IJacobPAssembly3D_local(a, J_local,&ctx->resprop,ek,ej,ei,&ctx->e3D);
+
+          for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
+            for (j = 0; j < ctx->e3D.nphiy; j++) {
+              for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+                row[l].i = ei+i;row[l].j = ej+j;row[l].k = ek+k;row[l].c = 0;
+              }
+            }
+          }
+          ierr = MatSetValuesStencil(*J,nrow,row,nrow,row,J_local,ADD_VALUES);CHKERRQ(ierr);
+          /*
+            Jump to next element
+          */
+      } 
+    }
+  }
+
+  /*
+    Global Assembly
+  */
+  ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatApplyDirichletBC(*J,ctx->daScal,&ctx->bcP[0]);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+
+  /*
+   Cleanup
+  */
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  ierr = PetscFree2(J_local,row);CHKERRQ(ierr);
   
+  *str = SAME_NONZERO_PATTERN;
+
   PetscFunctionReturn(0);
 }
 
@@ -1034,26 +1166,24 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
   PetscErrorCode  ierr;
   PetscInt        itsP;
   TS              ts;
-  SNES            snes;
   Vec             r;
   Mat             J;
   PetscReal       dt,ftime;
   
   PetscFunctionBegin;
   
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"TS_FEM is not defined yet \n");CHKERRQ(ierr);
-  
   ierr = VecDuplicate(fields->pressure,&r);CHKERRQ(ierr);
   
   /*
     Create TS and set default options (not yet)
   */
-  ierr = TSAppendOptionsPrefix(ts,"P_");CHKERRQ(ierr);
   ierr = DMGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
   ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSAppendOptionsPrefix(ts,"P_");CHKERRQ(ierr);
   ierr = TSSetProblemType(ts,TS_NONLINEAR);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSBEULER);CHKERRQ(ierr);
   ierr = TSSetIFunction(ts,r,VFFormIFunction_Flow,ctx);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,100,1.0);CHKERRQ(ierr);
   
   /*
     Set initial and boundary condition
@@ -1073,7 +1203,6 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
     Set various TS parameters from user options
   */
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
-  
   ierr = TSSolve(ts,fields->pressure,&ftime);CHKERRQ(ierr);
   
   /*
