@@ -886,7 +886,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   PetscReal      BBmin[3],BBmax[3];
   
   PetscFunctionBegin;
-  ierr = PetscLogStagePush(ctx->vflog.VF_UAssemblyStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(ctx->vflog.VF_UAssemblyStage);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -1307,7 +1307,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
     ierr = DMRestoreLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
   }
   ierr = PetscFree3(RHS_local,K_local,row);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -1654,7 +1654,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   PetscReal       BBmin[3],BBmax[3];
 
   PetscFunctionBegin;
-  ierr = PetscLogStagePush(ctx->vflog.VF_EnergyStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(ctx->vflog.VF_EnergyStage);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -1950,7 +1950,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
     ierr = DMRestoreLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
   }
 
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -1979,9 +1979,9 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
     ierr = VecView(ctx->RHSU,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
   
-  ierr = PetscLogStagePush(ctx->vflog.VF_USolverStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(ctx->vflog.VF_USolverStage);CHKERRQ(ierr);
   ierr = KSPSolve(ctx->kspU,ctx->RHSU,fields->U);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
 
   if (ctx->verbose > 1) {
     ierr = VecView(fields->U,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
@@ -2028,9 +2028,9 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
     ierr = VecView(ctx->RHSU,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
   
-  ierr = PetscLogStagePush(ctx->vflog.VF_USolverStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(ctx->vflog.VF_USolverStage);CHKERRQ(ierr);
   ierr = KSPSolve(ctx->kspU,ctx->RHSU,fields->BCU);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
 
   if (ctx->verbose > 1) {
     ierr = VecView(fields->BCU,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);

@@ -143,7 +143,7 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
       ierr = VFFlow_Fake(ctx,fields);CHKERRQ(ierr);
       break; 
     case FLOWSOLVER_READFROMFILES:
-      ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
+      //ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
       switch (ctx->fileformat) {
         case FILEFORMAT_HDF5:
 #ifdef PETSC_HAVE_HDF5
@@ -159,7 +159,7 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
           SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"Reading from binary files not implemented yet");
           break;
       }
-      ierr = PetscLogStagePop();CHKERRQ(ierr);
+      //ierr = PetscLogStagePop();CHKERRQ(ierr);
 	// eventually replace FLOWSOLVER_FEM with this after confirming it provides the same results
 
   }
