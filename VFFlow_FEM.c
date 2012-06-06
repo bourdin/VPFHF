@@ -1055,7 +1055,7 @@ extern PetscErrorCode VFFlow_FEM_IJacobPAssembly3D_local(PetscReal a, PetscReal 
             for (i2 = 0; i2 < e->nphix; i2++,l++) {
               Mat_local[l] = 0.;
               for (g = 0; g < e->ng; g++) {
-                Mat_local[l] += a*e->weight[g]*(ACoef_P*e->phi[k1][j1][i1][g]*e->phi[k2][j2][i2][g]
+                Mat_local[l] = e->weight[g]*(a*ACoef_P*e->phi[k1][j1][i1][g]*e->phi[k2][j2][i2][g]
 				                + DCoef_P*(kxx*e->dphi[k1][j1][i1][0][g]*e->dphi[k2][j2][i2][0][g]
 								          +kyy*e->dphi[k1][j1][i1][1][g]*e->dphi[k2][j2][i2][1][g]
 										  +kzz*e->dphi[k1][j1][i1][2][g]*e->dphi[k2][j2][i2][2][g]));
@@ -1141,7 +1141,6 @@ extern PetscErrorCode VFFormIJacobian_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
     Global Assembly
   */
   ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatApplyDirichletBC(*J,ctx->daScal,&ctx->bcP[0]);CHKERRQ(ierr);
   ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -1183,7 +1182,7 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
   ierr = TSSetProblemType(ts,TS_NONLINEAR);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSBEULER);CHKERRQ(ierr);
   ierr = TSSetIFunction(ts,r,VFFormIFunction_Flow,ctx);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,100,1.0);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,10,1.0);CHKERRQ(ierr);
   
   /*
     Set initial and boundary condition
