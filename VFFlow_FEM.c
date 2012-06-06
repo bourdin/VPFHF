@@ -531,6 +531,38 @@ extern PetscErrorCode VFFormIBCondition_Flow(VFCtx *ctx,VFFields *fields)
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "VFFormInitCondition_Flow"
+/*
+  Set initialcondition
+*/
+extern PetscErrorCode VFFormInitCondition_Flow(VFCtx *ctx,VFFields *fields)
+{
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       i,j,k;
+  PetscErrorCode ierr;
+  PetscReal      ***pressure_array;
+
+  PetscFunctionBegin;
+
+  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,fields->pressure,&pressure_array);
+
+  for (k = zs; k < zs+zm; k++) {
+    for (j = ys; j < ys+ym; j++) {
+      for (i = xs; i < xs+xm; i++) {
+           pressure_array[k][j][i] = ctx->resprop.Pinit;
+      }
+    }
+  }
+  ierr = DMDAVecRestoreArray(ctx->daScal,fields->pressure,&pressure_array);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "VFFormFunction_Flow"
@@ -1055,7 +1087,7 @@ extern PetscErrorCode VFFlow_FEM_IJacobPAssembly3D_local(PetscReal a, PetscReal 
             for (i2 = 0; i2 < e->nphix; i2++,l++) {
               Mat_local[l] = 0.;
               for (g = 0; g < e->ng; g++) {
-                Mat_local[l] = e->weight[g]*(a*ACoef_P*e->phi[k1][j1][i1][g]*e->phi[k2][j2][i2][g]
+                Mat_local[l] += e->weight[g]*(a*ACoef_P*e->phi[k1][j1][i1][g]*e->phi[k2][j2][i2][g]
 				                + DCoef_P*(kxx*e->dphi[k1][j1][i1][0][g]*e->dphi[k2][j2][i2][0][g]
 								          +kyy*e->dphi[k1][j1][i1][1][g]*e->dphi[k2][j2][i2][1][g]
 										  +kzz*e->dphi[k1][j1][i1][2][g]*e->dphi[k2][j2][i2][2][g]));
@@ -1182,15 +1214,15 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
   ierr = TSSetProblemType(ts,TS_NONLINEAR);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSBEULER);CHKERRQ(ierr);
   ierr = TSSetIFunction(ts,r,VFFormIFunction_Flow,ctx);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,10,1.0);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,10,0.03);CHKERRQ(ierr);
   
   /*
     Set initial and boundary condition
   */
-  ierr = VFFormIBCondition_Flow(ctx,fields);CHKERRQ(ierr);
+  ierr = VFFormInitCondition_Flow(ctx,fields);CHKERRQ(ierr);
   ierr = TSSetSolution(ts,fields->pressure);CHKERRQ(ierr);
   dt    = .01;
-  ftime = .05;
+//  ftime = .05;
   ierr = TSSetInitialTimeStep(ts,0.0,dt);CHKERRQ(ierr);
   
   /*
@@ -1204,10 +1236,15 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
   ierr = TSSolve(ts,fields->pressure,&ftime);CHKERRQ(ierr);
   
+  PetscReal fnorm;
+  /* check residual computaiton */
+/*  ierr = VFFormIFunction_Flow(ts,0,fields->pressure,fields->pressure,r,ctx);CHKERRQ(ierr);
+  ierr = VecNorm(r,NORM_2,&fnorm);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"fnorm %g \n",fnorm);CHKERRQ(ierr);
+*/
   /*
     clean up
   */
-  
   ierr = MatDestroy(&J);CHKERRQ(ierr);
   ierr = VecDestroy(&r);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);
