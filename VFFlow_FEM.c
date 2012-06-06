@@ -174,9 +174,9 @@ extern PetscErrorCode VFFlow_FEM_MatPAssembly3D(Mat K,Vec RHS,VFFields *fields,V
           Accumulate stiffness matrix
         */
         for (l = 0; l < nrow*nrow; l++) K_local[l] = 0.;
-        ierr = PetscLogEventBegin(ctx->vflog.VF_MatPLocalEvent,0,0,0,0);CHKERRQ(ierr);
+        //ierr = PetscLogEventBegin(ctx->vflog.VF_MatPLocalEvent,0,0,0,0);CHKERRQ(ierr);
         ierr = VFFlow_FEM_MatPAssembly3D_local(K_local,&ctx->resprop,ek,ej,ei,&ctx->e3D);
-        ierr = PetscLogEventEnd(ctx->vflog.VF_MatPLocalEvent,0,0,0,0);CHKERRQ(ierr);
+        //ierr = PetscLogEventEnd(ctx->vflog.VF_MatPLocalEvent,0,0,0,0);CHKERRQ(ierr);
 
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -348,9 +348,9 @@ extern PetscErrorCode VFFlow_FEM_MatTAssembly3D(Mat K,Vec RHS,VFFields *fields,V
         ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 
         for (l = 0; l < nrow*nrow; l++) K_local[l] = 0.;
-        ierr = PetscLogEventBegin(ctx->vflog.VF_MatTLocalEvent,0,0,0,0);CHKERRQ(ierr);
+        //ierr = PetscLogEventBegin(ctx->vflog.VF_MatTLocalEvent,0,0,0,0);CHKERRQ(ierr);
         ierr = VFFlow_FEM_MatTAssembly3D_local(K_local,&ctx->resprop,ek,ej,ei,&ctx->e3D);
-        ierr = PetscLogEventEnd(ctx->vflog.VF_MatTLocalEvent,0,0,0,0);CHKERRQ(ierr);
+        //ierr = PetscLogEventEnd(ctx->vflog.VF_MatTLocalEvent,0,0,0,0);CHKERRQ(ierr);
 
         /* *row: MatStencil */
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
@@ -767,9 +767,9 @@ extern PetscErrorCode VFFormJacobian_Flow(SNES snes,Vec pressure_Vec,Mat *J,Mat 
           Accumulate Jacobian matrix
         */
         for (l = 0; l < nrow*nrow; l++) J_local[l] = 0.;
-        ierr = PetscLogEventBegin(ctx->vflog.VF_MatPLocalEvent,0,0,0,0);CHKERRQ(ierr);
+        //ierr = PetscLogEventBegin(ctx->vflog.VF_MatPLocalEvent,0,0,0,0);CHKERRQ(ierr);
         ierr = VFFlow_FEM_MatPAssembly3D_local(J_local,&ctx->resprop,ek,ej,ei,&ctx->e3D);
-        ierr = PetscLogEventEnd(ctx->vflog.VF_MatPLocalEvent,0,0,0,0);CHKERRQ(ierr);
+        //ierr = PetscLogEventEnd(ctx->vflog.VF_MatPLocalEvent,0,0,0,0);CHKERRQ(ierr);
 
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -836,7 +836,7 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx,VFFields *fields)
   /*
     Create SNES and set reasonable default options for its internal ksp and pc
   */
-  ierr = DMGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
   ierr = SNESCreate(PETSC_COMM_WORLD,&snes);CHKERRQ(ierr);
   ierr = SNESAppendOptionsPrefix(snes,"P_");CHKERRQ(ierr);
   ierr = SNESSetFunction(snes,r,VFFormFunction_Flow,ctx);CHKERRQ(ierr);
@@ -859,7 +859,7 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx,VFFields *fields)
 
   /* create if-then based on Jacobian computation choise (numerical or analytical) later */
 /*  ierr = DAGetColoring(ctx->daScal,IS_COLORING_GLOBAL,MATAIJ,&iscoloring);CHKERRQ(ierr);
-  ierr = DMGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
   ierr = MatFDColoringCreate(J,iscoloring,&matfdcoloring);CHKERRQ(ierr);
   ierr = ISColoringDestroy(&iscoloring);CHKERRQ(ierr);
   ierr = MatFDColoringSetFunction(matfdcoloring,(PetscErrorCode (*)(void))VFFormFunction_Flow,ctx);CHKERRQ(ierr);
