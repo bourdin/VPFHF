@@ -916,6 +916,8 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx,VFFields *fields)
   PetscFunctionReturn(0);
 }
 
+
+
 #undef __FUNCT__
 #define __FUNCT__ "VFFormIFunction_Flow"
 
@@ -1214,12 +1216,13 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
   ierr = TSSetProblemType(ts,TS_NONLINEAR);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSBEULER);CHKERRQ(ierr);
   ierr = TSSetIFunction(ts,r,VFFormIFunction_Flow,ctx);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,10,0.03);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,10,0.3);CHKERRQ(ierr);
   
   /*
     Set initial and boundary condition
   */
-  ierr = VFFormInitCondition_Flow(ctx,fields);CHKERRQ(ierr);
+  ierr = VFFormIBCondition_Flow(ctx,fields);CHKERRQ(ierr);
+//  ierr = VFFormInitCondition_Flow(ctx,fields);CHKERRQ(ierr);
   ierr = TSSetSolution(ts,fields->pressure);CHKERRQ(ierr);
   dt    = .01;
 //  ftime = .05;
