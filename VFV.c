@@ -342,7 +342,7 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
         for (l = 0; l < nrow * nrow; l++) {
           K_local[l] = 0.;
         }
-        ierr = PetscLogEventBegin(ctx->vflog.VF_MatVLocalEvent,0,0,0,0);CHKERRQ(ierr);
+        //ierr = PetscLogEventBegin(ctx->vflog.VF_MatVLocalEvent,0,0,0,0);CHKERRQ(ierr);
         ierr = VF_MatVAT2Surface3D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D);CHKERRQ(ierr);
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
@@ -358,7 +358,7 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                                                     &ctx->e3D);CHKERRQ(ierr);
             break;
         }
-        ierr = PetscLogEventEnd(ctx->vflog.VF_MatVLocalEvent,0,0,0,0);CHKERRQ(ierr); 
+        //ierr = PetscLogEventEnd(ctx->vflog.VF_MatVLocalEvent,0,0,0,0);CHKERRQ(ierr); 
         /*
          Generate array of grid indices in the linear system's ordering.
          i.e. tells MatSetValuesStencil where to store values from  K_local
@@ -382,9 +382,9 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
           Accumulate Surface energy contribution to RHS
         */
         for (l = 0; l < nrow; l++) RHS_local[l] = 0.;
-        ierr = PetscLogEventBegin(ctx->vflog.VF_VecVLocalEvent,0,0,0,0);CHKERRQ(ierr);
+        //ierr = PetscLogEventBegin(ctx->vflog.VF_VecVLocalEvent,0,0,0,0);CHKERRQ(ierr);
         ierr = VF_RHSVAT2Surface3D_local(RHS_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D);CHKERRQ(ierr);
-        ierr = PetscLogEventEnd(ctx->vflog.VF_VecVLocalEvent,0,0,0,0);CHKERRQ(ierr);
+        //ierr = PetscLogEventEnd(ctx->vflog.VF_VecVLocalEvent,0,0,0,0);CHKERRQ(ierr);
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
             for (i = 0; i < ctx->e3D.nphix; i++,l++) {

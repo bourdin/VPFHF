@@ -93,35 +93,35 @@ extern PetscErrorCode VFLogInitialize(VFLog *vflog)
 	ierr = PetscLogStageRegister("I/O operations",&vflog->VF_IOStage);CHKERRQ(ierr);
 	
 	ierr = PetscLogStageRegister("U assembly",&vflog->VF_UAssemblyStage);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("U Mat local",&vflog->VF_MatULocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("U Mat local",vflog->VF_MatULocalClassId,&vflog->VF_MatULocalEvent);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("U VecView local",&vflog->VF_VecULocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("U Vec local",vflog->VF_VecULocalClassId,&vflog->VF_VecULocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("U Mat local",&vflog->VF_MatULocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("U Mat local",vflog->VF_MatULocalClassId,&vflog->VF_MatULocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("U VecView local",&vflog->VF_VecULocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("U Vec local",vflog->VF_VecULocalClassId,&vflog->VF_VecULocalEvent);CHKERRQ(ierr);
 	ierr = PetscLogStageRegister("U solver",&vflog->VF_USolverStage);CHKERRQ(ierr);
 	
 	ierr = PetscLogStageRegister("V assembly",&vflog->VF_VAssemblyStage);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("V Mat local",&vflog->VF_MatVLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("V Mat local",vflog->VF_MatVLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("V Vec local",&vflog->VF_VecVLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("V Vec local",vflog->VF_VecVLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("V Mat local",&vflog->VF_MatVLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("V Mat local",vflog->VF_MatVLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("V Vec local",&vflog->VF_VecVLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("V Vec local",vflog->VF_VecVLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
 	ierr = PetscLogStageRegister("V solver",&vflog->VF_VSolverStage);CHKERRQ(ierr);
 	
 	ierr = PetscLogStageRegister("Energy",&vflog->VF_EnergyStage);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("Energy",&vflog->VF_EnergyLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("Energy",vflog->VF_EnergyLocalClassId,&vflog->VF_EnergyLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("Energy",&vflog->VF_EnergyLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("Energy",vflog->VF_EnergyLocalClassId,&vflog->VF_EnergyLocalEvent);CHKERRQ(ierr);
 	
 	ierr = PetscLogStageRegister("P assembly",&vflog->VF_PAssemblyStage);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("P Mat local",&vflog->VF_MatPLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("P Mat local",vflog->VF_MatPLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("P Vec local",&vflog->VF_VecPLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("P Vec local",vflog->VF_VecPLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("P Mat local",&vflog->VF_MatPLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("P Mat local",vflog->VF_MatPLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("P Vec local",&vflog->VF_VecPLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("P Vec local",vflog->VF_VecPLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
 	ierr = PetscLogStageRegister("P solver",&vflog->VF_PSolverStage);CHKERRQ(ierr);  
 	
 	ierr = PetscLogStageRegister("T assembly",&vflog->VF_TAssemblyStage);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("T Mat local",&vflog->VF_MatTLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("T Mat local",vflog->VF_MatTLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("T Vec local",&vflog->VF_VecTLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("T Vec local",vflog->VF_VecTLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("T Mat local",&vflog->VF_MatTLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("T Mat local",vflog->VF_MatTLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("T Vec local",&vflog->VF_VecTLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("T Vec local",vflog->VF_VecTLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
 	ierr = PetscLogStageRegister("T solver",&vflog->VF_TSolverStage);CHKERRQ(ierr);    
 	
 	PetscFunctionReturn(0);
@@ -737,17 +737,17 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 {
 	PetscMPIInt    comm_size;
 	/*
-	MatNullSpace   matnull;
-	Vec            coordinates;
-  */
+	  MatNullSpace   matnull;
+	  Vec            coordinates;
+	*/
 	PetscErrorCode ierr;
 	
 	PetscFunctionBegin;
 	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
 	if (comm_size == 1) {
-		ierr = DMGetMatrix(ctx->daVect,MATSEQAIJ,&ctx->KU);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daVect,MATSEQAIJ,&ctx->KU);CHKERRQ(ierr);
 	} else {
-		ierr = DMGetMatrix(ctx->daVect,MATMPIAIJ,&ctx->KU);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daVect,MATMPIAIJ,&ctx->KU);CHKERRQ(ierr);
 	}
 	ierr = MatSetOption(ctx->KU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 	
@@ -757,18 +757,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	
 	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspU);CHKERRQ(ierr);
 
-	/*
-    At this point, it is not completely clear if setting the null space 
-    improves convergence.
-    Leaving it out for now
-  */
-  /*	
-	ierr = DMDAGetCoordinates(ctx->daVect,&coordinates);CHKERRQ(ierr);
-  ierr = MatNullSpaceCreateRigidBody(coordinates,&matnull);CHKERRQ(ierr);
-    //ierr = MatSetNearNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
-  ierr = KSPSetNullSpace(ctx->kspU,matnull);CHKERRQ(ierr);
-  ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
-  */
+  
 	ierr = KSPSetTolerances(ctx->kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
 	ierr = KSPSetOperators(ctx->kspU,ctx->KU,ctx->KU,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
 	ierr = KSPSetInitialGuessNonzero(ctx->kspU,PETSC_TRUE);CHKERRQ(ierr);
@@ -780,9 +769,9 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	ierr = PCSetFromOptions(ctx->pcU);CHKERRQ(ierr);
 	
 	if (comm_size == 1) {
-		ierr = DMGetMatrix(ctx->daScal,MATSEQAIJ,&ctx->KV);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->KV);CHKERRQ(ierr);
 	} else {
-		ierr = DMGetMatrix(ctx->daScal,MATMPIAIJ,&ctx->KV);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->KV);CHKERRQ(ierr);
 	}
 	ierr = MatSetOption(ctx->KV,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSV);CHKERRQ(ierr);
@@ -801,9 +790,9 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	ierr = PCSetFromOptions(ctx->pcV);CHKERRQ(ierr);
 	
 	if (comm_size == 1) {
-		ierr = DMGetMatrix(ctx->daScal,MATSEQAIJ,&ctx->KP);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->KP);CHKERRQ(ierr);
 	} else {
-		ierr = DMGetMatrix(ctx->daScal,MATMPIAIJ,&ctx->KP);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->KP);CHKERRQ(ierr);
 	}
 	ierr = MatSetOption(ctx->KP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSP);CHKERRQ(ierr);
@@ -822,9 +811,9 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	ierr = PCSetFromOptions(ctx->pcP);CHKERRQ(ierr);
 	
 	if (comm_size == 1) {
-		ierr = DMGetMatrix(ctx->daScal,MATSEQAIJ,&ctx->KT);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->KT);CHKERRQ(ierr);
 	} else {
-		ierr = DMGetMatrix(ctx->daScal,MATMPIAIJ,&ctx->KT);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->KT);CHKERRQ(ierr);
 	}
 	ierr = MatSetOption(ctx->KT,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHST);CHKERRQ(ierr);
@@ -842,6 +831,31 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	ierr = PCSetType(ctx->pcT,PCBJACOBI);CHKERRQ(ierr);
 	ierr = PCSetFromOptions(ctx->pcT);CHKERRQ(ierr);
 	
+	/*
+	  At this point, it is not completely clear if setting the null space 
+	  improves convergence.
+	  Leaving it out for now
+	*/
+  	Vec           coordinates;
+	PetscReal    *coordinates_array;
+	PetscInt      nx,ny,nz,nloc;
+	MatNullSpace  matnull;
+	ierr = DMDAGetCoordinates(ctx->daVect,&coordinates);CHKERRQ(ierr);
+	//ierr = DMDAVecGetArrayDOF(ctx->daVect,coordinates,&coordinates_array);CHKERRQ(ierr);
+	ierr = VecGetArray(coordinates,&coordinates_array);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+			   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = VecGetLocalSize(coordinates,&nloc);CHKERRQ(ierr);
+	nloc = nloc/3;
+	ierr = PCSetCoordinates(ctx->pcU,3,nloc,coordinates_array);CHKERRQ(ierr);
+	ierr = PCSetCoordinates(ctx->pcV,3,nloc,coordinates_array);CHKERRQ(ierr);
+	ierr = MatNullSpaceCreateRigidBody(coordinates,&matnull);CHKERRQ(ierr);
+	ierr = MatSetNearNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
+	////ierr = KSPSetNullSpace(ctx->kspU,matnull);CHKERRQ(ierr);
+	ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
+	ierr = VecRestoreArray(coordinates,&coordinates_array);CHKERRQ(ierr);
+	ierr = VecDestroy(&coordinates);CHKERRQ(ierr);
+
 	PetscFunctionReturn(0);
 }
 
