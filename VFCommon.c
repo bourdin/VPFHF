@@ -40,7 +40,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 	
 	ierr = PetscOptionsHasName(PETSC_NULL,"-help",&ctx->printhelp);CHKERRQ(ierr);
 	
-	ierr = VFLogInitialize(&ctx->vflog);CHKERRQ(ierr);
+	//ierr = VFLogInitialize(&ctx->vflog);CHKERRQ(ierr);
 	ierr = VFCtxGet(ctx);CHKERRQ(ierr);
 	ierr = VFGeometryInitialize(ctx);CHKERRQ(ierr);
 	ierr = VFPropGet(&ctx->vfprop);CHKERRQ(ierr);
@@ -398,20 +398,20 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 			 Even coordinates are part of the DA and do not need to be saved separately, it looks like the coordinate vector
 			 obtained from DMDAGetCoordinates cannot be saved properly in an hdf5 file, so we save the coordinate vector anyway
 			 */
-			ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
+			//ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
 			ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.bin",ctx->prefix);CHKERRQ(ierr);
 			ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
 			ierr = DMView(ctx->daScal,viewer);CHKERRQ(ierr);
 			ierr = VecView(ctx->coordinates,viewer);CHKERRQ(ierr);
 			ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-			ierr = PetscLogStagePop();CHKERRQ(ierr);
+			//ierr = PetscLogStagePop();CHKERRQ(ierr);
 			break;
 #ifdef PETSC_HAVE_HDF5
 		case FILEFORMAT_HDF5:
 			/*
 			 Write headers in multistep XDMF file
 			 */
-			ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
+			//ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
 			ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.xmf",ctx->prefix);CHKERRQ(ierr);
 			ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->XDMFviewer);
 			ierr = XDMFmultistepInitialize(ctx->XDMFviewer);CHKERRQ(ierr);
@@ -423,7 +423,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 			ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&h5viewer);CHKERRQ(ierr);
 			ierr = VecView(ctx->coordinates,h5viewer);CHKERRQ(ierr);
 			ierr = PetscViewerDestroy(&h5viewer);CHKERRQ(ierr);
-			ierr = PetscLogStagePop();CHKERRQ(ierr);
+			//ierr = PetscLogStagePop();CHKERRQ(ierr);
 #endif
 	}
 	

@@ -134,7 +134,7 @@ extern PetscErrorCode VFFlow_FEM_MatPAssembly3D(Mat K,Vec RHS,VFFields *fields,V
   PetscReal      ****coords_array;
 
   PetscFunctionBegin;
-  ierr = PetscLogStagePush(ctx->vflog.VF_PAssemblyStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(ctx->vflog.VF_PAssemblyStage);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -236,7 +236,7 @@ extern PetscErrorCode VFFlow_FEM_MatPAssembly3D(Mat K,Vec RHS,VFFields *fields,V
   */
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = PetscFree3(RHS_local,K_local,row);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -310,7 +310,7 @@ extern PetscErrorCode VFFlow_FEM_MatTAssembly3D(Mat K,Vec RHS,VFFields *fields,V
   PetscReal      ****coords_array;
 
   PetscFunctionBegin;
-  ierr = PetscLogStagePush(ctx->vflog.VF_TAssemblyStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(ctx->vflog.VF_TAssemblyStage);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -389,7 +389,7 @@ extern PetscErrorCode VFFlow_FEM_MatTAssembly3D(Mat K,Vec RHS,VFFields *fields,V
   */
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = PetscFree3(RHS_local,K_local,row);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -423,13 +423,13 @@ extern PetscErrorCode VFFlow_FEM(VFCtx *ctx,VFFields *fields)
     ierr = VecView(ctx->RHST,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
 
-  ierr = PetscLogStagePush(ctx->vflog.VF_PSolverStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(ctx->vflog.VF_PSolverStage);CHKERRQ(ierr);
   ierr = KSPSolve(ctx->kspP,ctx->RHSP,fields->pressure);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
 
-  ierr = PetscLogStagePush(ctx->vflog.VF_TSolverStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(ctx->vflog.VF_TSolverStage);CHKERRQ(ierr);
   ierr = KSPSolve(ctx->kspT,ctx->RHST,fields->theta);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
 
   if (ctx->verbose > 1) {
     ierr = VecView(fields->pressure,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
@@ -733,7 +733,7 @@ extern PetscErrorCode VFFormJacobian_Flow(SNES snes,Vec pressure_Vec,Mat *J,Mat 
   PetscReal      ****coords_array;
 
   PetscFunctionBegin;
-  ierr = PetscLogStagePush(ctx->vflog.VF_PAssemblyStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(ctx->vflog.VF_PAssemblyStage);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -802,7 +802,7 @@ extern PetscErrorCode VFFormJacobian_Flow(SNES snes,Vec pressure_Vec,Mat *J,Mat 
   */
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = PetscFree2(J_local,row);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
 
   *flag = SAME_NONZERO_PATTERN;
 
@@ -870,9 +870,9 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx,VFFields *fields)
   /* move to VFCommon later? */
 
 
-  ierr = PetscLogStagePush(ctx->vflog.VF_PSolverStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(ctx->vflog.VF_PSolverStage);CHKERRQ(ierr);
   ierr = SNESSolve(snes,PETSC_NULL,fields->pressure);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
 
   /* TEST - explicitly calcualte the residual */
 
@@ -1210,7 +1210,7 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
   /*
     Create TS and set default options (not yet)
   */
-  ierr = DMGetMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
   ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
   ierr = TSAppendOptionsPrefix(ts,"P_");CHKERRQ(ierr);
   ierr = TSSetProblemType(ts,TS_NONLINEAR);CHKERRQ(ierr);
