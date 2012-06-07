@@ -8,7 +8,7 @@
 #include "VFCommon.h"
 #include "VFV.h"
 #include "VFU.h"
-#include "VFFlow.h"
+#include "VFPermfield.h"
 
 VFCtx               ctx;
 VFFields            fields;
@@ -17,30 +17,26 @@ VFFields            fields;
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
 {
-	PetscErrorCode      ierr;
+	PetscErrorCode  ierr;
 	PetscViewer			viewer;
-	PetscViewer         logviewer;
-	PetscReal           length = .2;
-	PetscReal           center[3]={0.,0.,.5};
-	PetscInt            orientation=2;
-	PetscInt            nopts=3;
-	PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-	PetscReal			****coords_array;
-	PetscReal			***v_array;  
-	PetscReal           BBmin[3],BBmax[3];
-	PetscReal           x,y,z;  
-	PetscReal           ElasticEnergy = 0;
-	PetscReal           InsituWork = 0;
-	PetscReal           SurfaceEnergy = 0;
-	char                filename[FILENAME_MAX];
-	PetscReal           p;
-	PetscReal           p_old;
-	PetscReal           p_epsilon = 1.e-5;
-	PetscInt			altminit=1;
-	Vec					Vold;
-	PetscReal			errV=1e+10;
-	PetscReal			lx,ly,lz;
-	PetscReal			q=2.e-4;
+	PetscViewer     logviewer;
+	PetscReal       length = .2;
+	PetscReal       center[3]={0.,0.,.5};
+	PetscInt        orientation=2;
+	PetscInt        nopts=3;
+	PetscInt        i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+	PetscReal		****coords_array;
+	PetscReal		 ***v_array;  
+	PetscReal       BBmin[3],BBmax[3];
+	char            filename[FILENAME_MAX];
+	PetscReal       p;
+	PetscReal       p_old;
+	PetscReal       p_epsilon = 1.e-5;
+	PetscInt			  altminit=1;
+	Vec					    Vold;
+	PetscReal			  errV=1e+10;
+	PetscReal			  lx,ly,lz;
+	PetscReal			  q=2.e-4;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -274,14 +270,13 @@ int main(int argc,char **argv)
 	
 	ctx.hasCrackPressure = PETSC_TRUE;
 	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
-	
 
-	
-	PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
-	PetscViewerSetType(viewer, PETSCVIEWERASCII);
-	PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);
-	PetscViewerFileSetName(viewer, "pressure.txt");
-	PetscViewerASCIIPrintf(viewer, "Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \t TotalMechEnergy \n");
+	ierr = PetscViewerCreate(PETSC_COMM_WORLD, &viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetType(viewer, PETSCVIEWERASCII);CHKERRQ(ierr);
+	ierr = PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);CHKERRQ(ierr);
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.pres",ctx.prefix);CHKERRQ(ierr);
+	ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
+	ierr = PetscViewerASCIIPrintf(viewer, "#Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \t TotalMechEnergy \n");CHKERRQ(ierr);
 	
 	p = 1.;
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
@@ -313,28 +308,30 @@ int main(int argc,char **argv)
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
-				ierr = FieldsH5Write(&ctx,&fields);
+				ierr = FieldsH5Write(&ctx,&fields);CHKERRQ(ierr);
 				break;
 			case FILEFORMAT_BIN:
-				ierr = FieldsBinaryWrite(&ctx,&fields);
+				ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
 				break; 
 		}
 		ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
 		ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
 		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
-		ierr = PetscViewerDestroy(&logviewer);
+		ierr = PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
 		ctx.ElasticEnergy=0;
 		ctx.InsituWork=0;
 		ctx.PressureWork = 0.;
 		ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
 		ierr = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
 		ctx.TotalEnergy = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork;
-		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g \t %g \t %g \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p, ctx.SurfaceEnergy, ctx.ElasticEnergy, ctx.PressureWork, ctx.TotalEnergy);
+		ierr = PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g \t %g \t %g \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p, ctx.SurfaceEnergy, ctx.ElasticEnergy, ctx.PressureWork, ctx.TotalEnergy);CHKERRQ(ierr);
+    ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,p,ctx.ElasticEnergy,
+                                  ctx.InsituWork,ctx.SurfaceEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
 		altminit = 0.;
 	}
-	PetscViewerFlush(viewer);CHKERRQ(ierr);
-	PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-	PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
+	ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
+	ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
 	ierr = VecDestroy(&Vold);CHKERRQ(ierr);
 
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);

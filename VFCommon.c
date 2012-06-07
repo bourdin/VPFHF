@@ -306,11 +306,6 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 	PetscBool          flg;
 	
 	PetscFunctionBegin;
-	/*
-	 for some reasons, the following does not work. 
-	 Using nx,ny,nz and lx, ly, lz instead.
-	 */
-	
 	ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: geometry options:","");CHKERRQ(ierr);
 	{
 		ierr = PetscMalloc(3 * sizeof(PetscReal),&l);CHKERRQ(ierr);
