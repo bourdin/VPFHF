@@ -7,6 +7,5 @@ h = lx/nx
 for k in (.5,1,1.5,2,2.5,3):
     eps = k * h
     gc = 1./(1.+h/4./eps)
-    runcmd = 'echo qsub -v EPS=%f,GC=%f ${VFDIR}/scripts/test15.sge'%(eps,gc)
-    print runcmd
+    runcmd = 'qsub -v EPS=%f,GC=%f ${VFDIR}/scripts/test15.sge'%(eps,gc)
     os.system(runcmd)
