@@ -21,7 +21,7 @@ extern PetscErrorCode CartFE_Init()
   PetscFunctionBegin;
   //ierr = PetscClassIdRegister("CartFE_Element",&CartFE_Element);CHKERRQ(ierr);
   //ierr = PetscLogEventRegister("CartFE_Elem Init",CartFE_Element,&CartFE_ElementInitEvent);CHKERRQ(ierr);
-  ierr = PetscLogStageRegister("CartFE_Elem Init",&CartFE_ElementInitStage);CHKERRQ(ierr);
+  //ierr = PetscLogStageRegister("CartFE_Elem Init",&CartFE_ElementInitStage);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -58,7 +58,7 @@ extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
   
   PetscFunctionBegin;
   //ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
-  ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
   e->lx        = lx;
   e->ly        = 0.;
   e->lz        = 0.;
@@ -78,7 +78,7 @@ extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
   e->dphi[0][0][0][0] = -1. / e->lx; e->dphi[0][0][0][1] = -1. / e->lx; e->dphi[0][0][0][2] = -1. / e->lx; 
   e->dphi[0][0][1][0] =  1. / e->lx; e->dphi[0][0][1][1] =  1. / e->lx; e->dphi[0][0][1][2] =  1. / e->lx;
   ierr = PetscLogFlops(24);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
   //ierr = PetscLogEventEnd(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -118,7 +118,7 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,Pets
   
   PetscFunctionBegin;
   //ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
-  ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ex);CHKERRQ(ierr);
   ierr = CartFE_Element1DInit(&ex,lx);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ey);CHKERRQ(ierr);
@@ -154,7 +154,7 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,Pets
     }
   }
   ierr = PetscLogFlops(1 + e->ng + 3 * e->ng * e->nphiy * e->nphix);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
   //ierr = PetscLogEventEnd(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -194,7 +194,7 @@ extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,Pets
   
   PetscFunctionBegin;
   //ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
-  ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ex);CHKERRQ(ierr);
   ierr = CartFE_Element1DInit(&ex,lx);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ey);CHKERRQ(ierr);
@@ -239,7 +239,7 @@ extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,Pets
     }
   }
   ierr = PetscLogFlops(2 + 2 * e->ng + 8 * e->ng * e->nphiz * e->nphiy * e->nphix);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
   //ierr = PetscLogEventEnd(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
