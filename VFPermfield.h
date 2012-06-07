@@ -1,14 +1,19 @@
 /*
    VFFlow_DarcySteadyState.h
    A mixed finite elements Darcy solver based on the method presented in
-    [Chukwudi, please add reference here]
-    
+   A. Masud and T.J.R. Hughes. 
+      "A stabilized mixed finite element method for Darcy flow. Computer Methods 
+      in Applied Mechanics and Engineering", 191(39–40):4341 – 4370, 2002.
+   K.B. Nakshatrala, D.Z. Turner, K.D. Hjelmstad, and A. Masud. 
+      "A stabilized mixed finite element method for Darcy flow based on a 
+      multiscale decomposition of the solution". Computer Methods in Applied 
+      Mechanics and Engineering, 195(33–36):4036 – 4049, 2006.    
+
    (c) 2011 B. Bourdin.C. Chukwudozie, LSU, K. Yoshioka, CHEVRON ETC
 */
 
 #ifndef VFPermfield_H
 #define VFPermfield_H
-#include "PetscFixes.h"
 
 
 /* 
