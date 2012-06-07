@@ -14,11 +14,11 @@ def parse(args=None):
 
 def plot(energies):
   import matplotlib.pyplot as plt
-  plt.plot(energies[:,0], energies[:,1], 'r-', label='Elastic energy')
-  plt.plot(energies[:,0], energies[:,2], 'g-', label='Insitu work')
-  plt.plot(energies[:,0], energies[:,3], 'b-', label='Surface energy')
-  plt.plot(energies[:,0], energies[:,4], 'y-', label='Pressure work')
-  plt.plot(energies[:,0], energies[:,1]+energies[:,2]+energies[:,3]+energies[:,4], 'k-', label='Total energy', lw=2)
+  plt.plot(energies[:,0], energies[:,1], 'r-', label='Elastic energy',lw=2)
+  plt.plot(energies[:,0], energies[:,2], 'g-', label='Insitu work',lw=2)
+  plt.plot(energies[:,0], energies[:,3], 'b-', label='Surface energy',lw=2)
+  plt.plot(energies[:,0], energies[:,4], 'y-', label='Pressure work',lw=2)
+  plt.plot(energies[:,0], energies[:,1]+energies[:,2]+energies[:,3]+energies[:,4], 'k-', label='Total energy', lw=4)
   plt.grid()
   plt.legend(loc=0)
   plt.xlabel('Step')

@@ -54,7 +54,7 @@ def main():
                     p = np.loadtxt(presfile)    
                     hx = D['LX']/(D['NX']+0.0)
                     l = '%s: $h=%.2E$, $\epsilon/h=%.1f$'%(f,hx,D['EPSILON']/hx)
-                    plt.plot(p[:,1],p[:,2],label=l)
+                    plt.plot(p[:,1],p[:,2],lw=2,label=l)
                 
     plt.grid()
     plt.legend(loc=0)
