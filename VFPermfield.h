@@ -12,8 +12,8 @@
    (c) 2011 B. Bourdin.C. Chukwudozie, LSU, K. Yoshioka, CHEVRON ETC
 */
 
-#ifndef VFPermfield_H
-#define VFPermfield_H
+#ifndef VFPERMFIELD_H
+#define VFPERMFIELD_H
 
 
 /* 

@@ -36,7 +36,7 @@ echo  NZ             $NZ          >> 00_INFO.txt
 echo  LX             $LX          >> 00_INFO.txt 
 echo  LY             $LY          >> 00_INFO.txt 
 echo  LZ             $LZ          >> 00_INFO.txt 
-echo  epsilon        $EPS         >> 00_INFO.txt
+echo  EPSILON        $EPS         >> 00_INFO.txt
 echo  EXTRAOPTS      $EXTRAOPTS   >> 00_INFO.txt
 
 ibrun ${VFDIR}/ValidationTests/test15 -p ${JOB_ID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} -epsilon $EPS -gc ${GC} -length ${L} -orientation ${OR} ${EXTRAOPTS}
