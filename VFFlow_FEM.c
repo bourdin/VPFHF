@@ -837,6 +837,7 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx,VFFields *fields)
     Create SNES and set reasonable default options for its internal ksp and pc
   */
   ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
+  ierr = MatSetOption(J,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = SNESCreate(PETSC_COMM_WORLD,&snes);CHKERRQ(ierr);
   ierr = SNESAppendOptionsPrefix(snes,"P_");CHKERRQ(ierr);
   ierr = SNESSetFunction(snes,r,VFFormFunction_Flow,ctx);CHKERRQ(ierr);
@@ -1211,6 +1212,7 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
     Create TS and set default options (not yet)
   */
   ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&J);CHKERRQ(ierr);
+  ierr = MatSetOption(J,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
   ierr = TSAppendOptionsPrefix(ts,"P_");CHKERRQ(ierr);
   ierr = TSSetProblemType(ts,TS_NONLINEAR);CHKERRQ(ierr);
