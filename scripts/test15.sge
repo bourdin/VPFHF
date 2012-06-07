@@ -1,0 +1,44 @@
+#!/bin/bash      
+#$ -A TG-DMS060014
+#$ -V                   # Inherit the submission environment
+#$ -cwd
+#$ -N HS2D       # Job Name
+#$ -j y                 # Combine stderr and stdout
+#$ -o SGE_Output        # Name of the output file (eg. myMPI.oJobID)
+#$ -pe 12way 360
+#$ -q normal            # Queue name "normal"
+#$ -l h_rt=10:00:00     # Run time (hh:mm:ss) - 1.5 hours
+#$ -M bourdin@lsu.edu   # Use email notification address
+#$ -m be                # Email at Begin and End of job
+
+
+export NX=1001
+export NY=1000
+export NZ=2
+export LX=8.
+export LY=8.
+export LZ=.01
+export L=.2
+export O=1
+
+#export EPS=.012
+#export GC=
+
+
+export WORKDIR=${SCRATCH}/HS2D/${JOB_ID}
+mkdir -p ${WORKDIR}
+cd ${WORKDIR}
+
+echo  PBS_JOBID     $JOB_ID       >  00_INFO.txt
+echo  NX             $NX          >> 00_INFO.txt 
+echo  NY             $NY          >> 00_INFO.txt 
+echo  NZ             $NZ          >> 00_INFO.txt 
+echo  LX             $LX          >> 00_INFO.txt 
+echo  LY             $LY          >> 00_INFO.txt 
+echo  LZ             $LZ          >> 00_INFO.txt 
+echo  epsilon        $EPS         >> 00_INFO.txt
+echo  EXTRAOPTS      $EXTRAOPTS   >> 00_INFO.txt
+
+ibrun ${VFDIR}/ValidationTests/test15 -p ${JOB_ID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} -epsilon $EPS -gc ${GC} -length ${L} -orientation ${OR} ${EXTRAOPTS}
+
+
