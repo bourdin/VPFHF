@@ -72,7 +72,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 	
 	ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.ener",ctx->prefix);CHKERRQ(ierr);
 	ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->energyviewer);CHKERRQ(ierr);
-	ierr = PetscViewerASCIIPrintf(ctx->energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Total Energy\n");CHKERRQ(ierr);
+	ierr = PetscViewerASCIIPrintf(ctx->energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Pressure Work,Total Energy\n");CHKERRQ(ierr);
 	ierr = PetscViewerFlush(ctx->energyviewer);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
