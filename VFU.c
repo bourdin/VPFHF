@@ -8,7 +8,7 @@
 /*
   BCUInit
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 
 extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
@@ -85,7 +85,7 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
               Typically, this is used to account for insitu stresses by first computing the 
               boundary displacement using the reference pressure and porosity.
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
 {
@@ -166,7 +166,7 @@ extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
      * \beta is the Biot coefficient
      * the index "0" denotes a reference field (temperature or pressure)
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensity_local,
                                                    PetscReal ****u_array,
@@ -264,7 +264,7 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
 /*
   ElasticEnergyDensitySphericalDeviatoric3D_local
   Compute the spherical and deviatoric parts of the elastic energy density in an element
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal *ElasticEnergyDensityS_local,PetscReal *ElasticEnergyDensityD_local,
                                                                       PetscReal ****u_array,
@@ -369,7 +369,7 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal 
 /*
   VF_MatU3D_local
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_MatU3D_local(PetscReal *Mat_local,PetscReal ***v_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -439,7 +439,7 @@ extern PetscErrorCode VF_MatU3D_local(PetscReal *Mat_local,PetscReal ***v_array,
 /*
   VF_MatUShearOnly3D_local
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_MatUShearOnly3D_local(PetscReal *Mat_local,PetscReal ***v_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -512,7 +512,7 @@ extern PetscErrorCode VF_MatUShearOnly3D_local(PetscReal *Mat_local,PetscReal **
 /*
   VF_RHSUCoupling3D_local
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_RHSUCoupling3D_local(PetscReal *RHS_local,PetscReal ***v_array,
                                               PetscReal ***theta_array,PetscReal ***thetaRef_array,
@@ -587,7 +587,7 @@ extern PetscErrorCode VF_RHSUCoupling3D_local(PetscReal *RHS_local,PetscReal ***
 /*
   VF_RHSUCouplingShearOnly3D_local
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_RHSUCouplingShearOnly3D_local(PetscReal *RHS_local,PetscReal ***v_array,
                                                        PetscReal ***theta_array,PetscReal ***thetaRef_array,
@@ -659,7 +659,7 @@ extern PetscErrorCode VF_RHSUCouplingShearOnly3D_local(PetscReal *RHS_local,Pets
 /*
   VF_RHSUPressure3D_local
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_RHSUPressure3D_local(PetscReal *RHS_local,PetscReal ***v_array,
                                               PetscReal ***pressure_array,PetscReal ***pressureRef_array,
@@ -726,7 +726,7 @@ extern PetscErrorCode VF_RHSUPressure3D_local(PetscReal *RHS_local,PetscReal ***
 /*
   VF_RHSUInSituStresses3D_local: Accumulates the contribution of surface forces along the face of an element
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_RHSUInSituStresses3D_local(PetscReal *RHS_local,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element3D *e)
 {
@@ -854,7 +854,7 @@ extern PetscErrorCode VF_RHSUInSituStresses3D_local(PetscReal *RHS_local,PetscRe
 /*
   VF_UAssembly3D
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
 {
@@ -1316,7 +1316,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
 /*
   VF_ElasticEnergy3D_local: 
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,
                                                PetscReal ****u_array,PetscReal ***v_array,
@@ -1426,7 +1426,7 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,
   given by
     \int_e p(x)\nabla v(x) \cdot u(x) \, dx
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,PetscReal ****u_array,PetscReal ***v_array,
                                               PetscReal ***pressure_array,PetscReal ***pressureRef_array,
@@ -1493,7 +1493,7 @@ extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,Pets
 /*
   VF_InSituStressWork3D_local
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscReal ****u_array,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element3D *e)
 {
@@ -1621,7 +1621,7 @@ extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscRea
 /*
   VF_UEnergy3D
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWork,PetscReal *PressureWork,VFFields *fields,VFCtx *ctx)
 {
@@ -1959,7 +1959,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
 /*
   VF_StepU
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
 {
@@ -2008,7 +2008,7 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   VF_ComputeBCU: Compute the boundary displacement by performing an elastic solve with insitu stresses
                  The sets ctx->hasInsitu to PETSC_FALSE and update the BC flags
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
 {

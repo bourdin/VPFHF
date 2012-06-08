@@ -2,7 +2,7 @@
    VFFlow_Fake.c
    A fake fluid flow returning the solution of transient flow between 2 walls
    
-     (c) 2010-2011 Blaise Bourdin, C. Chukwudozie, LSU. bourdin@lsu.edu
+     (c) 2010-2012 Blaise Bourdin, C. Chukwudozie, LSU. bourdin@lsu.edu
 */
 #include "petsc.h"
 #include "CartFE.h"

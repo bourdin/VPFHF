@@ -56,8 +56,14 @@ def main():
                     l = '%s: $h=%.2E$, $\epsilon/h=%.1f$'%(f,hx,D['EPSILON']/hx)
                     plt.plot(p[:,1],p[:,2],lw=2,label=l)
                 
-    plt.grid()
-    plt.legend(loc=0)
+    ax = plt.gca()
+    ax.grid()
+    ax.axis([0,.03,0,2.5])
+    plt.legend(loc=0,labelspacing=.1)
+    leg = plt.gca().get_legend()
+    ltext  = leg.get_texts()
+    plt.setp(ltext, fontsize='small')
+
     plt.xlabel('V')
     plt.ylabel('p')
     plt.title('Pressure vs. injected volume')

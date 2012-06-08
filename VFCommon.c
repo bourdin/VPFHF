@@ -14,7 +14,7 @@
 /*
  VFInitialize: Initialize the VF code. Called by the fortran implementation of VIADAT
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 {
@@ -83,7 +83,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 /*
  VFLogInitialize
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFLogInitialize(VFLog *vflog)
 {
@@ -133,7 +133,7 @@ extern PetscErrorCode VFLogInitialize(VFLog *vflog)
 /*
  VFCtxGet
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 {
@@ -288,7 +288,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 /*
  VFGeometryInitialize: Creates DA, and coordinates, and other geometric informations
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 {
@@ -448,7 +448,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 /*
  VFPropGet
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFPropGet(VFProp *vfprop)
 {
@@ -478,7 +478,7 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
 #define __FUNCT__ "VFMatPropGet"
 /*
  VFMatPropGet: get all material properties.
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFMatPropGet(MatProp *matprop,PetscInt n)
 {
@@ -583,7 +583,7 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop)
 /*
  VFFieldsInitialize: Creates fields
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 {
@@ -687,7 +687,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 /*
  VFBCInitialize: Creates and initialize bondary condition data structures
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
 {
@@ -725,7 +725,7 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
 /*
  VFSolversInitialize: Creates matrices, RHS, solvers
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  Keita Yoshioka yoshk@chevron.com   
  */
 extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
@@ -860,7 +860,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 /*
  VFLayerInit: find the horizontal layer associated to a cell in the most stupid and unoptimzed way
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  
  */
 extern PetscErrorCode VFLayerInit(VFCtx *ctx)
@@ -911,7 +911,7 @@ extern PetscErrorCode VFLayerInit(VFCtx *ctx)
  - Read boundary displacement from files if necessary
  - Set boundary values of U and V
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFTimeStepPrepare(VFCtx *ctx,VFFields *fields)
 {
@@ -937,7 +937,7 @@ extern PetscErrorCode VFTimeStepPrepare(VFCtx *ctx,VFFields *fields)
 /*
  VFElasticityTimeStep
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFElasticityTimeStep(VFCtx *ctx,VFFields *fields)
 {
@@ -962,7 +962,7 @@ extern PetscErrorCode VFElasticityTimeStep(VFCtx *ctx,VFFields *fields)
 /*
  VFFractureTimeStep
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  
  */
 extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
@@ -1012,7 +1012,7 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
 /*
  VFFinalize
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 {
@@ -1093,7 +1093,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 /*
  FieldsH5Write: Export all fields in HDF5 format using PETSc HDF5 viewer. Also write an XDMF container
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
 {
@@ -1155,7 +1155,7 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
 /*
  FieldsBinaryWrite: Export all fields in PETSc native binary format.
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
 {

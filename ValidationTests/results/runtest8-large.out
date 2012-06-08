@@ -1,6 +1,6 @@
 VF:
 Numerical implementation of the variational approach to fracture.
-(c) 2010-2011 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu
+(c) 2010-2012 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu
 
 Option table:
 #PETSc Option Table entries:
