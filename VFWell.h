@@ -1,6 +1,6 @@
 /*
   VFWell.h
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 #include "CartFE.h"
 #include "VFCommon.h"

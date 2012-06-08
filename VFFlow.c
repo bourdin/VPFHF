@@ -2,7 +2,7 @@
    VFFlow.c
    Generic interface to flow solvers
 
-     (c) 2010-2011 Blaise Bourdin, LSU. bourdin@lsu.edu
+     (c) 2010-2012 Blaise Bourdin, LSU. bourdin@lsu.edu
                     Keita Yoshioka, Chevron ETC
 */
 #include "petsc.h"

@@ -9,7 +9,7 @@
 /*
   BCVInit
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
 {
@@ -42,7 +42,7 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
 /*
   BCVUpdate
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset)
 {
@@ -92,7 +92,7 @@ extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset)
 /*
   VF_MatVAT2Surface3D_local
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_MatVAT2Surface3D_local(PetscReal *Mat_local,MatProp *matprop,VFProp *vfprop,CartFE_Element3D *e)
 {
@@ -126,7 +126,7 @@ extern PetscErrorCode VF_MatVAT2Surface3D_local(PetscReal *Mat_local,MatProp *ma
 /*
   VF_MatVCoupling3D_local
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ****U_array,
                                               PetscReal ***theta_array,PetscReal ***thetaRef_array,
@@ -171,7 +171,7 @@ extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ***
 /*
   VF_MatVCouplingShearOnly3D_local
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_MatVCouplingShearOnly3D_local(PetscReal *Mat_local,PetscReal ****U_array,
                                                        PetscReal ***theta_array,PetscReal ***thetaRef_array,
@@ -214,7 +214,7 @@ extern PetscErrorCode VF_MatVCouplingShearOnly3D_local(PetscReal *Mat_local,Pets
 /*
   VF_RHSVAT2Surface3D_local
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_RHSVAT2Surface3D_local(PetscReal *RHS_local,MatProp *matprop,VFProp *vfprop,CartFE_Element3D *e)
 {
@@ -239,7 +239,7 @@ extern PetscErrorCode VF_RHSVAT2Surface3D_local(PetscReal *RHS_local,MatProp *ma
 /*
   VF_VAssembly3D
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
 {
@@ -438,7 +438,7 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
 /*
   VF_SurfaceEnergy3D_local: 
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,PetscReal ***v_array,MatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -481,7 +481,7 @@ extern PetscErrorCode VF_SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,Pe
 /*
   VF_VEnergy3D
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFCtx *ctx)
 {
@@ -541,7 +541,7 @@ extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFC
 /*
   VF_IrrevApplyEQ: Apply irreversibility conditions using truncation and equality constraints
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_IrrevApplyEQ(Mat K,Vec RHS,Vec V,Vec VIrrev,VFProp *vfprop,VFCtx *ctx)
 {
@@ -606,7 +606,7 @@ extern PetscErrorCode VF_IrrevApplyEQ(Mat K,Vec RHS,Vec V,Vec VIrrev,VFProp *vfp
 /*
   VF_StepV
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
 {

@@ -1,9 +1,9 @@
 /*
   vtkexport.c
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 
-static const char banner[] = "vtkexport:\nconvert petsc binary files into vtk files\n(c) 2010-2011 Blaise Bourdin Louisiana State University bourdin@lsu.edu\n\n";
+static const char banner[] = "vtkexport:\nconvert petsc binary files into vtk files\n(c) 2010-2012 Blaise Bourdin Louisiana State University bourdin@lsu.edu\n\n";
 
 #include "petsc.h"
 

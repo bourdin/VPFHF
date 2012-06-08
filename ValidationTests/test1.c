@@ -1,6 +1,6 @@
 /*
   test1.c: solves for the displacement in a pressurized penny crack in 3d
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 
 #include "petsc.h"

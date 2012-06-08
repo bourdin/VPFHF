@@ -1,9 +1,9 @@
 /*
   h5export.c
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 
-static const char banner[] = "h5export:\nconvert petsc binary files into hdf5 / xmf files\n(c) 2010-2011 Blaise Bourdin Louisiana State University bourdin@lsu.edu\n\n";
+static const char banner[] = "h5export:\nconvert petsc binary files into hdf5 / xmf files\n(c) 2010-2012 Blaise Bourdin Louisiana State University bourdin@lsu.edu\n\n";
 
 #include "petsc.h"
 #include "../xdmf.h"

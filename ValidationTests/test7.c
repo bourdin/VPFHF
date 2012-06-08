@@ -2,7 +2,7 @@
   test6.c:
   Validate elasticity solver by applying shear boundary condition
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 
 #include "petsc.h"

@@ -12,7 +12,7 @@ PetscLogStage CartFE_ElementInitStage;
 /*
   CartFE_Init
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Init()
 {
@@ -32,7 +32,7 @@ extern PetscErrorCode CartFE_Init()
   CartFE_Element1DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element1DCreate(CartFE_Element1D *e)
 {
@@ -50,7 +50,7 @@ extern PetscErrorCode CartFE_Element1DCreate(CartFE_Element1D *e)
 /*
   CartFE_Element1DInit
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
 {
@@ -89,7 +89,7 @@ extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
   CartFE_Element2DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element2DCreate(CartFE_Element2D *e)
 {
@@ -107,7 +107,7 @@ extern PetscErrorCode CartFE_Element2DCreate(CartFE_Element2D *e)
 /*
   CartFE_Element2DInit
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,PetscReal ly)
 {
@@ -165,7 +165,7 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,Pets
   CartFE_Element3DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element3DCreate(CartFE_Element3D *e)
 {
@@ -183,7 +183,7 @@ extern PetscErrorCode CartFE_Element3DCreate(CartFE_Element3D *e)
 /*
   CartFE_Element3DInit
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,PetscReal ly,PetscReal lz)
 {
@@ -249,7 +249,7 @@ extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,Pets
 /*
   VecApplyDirichletBC
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
 {
@@ -506,7 +506,7 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
 /*
   MatApplyDirichletBC
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC)
 {
@@ -670,7 +670,7 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC)
 /*
   DAReadCoordinatesHDF5
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode DAReadCoordinatesHDF5(DM da,const char filename[])
 {
@@ -695,7 +695,7 @@ extern PetscErrorCode DAReadCoordinatesHDF5(DM da,const char filename[])
 /*
   BCInit: Set all boundary conditions to FREE
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCInit(BC *bc,PetscInt dof)
 {
@@ -736,7 +736,7 @@ extern PetscErrorCode BCInit(BC *bc,PetscInt dof)
   BCGet: Get boundary condition flag for each face, edge, vertex of the domain.
   The option names are -<prefix>_<name> where name is the nema of a geometric entity
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof)
 {
@@ -809,7 +809,7 @@ extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof)
 /*
   BCView
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof)
 {

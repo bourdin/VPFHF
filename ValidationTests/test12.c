@@ -1,6 +1,6 @@
 /*
  test12.c: solves for the displacement and v-field in a pressurized penny crack in 3d (Sneddon 3D)
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 
 #include "petsc.h"
