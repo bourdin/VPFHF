@@ -4,22 +4,25 @@
 #$ -cwd
 #$ -N HS2D       # Job Name
 #$ -j y                 # Combine stderr and stdout
-#$ -o SGE_Output        # Name of the output file (eg. myMPI.oJobID)
-#$ -pe 12way 360
+#$ -pe 12way 240
 #$ -q normal            # Queue name "normal"
-#$ -l h_rt=10:00:00     # Run time (hh:mm:ss) - 1.5 hours
+#$ -l h_rt=5:00:00     # Run time (hh:mm:ss) - 1.5 hours
 #$ -M bourdin@lsu.edu   # Use email notification address
 #$ -m be                # Email at Begin and End of job
 
 
-export NX=1001
-export NY=1000
+if [ -z "NX" ]; then
+	export NX=1001
+fi
+if [ -z "NY" ]; then
+	export NY=1000
+fi
 export NZ=2
 export LX=8.
 export LY=8.
 export LZ=.01
 export L=.2
-export O=1
+export OR=1
 
 #export EPS=.012
 #export GC=
@@ -36,9 +39,13 @@ echo  NZ             $NZ          >> 00_INFO.txt
 echo  LX             $LX          >> 00_INFO.txt 
 echo  LY             $LY          >> 00_INFO.txt 
 echo  LZ             $LZ          >> 00_INFO.txt 
+echo  GC             $GC          >> 00_INFO.txt
+echo  L              $L           >> 00_INFO.txt
 echo  EPSILON        $EPS         >> 00_INFO.txt
+echo  ETA            $ETA         >> 00_INFO.txt
+echo  ORIENTATION    $OR          >> 00_INFO.txt
 echo  EXTRAOPTS      $EXTRAOPTS   >> 00_INFO.txt
 
-ibrun ${VFDIR}/ValidationTests/test15 -p ${JOB_ID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} -epsilon $EPS -gc ${GC} -length ${L} -orientation ${OR} ${EXTRAOPTS}
+ibrun ${VFDIR}/ValidationTests/test15 -p ${JOB_ID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} -epsilon ${EPS} -eta ${ETA} -gc ${GC} -length ${L} -orientation ${OR} -format bin -log_summary ${EXTRAOPTS}
 
 
