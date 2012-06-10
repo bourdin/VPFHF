@@ -122,4 +122,5 @@ int main(int argc,char **argv)
   ierr = VecDestroy(&V);CHKERRQ(ierr);
   ierr = VecDestroy(&coordinates);CHKERRQ(ierr);
   ierr = PetscFinalize();
+  return(0);
 }
