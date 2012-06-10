@@ -62,7 +62,7 @@ int main(int argc,char **argv)
   ierr = VecCreate(PETSC_COMM_WORLD,&FVCellndof);CHKERRQ(ierr);
   ierr = VecSetBlockSize(FVCellndof,1);CHKERRQ(ierr);
   ierr = VecCreate(PETSC_COMM_WORLD,&coordinates);CHKERRQ(ierr);
-  ierr = VecSetBlockSize(coordinates,1);CHKERRQ(ierr);
+  ierr = VecSetBlockSize(coordinates,3);CHKERRQ(ierr);
 
   ierr = PetscObjectSetName((PetscObject) pres,"Pressure");CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) pmult,"Permeability");CHKERRQ(ierr);
@@ -173,4 +173,5 @@ int main(int argc,char **argv)
   ierr = VecDestroy(&FVCellndof);CHKERRQ(ierr);  
   ierr = VecDestroy(&coordinates);CHKERRQ(ierr);
   ierr = PetscFinalize();
+  return(0);
 }

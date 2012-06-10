@@ -8,7 +8,6 @@
 #include "VFCommon.h"
 #include "VFV.h"
 #include "VFU.h"
-#include "VFFlow.h"
 
 VFCtx    ctx;
 VFFields fields;
@@ -30,10 +29,7 @@ int main(int argc,char **argv)
   PetscReal ***v_array;
   PetscReal BBmin[3],BBmax[3];
   PetscReal x,y,z;
-  PetscReal ElasticEnergy = 0;
   PetscReal InsituWork    = 0;
-  PetscReal SurfaceEnergy = 0;
-  char      filename[FILENAME_MAX];
   PetscReal p = 1e-3;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
