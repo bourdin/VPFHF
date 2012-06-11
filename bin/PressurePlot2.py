@@ -26,7 +26,6 @@ def parse(args=None):
     return parser.parse_args()
 
 def main():
-    import pymef90
     import matplotlib
     import numpy as np
     import matplotlib.pyplot as plt
