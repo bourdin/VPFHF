@@ -26,7 +26,6 @@ def parse(args=None):
     return parser.parse_args()
 
 def main():
-    import pymef90
     import matplotlib
     import numpy as np
     import matplotlib.pyplot as plt
@@ -54,13 +53,15 @@ def main():
                     p = np.loadtxt(presfile)    
                     hx = D['LX']/(D['NX']+0.0)
                     l = '%s: $h=%.2E$, $\epsilon/h=%.1f$'%(f,hx,D['EPSILON']/hx)
-                    plt.plot(p[:,1],p[:,3],label=l,lw=2)
+                    plt.plot(p[:,1]/D['LZ'],p[:,3]/D['LZ'],label=l,lw=2)
                 
-    plt.grid()
+    ax = plt.gca()
+    ax.grid()
+    ax.axis([0,.03/D['LZ'],0,.025/D['LZ']])
     plt.legend(loc=0)
-    plt.xlabel('E')
-    plt.ylabel('p')
-    plt.title('Surface energy vs. injected volume')
+    plt.xlabel('V')
+    plt.ylabel('l')
+    plt.title('Half crack length vs. injected volume')
 
     if options.outputfile != None:
       plt.savefig(options.outputfile)
