@@ -57,7 +57,7 @@ def main():
                 
     ax = plt.gca()
     ax.grid()
-    ax.axis([0,.03,0,.025])
+    ax.axis([0,.025,0,.025])
     plt.legend(loc=0)
     plt.xlabel('V')
     plt.ylabel('l')

@@ -55,7 +55,7 @@ def main():
                 
     ax = plt.gca()
     ax.grid()
-    ax.axis([0,.03,0,2.])
+    ax.axis([0,.025,0,2.])
     plt.legend(loc=0,labelspacing=.1)
     leg = plt.gca().get_legend()
     ltext  = leg.get_texts()
