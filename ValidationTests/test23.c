@@ -1,6 +1,8 @@
 /*
- test9.c: solves for the displacement with several pressurized penny cracks in 3d
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ test10.c:
+ Validate crack opening computation
+ 
+ (c) 2010-2012 chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  */
 
 #include "petsc.h"

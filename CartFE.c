@@ -2,9 +2,9 @@
 #include "petsc.h"
 #include "CartFE.h"
 
-PetscLogEvent CartFE_ElementInitEvent;
+//PetscLogEvent CartFE_ElementInitEvent;
 PetscLogStage CartFE_ElementInitStage;
-PetscClassId   CartFE_Element;
+//PetscClassId  CartFE_Element;
 
 
 #undef __FUNCT__
@@ -12,16 +12,16 @@ PetscClassId   CartFE_Element;
 /*
   CartFE_Init
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Init()
 {
-  PetscErrorCode ierr;
+  //PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = PetscClassIdRegister("CartFE_Element",&CartFE_Element);CHKERRQ(ierr);
-  ierr = PetscLogEventRegister("CartFE_Elem Init",CartFE_Element,&CartFE_ElementInitEvent);CHKERRQ(ierr);
-  ierr = PetscLogStageRegister("CartFE_Elem Init",&CartFE_ElementInitStage);CHKERRQ(ierr);
+  //ierr = PetscClassIdRegister("CartFE_Element",&CartFE_Element);CHKERRQ(ierr);
+  //ierr = PetscLogEventRegister("CartFE_Elem Init",CartFE_Element,&CartFE_ElementInitEvent);CHKERRQ(ierr);
+  //ierr = PetscLogStageRegister("CartFE_Elem Init",&CartFE_ElementInitStage);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -32,7 +32,7 @@ extern PetscErrorCode CartFE_Init()
   CartFE_Element1DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element1DCreate(CartFE_Element1D *e)
 {
@@ -50,15 +50,15 @@ extern PetscErrorCode CartFE_Element1DCreate(CartFE_Element1D *e)
 /*
   CartFE_Element1DInit
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
 {
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
-  ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
-  ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
+  //ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
   e->lx        = lx;
   e->ly        = 0.;
   e->lz        = 0.;
@@ -78,8 +78,8 @@ extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
   e->dphi[0][0][0][0] = -1. / e->lx; e->dphi[0][0][0][1] = -1. / e->lx; e->dphi[0][0][0][2] = -1. / e->lx; 
   e->dphi[0][0][1][0] =  1. / e->lx; e->dphi[0][0][1][1] =  1. / e->lx; e->dphi[0][0][1][2] =  1. / e->lx;
   ierr = PetscLogFlops(24);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
-  ierr = PetscLogEventEnd(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogEventEnd(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -89,7 +89,7 @@ extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
   CartFE_Element2DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element2DCreate(CartFE_Element2D *e)
 {
@@ -107,7 +107,7 @@ extern PetscErrorCode CartFE_Element2DCreate(CartFE_Element2D *e)
 /*
   CartFE_Element2DInit
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,PetscReal ly)
 {
@@ -117,8 +117,8 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,Pets
   PetscInt           i,j;
   
   PetscFunctionBegin;
-  ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
-  ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
+  //ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ex);CHKERRQ(ierr);
   ierr = CartFE_Element1DInit(&ex,lx);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ey);CHKERRQ(ierr);
@@ -154,8 +154,8 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,Pets
     }
   }
   ierr = PetscLogFlops(1 + e->ng + 3 * e->ng * e->nphiy * e->nphix);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
-  ierr = PetscLogEventEnd(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogEventEnd(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -165,7 +165,7 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,Pets
   CartFE_Element3DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element3DCreate(CartFE_Element3D *e)
 {
@@ -183,7 +183,7 @@ extern PetscErrorCode CartFE_Element3DCreate(CartFE_Element3D *e)
 /*
   CartFE_Element3DInit
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,PetscReal ly,PetscReal lz)
 {
@@ -193,8 +193,8 @@ extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,Pets
   PetscInt           i,j,k;
   
   PetscFunctionBegin;
-  ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
-  ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
+  //ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ex);CHKERRQ(ierr);
   ierr = CartFE_Element1DInit(&ex,lx);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ey);CHKERRQ(ierr);
@@ -239,8 +239,8 @@ extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,Pets
     }
   }
   ierr = PetscLogFlops(2 + 2 * e->ng + 8 * e->ng * e->nphiz * e->nphiy * e->nphix);CHKERRQ(ierr);
-  ierr = PetscLogStagePop();CHKERRQ(ierr);
-  ierr = PetscLogEventEnd(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
+  //ierr = PetscLogStagePop();CHKERRQ(ierr);
+  //ierr = PetscLogEventEnd(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -249,7 +249,7 @@ extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,Pets
 /*
   VecApplyDirichletBC
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
 {
@@ -261,7 +261,7 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
   DM             da;
   PetscReal  ****RHS_array;
   PetscReal  ****BCU_array;
-  PetscInt       dim,dof,s;
+  PetscInt       dim,dof;
   
   PetscFunctionBegin;
   ierr = PetscObjectQuery((PetscObject) RHS,"DM",(PetscObject *) &da); CHKERRQ(ierr);
@@ -506,7 +506,7 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
 /*
   MatApplyDirichletBC
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC)
 {
@@ -670,7 +670,7 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC)
 /*
   DAReadCoordinatesHDF5
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode DAReadCoordinatesHDF5(DM da,const char filename[])
 {
@@ -695,7 +695,7 @@ extern PetscErrorCode DAReadCoordinatesHDF5(DM da,const char filename[])
 /*
   BCInit: Set all boundary conditions to FREE
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCInit(BC *bc,PetscInt dof)
 {
@@ -736,7 +736,7 @@ extern PetscErrorCode BCInit(BC *bc,PetscInt dof)
   BCGet: Get boundary condition flag for each face, edge, vertex of the domain.
   The option names are -<prefix>_<name> where name is the nema of a geometric entity
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof)
 {
@@ -809,7 +809,7 @@ extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof)
 /*
   BCView
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof)
 {
