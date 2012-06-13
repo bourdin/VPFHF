@@ -35,6 +35,7 @@ int main(int argc,char **argv)
   PetscReal ElasticEnergy = 0;
   PetscReal InsituWork    = 0;
   PetscReal SurfaceEnergy = 0;
+  PetscReal pinit;
   char      filename[FILENAME_MAX];
 
 
@@ -45,6 +46,8 @@ int main(int argc,char **argv)
   ierr            = PetscOptionsGetReal(PETSC_NULL,"-length",&length,PETSC_NULL);CHKERRQ(ierr);
   pinc            = 1e-6;
   ierr            = PetscOptionsGetReal(PETSC_NULL,"-pinc",&pinc,PETSC_NULL);CHKERRQ(ierr);
+  pinit            = 0.;
+  ierr            = PetscOptionsGetReal(PETSC_NULL,"-pinit",&pinit,PETSC_NULL);CHKERRQ(ierr);
   ctx.maxtimestep = 1;
   ierr            = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
   ierr            = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -52,7 +55,7 @@ int main(int argc,char **argv)
   ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 
-  p                    = 0;
+  p                    = pinit;
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
 
@@ -170,18 +173,6 @@ int main(int argc,char **argv)
     ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,p,ctx.ElasticEnergy,
                                   ctx.InsituWork,ctx.SurfaceEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
 
-    /*
-  Save fields and write statistics about current run
-*/
-    switch (ctx.fileformat) {
-    case FILEFORMAT_HDF5:
-      ierr = FieldsH5Write(&ctx,&fields);
-      break;
-
-    case FILEFORMAT_BIN:
-      ierr = FieldsBinaryWrite(&ctx,&fields);
-      break;
-    }
   }
 /* end of time step */
 
@@ -199,4 +190,5 @@ int main(int argc,char **argv)
   ierr = PetscFinalize();
   return(0);
 }
+ 
 

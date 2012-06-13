@@ -562,7 +562,7 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop)
 	{
 		resprop->perm = 1.e-1; /* Multiply by 1e12 because pressure unit in MPa, viscosity unit in cp, and density is specific density */
 		resprop->por  = 0.2;   /* fraction */
-		resprop->Pinit = 20.;  /* MPa */
+		resprop->Pinit = 1.;  /* MPa */
 		resprop->Tinit = 200.; /* Celsius */
 		resprop->relk = 1.0;   /* fraction */
 		resprop->visc = 1.0;   /* cp */
