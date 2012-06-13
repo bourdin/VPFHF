@@ -943,7 +943,6 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
     ierr = DMGetLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
     ierr = DMDAVecGetArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr); 
   }
-  CHKMEMQ;
   /*
     get local mat and RHS
   */
@@ -1271,7 +1270,6 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
       }
     }
   }
-  CHKMEMQ;
   /*
     Global Assembly and Boundary Conditions
   */
