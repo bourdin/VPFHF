@@ -230,7 +230,7 @@ typedef struct {
 	PetscReal         visc;     /* Viscosity in cp */
 	PetscReal         fdens;    /* Fluid Density in specific density*/
 	PetscReal         rock_comp; /* Rock compressibility in 1/MPa */
-	PetscReal		  wat_comp; /* Water compressibility in 1/MPa */
+	PetscReal		      wat_comp; /* Water compressibility in 1/MPa */
 	PetscReal         TCond_X;  /* Thermal Conductivity in x-direction */
 	PetscReal         TCond_Y;  /* Thermal Conductivity in y-direction */
 	PetscReal         TCond_Z;  /* Thermal Conductivity in z-direction */
