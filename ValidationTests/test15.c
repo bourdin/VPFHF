@@ -59,8 +59,6 @@ int main(int argc,char **argv)
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
 	q = maxvol / ctx.maxtimestep;
 	
-	printf("maxtimestep: %i\nflowrate %f\n",ctx.maxtimestep,q);
-	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);    

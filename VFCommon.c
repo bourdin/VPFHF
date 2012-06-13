@@ -858,7 +858,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 #undef __FUNCT__
 #define __FUNCT__ "VFLayerInit"
 /*
- VFLayerInit: find the horizontal layer associated to a cell in the most stupid and unoptimzed way
+ VFLayerInit: find the horizontal layer associated to a cell in the most stupid and unoptimized way
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  
