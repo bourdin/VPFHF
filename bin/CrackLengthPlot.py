@@ -30,7 +30,6 @@ def main():
     import numpy as np
     import os.path
     options = parse()
-    print options
 
     if options.outputfile != None:
       matplotlib.use('Agg')
@@ -38,11 +37,9 @@ def main():
     
     for f in options.inputfile:
         if (os.path.isfile(f)):
-            print '%s is a file'%f
             p = np.loadtxt(f)    
             plt.plot(p[:,1],p[:,3],'--',lw=2,label=f)
         if (os.path.isdir(f)):
-            print '%s is a folder'%f
             infotxt = os.path.join(f,'00_INFO.txt')
             if (os.path.exists(infotxt)):
                 print 'Reading parameters for %s'%infotxt
