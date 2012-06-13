@@ -1,0 +1,56 @@
+#!/bin/bash      
+#$ -A TG-DMS060014
+#$ -V                   # Inherit the submission environment
+#$ -cwd
+#$ -N HS2D       # Job Name
+#$ -j y                 # Combine stderr and stdout
+#$ -pe 12way 240
+#$ -q normal            # Queue name "normal"
+#$ -l h_rt=5:00:00     # Run time (hh:mm:ss) - 1.5 hours
+#$ -M bourdin@lsu.edu   # Use email notification address
+#$ -m be                # Email at Begin and End of job
+
+
+if [ -z "NX" ]; then
+	export NX=251
+fi
+if [ -z "NY" ]; then
+	export NY=251
+fi
+if [ -z "NZ" ]; then
+	export NZ=251
+fi
+export LX=1.
+export LY=1.
+export LZ=1.
+export R=.1
+export OR=1
+export PINIT=1e-5
+export RATE=2e-8
+#export EPS=.012
+#export GC=
+
+
+export WORKDIR=${SCRATCH}/HS2D/${JOB_ID}
+mkdir -p ${WORKDIR}
+cd ${WORKDIR}
+
+echo  PBS_JOBID     $JOB_ID       >  00_INFO.txt
+echo  NX             $NX          >> 00_INFO.txt 
+echo  NY             $NY          >> 00_INFO.txt 
+echo  NZ             $NZ          >> 00_INFO.txt 
+echo  LX             $LX          >> 00_INFO.txt 
+echo  LY             $LY          >> 00_INFO.txt 
+echo  LZ             $LZ          >> 00_INFO.txt 
+echo  GC             $GC          >> 00_INFO.txt
+echo  R              $R           >> 00_INFO.txt
+echo  EPSILON        $EPS         >> 00_INFO.txt
+echo  ETA            $ETA         >> 00_INFO.txt
+echo  ORIENTATION    $OR          >> 00_INFO.txt
+echo  PINIT          $PINIT       >> 00_INFO.txt
+echo  RATE           $RATE        >> 00_INFO.txt
+echo  EXTRAOPTS      $EXTRAOPTS   >> 00_INFO.txt
+
+ibrun ${VFDIR}/ValidationTests/test16 -p ${JOB_ID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} -epsilon ${EPS} -eta ${ETA} -gc ${GC} -radius ${R} -orientation ${OR} -pinit ${PINIT} -rate ${RATE} -maxtimestep 120 -format bin -log_summary ${EXTRAOPTS}
+
+
