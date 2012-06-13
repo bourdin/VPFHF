@@ -16,7 +16,7 @@ PetscLogStage CartFE_ElementInitStage;
 */
 extern PetscErrorCode CartFE_Init()
 {
-  PetscErrorCode ierr;
+  //PetscErrorCode ierr;
 
   PetscFunctionBegin;
   //ierr = PetscClassIdRegister("CartFE_Element",&CartFE_Element);CHKERRQ(ierr);
@@ -261,7 +261,7 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
   DM             da;
   PetscReal  ****RHS_array;
   PetscReal  ****BCU_array;
-  PetscInt       dim,dof,s;
+  PetscInt       dim,dof;
   
   PetscFunctionBegin;
   ierr = PetscObjectQuery((PetscObject) RHS,"DM",(PetscObject *) &da); CHKERRQ(ierr);

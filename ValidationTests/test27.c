@@ -84,9 +84,21 @@ int main(int argc,char **argv)
   ierr                 = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy:              %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
 
+  switch (ctx.fileformat) {
+  case FILEFORMAT_HDF5:
+    ctx.timestep++;
+    ctx.timevalue += 1.;
+    ierr = FieldsH5Write(&ctx,&fields);
+    break;
+
+  case FILEFORMAT_BIN:
+    ierr = FieldsBinaryWrite(&ctx,&fields);
+    break;
+  }
+
   ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-  //ierr = VF_StepV(&fields,&ctx);
+  ierr = VF_StepV(&fields,&ctx);
 
   ctx.SurfaceEnergy    = 0.;
   ierr                 = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
@@ -99,7 +111,6 @@ int main(int argc,char **argv)
   */
   switch (ctx.fileformat) {
   case FILEFORMAT_HDF5:
-    ierr = FieldsH5Write(&ctx,&fields);
     ctx.timestep++;
     ctx.timevalue += 1.;
     ierr           = FieldsH5Write(&ctx,&fields);
