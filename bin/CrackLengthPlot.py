@@ -28,7 +28,6 @@ def parse(args=None):
 def main():
     import matplotlib
     import numpy as np
-    import matplotlib.pyplot as plt
     import os.path
     options = parse()
     print options
@@ -41,7 +40,7 @@ def main():
         if (os.path.isfile(f)):
             print '%s is a file'%f
             p = np.loadtxt(f)    
-            plt.plot(p[:,1],p[:,2],label=f)
+            plt.plot(p[:,1],p[:,3],'--',lw=2,label=f)
         if (os.path.isdir(f)):
             print '%s is a folder'%f
             infotxt = os.path.join(f,'00_INFO.txt')
@@ -53,11 +52,12 @@ def main():
                     p = np.loadtxt(presfile)    
                     hx = D['LX']/(D['NX']+0.0)
                     l = '%s: $h=%.2E$, $\epsilon/h=%.1f$'%(f,hx,D['EPSILON']/hx)
-                    plt.plot(p[:,1]/D['LZ'],p[:,3]/D['LZ'],label=l,lw=2)
+                    #plt.plot(p[:,1]/D['LZ'],p[:,3]/D['LZ'],label=l,lw=2)
+                    plt.plot(p[:,1],p[:,3],label=l,lw=2)
                 
     ax = plt.gca()
     ax.grid()
-    ax.axis([0,.03/D['LZ'],0,.025/D['LZ']])
+    ax.axis([0,.03,0,.025])
     plt.legend(loc=0)
     plt.xlabel('V')
     plt.ylabel('l')
