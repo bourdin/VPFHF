@@ -34,7 +34,7 @@ int main(int argc,char **argv)
 	PetscReal InsituWork    = 0;
 	PetscReal SurfaceEnergy = 0;
 	char      filename[FILENAME_MAX];
-	PetscReal bc = .005;
+	PetscReal bc = .05;
 	PetscReal ***v_array;
 	PetscReal lx,ly,lz;
 	PetscReal ***pmult_array;
@@ -61,7 +61,7 @@ int main(int argc,char **argv)
 	ctx.matprop[0].beta  = 0.;
 	ctx.matprop[0].alpha = 0.;
 	ctx.timestep  = 1;
-	ctx.maxtimestep = 20;
+	ctx.maxtimestep = 35;
 	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
@@ -74,19 +74,19 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
 	for (i = 0; i < 6; i++) {
 		ctx.bcV[0].face[i] = NONE;
-		for (j = 1; j < 3; j++) {
+		for (j = 0; j < 3; j++) {
 			ctx.bcU[j].face[i] = NONE;
 		}
 	}
 	for (i = 0; i < 12; i++) {
 		ctx.bcV[0].edge[i] = NONE;
-		for (j = 1; j < 3; j++) {
+		for (j = 0; j < 3; j++) {
 			ctx.bcU[j].edge[i] = NONE;
 		}
 	}
 	for (i = 0; i < 8; i++) {
 		ctx.bcV[0].vertex[i] = NONE;
-		for (j = 1; j < 3; j++) {
+		for (j = 0; j < 3; j++) {
 			ctx.bcU[j].vertex[i] = NONE;
 		}
 	}
@@ -94,7 +94,13 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) { 
-				if ( ((i == nx/2) || (i == nx/2-1)) && (coords_array[k][j][i][2] > lz/2.-length) && (coords_array[k][j][i][2] < lz/2.+length ) ) {
+//				if ( ((i == nx/2) || (i == nx/2-1)) && coords_array[k][j][i][2] <= 2.*length) {
+//					v_array[k][j][i] = 0.;
+//				}
+				if ( ((i == 3*nx/5) || (i == 3*nx/5-1)) && coords_array[k][j][i][2] <= 2.*length) {
+					v_array[k][j][i] = 0.;
+				}
+				if ( ((i == 2*nx/5) || (i == 2*nx/5-1)) && coords_array[k][j][i][2] >= .7*lz ) {
 					v_array[k][j][i] = 0.;
 				}
 			}
@@ -115,6 +121,7 @@ int main(int argc,char **argv)
 				ctx.bcU[0].face[X0] = FIXED;ctx.bcU[0].face[X1] = FIXED;
 				ctx.bcU[1].face[X0] = ZERO;ctx.bcU[1].face[X1] = ZERO;
 				ctx.bcU[2].face[X0] = ZERO;ctx.bcU[2].face[X1] = ZERO;
+
 				
 				ctx.bcU[1].face[Y0] = ZERO;ctx.bcU[1].face[Y1] = ZERO;
 				for (k = zs; k < zs+zm; k++) {
