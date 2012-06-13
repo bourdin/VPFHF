@@ -170,7 +170,7 @@ extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx
 			  v_array[k][j][i] = 0.;
 		  }
 		  else{
-			  v_array[k][j][i] = 1.-exp(-dist/2/ctx->vfprop.epsilon);
+			  v_array[k][j][i] = 1.-exp(-dist/ctx->vfprop.epsilon);
 		  }
       }
     }

@@ -36,7 +36,7 @@ int main(int argc,char **argv)
 	Vec					    Vold;
 	PetscReal			  errV=1e+10;
 	PetscReal			  lx,ly,lz;
-	PetscReal			  q=2.e-4;
+	PetscReal			  q=2.e-3;//2.e-4;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);

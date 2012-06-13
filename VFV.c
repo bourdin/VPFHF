@@ -210,6 +210,73 @@ extern PetscErrorCode VF_MatVCouplingShearOnly3D_local(PetscReal *Mat_local,Pets
 
 
 #undef __FUNCT__
+#define __FUNCT__ "VF_RHSVPressure3D_local"
+/*
+  VF_RHSVPressure3D_local
+
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VF_RHSVPressure3D_local(PetscReal *RHS_local,PetscReal ****u_array,
+                                              PetscReal ***pressure_array,PetscReal ***pressureRef_array,
+                                              MatProp *matprop,VFProp *vfprop,
+                                              PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+{
+  PetscErrorCode ierr;
+  PetscInt       l,i,j,k,g,c;
+  PetscReal      *pressure_elem,*u_elem[3];
+
+  PetscFunctionBegin;
+  ierr = PetscMalloc4(e->ng,PetscReal,&pressure_elem,
+                      e->ng,PetscReal,&u_elem[0],
+                      e->ng,PetscReal,&u_elem[1],
+                      e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);
+
+  /*
+    Compute the projection of the fields in the local base functions basis
+  */
+  for (g = 0; g < e->ng; g++) {
+    pressure_elem[g] = 0;
+    for (c=0; c<3; c++) u_elem[c][g] = 0.;
+  }
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        for (g = 0; g < e->ng; g++) {
+          pressure_elem[g] += e->phi[k][j][i][g] 
+                              * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i]);
+          for (c=0; c<3; c++) u_elem[c][g] += e->phi[k][j][i][g] * u_array[ek+k][ej+j][ei+i][c];
+        }
+      }
+    }
+  }  
+  ierr = PetscLogFlops(9 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+
+  /*
+    Accumulate the contribution of the current element to the local
+    version of the RHS
+  */
+  for (l=0,k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++,l++) {
+        for (c = 0; c < 3; c++) {
+          for (g = 0; g < e->ng; g++) {
+            RHS_local[l] += e->weight[g] * pressure_elem[g] 
+                          * u_elem[c][g]            
+                          * e->dphi[k][j][i][c][g];  
+          }
+        }
+      }
+    }
+  }
+  ierr = PetscLogFlops(12 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  /*
+    Clean up
+  */
+  ierr = PetscFree4(pressure_elem,u_elem[0],u_elem[1],u_elem[2]);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "VF_RHSVAT2Surface3D_local"
 /*
   VF_RHSVAT2Surface3D_local
@@ -384,6 +451,9 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
         for (l = 0; l < nrow; l++) RHS_local[l] = 0.;
         //ierr = PetscLogEventBegin(ctx->vflog.VF_VecVLocalEvent,0,0,0,0);CHKERRQ(ierr);
         ierr = VF_RHSVAT2Surface3D_local(RHS_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D);CHKERRQ(ierr);
+        ierr = VF_RHSVPressure3D_local(RHS_local,U_array,pressure_array,pressureRef_array,
+                                      &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
+                                      &ctx->e3D);CHKERRQ(ierr);
         //ierr = PetscLogEventEnd(ctx->vflog.VF_VecVLocalEvent,0,0,0,0);CHKERRQ(ierr);
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -649,5 +719,18 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
   if (Vmin < -.5 || Vmax > 1.5) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] V is not in or near (0,1). Is EPSILON of the order of h?\n");CHKERRQ(ierr);  
   }
+  
+  /*
+    Temporarily adding truncation
+  */
+  Vec                 V0,V1;
+  ierr = DMGetGlobalVector(ctx->daScal,&V0);CHKERRQ(ierr);
+  ierr = VecSet(V0,0.0);CHKERRQ(ierr);
+  ierr = DMGetGlobalVector(ctx->daScal,&V1);CHKERRQ(ierr);
+  ierr = VecSet(V1,1.0);CHKERRQ(ierr);
+  ierr = VecPointwiseMax(fields->V,fields->V,V0);CHKERRQ(ierr);
+  ierr = VecPointwiseMin(fields->V,fields->V,V1);CHKERRQ(ierr);
+  ierr = DMRestoreGlobalVector(ctx->daScal,&V0);CHKERRQ(ierr);
+  ierr = DMRestoreGlobalVector(ctx->daScal,&V1);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
