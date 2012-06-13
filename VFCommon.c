@@ -844,10 +844,10 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	nloc = nloc/3;
 	ierr = PCSetCoordinates(ctx->pcU,3,nloc,coordinates_array);CHKERRQ(ierr);
 	ierr = PCSetCoordinates(ctx->pcV,3,nloc,coordinates_array);CHKERRQ(ierr);
-	ierr = MatNullSpaceCreateRigidBody(coordinates,&matnull);CHKERRQ(ierr);
-	ierr = MatSetNearNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
+	///ierr = MatNullSpaceCreateRigidBody(coordinates,&matnull);CHKERRQ(ierr);
+	//ierr = MatSetNearNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
 	////ierr = KSPSetNullSpace(ctx->kspU,matnull);CHKERRQ(ierr);
-	ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
+	//ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
 	ierr = VecRestoreArray(coordinates,&coordinates_array);CHKERRQ(ierr);
 	ierr = VecDestroy(&coordinates);CHKERRQ(ierr);
 
