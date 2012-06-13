@@ -1,6 +1,6 @@
 /*
   VFU.h
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 
 #ifndef VFU_H
@@ -28,5 +28,4 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *OverbdnWo
 extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx);
 extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx);
 
-extern PetscErrorCode MatNullSpaceCreateRigidBody(Vec coords,MatNullSpace *sp);
 #endif /* VFU_H */

@@ -2,9 +2,9 @@
 #define VFCOMMON_H
 /*
  VFCommon.h
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-static const char banner[] = "\n\nVF:\nNumerical implementation of the variational approach to fracture.\n(c) 2010-2011 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu\n\n";
+static const char banner[] = "\n\nVF:\nNumerical implementation of the variational approach to fracture.\n(c) 2010-2012 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu\n\n";
 
 typedef enum {
 	VELOCITY,
@@ -230,7 +230,7 @@ typedef struct {
 	PetscReal         visc;     /* Viscosity in cp */
 	PetscReal         fdens;    /* Fluid Density in specific density*/
 	PetscReal         rock_comp; /* Rock compressibility in 1/MPa */
-	PetscReal		  wat_comp; /* Water compressibility in 1/MPa */
+	PetscReal		      wat_comp; /* Water compressibility in 1/MPa */
 	PetscReal         TCond_X;  /* Thermal Conductivity in x-direction */
 	PetscReal         TCond_Y;  /* Thermal Conductivity in y-direction */
 	PetscReal         TCond_Z;  /* Thermal Conductivity in z-direction */
@@ -245,38 +245,38 @@ typedef struct {
 	PetscLogStage VF_IOStage;
 	
 	PetscLogStage VF_UAssemblyStage;
-	PetscClassId  VF_MatULocalClassId;
-	PetscLogEvent VF_MatULocalEvent;
-	PetscClassId  VF_VecULocalClassId;
-	PetscLogEvent VF_VecULocalEvent;
+  //PetscClassId  VF_MatULocalClassId;
+  //PetscLogEvent VF_MatULocalEvent;
+  //PetscClassId  VF_VecULocalClassId;
+  //PetscLogEvent VF_VecULocalEvent;
 	
 	PetscLogStage VF_USolverStage;
 	
 	PetscLogStage VF_VAssemblyStage;
-	PetscClassId  VF_MatVLocalClassId;
-	PetscLogEvent VF_MatVLocalEvent;
-	PetscClassId  VF_VecVLocalClassId;
-	PetscLogEvent VF_VecVLocalEvent;
+	//PetscClassId  VF_MatVLocalClassId;
+	//PetscLogEvent VF_MatVLocalEvent;
+	//PetscClassId  VF_VecVLocalClassId;
+	//PetscLogEvent VF_VecVLocalEvent;
 	
 	PetscLogStage VF_VSolverStage;
 	
 	PetscLogStage VF_EnergyStage;
-	PetscClassId  VF_EnergyLocalClassId;
-	PetscLogEvent VF_EnergyLocalEvent;
+	//PetscClassId  VF_EnergyLocalClassId;
+	//PetscLogEvent VF_EnergyLocalEvent;
 	
 	PetscLogStage VF_PAssemblyStage;
-	PetscClassId  VF_MatPLocalClassId;
-	PetscLogEvent VF_MatPLocalEvent;
-	PetscClassId  VF_VecPLocalClassId;
-	PetscLogEvent VF_VecPLocalEvent;
+	//PetscClassId  VF_MatPLocalClassId;
+	//PetscLogEvent VF_MatPLocalEvent;
+	//PetscClassId  VF_VecPLocalClassId;
+	//PetscLogEvent VF_VecPLocalEvent;
 	
 	PetscLogStage VF_PSolverStage;
 	
 	PetscLogStage VF_TAssemblyStage;
-	PetscClassId  VF_MatTLocalClassId;
-	PetscLogEvent VF_MatTLocalEvent;
-	PetscClassId  VF_VecTLocalClassId;
-	PetscLogEvent VF_VecTLocalEvent;
+	//PetscClassId  VF_MatTLocalClassId;
+	//PetscLogEvent VF_MatTLocalEvent;
+	//PetscClassId  VF_VecTLocalClassId;
+	//PetscLogEvent VF_VecTLocalEvent;
 	
 	PetscLogStage VF_TSolverStage;
 } VFLog;

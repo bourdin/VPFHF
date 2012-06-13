@@ -2,7 +2,7 @@
 #define CARTFE_H
 /* 
   Implement a simple P1 Lagrange element on a rectangle aligned with axis directions.
-  (c) 2010-2011 B. Bourdin, bourdin@lsu.edu
+  (c) 2010-2012 B. Bourdin, bourdin@lsu.edu
   
   Uses 3 points / 5th order quadrature from 
     A. Ern  and J.-L. Guermond "Theory and Practice of Finite Elements"

@@ -6,7 +6,7 @@
 /*
   
 
-  VFWellGet (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  VFWellGet (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFWellGet(const char prefix[],VFWell *well)
 {
@@ -33,7 +33,7 @@ extern PetscErrorCode VFWellGet(const char prefix[],VFWell *well)
 /*
   VFWellCreate: Allocates a well data structure
   
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFWellCreate(VFWell *well)
 {
@@ -55,7 +55,7 @@ extern PetscErrorCode VFWellCreate(VFWell *well)
 /*
   VFWellView 
   
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFWellView(VFWell *well,PetscViewer viewer)
 {
@@ -76,7 +76,7 @@ extern PetscErrorCode VFWellView(VFWell *well,PetscViewer viewer)
 /*
   VFWellSetName 
   
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFWellSetName(VFWell *well,const char name[])
 {
@@ -93,7 +93,7 @@ extern PetscErrorCode VFWellSetName(VFWell *well,const char name[])
   VFDistanceToWell: Computes the distance between a point with coordinates x and a well described by well
   
   
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 extern PetscErrorCode VFDistanceToWell(PetscReal *d,PetscReal *x,VFWell *well)
 {

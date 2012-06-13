@@ -2,7 +2,7 @@
   test5.c:
   solves for the displacement in brick subject to a pressure force in one of its faces
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 
 #include "petsc.h"

@@ -1,9 +1,9 @@
 /*
   h5export.c
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 
-static const char banner[] = "h5export:\nconvert petsc binary files into hdf5 / xmf files\n(c) 2010-2011 Blaise Bourdin Louisiana State University bourdin@lsu.edu\n\n";
+static const char banner[] = "h5export:\nconvert petsc binary files into hdf5 / xmf files\n(c) 2010-2012 Blaise Bourdin Louisiana State University bourdin@lsu.edu\n\n";
 
 #include "petsc.h"
 #include "../xdmf.h"
@@ -31,14 +31,6 @@ int main(int argc,char **argv)
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
-  /*
-    Load DA from files
-    As of version 3.1, there is a bug in petsc preventing to save 2 DA with different number of degrees of freedoms
-    per node in a single file, so we read the Scalar DA, then recreate the Vect DA from the saved informations.
-    Also, for some reason coordinates vectors obtained using DAGetCoordinates don't inherit from the proper layout 
-    when saved in an hdf5 file. So instead of simply using the coordinate vector obtained from DAScal, we will 
-    read it from the file a bit later
-  */
   ierr = PetscSNPrintf(petscfilename,FILENAME_MAX,"%s.bin",prefix);CHKERRQ(ierr);
   ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,petscfilename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
   ierr = DMCreate(PETSC_COMM_WORLD,&daScal);CHKERRQ(ierr);
@@ -55,14 +47,23 @@ int main(int argc,char **argv)
   /* 
     Create Vecs from DA
   */
-  ierr = DMCreateGlobalVector(daScal,&pres);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(daScal,&pmult);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(daScal,&temp);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(daVect,&U);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(daScal,&V);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(daVect,&FVel);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(daScal,&FVCellndof);CHKERRQ(ierr);  
-  ierr = DMCreateGlobalVector(daVect,&coordinates);CHKERRQ(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD,&pres);CHKERRQ(ierr);
+  ierr = VecSetBlockSize(pres,1);CHKERRQ(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD,&pmult);CHKERRQ(ierr);
+  ierr = VecSetBlockSize(pmult,1);CHKERRQ(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD,&temp);CHKERRQ(ierr);
+  ierr = VecSetBlockSize(temp,1);CHKERRQ(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD,&U);CHKERRQ(ierr);
+  ierr = VecSetBlockSize(U,3);CHKERRQ(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD,&V);CHKERRQ(ierr);
+  ierr = VecSetBlockSize(V,1);CHKERRQ(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD,&FVel);CHKERRQ(ierr);
+  ierr = VecSetBlockSize(FVel,3);CHKERRQ(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD,&FVCellndof);CHKERRQ(ierr);
+  ierr = VecSetBlockSize(FVCellndof,1);CHKERRQ(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD,&coordinates);CHKERRQ(ierr);
+  ierr = VecSetBlockSize(coordinates,3);CHKERRQ(ierr);
+
   ierr = PetscObjectSetName((PetscObject) pres,"Pressure");CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) pmult,"Permeability");CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) temp,"Temperature");CHKERRQ(ierr);
@@ -172,4 +173,5 @@ int main(int argc,char **argv)
   ierr = VecDestroy(&FVCellndof);CHKERRQ(ierr);  
   ierr = VecDestroy(&coordinates);CHKERRQ(ierr);
   ierr = PetscFinalize();
+  return(0);
 }

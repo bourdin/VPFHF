@@ -3,7 +3,7 @@
   solves for the displacement in a pressurized rectangular crack in 3d
   no symmetry used
 
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
 
 #include "petsc.h"

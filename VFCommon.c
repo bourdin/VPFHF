@@ -14,7 +14,7 @@
 /*
  VFInitialize: Initialize the VF code. Called by the fortran implementation of VIADAT
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 {
@@ -40,7 +40,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 	
 	ierr = PetscOptionsHasName(PETSC_NULL,"-help",&ctx->printhelp);CHKERRQ(ierr);
 	
-	ierr = VFLogInitialize(&ctx->vflog);CHKERRQ(ierr);
+	//ierr = VFLogInitialize(&ctx->vflog);CHKERRQ(ierr);
 	ierr = VFCtxGet(ctx);CHKERRQ(ierr);
 	ierr = VFGeometryInitialize(ctx);CHKERRQ(ierr);
 	ierr = VFPropGet(&ctx->vfprop);CHKERRQ(ierr);
@@ -72,7 +72,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 	
 	ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.ener",ctx->prefix);CHKERRQ(ierr);
 	ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->energyviewer);CHKERRQ(ierr);
-	ierr = PetscViewerASCIIPrintf(ctx->energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Total Energy\n");CHKERRQ(ierr);
+	ierr = PetscViewerASCIIPrintf(ctx->energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Pressure Work,Total Energy\n");CHKERRQ(ierr);
 	ierr = PetscViewerFlush(ctx->energyviewer);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
@@ -83,7 +83,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 /*
  VFLogInitialize
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFLogInitialize(VFLog *vflog)
 {
@@ -93,35 +93,35 @@ extern PetscErrorCode VFLogInitialize(VFLog *vflog)
 	ierr = PetscLogStageRegister("I/O operations",&vflog->VF_IOStage);CHKERRQ(ierr);
 	
 	ierr = PetscLogStageRegister("U assembly",&vflog->VF_UAssemblyStage);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("U Mat local",&vflog->VF_MatULocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("U Mat local",vflog->VF_MatULocalClassId,&vflog->VF_MatULocalEvent);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("U VecView local",&vflog->VF_VecULocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("U Vec local",vflog->VF_VecULocalClassId,&vflog->VF_VecULocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("U Mat local",&vflog->VF_MatULocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("U Mat local",vflog->VF_MatULocalClassId,&vflog->VF_MatULocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("U VecView local",&vflog->VF_VecULocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("U Vec local",vflog->VF_VecULocalClassId,&vflog->VF_VecULocalEvent);CHKERRQ(ierr);
 	ierr = PetscLogStageRegister("U solver",&vflog->VF_USolverStage);CHKERRQ(ierr);
 	
 	ierr = PetscLogStageRegister("V assembly",&vflog->VF_VAssemblyStage);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("V Mat local",&vflog->VF_MatVLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("V Mat local",vflog->VF_MatVLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("V Vec local",&vflog->VF_VecVLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("V Vec local",vflog->VF_VecVLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("V Mat local",&vflog->VF_MatVLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("V Mat local",vflog->VF_MatVLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("V Vec local",&vflog->VF_VecVLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("V Vec local",vflog->VF_VecVLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
 	ierr = PetscLogStageRegister("V solver",&vflog->VF_VSolverStage);CHKERRQ(ierr);
 	
 	ierr = PetscLogStageRegister("Energy",&vflog->VF_EnergyStage);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("Energy",&vflog->VF_EnergyLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("Energy",vflog->VF_EnergyLocalClassId,&vflog->VF_EnergyLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("Energy",&vflog->VF_EnergyLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("Energy",vflog->VF_EnergyLocalClassId,&vflog->VF_EnergyLocalEvent);CHKERRQ(ierr);
 	
 	ierr = PetscLogStageRegister("P assembly",&vflog->VF_PAssemblyStage);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("P Mat local",&vflog->VF_MatPLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("P Mat local",vflog->VF_MatPLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("P Vec local",&vflog->VF_VecPLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("P Vec local",vflog->VF_VecPLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("P Mat local",&vflog->VF_MatPLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("P Mat local",vflog->VF_MatPLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("P Vec local",&vflog->VF_VecPLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("P Vec local",vflog->VF_VecPLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
 	ierr = PetscLogStageRegister("P solver",&vflog->VF_PSolverStage);CHKERRQ(ierr);  
 	
 	ierr = PetscLogStageRegister("T assembly",&vflog->VF_TAssemblyStage);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("T Mat local",&vflog->VF_MatTLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("T Mat local",vflog->VF_MatTLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
-	ierr = PetscClassIdRegister  ("T Vec local",&vflog->VF_VecTLocalClassId);CHKERRQ(ierr);
-	ierr = PetscLogEventRegister("T Vec local",vflog->VF_VecTLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("T Mat local",&vflog->VF_MatTLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("T Mat local",vflog->VF_MatTLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
+	//ierr = PetscClassIdRegister  ("T Vec local",&vflog->VF_VecTLocalClassId);CHKERRQ(ierr);
+	//ierr = PetscLogEventRegister("T Vec local",vflog->VF_VecTLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
 	ierr = PetscLogStageRegister("T solver",&vflog->VF_TSolverStage);CHKERRQ(ierr);    
 	
 	PetscFunctionReturn(0);
@@ -133,7 +133,7 @@ extern PetscErrorCode VFLogInitialize(VFLog *vflog)
 /*
  VFCtxGet
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 {
@@ -288,7 +288,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 /*
  VFGeometryInitialize: Creates DA, and coordinates, and other geometric informations
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 {
@@ -306,11 +306,6 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 	PetscBool          flg;
 	
 	PetscFunctionBegin;
-	/*
-	 for some reasons, the following does not work. 
-	 Using nx,ny,nz and lx, ly, lz instead.
-	 */
-	
 	ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: geometry options:","");CHKERRQ(ierr);
 	{
 		ierr = PetscMalloc(3 * sizeof(PetscReal),&l);CHKERRQ(ierr);
@@ -398,20 +393,20 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 			 Even coordinates are part of the DA and do not need to be saved separately, it looks like the coordinate vector
 			 obtained from DMDAGetCoordinates cannot be saved properly in an hdf5 file, so we save the coordinate vector anyway
 			 */
-			ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
+			//ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
 			ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.bin",ctx->prefix);CHKERRQ(ierr);
 			ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
 			ierr = DMView(ctx->daScal,viewer);CHKERRQ(ierr);
 			ierr = VecView(ctx->coordinates,viewer);CHKERRQ(ierr);
 			ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-			ierr = PetscLogStagePop();CHKERRQ(ierr);
+			//ierr = PetscLogStagePop();CHKERRQ(ierr);
 			break;
 #ifdef PETSC_HAVE_HDF5
 		case FILEFORMAT_HDF5:
 			/*
 			 Write headers in multistep XDMF file
 			 */
-			ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
+			//ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
 			ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.xmf",ctx->prefix);CHKERRQ(ierr);
 			ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->XDMFviewer);
 			ierr = XDMFmultistepInitialize(ctx->XDMFviewer);CHKERRQ(ierr);
@@ -423,7 +418,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 			ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&h5viewer);CHKERRQ(ierr);
 			ierr = VecView(ctx->coordinates,h5viewer);CHKERRQ(ierr);
 			ierr = PetscViewerDestroy(&h5viewer);CHKERRQ(ierr);
-			ierr = PetscLogStagePop();CHKERRQ(ierr);
+			//ierr = PetscLogStagePop();CHKERRQ(ierr);
 #endif
 	}
 	
@@ -453,7 +448,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 /*
  VFPropGet
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFPropGet(VFProp *vfprop)
 {
@@ -483,7 +478,7 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
 #define __FUNCT__ "VFMatPropGet"
 /*
  VFMatPropGet: get all material properties.
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFMatPropGet(MatProp *matprop,PetscInt n)
 {
@@ -588,7 +583,7 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop)
 /*
  VFFieldsInitialize: Creates fields
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 {
@@ -692,7 +687,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 /*
  VFBCInitialize: Creates and initialize bondary condition data structures
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
 {
@@ -730,24 +725,24 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
 /*
  VFSolversInitialize: Creates matrices, RHS, solvers
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  Keita Yoshioka yoshk@chevron.com   
  */
 extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 {
 	PetscMPIInt    comm_size;
 	/*
-	MatNullSpace   matnull;
-	Vec            coordinates;
-  */
+	  MatNullSpace   matnull;
+	  Vec            coordinates;
+	*/
 	PetscErrorCode ierr;
 	
 	PetscFunctionBegin;
 	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
 	if (comm_size == 1) {
-		ierr = DMGetMatrix(ctx->daVect,MATSEQAIJ,&ctx->KU);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daVect,MATSEQAIJ,&ctx->KU);CHKERRQ(ierr);
 	} else {
-		ierr = DMGetMatrix(ctx->daVect,MATMPIAIJ,&ctx->KU);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daVect,MATMPIAIJ,&ctx->KU);CHKERRQ(ierr);
 	}
 	ierr = MatSetOption(ctx->KU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 	
@@ -757,18 +752,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	
 	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspU);CHKERRQ(ierr);
 
-	/*
-    At this point, it is not completely clear if setting the null space 
-    improves convergence.
-    Leaving it out for now
-  */
-  /*	
-	ierr = DMDAGetCoordinates(ctx->daVect,&coordinates);CHKERRQ(ierr);
-  ierr = MatNullSpaceCreateRigidBody(coordinates,&matnull);CHKERRQ(ierr);
-    //ierr = MatSetNearNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
-  ierr = KSPSetNullSpace(ctx->kspU,matnull);CHKERRQ(ierr);
-  ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
-  */
+  
 	ierr = KSPSetTolerances(ctx->kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
 	ierr = KSPSetOperators(ctx->kspU,ctx->KU,ctx->KU,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
 	ierr = KSPSetInitialGuessNonzero(ctx->kspU,PETSC_TRUE);CHKERRQ(ierr);
@@ -780,9 +764,9 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	ierr = PCSetFromOptions(ctx->pcU);CHKERRQ(ierr);
 	
 	if (comm_size == 1) {
-		ierr = DMGetMatrix(ctx->daScal,MATSEQAIJ,&ctx->KV);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->KV);CHKERRQ(ierr);
 	} else {
-		ierr = DMGetMatrix(ctx->daScal,MATMPIAIJ,&ctx->KV);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->KV);CHKERRQ(ierr);
 	}
 	ierr = MatSetOption(ctx->KV,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSV);CHKERRQ(ierr);
@@ -801,9 +785,9 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	ierr = PCSetFromOptions(ctx->pcV);CHKERRQ(ierr);
 	
 	if (comm_size == 1) {
-		ierr = DMGetMatrix(ctx->daScal,MATSEQAIJ,&ctx->KP);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->KP);CHKERRQ(ierr);
 	} else {
-		ierr = DMGetMatrix(ctx->daScal,MATMPIAIJ,&ctx->KP);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->KP);CHKERRQ(ierr);
 	}
 	ierr = MatSetOption(ctx->KP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSP);CHKERRQ(ierr);
@@ -822,9 +806,9 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	ierr = PCSetFromOptions(ctx->pcP);CHKERRQ(ierr);
 	
 	if (comm_size == 1) {
-		ierr = DMGetMatrix(ctx->daScal,MATSEQAIJ,&ctx->KT);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->KT);CHKERRQ(ierr);
 	} else {
-		ierr = DMGetMatrix(ctx->daScal,MATMPIAIJ,&ctx->KT);CHKERRQ(ierr);
+		ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->KT);CHKERRQ(ierr);
 	}
 	ierr = MatSetOption(ctx->KT,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHST);CHKERRQ(ierr);
@@ -842,6 +826,31 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	ierr = PCSetType(ctx->pcT,PCBJACOBI);CHKERRQ(ierr);
 	ierr = PCSetFromOptions(ctx->pcT);CHKERRQ(ierr);
 	
+	/*
+	  At this point, it is not completely clear if setting the null space 
+	  improves convergence.
+	  Leaving it out for now
+	*/
+  	Vec           coordinates;
+	PetscReal    *coordinates_array;
+	PetscInt      nx,ny,nz,nloc;
+	MatNullSpace  matnull;
+	ierr = DMDAGetCoordinates(ctx->daVect,&coordinates);CHKERRQ(ierr);
+	//ierr = DMDAVecGetArrayDOF(ctx->daVect,coordinates,&coordinates_array);CHKERRQ(ierr);
+	ierr = VecGetArray(coordinates,&coordinates_array);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+			   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = VecGetLocalSize(coordinates,&nloc);CHKERRQ(ierr);
+	nloc = nloc/3;
+	ierr = PCSetCoordinates(ctx->pcU,3,nloc,coordinates_array);CHKERRQ(ierr);
+	ierr = PCSetCoordinates(ctx->pcV,3,nloc,coordinates_array);CHKERRQ(ierr);
+	///ierr = MatNullSpaceCreateRigidBody(coordinates,&matnull);CHKERRQ(ierr);
+	//ierr = MatSetNearNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
+	////ierr = KSPSetNullSpace(ctx->kspU,matnull);CHKERRQ(ierr);
+	//ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
+	ierr = VecRestoreArray(coordinates,&coordinates_array);CHKERRQ(ierr);
+	ierr = VecDestroy(&coordinates);CHKERRQ(ierr);
+
 	PetscFunctionReturn(0);
 }
 
@@ -849,9 +858,9 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 #undef __FUNCT__
 #define __FUNCT__ "VFLayerInit"
 /*
- VFLayerInit: find the horizontal layer associated to a cell in the most stupid and unoptimzed way
+ VFLayerInit: find the horizontal layer associated to a cell in the most stupid and unoptimized way
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  
  */
 extern PetscErrorCode VFLayerInit(VFCtx *ctx)
@@ -902,7 +911,7 @@ extern PetscErrorCode VFLayerInit(VFCtx *ctx)
  - Read boundary displacement from files if necessary
  - Set boundary values of U and V
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFTimeStepPrepare(VFCtx *ctx,VFFields *fields)
 {
@@ -928,7 +937,7 @@ extern PetscErrorCode VFTimeStepPrepare(VFCtx *ctx,VFFields *fields)
 /*
  VFElasticityTimeStep
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFElasticityTimeStep(VFCtx *ctx,VFFields *fields)
 {
@@ -953,7 +962,7 @@ extern PetscErrorCode VFElasticityTimeStep(VFCtx *ctx,VFFields *fields)
 /*
  VFFractureTimeStep
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  
  */
 extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
@@ -1003,7 +1012,7 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
 /*
  VFFinalize
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 {
@@ -1084,7 +1093,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 /*
  FieldsH5Write: Export all fields in HDF5 format using PETSc HDF5 viewer. Also write an XDMF container
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
 {
@@ -1146,7 +1155,7 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
 /*
  FieldsBinaryWrite: Export all fields in PETSc native binary format.
  
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
 {
