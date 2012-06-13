@@ -73,19 +73,19 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
 	for (i = 0; i < 6; i++) {
 		ctx.bcV[0].face[i] = NONE;
-		for (j = 1; j < 3; j++) {
+		for (j = 0; j < 3; j++) {
 			ctx.bcU[j].face[i] = NONE;
 		}
 	}
 	for (i = 0; i < 12; i++) {
 		ctx.bcV[0].edge[i] = NONE;
-		for (j = 1; j < 3; j++) {
+		for (j = 0; j < 3; j++) {
 			ctx.bcU[j].edge[i] = NONE;
 		}
 	}
 	for (i = 0; i < 8; i++) {
 		ctx.bcV[0].vertex[i] = NONE;
-		for (j = 1; j < 3; j++) {
+		for (j = 0; j < 3; j++) {
 			ctx.bcU[j].vertex[i] = NONE;
 		}
 	}

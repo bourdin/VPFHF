@@ -118,16 +118,14 @@ extern PetscErrorCode VFDistanceToPennyCrack(PetscReal *d,PetscReal *x,VFPennyCr
   tau[1] = (x[1]-PennyCrack->center[1]) - xdotn*n[1];
   tau[2] = (x[2]-PennyCrack->center[2]) - xdotn*n[2];
   l = sqrt(tau[0]*tau[0] + tau[1]*tau[1] + tau[2]*tau[2]);
-  if (PennyCrack->r == 0.) {
-	  *d = 0.;
-  } else {
+	
     if (l <= PennyCrack->r) {
       *d = sqrt(xdotn*xdotn);
-    } else {		
+    } else {	
 	  *d = sqrt(pow(xdotn,2)+pow((l-PennyCrack->r),2));
     } 
-  }
-  PetscFunctionReturn(0);
+
+	PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -162,16 +160,13 @@ extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx
         x[2] = coords_array[k][j][i][2];
         x[1] = coords_array[k][j][i][1];
         x[0] = coords_array[k][j][i][0];
-        ierr = VFDistanceToPennyCrack(&dist,x,crack);CHKERRQ(ierr);
 		  if(crack->r == 0){
 			  v_array[k][j][i] = 1.;
 		  }
-		  if(dist == 0){
-			  v_array[k][j][i] = 0.;
-		  }
 		  else{
+			  ierr = VFDistanceToPennyCrack(&dist,x,crack);CHKERRQ(ierr);	
 			  v_array[k][j][i] = 1.-exp(-dist/2/ctx->vfprop.epsilon);
-		  }
+			}
       }
     }
   }      
@@ -179,127 +174,285 @@ extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-//
-// #undef __FUNCT__
-// #define __FUNCT__ "VFRectangularCrackGet"
-// /*
-//   
-// 
-//   VFRectangularCrackGet (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
-// */
-// extern PetscErrorCode VFRectangularCrackGet(const char prefix[],VFRectangularCrack *RectangularCrack)
-// {
-//   PetscErrorCode ierr;
-//   PetscInt       nval=3;
-//   PetscFunctionBegin;
-//   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,prefix,"\n\nVF: Rectangular-shaped crack description:","");CHKERRQ(ierr);
-//   {
-//     ierr = PetscOptionsString("-name","\n\tRectangular-shaped crack name","",RectangularCrack->name,RectangularCrack->name,sizeof(RectangularCrack->name),PETSC_NULL);CHKERRQ(ierr);
-//     nval = 9;    
-//     ierr = PetscOptionsRealArray("-corners","\n\tRectangular-shaped crack corners coordinates (x0,y0,z0, x1,y1,z1, x2,y2,z2)  (comma separated).","",RectangularCrack->corner,&nval,PETSC_NULL);CHKERRQ(ierr);
-//   }
-//   ierr = PetscOptionsEnd();CHKERRQ(ierr);
-//   PetscFunctionReturn(0);
-// }
-// 
-// #undef __FUNCT__
-// #define __FUNCT__ "VFRectangularCrackCreate"
-// /*
-//   VFRectangularCrackCreate: Allocates a RectangularCrack data structure
-//   
-//   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
-// */
-// extern PetscErrorCode VFRectangularCrackCreate(VFRectangularCrack *RectangularCrack)
-// {
-//   PetscErrorCode ierr;
-//   int            i;
-//   
-//   PetscFunctionBegin;
-//   ierr = PetscStrcpy(RectangularCrack->name,"RectangularCrack");CHKERRQ(ierr);
-//   for (i=0; i<9; i++) RectangularCrack->corners[i] = 0.;
-//   PetscFunctionReturn(0);
-// }
-// 
-// #undef __FUNCT__
-// #define __FUNCT__ "VFRectangularCrackView"
-// /*
-//   VFRectangularCrackView 
-//   
-//   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
-// */
-// extern PetscErrorCode VFRectangularCrackView(VFRectangularCrack *RectangularCrack,PetscViewer viewer)
-// {
-//   PetscErrorCode ierr;
-//   
-//   PetscFunctionBegin;
-//   ierr = PetscViewerASCIIPrintf(viewer,"RectangularCrack object \"%s\":\n",RectangularCrack->name);CHKERRQ(ierr);
-//   ierr = PetscViewerASCIIPrintf(viewer,"corners:     \t%e \t%e \t%e \t%e\n\t\t%e \t%e \t%e \t%e\n\t\t%e \t%e \t%e \t%e\n",
-//                                RectangularCrack->corners[0],RectangularCrack->corners[1],RectangularCrack->corners[2],
-//                                RectangularCrack->corners[3],RectangularCrack->corners[4],RectangularCrack->corners[5],
-//                                RectangularCrack->corners[6],RectangularCrack->corners[7],RectangularCrack->corners[8]);CHKERRQ(ierr);
-//   PetscFunctionReturn(0);
-// }
-// 
-// #undef __FUNCT__
-// #define __FUNCT__ "VFRectangularCrackSetName"
-// /*
-//   VFRectangularCrackSetName 
-//   
-//   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
-// */
-// extern PetscErrorCode VFRectangularCrackSetName(VFRectangularCrack *RectangularCrack,const char name[])
-// {
-//   PetscErrorCode ierr;
-//   
-//   PetscFunctionBegin;
-//   ierr = PetscStrcpy(RectangularCrack->name,name);CHKERRQ(ierr);
-//   PetscFunctionReturn(0);
-// }
-// 
-// #undef __FUNCT__
-// #define __FUNCT__ "VFDistanceToRectangularCrack"
-// /*
-//   VFDistanceToRectangularCrack: Computes the distance between a point with coordinates x and a RectangularCrack described by RectangularCrack
-//   
-//   
-//   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
-// */
-// extern PetscErrorCode VFDistanceToRectangularCrack(PetscReal *d,PetscReal *x,VFRectangularCrack *Crack)
-// {
-//   PetscErrorCode      ierr;
-//   PetscReal           n[3],tau[3],l,xdotn;
-// 
-//   PetscFunctionBegin;
-//   /*
-//     n: normal vector to the disk
-//   */
-//   n[0] = cos(Crack->theta * PETSC_PI/180.)*sin(Crack->phi * PETSC_PI/180.);
-//   n[1] = sin(Crack->theta * PETSC_PI/180.)*sin(Crack->phi * PETSC_PI/180.);
-//   n[2] = cos(Crack->phi * PETSC_PI/180.);
-//   
-//   /*
-//     tau: projection onto the disk plane
-//   */
-//   xdotn  = (x[0]-PennyCrack->corner[0])*n[0] + 
-//            (x[1]-PennyCrack->corner[1])*n[1] + 
-//            (x[2]-PennyCrack->corner[2])*n[2];
-//   tau[0] = (x[0]-PennyCrack->corner[0]) - xdotn*n[0];
-//   tau[1] = (x[1]-PennyCrack->corner[1]) - xdotn*n[1];
-//   tau[2] = (x[2]-PennyCrack->corner[2]) - xdotn*n[2];
-//   l = sqrt(tau[0]*tau[0] + tau[1]*tau[1] + tau[2]*tau[2]);
-//   if (PennyCrack->r == 0.) {
-//     *d = sqrt(pow(x[0] - PennyCrack->center[0],2) +  
-//               pow(x[1] - PennyCrack->center[1],2) + 
-//               pow(x[2] - PennyCrack->center[2],2));
-//   } else {
-//     if (l < PennyCrack->r) {
-//       *d = sqrt(xdotn*xdotn);
-//     } else {
-//       *d = sqrt(pow(x[0] - PennyCrack->center[0] - tau[0] / l * PennyCrack->r,2) +  
-//                 pow(x[1] - PennyCrack->center[1] - tau[1] / l * PennyCrack->r,2) + 
-//                 pow(x[2] - PennyCrack->center[2] - tau[2] / l * PennyCrack->r,2));
-//     } 
-//   }
-//   PetscFunctionReturn(0);
-// }
+
+ #undef __FUNCT__
+ #define __FUNCT__ "VFRectangularCrackGet"
+ /*
+   
+ 
+   VFRectangularCrackGet (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ */
+ extern PetscErrorCode VFRectangularCrackGet(const char prefix[],VFRectangularCrack *RectangularCrack)
+ {
+   PetscErrorCode ierr;
+   PetscInt       nval=3;
+   PetscFunctionBegin;
+   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,prefix,"\n\nVF: Rectangular-shaped crack description:","");CHKERRQ(ierr);
+   {
+     ierr = PetscOptionsString("-name","\n\tRectangular-shaped crack name","",RectangularCrack->name,RectangularCrack->name,sizeof(RectangularCrack->name),PETSC_NULL);CHKERRQ(ierr);
+     nval = 9;    
+     ierr = PetscOptionsRealArray("-corners","\n\tRectangular-shaped crack corners coordinates (x0,y0,z0, x1,y1,z1, x2,y2,z2)  (comma separated).","",RectangularCrack->corners,&nval,PETSC_NULL);CHKERRQ(ierr);
+   }
+   ierr = PetscOptionsEnd();CHKERRQ(ierr);
+   PetscFunctionReturn(0);
+ }
+ 
+ #undef __FUNCT__
+ #define __FUNCT__ "VFRectangularCrackCreate"
+ /*
+   VFRectangularCrackCreate: Allocates a RectangularCrack data structure
+   
+   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ */
+ extern PetscErrorCode VFRectangularCrackCreate(VFRectangularCrack *RectangularCrack)
+ {
+   PetscErrorCode ierr;
+   int            i;
+   
+   PetscFunctionBegin;
+   ierr = PetscStrcpy(RectangularCrack->name,"RectangularCrack");CHKERRQ(ierr);
+   for (i=0; i<9; i++) RectangularCrack->corners[i] = 0.;
+   PetscFunctionReturn(0);
+ }
+ 
+ #undef __FUNCT__
+ #define __FUNCT__ "VFRectangularCrackView"
+ /*
+   VFRectangularCrackView 
+   
+   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ */
+ extern PetscErrorCode VFRectangularCrackView(VFRectangularCrack *RectangularCrack,PetscViewer viewer)
+ {
+   PetscErrorCode ierr;
+   
+   PetscFunctionBegin;
+   ierr = PetscViewerASCIIPrintf(viewer,"RectangularCrack object \"%s\":\n",RectangularCrack->name);CHKERRQ(ierr);
+   ierr = PetscViewerASCIIPrintf(viewer,"corners:     \t%e \t%e \t%e\n\t\t%e \t%e \t%e\n\t\t%e \t%e \t%e\n",
+                                RectangularCrack->corners[0],RectangularCrack->corners[1],RectangularCrack->corners[2],
+                                RectangularCrack->corners[3],RectangularCrack->corners[4],RectangularCrack->corners[5],
+                                RectangularCrack->corners[6],RectangularCrack->corners[7],RectangularCrack->corners[8]);CHKERRQ(ierr);
+   PetscFunctionReturn(0);
+ }
+ 
+ #undef __FUNCT__
+ #define __FUNCT__ "VFRectangularCrackSetName"
+ /*
+   VFRectangularCrackSetName 
+   
+   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ */
+ extern PetscErrorCode VFRectangularCrackSetName(VFRectangularCrack *RectangularCrack,const char name[])
+ {
+   PetscErrorCode ierr;
+   
+   PetscFunctionBegin;
+   ierr = PetscStrcpy(RectangularCrack->name,name);CHKERRQ(ierr);
+   PetscFunctionReturn(0);
+ }
+ 
+ #undef __FUNCT__
+ #define __FUNCT__ "VFDistanceToRectangularCrack"
+ /*
+   VFDistanceToRectangularCrack: Computes the distance between a point with coordinates x and a RectangularCrack described by RectangularCrack
+   
+   
+   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ */
+ extern PetscErrorCode VFDistanceToRectangularCrack(PetscReal *d,PetscReal *x,VFRectangularCrack *Crack)
+ {
+   PetscErrorCode		ierr;
+   PetscReal			n_1[3],n_2[3],n[3],n_q[3],l,xdotn;
+	 PetscReal			a[3],b[3],center[3],corner4[3],n_norm;
+	 PetscReal			length_to_side;
+	 PetscReal			p[3],q[3],mid_a[3],mid_b[3],tau[3];
+	 PetscReal			dist_a,dist_b,theta_a,theta_b,corner_len, theta, theta_side, theta_top;
+   PetscFunctionBegin;
+	 
+	 /*
+	  Corner allocation:
+	  
+			pt3;[6,7,8]           pt4;corner4
+			+-----------------------+
+			|		Side_D			|
+			|						|
+			|						|
+			|		   center		|
+	 Side_A |			 o			|    Side_B
+			|						|
+			|						|
+			|						|
+			|		Side_C			|
+			+-----------------------+
+			pt1;[0,1,2]           pt2;[3,4,5]
+	  */ 
+	 
+	 
+	 PETSC_PI;
+	 
+	 center[0] = (Crack->corners[6]+Crack->corners[3])/2.;
+	 center[1] = (Crack->corners[7]+Crack->corners[4])/2.;
+	 center[2] = (Crack->corners[8]+Crack->corners[5])/2.;
+	 
+	 corner4[0] = 2.*center[0]-Crack->corners[0];
+	 corner4[1] = 2.*center[1]-Crack->corners[1];
+	 corner4[2] = 2.*center[2]-Crack->corners[2];
+
+	 /*
+	  n: normal vector to the plane
+	  */
+	 a[0] = Crack->corners[3]-Crack->corners[0];
+	 a[1] = Crack->corners[4]-Crack->corners[1];
+	 a[2] = Crack->corners[5]-Crack->corners[2];
+	 
+	 b[0] = Crack->corners[6]-Crack->corners[0];
+	 b[1] = Crack->corners[7]-Crack->corners[1];
+	 b[2] = Crack->corners[8]-Crack->corners[2];
+//	 printf("\n\n crn [0]= %f, [1] = %f, [2] = %f, center is ,[0] = %f, [1] = %f, [2] = %f", corner4[0], corner4[1],corner4[2], center[0], center[1],center[2]);
+
+	 n[0] = a[1]*b[2] - a[2]*b[1];
+	 n[1] = a[2]*b[0] - a[0]*b[2];
+	 n[2] = a[0]*b[1] - a[1]*b[0];
+	 n_norm = sqrt(pow(n[0],2)+pow(n[1],2)+pow(n[2],2));
+//	 printf("\n\n n_norm= %f, n is ,[0] = %f, [1] = %f, [2] = %f", n_norm, n[0], n[1],n[2]);
+
+	 n[0] = n[0]/n_norm;n[1] = n[1]/n_norm;n[2] = n[2]/n_norm;
+	 
+	 /*
+	  tau: projection onto the rectangular plane
+	  */
+	 xdotn  = (x[0]-center[0])*n[0] + 
+	 (x[1]-center[1])*n[1] + 
+	 (x[2]-center[2])*n[2];
+	 
+	 tau[0] = (x[0]-center[0]) - xdotn*n[0];
+	 tau[1] = (x[1]-center[1]) - xdotn*n[1];
+	 tau[2] = (x[2]-center[2]) - xdotn*n[2];
+//	 printf("\n\n tau [0]= %f, [1] = %f, [2] = %f, n is ,[0] = %f, [1] = %f, [2] = %f", tau[0], tau[1],tau[2], n[0], n[1],n[2]);
+
+	 p[0] = center[0]+xdotn*n[0];p[1] = center[1]+xdotn*n[1];p[2] = center[2]+xdotn*n[2];
+	 q[0] = x[0]+center[0]-p[0];q[1] = x[1]+center[1]-p[1];q[2] = x[2]+center[2]-p[2];
+
+	 /**Check which side of polygon point is*/
+	 /*Vector in the direction of center and corner3*/
+	 n_1[0] = Crack->corners[6]-center[0];
+	 n_1[1] = Crack->corners[7]-center[1];
+	 n_1[2] = Crack->corners[8]-center[2];
+	 n_norm = sqrt(pow(n_1[0],2)+pow(n_1[1],2)+pow(n_1[2],2));
+	 n_1[0] = n_1[0]/n_norm;n_1[1] = n_1[1]/n_norm;n_1[2] = n_1[2]/n_norm;
+
+	 /*Vector in the direction of center and corner4*/
+	 n_2[0] = corner4[0]-center[0];
+	 n_2[1] = corner4[1]-center[1];
+	 n_2[2] = corner4[2]-center[2];
+	 n_norm = sqrt(pow(n_2[0],2)+pow(n_2[1],2)+pow(n_2[2],2));
+	 n_2[0] = n_2[0]/n_norm;n_2[1] = n_2[1]/n_norm;n_2[2] = n_2[2]/n_norm;
+//	 printf("\n\n n1 [0]= %f, [1] = %f, [2] = %f, n2 is ,[0] = %f, [1] = %f, [2] = %f", n_1[0], n_1[1],n_1[2], n_2[0], n_2[1],n_2[2]);
+	 theta_top = acos(n_2[0]*n_1[0]+n_2[1]*n_1[1]+n_2[2]*n_1[2]);
+	 theta_side = PETSC_PI-theta_top;
+//	 printf("\n\n theta_top = %f theta_side = %f", 180./PETSC_PI*theta_top, 180./PETSC_PI*theta_side);
+	 /*Vector in the direction of q*/
+	 n_q[0] = q[0]-center[0];
+	 n_q[1] = q[1]-center[1];
+	 n_q[2] = q[2]-center[2];
+	 n_norm = sqrt(pow(n_q[0],2)+pow(n_q[1],2)+pow(n_q[2],2));
+	 n_q[0] = n_q[0]/n_norm;n_q[1] = n_q[1]/n_norm;n_q[2] = n_q[2]/n_norm;
+//	 printf("\n\n nq [0]= %f, [1] = %f, [2] = %f theta1 = %f theta1val = %f theta2 = %f theta2val = %f",n_q[0], n_q[1],n_q[2],180./PETSC_PI*acos(n_2[0]*n_q[0]+n_2[1]*n_q[1]+n_2[2]*n_q[2]),n_2[0]*n_q[0]+n_2[1]*n_q[1]+n_2[2]*n_q[2] , 180./PETSC_PI*acos(-n_1[0]*n_q[0]-n_1[1]*n_q[1]-n_1[2]*n_q[2]), acos(-n_1[0]*n_q[0]-n_1[1]*n_q[1]-n_1[2]*n_q[2]));
+	 theta = acos(n_2[0]*n_q[0]+n_2[1]*n_q[1]+n_2[2]*n_q[2]) + acos(-n_1[0]*n_q[0]-n_1[1]*n_q[1]-n_1[2]*n_q[2]);
+	 
+//	 printf("\n\n n1 [0]= %f, [1] = %f, [2] = %f, n2 is ,[0] = %f, [1] = %f, [2] = %f theta = %f theta_a = %f", n_1[0], n_1[1],n_1[2], n_2[0], n_2[1],n_2[2],180./PETSC_PI*theta, 180./PETSC_PI*theta_a);
+
+	 
+	 if( (theta-theta_side) < 1e-6 || (2.*PETSC_PI-theta_side-theta) < 1e-6 ){
+		 n_1[0] = corner4[0]-Crack->corners[3];
+		 n_1[1] = corner4[1]-Crack->corners[4];
+		 n_1[2] = corner4[2]-Crack->corners[5];
+		 n_norm = sqrt(pow(n_1[0],2)+pow(n_1[1],2)+pow(n_1[2],2));
+		 n_1[0] = n_1[0]/n_norm;n_1[1] = n_1[1]/n_norm;n_1[2] = n_1[2]/n_norm;
+
+		 dist_a = sqrt(pow((corner4[0]-center[0]),2)+pow((corner4[1]-center[1]),2)+pow((corner4[2]-center[2]),2));
+		 dist_b = (corner4[0]-center[0])*n_1[0]+(corner4[1]-center[1])*n_1[1]+(corner4[2]-center[2])*n_1[2];
+		 
+		 
+			 dist_b = PetscAbs(dist_b);
+			 dist_b = sqrt(pow(dist_a,2)-pow(dist_b,2));
+			 
+			 theta_b = acos(n_1[0]*n_q[0]+n_1[1]*n_q[1]+n_1[2]*n_q[2]);
+//		 printf("\n\n left\right2: dist_a= %f, dist_b = %f", dist_a,dist_b);
+//		 printf("\n\n n1 [0]= %f, [1] = %f, [2] = %f theta = %f, costheta = %f", n_1[0], n_1[1],n_1[2], 180/3.142*theta_b, (n_1[0]*n_q[0]+n_1[1]*n_q[1]+n_1[2]*n_q[2]));
+			 length_to_side = dist_b/sin(theta_b);
+
+	 }
+	 else{
+		 n_1[0] = corner4[0]-Crack->corners[6];
+		 n_1[1] = corner4[1]-Crack->corners[7];
+		 n_1[2] = corner4[2]-Crack->corners[8];
+		 n_norm = sqrt(pow(n_1[0],2)+pow(n_1[1],2)+pow(n_1[2],2));
+		 n_1[0] = n_1[0]/n_norm;n_1[1] = n_1[1]/n_norm;n_1[2] = n_1[2]/n_norm;
+
+		 
+		 dist_a = sqrt(pow((corner4[0]-center[0]),2)+pow((corner4[1]-center[1]),2)+pow((corner4[2]-center[2]),2));
+		 dist_b = (corner4[0]-center[0])*n_1[0]+(corner4[1]-center[1])*n_1[1]+(corner4[2]-center[2])*n_1[2];
+		 dist_b = PetscAbs(dist_b);
+		 dist_b = sqrt(pow(dist_a,2)-pow(dist_b,2));
+		
+		 theta_b = acos(n_1[0]*n_q[0]+n_1[1]*n_q[1]+n_1[2]*n_q[2]);
+		 length_to_side = dist_b/sin(theta_b);
+//		 printf("\n\n top/bottom2: dist_a= %f, dist_b = %f", dist_a,dist_b);
+//		 printf("\n\n n1 [0]= %f, [1] = %f, [2] = %f theta = %f, costheta = %f", n_1[0], n_1[1],n_1[2], 180/3.142*theta_b, (n_1[0]*n_q[0]+n_1[1]*n_q[1]+n_1[2]*n_q[2]));
+	 }
+	 
+	 
+//	 printf("\n\n x [0]= %f, [1] = %f, [2] = %f, q is ,[0] = %f, [1] = %f, [2] = %f", x[0], x[1],x[2], q[0], q[1],q[2]);
+
+	 
+	 
+	 l = sqrt(tau[0]*tau[0] + tau[1]*tau[1] + tau[2]*tau[2]);
+	 if (l > length_to_side){
+		 *d = sqrt( pow((l-length_to_side),2) + pow(xdotn,2));
+	 }
+	 else{
+		 *d = sqrt(xdotn*xdotn);
+//		 printf("\n Inside");
+	 }
+//	 printf("\n d = %f, l = %f, lenthtoside = %f xdotn = %f", *d, l,length_to_side, xdotn);
+
+   PetscFunctionReturn(0);
+ }
+
+#undef __FUNCT__
+#define __FUNCT__ "VFRectangularCrackBuildVAT2"
+extern PetscErrorCode VFRectangularCrackBuildVAT2(Vec V,VFRectangularCrack *crack,VFCtx *ctx)
+{
+	PetscErrorCode      ierr;
+	PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+	PetscReal       ****coords_array;
+	PetscReal        ***v_array;
+	PetscReal           x[3];
+	PetscReal           dist;  
+	
+	PetscFunctionBegin;
+	ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	
+	ierr = VecSet(V,1.0);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) { 
+				x[2] = coords_array[k][j][i][2];
+				x[1] = coords_array[k][j][i][1];
+				x[0] = coords_array[k][j][i][0];
+				ierr = VFDistanceToRectangularCrack(&dist,x,crack);CHKERRQ(ierr);	
+				v_array[k][j][i] = 1.-exp(-dist/2/ctx->vfprop.epsilon);
+			}
+		}
+	}      
+	ierr = DMDAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
 
