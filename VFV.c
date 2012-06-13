@@ -451,10 +451,13 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
         for (l = 0; l < nrow; l++) RHS_local[l] = 0.;
         //ierr = PetscLogEventBegin(ctx->vflog.VF_VecVLocalEvent,0,0,0,0);CHKERRQ(ierr);
         ierr = VF_RHSVAT2Surface3D_local(RHS_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D);CHKERRQ(ierr);
-        ierr = VF_RHSVPressure3D_local(RHS_local,U_array,pressure_array,pressureRef_array,
-                                      &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
-                                      &ctx->e3D);CHKERRQ(ierr);
+        if (ctx->hasCrackPressure) {
+          ierr = VF_RHSVPressure3D_local(RHS_local,U_array,pressure_array,pressureRef_array,
+                                        &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
+                                        &ctx->e3D);CHKERRQ(ierr);
+        }
         //ierr = PetscLogEventEnd(ctx->vflog.VF_VecVLocalEvent,0,0,0,0);CHKERRQ(ierr);
+        
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
             for (i = 0; i < ctx->e3D.nphix; i++,l++) {

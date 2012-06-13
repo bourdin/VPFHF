@@ -97,8 +97,7 @@ extern PetscErrorCode VFPennyCrackSetName(VFPennyCrack *PennyCrack,const char na
 */
 extern PetscErrorCode VFDistanceToPennyCrack(PetscReal *d,PetscReal *x,VFPennyCrack *PennyCrack)
 {
-  PetscErrorCode      ierr;
-  PetscReal           n[3],tau[3],l,xdotn, taumag;
+  PetscReal           n[3],tau[3],l,xdotn;
 
   PetscFunctionBegin;
   /*
@@ -163,14 +162,16 @@ extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx
         x[1] = coords_array[k][j][i][1];
         x[0] = coords_array[k][j][i][0];
         ierr = VFDistanceToPennyCrack(&dist,x,crack);CHKERRQ(ierr);
-		  if(crack->r == 0){
+		  if (crack->r == 0){
 			  v_array[k][j][i] = 1.;
 		  }
-		  if(dist == 0){
+		  //if (dist == 0){
+		  if (dist <= ctx->vfprop.epsilon/2.){
 			  v_array[k][j][i] = 0.;
 		  }
 		  else{
-			  v_array[k][j][i] = 1.-exp(-dist/ctx->vfprop.epsilon);
+			  //v_array[k][j][i] = 1.-exp(-dist/ctx->vfprop.epsilon);
+			  v_array[k][j][i] = 1.-exp(-(dist-ctx->vfprop.epsilon/2.)/ctx->vfprop.epsilon);
 		  }
       }
     }

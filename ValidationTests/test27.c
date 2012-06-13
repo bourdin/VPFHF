@@ -98,6 +98,7 @@ int main(int argc,char **argv)
 
   ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
+	ctx.hasCrackPressure = PETSC_FALSE;
   ierr = VF_StepV(&fields,&ctx);
 
   ctx.SurfaceEnergy    = 0.;
