@@ -21,7 +21,8 @@ def parse(args=None):
     ### Get options from the command line
     parser = argparse.ArgumentParser(description='Creates a summary of a series of computations in csv format.')
     parser.add_argument('inputfile',nargs='*',help='Input file',default=sys.stdin)
-    parser.add_argument('-o','--outputfile',help='output file',default=sys.stdout)
+    #parser.add_argument('-o','--outputfile',help='output file',default=sys.stdout)
+    parser.add_argument('-o','--outputfile', type=argparse.FileType('w', 0),default='-')
     return parser.parse_args()
 
 def main():
@@ -40,21 +41,21 @@ def main():
                 allDict.append(D)        
     allKeys.remove('PBS_JOBID')
     
-    f = open(options.outputfile,'w')
-    f.write('PBS_JOBID')
+    #f = open(options.outputfile,'w')
+    options.outputfile.write('PBS_JOBID')
     for k in sorted(allKeys):
-        f.write(',  ')
-        f.write(k)
-    f.write('\n')
+        options.outputfile.write(',  ')
+        options.outputfile.write(k)
+    options.outputfile.write('\n')
     for D in allDict:
-        f.write(repr(D['PBS_JOBID']))
+        options.outputfile.write(repr(D['PBS_JOBID']))
         for k in sorted(allKeys):
-            f.write(', ')
+            options.outputfile.write(', ')
             try:
-                f.write(repr(D[k]))
+                options.outputfile.write(repr(D[k]))
             except KeyError:
                 pass
-        f.write('\n')   
+        options.outputfile.write('\n')   
 
     #  plt.savefig(options.outputfile)
     #else:
