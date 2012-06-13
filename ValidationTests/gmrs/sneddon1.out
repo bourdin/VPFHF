@@ -1,4 +1,4 @@
-Working Directory: /data/etc_rpe_ucr/VF2/VF-Chevron/VF_Standalone/ValidationTests/gmrs
+Working Directory: /data/etc_rpe_ucr/VarFrac/vf_standalone/ValidationTests/gmrs
  ****************  GMRS - GeoMechanical Reservoir Simulator  *****************
  ****************  Chevron Confidential - Restricted Access  *****************
  ************  Unauthorized and/or improper reproduction, use or  ************
@@ -8,10 +8,10 @@ Working Directory: /data/etc_rpe_ucr/VF2/VF-Chevron/VF_Standalone/ValidationTest
  ********************  a division of Chevron U.S.A. Inc.  ********************
  ***************************  All rights reserved  ***************************
  *****************************  Version 030311  ******************************
- *********************************  hltd334  *********************************
- ****************************  Process ID 10436  *****************************
- **************************  Run Date: 22 Dec 2011  **************************
- *********************  Start Time: 16 hr 51 min 37 sec  *********************
+ *********************************  hltd828  *********************************
+ ****************************  Process ID 11199  *****************************
+ **************************  Run Date: 11 Jun 2012  **************************
+ *********************  Start Time: 16 hr 32 min 21 sec  *********************
  *********************  GEOMECHANICS PRESSURIZED SPHERE  *********************
  Sneddon comparison with VF                                                     
 
@@ -303,11 +303,12 @@ PROGRAM DETERMINING INITIAL STRESSES
 
  ************************  TIMER RESULTS IN SECONDS  *************************
  
- TOTAL TIME                                       1.21
- TOTAL INITIALIZATION                             1.21
+ TOTAL TIME                                       0.84
+ TOTAL INITIALIZATION                             0.84
  MECHANICS RESIDUAL SETUP                         0.00
- FACTOR LINEAR SOLVER FOR MECHANICS               0.03
- TOTAL LINEAR SOLVER FOR MECHANICS                0.63
+ RESTART OUTPUT TIME                              0.00
+ FACTOR LINEAR SOLVER FOR MECHANICS               0.02
+ TOTAL LINEAR SOLVER FOR MECHANICS                0.33
  VARIABLE UPDATES                                 0.01
   
  DISPLACEMENT SOLVES =                          1
