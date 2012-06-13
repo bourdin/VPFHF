@@ -8,7 +8,7 @@
 #include "VFCommon.h"
 #include "VFV.h"
 #include "VFU.h"
-#include "VFPermField.h"
+#include "VFPermfield.h"
 #include "VFCracks.h"
 
 VFCtx               ctx;
