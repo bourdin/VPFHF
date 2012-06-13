@@ -36,7 +36,7 @@ int main(int argc,char **argv)
 	Vec					    Vold;
 	PetscReal			  errV=1e+10;
 	PetscReal			  lx,ly,lz;
-	PetscReal			  q=2.e-3;//2.e-4;
+	PetscReal			  q,maxvol = .03;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -50,6 +50,16 @@ int main(int argc,char **argv)
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daScal,BBmin,BBmax);CHKERRQ(ierr);
+	
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-maxvol",&maxvol,PETSC_NULL);CHKERRQ(ierr);
+  /*
+    Overwrite ctx.maxtimestep with something more reasonable
+  */
+  ctx.maxtimestep = 150;
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
+	q = maxvol / ctx.maxtimestep;
+	
+	printf("maxtimestep: %i\nflowrate %f\n",ctx.maxtimestep,q);
 	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
@@ -284,11 +294,13 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 	ctx.timevalue = 0;
-	ctx.maxtimestep = 150;
+	//ctx.maxtimestep = 150;
+	
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, injected volume %g\n",ctx.timestep,q*ctx.timestep);CHKERRQ(ierr);
 		do {
 			p_old = p;
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit, p);CHKERRQ(ierr);
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"  Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit, p);CHKERRQ(ierr);
 			ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
 			ierr = VecScale(fields.U,1./p);CHKERRQ(ierr);
 			ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
@@ -301,8 +313,8 @@ int main(int argc,char **argv)
 
 			ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
 			ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on p: %e\n", PetscAbs(p-p_old));CHKERRQ(ierr);
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"    Max. change on V: %e\n",errV);CHKERRQ(ierr);
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"    Max. change on p: %e\n", PetscAbs(p-p_old));CHKERRQ(ierr);
 			altminit++;
 		} while (PetscAbs(p-p_old) >= p_epsilon && altminit <= ctx.altminmaxit);
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
