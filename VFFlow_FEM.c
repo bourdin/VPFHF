@@ -951,8 +951,8 @@ extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
   kxx       = ctx->resprop.perm;
   kyy       = ctx->resprop.perm;
   kzz       = ctx->resprop.perm;
-  DCoef_P   = fdens*relk/visc;
-  ACoef_P   = fdens*por*(wat_comp+rock_comp);
+  DCoef_P   = 1.;fdens*relk/visc;
+  ACoef_P   = 1.;fdens*por*(wat_comp+rock_comp);
 
 
   ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -1079,8 +1079,8 @@ extern PetscErrorCode VFFlow_FEM_IJacobPAssembly3D_local(PetscReal a, PetscReal 
   kxx       = resprop->perm;
   kyy       = resprop->perm;
   kzz       = resprop->perm;
-  DCoef_P   = fdens*relk/visc; 
-  ACoef_P   = fdens*por*(wat_comp+rock_comp);
+  DCoef_P   = 1.;fdens*relk/visc; 
+  ACoef_P   = 1.;fdens*por*(wat_comp+rock_comp);
 
   for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {
@@ -1218,7 +1218,7 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
   ierr = TSSetProblemType(ts,TS_NONLINEAR);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSBEULER);CHKERRQ(ierr);
   ierr = TSSetIFunction(ts,r,VFFormIFunction_Flow,ctx);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,10,0.3);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,100,0.3);CHKERRQ(ierr);
   
   /*
     Set initial and boundary condition
