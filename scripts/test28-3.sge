@@ -60,7 +60,7 @@ ibrun ${VFDIR}/ValidationTests/test28 -p ${JOB_ID} -n ${NX},${NY},${NZ} -l ${LX}
       -epsilon ${EPS} -eta ${ETA} -gc ${GC} -nc 2 \
       -c0_r ${L0} -c0_center ${C0} -c0_phi 90 -c0_theta ${THETA0} \
       -c1_r ${L1} -c1_center ${C1} -c1_phi 90 -c1_theta ${THETA1} \
-      -maxtimestep 100 -maxvol .025 \
+      -maxtimestep 100 -maxvol .2 \
       -orientation ${OR} -format bin -log_summary ${EXTRAOPTS}
 
 
