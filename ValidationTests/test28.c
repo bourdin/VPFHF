@@ -221,7 +221,8 @@ int main(int argc,char **argv)
 		ierr = VFPennyCrackBuildVAT2(fields.V,&(ctx.crack[c]),&ctx);CHKERRQ(ierr);
 		ierr = VecPointwiseMin(fields.VIrrev,fields.V,fields.VIrrev);CHKERRQ(ierr);
 	}
-
+  ierr - VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
+  
 	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 	ctx.hasCrackPressure = PETSC_FALSE;
   ierr = VF_StepV(&fields,&ctx);
