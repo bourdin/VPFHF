@@ -1,0 +1,68 @@
+#!/bin/bash      
+#$ -A TG-DMS060014
+#$ -V                   # Inherit the submission environment
+#$ -cwd
+#$ -N HS2D       # Job Name
+#$ -j y                 # Combine stderr and stdout
+#$ -pe 12way 240
+#$ -q normal            # Queue name "normal"
+#$ -l h_rt=5:00:00     # Run time (hh:mm:ss) - 1.5 hours
+#$ -M bourdin@lsu.edu   # Use email notification address
+#$ -m be                # Email at Begin and End of job
+
+
+if [ -z "NX" ]; then
+	export NX=1001
+fi
+if [ -z "NY" ]; then
+	export NY=1000
+fi
+if [ -z "THETA" ]; then
+	export THETA=20
+fi
+export NZ=2
+export LX=8.
+export LY=8.
+export LZ=.01
+export OR=1
+
+export L0=.2
+export THETA0=0
+export C0='-.1,4.5,0'
+export L1=.2
+export THETA1=0
+export C1='.1,3.5,0'
+#export EPS=.012
+#export GC=
+
+
+export WORKDIR=${SCRATCH}/HS2D/${JOB_ID}
+mkdir -p ${WORKDIR}
+cd ${WORKDIR}
+
+echo  PBS_JOBID      $JOB_ID      >  00_INFO.txt
+echo  NX             $NX          >> 00_INFO.txt 
+echo  NY             $NY          >> 00_INFO.txt 
+echo  NZ             $NZ          >> 00_INFO.txt 
+echo  LX             $LX          >> 00_INFO.txt 
+echo  LY             $LY          >> 00_INFO.txt 
+echo  LZ             $LZ          >> 00_INFO.txt 
+echo  GC             $GC          >> 00_INFO.txt
+echo  L0             $L0          >> 00_INFO.txt
+echo  THETA0         $THETA0      >> 00_INFO.txt
+echo  C0             $C0          >> 00_INFO.txt
+echo  L1             $L1          >> 00_INFO.txt
+echo  THETA1         $THETA1      >> 00_INFO.txt
+echo  C1             $C1          >> 00_INFO.txt
+echo  EPSILON        $EPS         >> 00_INFO.txt
+echo  ETA            $ETA         >> 00_INFO.txt
+echo  ORIENTATION    $OR          >> 00_INFO.txt
+echo  EXTRAOPTS      $EXTRAOPTS   >> 00_INFO.txt
+
+ibrun ${VFDIR}/ValidationTests/test28 -p ${JOB_ID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} \
+      -epsilon ${EPS} -eta ${ETA} -gc ${GC} -nc 2 \
+      -c0_r ${L0} -c0_center ${C0} -c0_phi 90 -c0_theta ${THETA0} \
+      -c1_r ${L1} -c1_center ${C1} -c1_phi 90 -c1_theta ${THETA1} \
+      -orientation ${OR} -format bin -log_summary ${EXTRAOPTS}
+
+
