@@ -1,6 +1,6 @@
 /*
  test13.c: solves for the displacement and v-field in a pressurized line crack in 2d (Sneddon 2D)
- (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 
 #include "petsc.h"
@@ -8,7 +8,7 @@
 #include "VFCommon.h"
 #include "VFV.h"
 #include "VFU.h"
-#include "VFFlow.h"
+#include "VFPermfield.h"
 
 VFCtx               ctx;
 VFFields            fields;
@@ -17,32 +17,23 @@ VFFields            fields;
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
 {
-	PetscErrorCode      ierr;
+	PetscErrorCode  ierr;
 	PetscViewer			viewer;
-	PetscViewer         logviewer;
-	PetscReal           length = .2;
-	PetscReal           center[3]={0.,0.,.5};
-	PetscInt            orientation=2;
-	PetscInt            nopts=3;
-	PetscInt            i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-	PetscReal			****coords_array;
-	PetscReal			***v_array;  
-	PetscReal           BBmin[3],BBmax[3];
-	PetscReal           ElasticEnergy = 0;
-	PetscReal           InsituWork = 0;
-	PetscReal           SurfaceEnergy = 0;
-	char                filename[FILENAME_MAX];
-	PetscReal           p;
-	PetscReal           p_old;
-	PetscReal           p_epsilon = 1.e-5;
-	PetscInt			altminit=1;
-	Vec					Vold;
-	PetscReal			errV=1e+10;
-	PetscReal			lx,ly,lz;
-	PetscReal			q=2.e-4;
-	
-	PetscReal    x[3],xc[3];
-	PetscReal    dist,d;
+	PetscViewer     logviewer;
+	PetscReal       length = .2;
+	PetscReal       center[3]={0.,0.,.5};
+	PetscInt        mode=1;
+	PetscInt        nopts=3;
+	PetscInt        i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+	PetscReal		****coords_array;
+	char            filename[FILENAME_MAX];
+	PetscReal       p;
+	PetscReal       p_old;
+	PetscReal       p_epsilon = 1.e-5;
+	PetscInt			  altminit=1;
+	Vec					    Vold;
+	PetscReal			  errV=1e+10;
+	PetscReal			  q,maxvol = .03;
 	VFRectangularCrack *crack;
 	PetscInt     nc = 0;
 	char         prefix[PETSC_MAX_PATH_LEN+1];
@@ -56,15 +47,20 @@ int main(int argc,char **argv)
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-q",&q,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&nc,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-mode",&mode,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-	ierr = DMDAGetBoundingBox(ctx.daScal,BBmin,BBmax);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);	
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-maxvol",&maxvol,PETSC_NULL);CHKERRQ(ierr);
+  /*
+    Overwrite ctx.maxtimestep with something more reasonable
+  */
+  ctx.maxtimestep = 150;
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
+	q = maxvol / ctx.maxtimestep;
 	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-
-	
+	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
 	ierr = PetscMalloc(nc*sizeof(VFRectangularCrack),&crack);CHKERRQ(ierr);
 	for (i = 0; i < nc; i++) {
 		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
@@ -73,23 +69,14 @@ int main(int argc,char **argv)
 		ierr = VFRectangularCrackView(&crack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 	}
 	ierr = DMCreateGlobalVector(ctx.daScal,&V);CHKERRQ(ierr);
-	ierr = VecSet(V,1.0);CHKERRQ(ierr);	
+	ierr = VecSet(V,1.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
 	for (c = 0; c < nc; c++) {
 		ierr = VFRectangularCrackBuildVAT2(V,&crack[c],&ctx);CHKERRQ(ierr);
 		ierr = VecPointwiseMin(fields.V,V,fields.V);CHKERRQ(ierr);
 	}
 	ierr = VecDestroy(&V);CHKERRQ(ierr);
 	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
-
-	
-	
-	ierr = DMDAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);    
-	lz = BBmax[2];
-	ly = BBmax[1];
-	lx = BBmax[0];	
-	
 	/*
 	 Reset all BC for U and V
 	 */
@@ -111,7 +98,7 @@ int main(int argc,char **argv)
 			ctx.bcU[j].vertex[i] = NONE;
 		}
 	}
-	switch (orientation) {
+	switch (mode) {
 		case 1:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
 							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
@@ -135,15 +122,6 @@ int main(int argc,char **argv)
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
 			break;
 		case 2:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
@@ -164,15 +142,6 @@ int main(int argc,char **argv)
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
 			break;
 		case 3:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
@@ -195,15 +164,6 @@ int main(int argc,char **argv)
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
 			break;
 		case 4:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
@@ -226,15 +186,6 @@ int main(int argc,char **argv)
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
 			break;
 		case 5:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
@@ -253,15 +204,6 @@ int main(int argc,char **argv)
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
 			break;
 		case 6:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
@@ -282,47 +224,33 @@ int main(int argc,char **argv)
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
 			break;
 		default:
-			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be one of {1,2,3,4,5,6}, got %i\n",orientation);
+			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: mode should be one of {1,2,3,4,5,6}, got %i\n",mode);
 			break;
 	}  
-	ierr = DMDAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
-	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-	
+	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);	
 	ctx.hasCrackPressure = PETSC_TRUE;
 	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
-	
-
-	
-	PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
-	PetscViewerSetType(viewer, PETSCVIEWERASCII);
-	PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);
-	PetscViewerFileSetName(viewer, "pressure.txt");
-	PetscViewerASCIIPrintf(viewer, "Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \t TotalMechEnergy \n");
+	ierr = PetscViewerCreate(PETSC_COMM_WORLD, &viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetType(viewer, PETSCVIEWERASCII);CHKERRQ(ierr);
+	ierr = PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);CHKERRQ(ierr);
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.pres",ctx.prefix);CHKERRQ(ierr);
+	ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
+	ierr = PetscViewerASCIIPrintf(viewer, "#Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \t TotalMechEnergy \n");CHKERRQ(ierr);
 	
 	p = 1.;
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
-	ctx.timevalue = 0;
-	ctx.maxtimestep = 150;
+	ctx.timevalue = 0;	
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, injected volume %g\n",ctx.timestep,q*ctx.timestep);CHKERRQ(ierr);
 		do {
 			p_old = p;
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit, p);CHKERRQ(ierr);
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"  Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit, p);CHKERRQ(ierr);
 			ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
 			ierr = VecScale(fields.U,1./p);CHKERRQ(ierr);
 			ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
@@ -335,35 +263,37 @@ int main(int argc,char **argv)
 
 			ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
 			ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on p: %e\n", PetscAbs(p-p_old));CHKERRQ(ierr);
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"    Max. change on V: %e\n",errV);CHKERRQ(ierr);
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"    Max. change on p: %e\n", PetscAbs(p-p_old));CHKERRQ(ierr);
 			altminit++;
 		} while (PetscAbs(p-p_old) >= p_epsilon && altminit <= ctx.altminmaxit);
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
-				ierr = FieldsH5Write(&ctx,&fields);
+				ierr = FieldsH5Write(&ctx,&fields);CHKERRQ(ierr);
 				break;
 			case FILEFORMAT_BIN:
-				ierr = FieldsBinaryWrite(&ctx,&fields);
+				ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
 				break; 
 		}
 		ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
 		ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
 		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
-		ierr = PetscViewerDestroy(&logviewer);
+		ierr = PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
 		ctx.ElasticEnergy=0;
 		ctx.InsituWork=0;
 		ctx.PressureWork = 0.;
 		ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
 		ierr = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
-		ctx.TotalEnergy = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork;
-		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g \t %g \t %g \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p, ctx.SurfaceEnergy, ctx.ElasticEnergy, ctx.PressureWork, ctx.TotalEnergy);
+		ctx.TotalEnergy = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork + ctx.SurfaceEnergy;
+		ierr = PetscViewerASCIIPrintf(viewer, "%d \t %e \t %e \t %e \t %e \t %e \t %e\n", ctx.timestep , ctx.CrackVolume, p, ctx.SurfaceEnergy, ctx.ElasticEnergy, ctx.PressureWork, ctx.TotalEnergy);CHKERRQ(ierr);
+    ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ctx.ElasticEnergy,
+                                  ctx.InsituWork,ctx.SurfaceEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
 		altminit = 0.;
 	}
-	PetscViewerFlush(viewer);CHKERRQ(ierr);
-	PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-	PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
+	ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
+	ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
 	ierr = VecDestroy(&Vold);CHKERRQ(ierr);
 
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
