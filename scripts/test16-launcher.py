@@ -18,5 +18,5 @@ eta = 1e-8
 k = 1.5
 eps = k * h
 gc = 1./(1.+h/2./eps)
-runcmd = 'echo qsub -l h_rt=01:00:00 -q development -pe 12way 240 -v EPS=%f,GC=%f,NX=%i,NY=%i,ETA=%f ${VFDIR}/scripts/test16.sge'%(eps,gc,nx,ny,eta)
+runcmd = 'echo qsub -l h_rt=01:00:00 -q development -pe 12way 240 -v EPS=%f,GC=%f,NX=%i,NY=%i,NZ=%iETA=%f ${VFDIR}/scripts/test16.sge'%(eps,gc,nx,ny,nz,eta)
 os.system(runcmd)

@@ -23,6 +23,7 @@ def parse(args=None):
     #parser.add_argument('inputfile',type=argparse.FileType('r'),nargs='*',help='Input file',default=sys.stdin)
     parser.add_argument('inputfile',nargs='*',help='Input file',default=sys.stdin)
     parser.add_argument('-o','--outputfile',help='output file',default=None)
+    parser.add_argument('-t','--title',help='Title',default=None)
     return parser.parse_args()
 
 def main():
@@ -37,8 +38,10 @@ def main():
     
     for f in options.inputfile:
         if (os.path.isfile(f)):
-            p = np.loadtxt(f)    
-            plt.plot(p[:,1],p[:,3],'--',lw=2,label=f)
+            p = np.loadtxt(f)   
+            pp = p[:,3]
+            pp -= p[0,3]
+            plt.plot(p[:,1],pp,'--',lw=2,label=f)
         if (os.path.isdir(f)):
             infotxt = os.path.join(f,'00_INFO.txt')
             if (os.path.exists(infotxt)):
@@ -50,15 +53,21 @@ def main():
                     hx = D['LX']/(D['NX']+0.0)
                     l = '%s: $h=%.2E$, $\epsilon/h=%.2f$'%(f,hx,D['EPSILON']/hx)
                     #plt.plot(p[:,1]/D['LZ'],p[:,3]/D['LZ'],label=l,lw=2)
-                    plt.plot(p[:,1],p[:,3],label=l,lw=2)
+                    pp = p[:,3]
+                    pp -= p[0,3]
+                    plt.plot(p[:,1],pp,label=l,lw=2)
                 
     ax = plt.gca()
     ax.grid()
-    ax.axis([0,.025,0,.025])
+    ax.axis([0,.025,0,.015])
     plt.legend(loc=0)
     plt.xlabel('V')
     plt.ylabel('l')
-    plt.title('Half crack length vs. injected volume')
+    if not options.title:
+        plt.title('Crack increment vs. injected volume')
+    else:
+        plt.title(options.title)
+        
 
     if options.outputfile != None:
       plt.savefig(options.outputfile)
