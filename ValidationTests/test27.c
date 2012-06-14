@@ -84,6 +84,7 @@ int main(int argc,char **argv)
   ierr                 = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy:              %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
 
+  ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
   switch (ctx.fileformat) {
   case FILEFORMAT_HDF5:
     ctx.timestep++;
@@ -96,7 +97,6 @@ int main(int argc,char **argv)
     break;
   }
 
-  ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 	ctx.hasCrackPressure = PETSC_FALSE;
   ierr = VF_StepV(&fields,&ctx);
