@@ -1,6 +1,6 @@
 /*
-  test9.c: solves for the displacement with several pressurized penny cracks in 3d
-  (c) 2010-2011 Blaise Bourdin bourdin@lsu.edu
+  test25.c: TESTING VFRectangularCracks: solves for displacement with several rectangular cracks in 3d
+  (c) 2010-2012 Chukwudi CHukwudozie cchukw1@tigers.lsu.edu
 */
 
 #include "petsc.h"
