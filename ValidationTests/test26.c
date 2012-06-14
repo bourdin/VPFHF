@@ -30,8 +30,6 @@ int main(int argc,char **argv)
 	PetscReal    SurfaceEnergy = 0;
 	char         filename[FILENAME_MAX];
 	PetscReal    p = 1e-3;
-	PetscReal    x[3],xc[3];
-	PetscReal    dist,d;
 	VFPennyCrack *crack;
 	PetscInt     nc = 0;
 	char         prefix[PETSC_MAX_PATH_LEN+1];
@@ -45,11 +43,13 @@ int main(int argc,char **argv)
 	PetscReal ****bcu_array;
 	PetscInt  mode = 1;
 	PetscReal BBmin[3],BBmax[3];
-	PetscInt	seed, no_seed = 10;
-	PetscRandom		rndz, rndy,rndx;
+	PetscInt	no_seed = 10;
 	PetscInt *seed_array_z;
 	PetscInt *seed_array_y;
 	PetscInt *seed_array_x;
+	PetscInt	seedz_start;
+	PetscInt	seedy_start;
+	PetscInt	seedx_start;
 	PetscReal ***v_array;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -89,15 +89,20 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArray(ctx.daScal,fields.V,&v_array);CHKERRQ(ierr);
 	
 	/*Initializing the v-field*/	
+	seedz_start = seedy_start = seedx_start = 1;
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-seedz_start",&seedz_start,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-seedy_start",&seedy_start,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-seedx_start",&seedx_start,PETSC_NULL);CHKERRQ(ierr);
+
 	srand((time(NULL)+1));
 	for(i = 0; i < no_seed; i++){
-		seed_array_z[i] = rand() % (nz-2)+1;
+		seed_array_z[i] = rand() % (nz-seedz_start)+seedz_start;
 	}
 	for(i = 0; i < no_seed; i++){
-		seed_array_y[i] = rand() % (ny-2)+1;
+		seed_array_y[i] = rand() % (ny-seedy_start)+seedy_start;
 	}
 	for(i = 0; i < no_seed; i++){
-		seed_array_x[i] = rand() % (nx-2)+1;
+		seed_array_x[i] = rand() % (nx-seedx_start)+seedx_start;
 	}
 
 	PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
