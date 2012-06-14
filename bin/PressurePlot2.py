@@ -23,6 +23,7 @@ def parse(args=None):
     #parser.add_argument('inputfile',type=argparse.FileType('r'),nargs='*',help='Input file',default=sys.stdin)
     parser.add_argument('inputfile',nargs='*',help='Input file',default=sys.stdin)
     parser.add_argument('-o','--outputfile',help='output file',default=None)
+    parser.add_argument('-t','--title',help='Title',default=None)
     return parser.parse_args()
 
 def main():
@@ -55,7 +56,7 @@ def main():
                 
     ax = plt.gca()
     ax.grid()
-    ax.axis([0,.025,0,2.])
+    ax.axis([0,.025,0,1.5])
     plt.legend(loc=0,labelspacing=.1)
     leg = plt.gca().get_legend()
     ltext  = leg.get_texts()
@@ -63,8 +64,11 @@ def main():
 
     plt.xlabel('V')
     plt.ylabel('p')
-    plt.title('Pressure vs. injected volume')
-
+    if not options.title:
+        plt.title('Pressure vs. injected volume')
+    else:
+        plt.title(options.title)
+        
     if options.outputfile != None:
       plt.savefig(options.outputfile)
     else:
