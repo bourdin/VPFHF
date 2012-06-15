@@ -13,6 +13,7 @@ SetTimeSliderState(TimeSliderGetNStates()-1)
 LineoutAtts = LineoutAttributes()
 LineoutAtts.point1 = (4.5,0,0)
 LineoutAtts.point2 = (4.5,8,0)
+SetOperatorOptions(LineoutAtts)
 DrawPlots()
 xypairs =  GetPlotInformation()["Curve"]
 #print xypairs
