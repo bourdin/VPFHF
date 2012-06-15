@@ -50,7 +50,7 @@ def main():
                 if os.path.exists(presfile):
                     p = np.loadtxt(presfile)    
                     hx = D['LX']/(D['NX']+0.0)
-                    l = '%s: $h=%.2E$, $\epsilon/h=%.2f$'%(f,hx,D['EPSILON']/hx)
+                    l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['EPSILON']/hx,f)
                     #plt.plot(p[:,1]/D['LZ'],p[:,2],lw=2,label=l)
                     plt.plot(p[:,1],p[:,2],lw=2,label=l)
                 

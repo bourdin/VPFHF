@@ -51,18 +51,24 @@ def main():
                 if os.path.exists(presfile):
                     p = np.loadtxt(presfile)    
                     hx = D['LX']/(D['NX']+0.0)
-                    l = '%s: $h=%.2E$, $\epsilon/h=%.2f$'%(f,hx,D['EPSILON']/hx)
+                    l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['EPSILON']/hx,f)
                     #plt.plot(p[:,1]/D['LZ'],p[:,3]/D['LZ'],label=l,lw=2)
                     pp = p[:,3]
                     pp -= p[0,3]
                     plt.plot(p[:,1],pp,label=l,lw=2)
                 
-    ax = plt.gca()
-    ax.grid()
-    ax.axis([0,.025,0,.015])
     plt.legend(loc=0)
     plt.xlabel('V')
     plt.ylabel('l')
+
+    ax = plt.gca()
+    ax.grid()
+    ax.axis([0,.025,0,.015])
+    plt.legend(loc=0,labelspacing=.1)
+    leg = plt.gca().get_legend()
+    ltext  = leg.get_texts()
+    plt.setp(ltext, fontsize='small')
+
     if not options.title:
         plt.title('Crack increment vs. injected volume')
     else:
