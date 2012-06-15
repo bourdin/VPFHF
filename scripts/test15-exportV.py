@@ -11,8 +11,8 @@ OpenDatabase(db, 0)
 AddPlot("Curve", "operators/Lineout/Fracture", 1, 1)
 SetTimeSliderState(TimeSliderGetNStates()-1)
 LineoutAtts = LineoutAttributes()
-LineoutAtts.point1 = (4.5,0,0)
-LineoutAtts.point2 = (4.5,8,0)
+LineoutAtts.point1 = (4.5,3.5,0)
+LineoutAtts.point2 = (4.5,4.5,0)
 DrawPlots()
 xypairs =  GetPlotInformation()["Curve"]
 #print xypairs
