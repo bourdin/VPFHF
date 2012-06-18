@@ -127,7 +127,7 @@ int main(int argc,char **argv)
 							   radius,center[0],center[1],center[2]);CHKERRQ(ierr);	  
 			/*	face X0	*/
 			ctx.bcU[0].face[X0] = ZERO;
-			ctx.bcU[1].face[X0] = ZERO;
+			//ctx.bcU[1].face[X0] = ZERO;
 			/*	face X1	*/
 			ctx.bcU[0].face[X1]= ZERO;
 			ctx.bcU[1].face[X1]= ZERO;
@@ -136,7 +136,7 @@ int main(int argc,char **argv)
 			/*	face Y1	*/
 
 			/*	face Z0	*/
-			ctx.bcU[1].face[Z0]= ZERO;
+			//ctx.bcU[1].face[Z0]= ZERO;
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[1].face[Z1]= ZERO;
