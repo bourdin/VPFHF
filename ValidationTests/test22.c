@@ -20,15 +20,11 @@ int main(int argc,char **argv)
 	VFCtx               ctx;
 	VFFields            fields;
 	PetscErrorCode      ierr;
-	PetscReal           radius = .1;
-	PetscReal           center1[3]={0.75,0.75,0.5};
-	PetscReal           center2[3]={1.25,1.25,0.5};	
 	PetscInt            orientation=1;
 	PetscInt            nopts=3;
 	PetscInt			ek,ej,ei,c;
 	PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
 	PetscReal			****coords_array;
-	PetscReal			***v_array;  
 	PetscReal           BBmin[3],BBmax[3];
 	PetscReal           x,y,z;  
 	PetscReal           ElasticEnergy = 0;
@@ -45,30 +41,46 @@ int main(int argc,char **argv)
 	PetscReal           p_read, q_read;
 	PetscReal           vol_inj;
 	PetscReal           max_it, p_conv;
+	PetscInt            nc = 0;
+	char                prefix[PETSC_MAX_PATH_LEN+1];
+	VFPennyCrack        *crack;
+	Vec                 V;
 
 	ctx.maxtimestep = 10;
 	max_it = 200;
 	p_conv = 1e-6;
+	q_read = 1e-6;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-radius",&radius,PETSC_NULL);CHKERRQ(ierr);
+	
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-max_it",&max_it,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-p_conv",&p_conv,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-pinit",&p_read,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-rate",&q_read,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center1",&center1[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
- 	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center2",&center2[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr); 	
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&nc,PETSC_NULL);CHKERRQ(ierr);
+	
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daScal,BBmin,BBmax);CHKERRQ(ierr);
+
+    ierr = PetscMalloc(nc*sizeof(VFPennyCrack),&crack);CHKERRQ(ierr);
+    for (i = 0; i < nc; i++) {
+      ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
+      ierr = VFPennyCrackCreate(&crack[i]);CHKERRQ(ierr);
+      ierr = VFPennyCrackGet(prefix,&crack[i]);CHKERRQ(ierr);
+      ierr = VFPennyCrackView(&crack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+     }	
 	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);    
+ 
+    ierr = DMCreateGlobalVector(ctx.daScal,&V);CHKERRQ(ierr);
+    ierr = VecSet(V,1.0);CHKERRQ(ierr);
+    ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);	
+
 	/*
 	 Reset all BC for U and V
 	 */
@@ -92,49 +104,37 @@ int main(int argc,char **argv)
 	} 
 	switch (orientation) {
 		case 1:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building penny-shaped cracks of radius %g at (%g,%g,%g) and (%g,%g,%g) with normal vector <0,1,0>\n",
-							   radius,center1[0],center1[1],center1[2],center2[0],center2[1],center2[2]);CHKERRQ(ierr);	  
 			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
+			ctx.bcU[0].face[X0] = ZERO;
+			ctx.bcU[2].face[X0] = ZERO;
 			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
+			ctx.bcU[0].face[X1] = ZERO;
+			ctx.bcU[2].face[X1] = ZERO;
 			/*	face Y0	*/
 
 			/*	face Y1	*/
 
 			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
+			ctx.bcU[0].face[Z0] = ZERO;
+			ctx.bcU[2].face[Z0] = ZERO;
 			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
+			ctx.bcU[0].face[Z1] = ZERO;
+			ctx.bcU[2].face[Z1] = ZERO;
 
-            ctx.bcU[0].vertex[X0Y0Z1] = ZERO;		
-            ctx.bcU[1].vertex[X0Y0Z1] = ZERO;	
-            ctx.bcU[2].vertex[X0Y0Z1] = ZERO;	
-			
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						x = coords_array[k][j][i][0];
-						y = coords_array[k][j][i][1];
-                        z = coords_array[k][j][i][2];						
-						if ( ((j == ny*3/8) || (j == ny*3/8+1)) && ((x-center1[0])*(x-center1[0])+(z-center1[2])*(z-center1[2])) <= radius*radius ) {
-							v_array[k][j][i] = 0.;
-						}
-						if ( ((j == ny*5/8) || (j == ny*5/8+1)) && ((x-center2[0])*(x-center2[0])+(z-center2[2])*(z-center2[2])) <= 0.05*0.05 ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
+	        for (c = 0; c < nc; c++) {
+              ierr = VFPennyCrackBuildVAT2(V,&crack[c],&ctx);CHKERRQ(ierr);
+              ierr = VecPointwiseMin(fields.V,V,fields.V);CHKERRQ(ierr);
+            }		
+  
 			break;
 
 		default:
 			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation specified is not defined yet, got %i\n",orientation);
 			break;
-	}  	
-	ierr = DMDAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
+	}  
+	
+    ierr = VecDestroy(&V);CHKERRQ(ierr);
+	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
 	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 
 	ctx.hasCrackPressure = PETSC_TRUE;
