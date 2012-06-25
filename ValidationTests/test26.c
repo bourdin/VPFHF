@@ -1,5 +1,5 @@
 /*
- test9.c: solves for the displacement with several pressurized penny cracks in 3d
+ test26.c: 3D:Solves for displacement and fracture given random distribution of seed points (i.e v = 0. at random points)
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  */
 
@@ -283,7 +283,6 @@ int main(int argc,char **argv)
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
 		}
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Total Mechanical energy:  %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
-		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:
 				ierr = FieldsH5Write(&ctx,&fields);
@@ -292,13 +291,11 @@ int main(int argc,char **argv)
 				ierr = FieldsBinaryWrite(&ctx,&fields);
 				break;
 		}
-		altminit = 1;
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"###################################################################\n\n\n");CHKERRQ(ierr);
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"#        VF crack volume change = %e\t      \n", ctx.CrackVolume);CHKERRQ(ierr);
-		
+		altminit = 1;		
 	}
 	PetscViewerFlush(viewer);CHKERRQ(ierr);
 	PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+	ierr = PetscFree(crack);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);

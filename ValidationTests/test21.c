@@ -22,10 +22,10 @@ int main(int argc,char **argv)
 	VFCtx          ctx;
 	VFFields       fields;
 	PetscErrorCode ierr;
-	
-	PetscReal length      = .2;
+	PetscViewer			viewer;	
+	PetscReal length      = .0;
 	PetscInt  mode = 1;
-	PetscInt  i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+	PetscInt  i,ii,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
 	PetscReal ****coords_array;
 	PetscReal ****bcu_array;
 	PetscReal BBmin[3],BBmax[3];
@@ -39,13 +39,25 @@ int main(int argc,char **argv)
 	PetscInt			altminit=1;
 	Vec					Vold;
 	PetscReal			errV=1e+10;
+	PetscInt	no_seed = 10;
+	PetscInt	*seed_array_z;
+	PetscInt	*seed_array_x;
+	PetscInt	seedz_start;
+	PetscInt	seedx_start;
+	VFRectangularCrack *crack;
+	PetscInt     nc = 0;
+	char         prefix[PETSC_MAX_PATH_LEN+1];
+	Vec          V;
+
+
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-no_seed",&no_seed,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-length",&length,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-mode",&mode,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-bcU",&bc,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&nc,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -61,6 +73,8 @@ int main(int argc,char **argv)
 	ctx.maxtimestep = 150;
 	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMCreateGlobalVector(ctx.daScal,&V);CHKERRQ(ierr);
+	ierr = VecSet(V,1.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
@@ -68,7 +82,7 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressure,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx.daScal,fields.V,&v_array);CHKERRQ(ierr);
 	for (i = 0; i < 6; i++) {
 		ctx.bcV[0].face[i] = NONE;
 		for (j = 0; j < 3; j++) {
@@ -87,24 +101,78 @@ int main(int argc,char **argv)
 			ctx.bcU[j].vertex[i] = NONE;
 		}
 	}
+	/*Initializing the v-field*/	
+	ierr = PetscMalloc(nc*sizeof(VFRectangularCrack),&crack);CHKERRQ(ierr);
+	for (i = 0; i < nc; i++) {
+		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
+		ierr = VFRectangularCrackCreate(&crack[i]);CHKERRQ(ierr);
+		ierr = VFRectangularCrackGet(prefix,&crack[i]);CHKERRQ(ierr);
+		ierr = VFRectangularCrackView(&crack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+	}
+	for (c = 0; c < nc; c++) {
+		ierr = VFRectangularCrackBuildVAT2(V,&crack[c],&ctx);CHKERRQ(ierr);
+		ierr = VecPointwiseMin(fields.V,V,fields.V);CHKERRQ(ierr);
+	}
+	ierr = VecDestroy(&V);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx.daScal,fields.V,&v_array);CHKERRQ(ierr);
+	/*Initializing seed points*/
+	ierr = PetscMalloc2(no_seed,PetscInt,&seed_array_z,no_seed,PetscInt,&seed_array_x);CHKERRQ(ierr);
+	seedz_start = seedx_start = 2;
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-seedz_start",&seedz_start,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-seedx_start",&seedx_start,PETSC_NULL);CHKERRQ(ierr);
+	
+	srand((time(NULL)+1));
+	for(i = 0; i < no_seed; i++){
+		seed_array_z[i] = rand() % (nz-2*seedz_start)+seedz_start;
+	}
+	for(i = 0; i < no_seed; i++){
+		seed_array_x[i] = rand() % (nx-2*seedx_start)+seedx_start;
+	}
+	
+	PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
+	PetscViewerSetType(viewer, PETSCVIEWERASCII);
+	PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);
+	PetscViewerFileSetName(viewer, "seed_nodes.txt");
+	PetscViewerASCIIPrintf(viewer, "seed \t z_nodes \t x_nodes \n");
+	for(ii = 0; ii < no_seed; ii++){
+		PetscViewerASCIIPrintf(viewer, "%d \t %d \t %d \n",ii, seed_array_z[ii],seed_array_x[ii] );
+	}
+	
 	/*Initializing the v-field*/
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) { 
-				if ( ((i == 3*nx/5) || (i == 3*nx/5-1)) && (coords_array[k][j][i][2] <= 2*length) ) {
+				if ( ((i == 3*nx/5) || (i == 3*nx/5-1)) && (coords_array[k][j][i][2] < 2*length) ) {
 					v_array[k][j][i] = 0.;
 				}
-				if( ((i == 2*nx/5) || (i == 2*nx/5-1)) && coords_array[k][j][i][2] >= (lz-2*length) ){
+				if( ((i == 2*nx/5) || (i == 2*nx/5-1)) && coords_array[k][j][i][2] > (lz-2*length) ){
 					v_array[k][j][i] = 0.;
-				    }
+				}
 			}
 		}
 	}
+
+	
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) { 
+				for(ii = 0; ii < no_seed; ii++)
+					if(k == seed_array_z[ii] && i == seed_array_x[ii]){
+						v_array[k][j][i] = 0.;
+					}
+			}
+		}
+	}
+	ierr = PetscFree2(seed_array_z,seed_array_x);CHKERRQ(ierr);
+
+	
+	
+	
+	
 	ierr = DMDAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
-	ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
+	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ctx.hasCrackPressure = PETSC_FALSE;
-	ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
 	for(ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){	
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i\n",ctx.timestep);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
@@ -215,11 +283,12 @@ int main(int argc,char **argv)
 				break;
 		}
 		altminit = 1;
-		printf("\n###################################################################\n");
-//		printf("#        Actual crack volume change = %f\t      \n\n\n\n",(lz*ly*2 * bc));
-		printf("#        VF crack volume change = %f\t      \n",ctx.CrackVolume);
-		printf("###################################################################\n\n\n");
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n###################################################################\n");CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"#        VF crack volume change = %f\t      \n",ctx.CrackVolume);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n###################################################################\n");CHKERRQ(ierr);
 	}
+	PetscViewerFlush(viewer);CHKERRQ(ierr);
+	PetscViewerDestroy(&viewer);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
