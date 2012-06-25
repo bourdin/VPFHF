@@ -1,6 +1,6 @@
 /*
- test13.c: solves for the displacement and v-field in a pressurized line crack in 2d (Sneddon 2D)
- (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ test30.c: 2D Case hydraulic fracturing: Simulates pressure driven propagation of line cracks, mimicking the hydraulic fracturing process, using VFRectangularCaracks.
+ (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  */
 
 #include "petsc.h"
@@ -41,8 +41,31 @@ int main(int argc,char **argv)
 
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-	
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      ######################################################\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #													#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #	    			Test30!!!						#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #													#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #			2D hydraulic fracturing					#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #			using VFRectangularCracks				#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #													#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   Inputs:											#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #	  1. number of rectangular cracks				#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #	  2. 9 components of coords. of the				#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #		 3 specified points as below				#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #													#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #			 (6,7,8)								#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				+--------------------+				#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				|					 |				#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				|					 |				#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				|					 |				#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				|					 |				#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				|					 |				#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				+--------------------+				#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #			 (0,1,2)			  (3,4,5)			#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #													#\n");CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      ######################################################\n\n\n");CHKERRQ(ierr);
+
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-length",&length,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-q",&q,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
@@ -295,7 +318,7 @@ int main(int argc,char **argv)
 	ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
 	ierr = PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
 	ierr = VecDestroy(&Vold);CHKERRQ(ierr);
-
+	ierr = PetscFree(crack);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
