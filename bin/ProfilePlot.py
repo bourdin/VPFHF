@@ -46,17 +46,17 @@ def main():
             if (os.path.exists(infotxt)):
                 print 'Reading parameters for %s'%infotxt
                 D = Dictreadtxt(infotxt)
-                presfile = os.path.join(f,f+'.pres')
-                if os.path.exists(presfile):
-                    p = np.loadtxt(presfile)    
+                profile = os.path.join(f,f+'.v')
+                if os.path.exists(profile):
+                    p = np.loadtxt(profile)    
                     hx = D['LX']/(D['NX']+0.0)
                     l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['EPSILON']/hx,f)
                     #plt.plot(p[:,1]/D['LZ'],p[:,2],lw=2,label=l)
-                    plt.plot(p[:,1],p[:,2],lw=2,label=l)
+                    plt.plot(p[:,0],p[:,1],lw=2,label=l)
                 
     ax = plt.gca()
     ax.grid()
-    ax.axis([0,.025,0,1.5])
+    ax.axis([3.5,4.5,0,1.1])
     plt.legend(loc=0,labelspacing=.1)
     leg = plt.gca().get_legend()
     ltext  = leg.get_texts()
@@ -65,7 +65,7 @@ def main():
     plt.xlabel('V')
     plt.ylabel('p')
     if not options.title:
-        plt.title('Pressure vs. injected volume')
+        plt.title('Phase file profile')
     else:
         plt.title(options.title)
         
