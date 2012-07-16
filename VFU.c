@@ -81,7 +81,7 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
 #undef __FUNCT__
 #define __FUNCT__ "BCUUpdate"
 /*
-  BCUUpdate:  Update boundary condition flage for U when prescribed displacements are applied
+  BCUUpdate:  Update boundary condition flag for U when prescribed displacements are applied
               Typically, this is used to account for insitu stresses by first computing the 
               boundary displacement using the reference pressure and porosity.
 
@@ -97,7 +97,7 @@ extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
        /*
          symmetry with respect to the x=0 and y=0 planes, all other faces from data dile
        */
-       BC[0].face[X0] = FIXED;
+       BC[0].face[X0] = ZERO;
        BC[0].face[X1] = FIXED;   BC[1].face[X1] = FIXED;   BC[2].face[X1] = FIXED; 
        BC[1].face[Y0] = ZERO;
        BC[0].face[Y1] = FIXED;   BC[1].face[Y1] = FIXED;   BC[2].face[Y1] = FIXED; 

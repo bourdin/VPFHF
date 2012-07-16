@@ -186,7 +186,11 @@ extern PetscErrorCode VFWellBuildVAT2(Vec V,VFWell *well,VFCtx *ctx)
         x[1] = coords_array[k][j][i][1];
         x[0] = coords_array[k][j][i][0];
         ierr = VFDistanceToWell(&dist,x,well);CHKERRQ(ierr);
+		if(dist <= ctx->vfprop.epsilon*0.75){
+		  v_array[k][j][i] = 0.;
+		} else {
         v_array[k][j][i] = 1.-exp(-dist/2/ctx->vfprop.epsilon);
+		}
       }
     }
   }      

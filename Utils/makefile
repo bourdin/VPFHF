@@ -7,6 +7,10 @@ h5export: h5export.o chkopts
 	@${CLINKER} -o ${VFDIR}/bin/${PETSC_ARCH}/h5export h5export.o ${VFDIR}/xdmf.o ${PETSC_LIB}
 	@${RM} h5export.o
 
+h5export4gmrs: h5export4gmrs.o chkopts
+	@${CLINKER} -o ${VFDIR}/bin/${PETSC_ARCH}/h5export4gmrs h5export4gmrs.o ${VFDIR}/xdmf.o ${PETSC_LIB}
+	@${RM} h5export.o
+
 vtkexport: vtkexport.o chkopts
 	@${CLINKER} -o ${VFDIR}/bin/${PETSC_ARCH}/vtkexport vtkexport.o ${PETSC_LIB}
 	@${RM} vtkexport.o
