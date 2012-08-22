@@ -1204,6 +1204,9 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
   Mat             J;
   PetscReal       dt,ftime;
   
+  SNES            snes;
+  Mat             Jmf = PETSC_NULL;
+  
   PetscFunctionBegin;
   
   ierr = VecDuplicate(fields->pressure,&r);CHKERRQ(ierr);
@@ -1218,7 +1221,7 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
   ierr = TSSetProblemType(ts,TS_NONLINEAR);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSBEULER);CHKERRQ(ierr);
   ierr = TSSetIFunction(ts,r,VFFormIFunction_Flow,ctx);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,100,0.3);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,100,1.0);CHKERRQ(ierr);
   
   /*
     Set initial and boundary condition
@@ -1226,14 +1229,18 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
   ierr = VFFormIBCondition_Flow(ctx,fields);CHKERRQ(ierr);
 //  ierr = VFFormInitCondition_Flow(ctx,fields);CHKERRQ(ierr);
   ierr = TSSetSolution(ts,fields->pressure);CHKERRQ(ierr);
-  dt    = .01;
+  dt    = .05;
 //  ftime = .05;
   ierr = TSSetInitialTimeStep(ts,0.0,dt);CHKERRQ(ierr);
   
   /*
     Set user provided Jacobian evaluation routine
   */
-  ierr = TSSetIJacobian(ts,J,J,VFFormIJacobian_Flow,ctx);CHKERRQ(ierr);
+//  ierr = TSSetIJacobian(ts,J,J,VFFormIJacobian_Flow,ctx);CHKERRQ(ierr);
+   // test with FD Jacobian
+   ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
+   ierr = MatCreateSNESMF(snes,&Jmf);CHKERRQ(ierr);
+   ierr = SNESSetJacobian(snes,Jmf,J,SNESDefaultComputeJacobian,PETSC_NULL);CHKERRQ(ierr);
   
   /*
     Set various TS parameters from user options
@@ -1253,6 +1260,7 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
   ierr = MatDestroy(&J);CHKERRQ(ierr);
   ierr = VecDestroy(&r);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);
+  ierr = MatDestroy(&Jmf);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }

@@ -77,6 +77,9 @@ test21: test21.o ${VFOBJ} chkopts
 test22: test22.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
+test22a: test22a.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+	
 test23: test23.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
