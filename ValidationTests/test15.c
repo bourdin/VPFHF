@@ -22,7 +22,7 @@ int main(int argc,char **argv)
 	PetscViewer     logviewer;
 	PetscReal       length = .2;
 	PetscReal       center[3]={0.,0.,.5};
-	PetscInt        orientation=2;
+	PetscInt        orientation=1;
 	PetscInt        nopts=3;
 	PetscInt        i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
 	PetscReal		****coords_array;
@@ -113,7 +113,7 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
+						if ( ( (j == ny/2)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
