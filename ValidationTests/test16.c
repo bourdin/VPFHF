@@ -94,20 +94,25 @@ int main(int argc,char **argv)
 							   radius,center[0],center[1],center[2]);CHKERRQ(ierr);	  
 			/*	face X0	*/
 			ctx.bcU[0].face[X0]= ZERO;
+			ctx.bcU[1].face[X0]= ZERO;
+			ctx.bcU[2].face[X0]= ZERO;			
 			/*	face X1	*/
 			ctx.bcU[0].face[X1]= ZERO;
+			ctx.bcU[1].face[X0]= ZERO;
+			ctx.bcU[2].face[X0]= ZERO;
 			/*	face Y0	*/
 
 			/*	face Y1	*/
 
 			/*	face Z0	*/
+			ctx.bcU[0].face[Z0]= ZERO;
+			ctx.bcU[1].face[Z0]= ZERO;
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
+			ctx.bcU[0].face[Z0]= ZERO;
+			ctx.bcU[1].face[Z0]= ZERO;
 			ctx.bcU[2].face[Z1]= ZERO;
 
-            ctx.bcU[0].vertex[X0Y0Z1] = ZERO;		
-            ctx.bcU[1].vertex[X0Y0Z1] = ZERO;	
-            ctx.bcU[2].vertex[X0Y0Z1] = ZERO;	
 			
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
@@ -172,6 +177,10 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
+	for ( i=0; i < ctx.nlayer; i++) {
+      ctx.matprop[i].alpha = 0.;
+	  ctx.matprop[i].beta = 0.;
+	}
 
 	PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
 	PetscViewerSetType(viewer, PETSCVIEWERASCII);
@@ -187,7 +196,7 @@ int main(int argc,char **argv)
     ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 	  vol_inj += q;
-//	  ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
+	  ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
 	  do {
 	    beginning:
 		p_old = p;
