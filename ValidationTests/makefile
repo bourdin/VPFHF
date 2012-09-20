@@ -1,8 +1,8 @@
 include ../makefile.include	
 CFLAGS='-I..'
 
-all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20 test21 test22 test23 test24 test25 test26 test28 test29 test30
-test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17 runtest18 runtest19 runtest20 runtest21 runtest2 runtest23 runtest24 runtest25 runtest26 runtest28  runtest29 runtest30
+all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20 test21 test22 test23 test24 test25 test26 test28 test29 test30 test31 test32 test33
+test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17 runtest18 runtest19 runtest20 runtest21 runtest2 runtest23 runtest24 runtest25 runtest26 runtest28  runtest29 runtest30 runtest31 runtest32 runtest33
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
@@ -77,9 +77,6 @@ test21: test21.o ${VFOBJ} chkopts
 test22: test22.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
-test22a: test22a.o ${VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
-	
 test23: test23.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
@@ -103,6 +100,16 @@ test29: test29.o ${VFOBJ} chkopts
 
 test30: test30.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
+test31: test31.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
+test32: test32.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
+test33: test33.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
 
 runtest1: test1
 	@echo "Running " $@
@@ -383,8 +390,35 @@ runtest30: test30
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
+runtest31: test31
+	@echo "Running " $@
+	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	if (${DIFF} -B results/$@.out $@.out) then true; \
+	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
+	${RM} -f $@.out
+
+runtest32: test32
+	@echo "Running " $@
+	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	if (${DIFF} -B results/$@.out $@.out) then true; \
+	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
+	${RM} -f $@.out
+
+runtest33: test33
+	@echo "Running " $@
+	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	if (${DIFF} -B results/$@.out $@.out) then true; \
+	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
+	${RM} -f $@.out
+
 
 clean::
-	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20 test21 test22 test23 test24 test25 test26 test28 test29 test30 pressure.txt seed_nodes.txt
+	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20 test21 test22 test23 test24 test25 test26 test28 test29 test30 test31 test32 test33 pressure.txt seed_nodes.txt
 	-rm -f runtest*
 	-rm -f TEST*

@@ -747,8 +747,8 @@ extern PetscErrorCode SETSourceTerms(Vec Src,FlowProp flowpropty)
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
-				/*		source_array[ek][ej][ei] = beta_c/mu*cos(pi*ek*hz)*cos(pi*ej*hy)*cos(pi*ei*hx); */
-				source_array[ek][ej][ei] = 4.*pi*pi*3.*beta_c/mu*sin(2.*pi*ek*hz)*sin(2.*pi*ej*hy)*sin(2.*pi*ei*hx);
+				source_array[ek][ej][ei] = beta_c/mu*cos(pi*ek*hz)*cos(pi*ej*hy)*cos(pi*ei*hx); 
+//				source_array[ek][ej][ei] = 4.*pi*pi*3.*beta_c/mu*sin(2.*pi*ek*hz)*sin(2.*pi*ej*hy)*sin(2.*pi*ei*hx);
 			}
 		}
 	}
@@ -1202,9 +1202,9 @@ extern PetscErrorCode SETBoundaryTerms(VFCtx *ctx, VFFields *fields)
 	for (ek = zs; ek < zs + zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
-				velnpress_array[ek][ej][ei][0] = -beta_c/mu*(2.*pi*cos(2.*pi*ei*hi)*sin(2.*pi*ej*hj)*sin(2.*pi*ek*hk)-gamma_c*rho*gx);
-				velnpress_array[ek][ej][ei][1] = -beta_c/mu*(2.*pi*sin(2.*pi*ei*hi)*cos(2.*pi*ej*hj)*sin(2.*pi*ek*hk)-gamma_c*rho*gy);
-				velnpress_array[ek][ej][ei][2] = -beta_c/mu*(2.*pi*sin(2.*pi*ei*hi)*sin(2.*pi*ej*hj)*cos(2.*pi*ek*hk)-gamma_c*rho*gz);
+				velnpress_array[ek][ej][ei][0] = beta_c/mu*(sin(pi*ei*hi)*cos(pi*ej*hj)*cos(pi*ek*hk)-gamma_c*rho*gx)/(3.*pi);
+				velnpress_array[ek][ej][ei][1] = beta_c/mu*(cos(pi*ei*hi)*sin(pi*ej*hj)*cos(pi*ek*hk)-gamma_c*rho*gy)/(3.*pi);
+				velnpress_array[ek][ej][ei][2] = beta_c/mu*(cos(pi*ei*hi)*cos(pi*ej*hj)*sin(pi*ek*hk)-gamma_c*rho*gz)/(3.*pi);
 				velnpress_array[ek][ej][ei][3] = sin(2.*pi*ek*hk)*sin(2.*pi*ej*hj)*sin(2.*pi*ei*hi);
 					//	printf("\nbc[2] = %f\n", velnpress_array[ek][ej][ei][2]);
 			}
