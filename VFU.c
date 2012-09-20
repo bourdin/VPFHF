@@ -69,7 +69,7 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       BC[2].face[Z1]       = ZERO;
       break;
     case TEST_MANUAL:
-      ierr = BCGet(BC,"U",3);
+  	 
       break;
     default:
       SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
