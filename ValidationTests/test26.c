@@ -89,26 +89,27 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArray(ctx.daScal,fields.V,&v_array);CHKERRQ(ierr);
 	
 	/*Initializing the v-field*/	
-	seedz_start = seedy_start = seedx_start = 1;
+	seedz_start = seedy_start = seedx_start = 2;
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-seedz_start",&seedz_start,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-seedy_start",&seedy_start,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-seedx_start",&seedx_start,PETSC_NULL);CHKERRQ(ierr);
 
 	srand((time(NULL)+1));
 	for(i = 0; i < no_seed; i++){
-		seed_array_z[i] = rand() % (nz-seedz_start)+seedz_start;
+		seed_array_z[i] = rand() % (nz-2*seedz_start)+seedz_start;
 	}
 	for(i = 0; i < no_seed; i++){
-		seed_array_y[i] = rand() % (ny-seedy_start)+seedy_start;
+		seed_array_y[i] = rand() % (ny-2*seedy_start)+seedy_start;
 	}
 	for(i = 0; i < no_seed; i++){
-		seed_array_x[i] = rand() % (nx-seedx_start)+seedx_start;
+		seed_array_x[i] = rand() % (nx-2*seedx_start)+seedx_start;
 	}
 
 	PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
 	PetscViewerSetType(viewer, PETSCVIEWERASCII);
 	PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);
 	PetscViewerFileSetName(viewer, "seed_nodes.txt");
+	PetscViewerASCIIPrintf(viewer, "%d \n", no_seed);
 	PetscViewerASCIIPrintf(viewer, "seed \t z_nodes \t y_nodes \t x_nodes \n");
 	for(ii = 0; ii < no_seed; ii++){
 		PetscViewerASCIIPrintf(viewer, "%d \t %d \t %d \t %d \n",ii, seed_array_z[ii],seed_array_y[ii],seed_array_x[ii] );
