@@ -42,12 +42,14 @@ int main(int argc,char **argv)
 	PetscReal			errV=1e+10;
 	PetscReal			q = 2.67e-4;
 	PetscReal           p_read, q_read;
-	PetscReal           vol_inj;
+	PetscReal           vol_inj,volinit;
 	PetscReal           max_it, p_conv;
 
 	ctx.maxtimestep = 10;
 	max_it = 200;
 	p_conv = 1e-6;
+	volinit = 0.;
+	p_read = 0.;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -55,6 +57,7 @@ int main(int argc,char **argv)
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-max_it",&max_it,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-p_conv",&p_conv,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-pinit",&p_read,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-volinit",&volinit,PETSC_NULL);CHKERRQ(ierr);		
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-rate",&q_read,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr); 	
@@ -191,7 +194,7 @@ int main(int argc,char **argv)
 	
 	ctx.timevalue = 0;
 	q = q_read;
-	vol_inj = 0;
+	vol_inj = volinit;
 	p = p_read;
     ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
@@ -200,7 +203,7 @@ int main(int argc,char **argv)
 	  do {
 	    beginning:
 		p_old = p;
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, alt min step %i with pressure %g rate %g\n",ctx.timestep,altminit, p,q);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, alt min step %i with pressure %g rate %g crack-vol %g\n",ctx.timestep,altminit, p,q,ctx.CrackVolume);CHKERRQ(ierr);
         ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
 		ierr = VecScale(fields.U,1./p);CHKERRQ(ierr);		
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
@@ -218,14 +221,15 @@ int main(int argc,char **argv)
 		  vol_inj -= q;
 		  q = 0.5 * q;
 		  altminit = 0;
+		  vol_inj += q;
 		  goto beginning;
 		  ierr = PetscPrintf(PETSC_COMM_WORLD,"Flow rate has been cut back... restarting the iteration \n");CHKERRQ(ierr);
 		}
 	  } while (PetscAbs((p-p_old)/p) >= 1e-5 && altminit <= ctx.altminmaxit);
-			/*	} while (errV > ctx.altmintol && altminit <= ctx.altminmaxit && PetscAbs(p-p_old) >= 1e-7);	*/
+
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n Final Crack volume\t = %g, Pressure\t= %g\n\n", p*ctx.CrackVolume, p);CHKERRQ(ierr);	
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
-//		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p);		
+
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
 				ierr = FieldsH5Write(&ctx,&fields);
