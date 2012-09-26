@@ -267,8 +267,7 @@ int main(int argc,char **argv)
 	PetscViewerSetType(viewer, PETSCVIEWERASCII);
 	PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);
 	PetscViewerFileSetName(viewer, "pressure.txt");
-	PetscViewerASCIIPrintf(viewer, "Time step \t Volume \t Pressure\n");
-
+  PetscViewerASCIIPrintf(viewer,"#step Volume        Pressure\n");
 	
 	
 	ctx.timevalue = 0;
@@ -297,7 +296,7 @@ int main(int argc,char **argv)
 			/*	} while (errV > ctx.altmintol && altminit <= ctx.altminmaxit && PetscAbs(p-p_old) >= 1e-7);	*/
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n Final Crack volume\t = %g, Pressure\t= %g\n\n", p*ctx.CrackVolume, p);CHKERRQ(ierr);	
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
-		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p);		switch (ctx.fileformat) {
+		PetscViewerASCIIPrintf(viewer, "%d \t %e \t %e\n", ctx.timestep , ctx.CrackVolume, p);		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
 				ierr = FieldsH5Write(&ctx,&fields);
 				break;

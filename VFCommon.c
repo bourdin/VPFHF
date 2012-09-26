@@ -190,7 +190,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 		
 		/*
 		 Move to geometry
-		 */
+		*/
 		ctx->nlayer = 1;
 		ierr = PetscOptionsInt("-nlayer","\n\tNumber of layers","",ctx->nlayer,&ctx->nlayer,PETSC_NULL);CHKERRQ(ierr);
 		nopt = ctx->nlayer-1;

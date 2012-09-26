@@ -8,6 +8,7 @@
 #include "VFV.h"
 #include "VFU.h"
 #include "VFFlow.h"
+#include "VFPermField.h"
 
 VFCtx    ctx;
 VFFields fields;
@@ -16,54 +17,55 @@ VFFields fields;
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
 {
-	PetscViewer			viewer;
+	PetscViewer			    viewer;
 	VFCtx               ctx;
 	VFFields            fields;
 	PetscErrorCode      ierr;
 	PetscReal           radius = .1;
-	PetscReal           center[3]={0.5,0.5,0.5};
+	PetscReal           center[3] = {0.5,0.5,0.5};
 	PetscInt            orientation=1;
 	PetscInt            nopts=3;
-	PetscInt			ek,ej,ei,c;
+	/*PetscInt			      ek,ej,ei,c;*/
 	PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-	PetscReal			****coords_array;
-	PetscReal			***v_array;  
+	PetscReal			  ****coords_array;
+	PetscReal			   ***v_array;  
 	PetscReal           BBmin[3],BBmax[3];
 	PetscReal           x,y,z;  
-	PetscReal           ElasticEnergy = 0;
-	PetscReal           InsituWork = 0;
-	PetscReal           SurfaceEnergy = 0;
-	char                filename[FILENAME_MAX];
-	PetscReal           p = 1.;
-	PetscReal           p_old = 1.;
-	PetscReal           p_epsilon = 1.e-6;
-	PetscInt			altminit=1;
-	Vec					Vold;
-	PetscReal			errV=1e+10;
-	PetscReal			q = 2.67e-4;
-	PetscReal           p_read, q_read;
-	PetscReal           vol_inj,volinit;
-	PetscReal           max_it, p_conv;
+	/*char                filename[FILENAME_MAX];*/
+	PetscReal           p = 5.e-3;
+	PetscReal           p_old = 0.;
+ 	/*PetscReal           p_epsilon = 1.e-6;*/
+	PetscInt			      altminit = 1;
+	Vec					        Vold;
+	PetscReal			      errV = 1e+10;
+	PetscReal			      q = 2.67e-4;
+	//PetscReal           p_read,q_read=1e-4;
+	PetscReal           vol_inj,volinit=0.;
+	PetscReal           p_conv;
 
-	ctx.maxtimestep = 10;
-	max_it = 200;
-	p_conv = 1e-6;
-	volinit = 0.;
-	p_read = 0.;
-	
+  /*
+    Do not do anything before PetscInitialize
+  */	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
+
+	ctx.maxtimestep = 10;
+	p_conv = 1e-6;
+
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-radius",&radius,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-max_it",&max_it,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-p_conv",&p_conv,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-pinit",&p_read,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-pinit",&p,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-volinit",&volinit,PETSC_NULL);CHKERRQ(ierr);		
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-rate",&q_read,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-rate",&q,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr); 	
+	
+	printf("maxtimestep is %d\n",ctx.maxtimestep);
+  ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr); 	
+	printf("maxtimestep is %d\n",ctx.maxtimestep);
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
+	
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+					           PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daScal,BBmin,BBmax);CHKERRQ(ierr);
 	
@@ -165,7 +167,7 @@ int main(int argc,char **argv)
 			}      
 			break;
 		default:
-			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation specified is not defined yet, got %i\n",orientation);
+			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation specified is not defined yet,got %i\n",orientation);
 			break;
 	}  	
 	ierr = DMDAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
@@ -181,54 +183,57 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 	for ( i=0; i < ctx.nlayer; i++) {
-      ctx.matprop[i].alpha = 0.;
+    ctx.matprop[i].alpha = 0.;
 	  ctx.matprop[i].beta = 0.;
 	}
 
-	PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
-	PetscViewerSetType(viewer, PETSCVIEWERASCII);
-	PetscViewerFileSetName(viewer, "pressure.txt");
-	PetscViewerASCIIPrintf(viewer, "Time step \t Volume \t Pressure\n");
+	PetscViewerCreate(PETSC_COMM_WORLD,&viewer);
+	PetscViewerSetType(viewer,PETSCVIEWERASCII);
+	PetscViewerFileSetName(viewer,"pressure.txt");
+	PetscViewerASCIIPrintf(viewer,"#step Volume        Pressure      Surf. energy  Elast. Energy Press. Work   Total Energy\n");
 
 	
 	
 	ctx.timevalue = 0;
-	q = q_read;
 	vol_inj = volinit;
-	p = p_read;
-    ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 	  vol_inj += q;
+	  printf("Injected volume: %f\n",vol_inj);
+	  printf("Well pressure:   %f\n",p);
 	  ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
 	  do {
 	    beginning:
-		p_old = p;
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, alt min step %i with pressure %g rate %g crack-vol %g\n",ctx.timestep,altminit, p,q,ctx.CrackVolume);CHKERRQ(ierr);
-        ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-		ierr = VecScale(fields.U,1./p);CHKERRQ(ierr);		
-		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
-		p = vol_inj/ctx.CrackVolume;
-		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
-		ierr = VecScale(fields.U,p);CHKERRQ(ierr);
-		ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
-		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
-		ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
-		ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on p: %e\n", PetscAbs(p-p_old));CHKERRQ(ierr);
-		altminit++;
-		if (altminit >= 200){
-		  vol_inj -= q;
-		  q = 0.5 * q;
-		  altminit = 0;
-		  vol_inj += q;
-		  goto beginning;
-		  ierr = PetscPrintf(PETSC_COMM_WORLD,"Flow rate has been cut back... restarting the iteration \n");CHKERRQ(ierr);
-		}
+      p_old = p;
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i,alt min step %i with pressure %g rate %g crack-vol %g\n",ctx.timestep,altminit,p,q,ctx.CrackVolume);CHKERRQ(ierr);
+      ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+      ierr = VecScale(fields.U,1./p);CHKERRQ(ierr);		
+      ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);   
+      p = vol_inj / ctx.CrackVolume;
+      ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
+      ierr = VecScale(fields.U,p);CHKERRQ(ierr);
+      ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
+      ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
+      ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
+      ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on V: %e\n",errV);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max. change on p: %e\n",PetscAbs(p-p_old));CHKERRQ(ierr);
+      altminit++;
+      if (altminit >= 200){
+        vol_inj -= q;
+        q = 0.5 * q;
+        altminit = 0;
+        vol_inj += q;
+        goto beginning;
+        ierr = PetscPrintf(PETSC_COMM_WORLD,"Flow rate has been cut back... restarting the iteration \n");CHKERRQ(ierr);
+        /*
+          The model is rate independent, so changing the injection rate should have no effect on stability
+        */
+      }
 	  } while (PetscAbs((p-p_old)/p) >= 1e-5 && altminit <= ctx.altminmaxit);
 
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n Final Crack volume\t = %g, Pressure\t= %g\n\n", p*ctx.CrackVolume, p);CHKERRQ(ierr);	
-		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n Final Crack volume\t = %g,Pressure\t= %g\n\n",p*ctx.CrackVolume,p);CHKERRQ(ierr);	
+		ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);   
 
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
@@ -252,9 +257,9 @@ int main(int argc,char **argv)
 		if (ctx.hasInsitu) {
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
 		}
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 		
-		PetscViewerASCIIPrintf(viewer, "%d \t %g \t %g \t %g \t %g \t %g \t %g\n", ctx.timestep , ctx.CrackVolume, p, ctx.SurfaceEnergy, ctx.ElasticEnergy, ctx.PressureWork, ctx.TotalEnergy);
+		PetscViewerASCIIPrintf(viewer,"%d \t\t%e \t%e \t%e \t%e \t%e \t%e\n",ctx.timestep ,ctx.CrackVolume,p,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);
 
 		altminit = 0.;
 	}

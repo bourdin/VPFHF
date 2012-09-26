@@ -267,8 +267,44 @@ int main(int argc,char **argv)
 				}
 			}      
 			break;
+		case 7:
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
+							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Setting up BC for in situ stress in the <0,0,1> direction only\n");CHKERRQ(ierr);
+			/*	face X0	*/
+			ctx.bcU[0].face[X0]= ZERO;
+			ctx.bcV[0].face[X0]= ONE;
+			//ctx.bcU[1].face[X0]= ZERO;
+			//ctx.bcU[2].face[X0]= ZERO;
+			/*	face X1	*/
+			ctx.bcU[0].face[X1]= ZERO;
+			ctx.bcV[0].face[X1]= ONE;
+			//ctx.bcU[1].face[X1]= ZERO;
+			//ctx.bcU[2].face[X1]= ZERO;
+			/*	face Y0	*/
+			ctx.bcU[1].face[Y0]= ZERO;
+			//ctx.bcV[0].face[Y0]= FIXED;
+			/*	face Y1	*/
+			ctx.bcU[1].face[Y1]= ZERO;
+			//ctx.bcV[0].face[Y1]= FIXED;
+			/*	face Z0	*/
+			ctx.bcU[2].face[Z0]= ZERO;
+			ctx.bcV[0].face[Z0]= ONE;
+			/*	face Z1	*/
+			//ctx.bcU[2].face[Z1]= ZERO;
+			ctx.bcV[0].face[Z1]= ONE;
+			for (k = zs; k < zs+zm; k++) {
+				for (j = ys; j < ys+ym; j++) {
+					for (i = xs; i < xs+xm; i++) { 
+						if ( ((k == nz/2) || (k == nz/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
+							v_array[k][j][i] = 0.;
+						}
+					}
+				}
+			}      
+			break;
 		default:
-			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be one of {1,2,3,4,5,6}, got %i\n",orientation);
+			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be one of {1,2,3,4,5,6,7}, got %i\n",orientation);
 			break;
 	}  
 	ierr = DMDAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
@@ -286,13 +322,14 @@ int main(int argc,char **argv)
 	ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
 	ierr = PetscViewerASCIIPrintf(viewer, "#Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \t TotalMechEnergy \n");CHKERRQ(ierr);
 	
-	p = 1.;
+	p = 1.e-5;
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 	ctx.timevalue = 0;
 	//ctx.maxtimestep = 150;
+	
 	
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, injected volume %g\n",ctx.timestep,q*ctx.timestep);CHKERRQ(ierr);

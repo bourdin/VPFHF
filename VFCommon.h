@@ -309,21 +309,21 @@ typedef struct {
 	PC                  pcP;
 	KSP                 kspP;
 	Vec                 RHSP;
-	PetscReal			CrackVolume;
+	PetscReal			      CrackVolume;
 	/* 
 	 Global variables for Mixed Darcy Flow
 	 */
-	Mat					KVelP;
-	PC					pcVelP;
-	KSP					kspVelP;
-	FLOWBC				bcFlow[4];
-	DM					daFlow;
-	DM					daVFperm;
-	FlowProp		    flowprop;
-	Vec			        RHSVelP;
-	FlowUnit			units;
-	FlowCases			flowcase;
-	Vec				    Source;
+	Mat						      KVelP;
+	PC						      pcVelP;
+	KSP						      kspVelP;
+	FLOWBC				      bcFlow[4];
+	DM						      daFlow;
+	DM						      daVFperm;
+	FlowProp			      flowprop;
+	Vec			    	      RHSVelP;
+	FlowUnit			      units;
+	FlowCases			      flowcase;
+	Vec				  	      Source;
 
 	
 	/*
