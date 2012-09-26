@@ -1,5 +1,5 @@
 /*
- test16.c: test for Multiple hydraulic fractures in 3D with no leakoff
+ test22.c: test for Multiple hydraulic fractures in 3D with no leakoff
 */
 
 #include "petsc.h"
@@ -22,7 +22,7 @@ int main(int argc,char **argv)
 	PetscErrorCode      ierr;
 	PetscInt            orientation=1;
 	PetscInt            nopts=3;
-	PetscInt			ek,ej,ei,c;
+	PetscInt			      ek,ej,ei,c;
 	PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
 	PetscReal           BBmin[3],BBmax[3];
 	PetscReal           x,y,z;  
@@ -33,10 +33,10 @@ int main(int argc,char **argv)
 	PetscReal           p = 1.;
 	PetscReal           p_old = 1.;
 	PetscReal           p_epsilon = 1.e-6;
-	PetscInt			altminit=1;
-	Vec					Vold;
-	PetscReal			errV=1e+10;
-	PetscReal			q = 2.67e-4;
+	PetscInt			      altminit=1;
+	Vec					        Vold;
+	PetscReal			      errV=1e+10;
+	PetscReal			      q = 2.67e-4;
 	PetscReal           p_read, q_read;
 	PetscReal           vol_inj;
 	PetscReal           max_it, p_conv;
