@@ -3,7 +3,7 @@
  Compute the total crack opening displacement (crack volume) by integrating u.\nabla v 
  over the entire domain
  
- (c) 2011 B. Bourdin.C. Chukwudozie, LSU, K. Yoshioka, CHEVRON ETC
+ (c) 2012	Chukwudozie, LSU
  */
 #include "petsc.h"
 #include "CartFE.h"
@@ -24,7 +24,6 @@ extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx,
 	Vec					u_local;
 	PetscReal			***v_array;
 	Vec				    v_local;
-    PetscReal			MyVol_change_total1 = 0;
 	PetscReal			***volcrackopening_array;
 	Vec					volcrackopening_local;   
 	PetscReal			myCrackVolumeLocal = 0.,myCrackVolume = 0.;
@@ -290,3 +289,194 @@ extern PetscErrorCode CellToNodeInterpolation(DM dm,Vec node_vec,Vec cell_vec,VF
 //	ierr = PetscPrintf(PETSC_COMM_WORLD,"\nNodal sum\t= %g\nCell sum\t= %g\n", TotalNodeSum, TotalCellSum);CHKERRQ(ierr);	
     PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "Permeabilityfield"
+extern PetscErrorCode Permeabilityfield(PetscReal *COD_local, PetscReal ***volcrackopening_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element2D *e, FACE face)
+{
+	PetscErrorCode ierr;
+	PetscInt       i,j,k,g;
+	PetscReal		*volopening_loc;
+	
+	PetscFunctionBegin;
+	ierr = PetscMalloc(e->ng*sizeof(PetscReal),&volopening_loc);CHKERRQ(ierr);
+	for (g = 0; g < e->ng; g++){
+		volopening_loc[g] = 0.;		
+	}	
+	switch (face) {
+		case X0:
+			for (k = 0; k < e->nphiz; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphiz; i++) {
+						for (g = 0; g < e->ng; g++) {
+							volopening_loc[g] += e->phi[k][j][i][g] * volcrackopening_array[ek+k][ej+j][ei+i];
+						}
+					}
+				}
+			}
+			break;
+		case Y0:
+			for (k = 0; k < e->nphiy; k++) {
+				for (j = 0; j < e->nphiz; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+							volopening_loc[g] += e->phi[k][j][i][g] * volcrackopening_array[ek+k][ej+j][ei+i];
+						}
+					}
+				}
+			}
+			break;
+		case Z0:
+			for (k = 0; k < e->nphiz; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+							volopening_loc[g] += e->phi[k][j][i][g] * volcrackopening_array[ek+k][ej+j][ei+i];
+						}
+					}
+				}
+			}
+			break;
+		case Z1:
+			break;
+		case Y1:
+			break;
+		case X1:
+			break;
+		default:
+/*	SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be one of X0,X1,Y0,Y1,Z0,Z1\n");	*/
+			break;
+	}
+	/*	Accumulate	*/
+	*COD_local = 0.;
+	for(g = 0; g < e->ng; g++){
+		*COD_local += e->weight[g] * volopening_loc[g];
+	}
+	/*	Clean up	*/
+	ierr = PetscFree(volopening_loc);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "PostProcessing"
+extern PetscErrorCode PostProcessing(VFCtx *ctx, VFFields *fields)
+{
+	PetscErrorCode  ierr;
+	PetscInt        xs,xm,nx;
+	PetscInt        ys,ym,ny;
+	PetscInt        zs,zm,nz;
+	PetscInt        ek, ej, ei;
+	PetscReal		hx,hy,hz;
+	PetscReal		****coords_array;
+	PetscReal		***volcrackopening_array;
+	Vec				volcrackopening_local;   
+	PetscReal		myCODLocal,myCOD, COD;
+	PetscReal       BBmin[3],BBmax[3];
+	PetscReal		lx,ly,lz;
+	PetscReal		****perm_array;
+	Vec				perm_local;   
+	FACE			face;
+
+	PetscFunctionBegin;
+    ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	
+	ierr = DMGetLocalVector(ctx->daScal,&volcrackopening_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->FVCellndof,INSERT_VALUES,volcrackopening_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->FVCellndof,INSERT_VALUES,volcrackopening_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,volcrackopening_local,&volcrackopening_array);
+	ierr = DMDAGetBoundingBox(ctx->daScal,BBmin,BBmax);CHKERRQ(ierr);
+//	ierr = VecSet(fields->vfperm,0.0);CHKERRQ(ierr);	
+	ierr = DMGetLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);
+	
+	lz = BBmax[2]-BBmin[2];
+	ly = BBmax[1]-BBmin[1];
+	lx = BBmax[0]-BBmin[0];	
+	
+	
+	
+	for (ek = zs; ek < zs+zm; ek++) {
+		for (ej = ys; ej < ys+ym; ej++) {
+			for (ei = xs; ei < xs+xm; ei++) {
+				if(volcrackopening_array[ek][ej][ei] > 0)
+					perm_array[ek][ej][ei][0] = perm_array[ek][ej][ei][0] + volcrackopening_array[ek][ej][ei];
+			}
+		}
+	}
+
+	
+	/*
+	
+	if (xs+xm == nx)    xm--;
+	if (ys+ym == ny)    ym--;
+	if (zs+zm == nz)    zm--;
+
+	face = Z0;
+	for (ek = zs; ek < zs+zm; ek++) {
+		myCODLocal = 0.,myCOD = 0., COD = 0.;
+		for (ej = ys; ej < ys+ym; ej++) {
+			for (ei = xs; ei < xs+xm; ei++) {
+				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+				ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+				ierr = Permeabilityfield(&myCODLocal, volcrackopening_array, ek, ej, ei, &ctx->e2D, face);CHKERRQ(ierr);				
+                myCOD += myCODLocal; 
+			}
+		}
+		ierr = MPI_Allreduce(&myCOD,&COD,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+		perm_array[ek][(ny/2)][(nx/2)][2] = 1./12.* (COD/lx);
+	}
+	
+	face = Y0;
+	for (ej = ys; ej < ys+ym; ej++) {
+		myCODLocal = 0.,myCOD = 0., COD = 0.;
+		for (ek = zs; ek < zs+zm; ek++) {
+			for (ei = xs; ei < xs+xm; ei++) {
+				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+				ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+				ierr = Permeabilityfield(&myCODLocal, volcrackopening_array, ek, ej, ei, &ctx->e2D, face);CHKERRQ(ierr);				
+                myCOD += myCODLocal; 
+			}
+		}
+		ierr = MPI_Allreduce(&myCOD,&COD,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+		perm_array[(nz/2)][ej][(nx/2)][1] = 1./12.* (COD/lz);
+	}
+
+	face = X0;
+	for (ei = xs; ei < xs+xm; ei++) {
+		myCODLocal = 0.,myCOD = 0., COD = 0.;
+		for (ek = zs; ek < zs+zm; ek++) {
+			for (ej = ys; ej < ys+ym; ej++) {
+				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+				ierr = CartFE_Element2DInit(&ctx->e2D,hy,hz);CHKERRQ(ierr);
+				ierr = Permeabilityfield(&myCODLocal, volcrackopening_array, ek, ej, ei, &ctx->e2D, face);CHKERRQ(ierr);				
+                myCOD += myCODLocal; 
+			}
+		}
+		ierr = MPI_Allreduce(&myCOD,&COD,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+		if(COD > 0){	
+		perm_array[(nz/2-1)][(ny/2-1)][ei][0] = 1./12.* (COD/lz);
+}
+		else
+			perm_array[(nz/2-1)][(ej)][ei][0] = 1e-6;
+
+	}
+	*/
+	
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr); 
+	ierr = DMRestoreLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
+	ierr = DMLocalToGlobalBegin(ctx->daVFperm,perm_local,INSERT_VALUES,fields->vfperm);CHKERRQ(ierr);
+	ierr = DMLocalToGlobalEnd(ctx->daVFperm,perm_local,INSERT_VALUES,fields->vfperm);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx->daScal,volcrackopening_local,&volcrackopening_array);CHKERRQ(ierr); 
+	ierr = DMRestoreLocalVector(ctx->daScal,&volcrackopening_local);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
