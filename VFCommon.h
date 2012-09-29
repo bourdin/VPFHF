@@ -293,6 +293,7 @@ typedef struct {
 	DM                  daVect;
 	DM                  daScal;
 	CartFE_Element3D    e3D;
+	CartFE_Element2D    e2D;
 	char                prefix[PETSC_MAX_PATH_LEN];
 	Vec                 coordinates;
 	PetscInt            verbose;

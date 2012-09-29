@@ -38,7 +38,7 @@ extern PetscErrorCode VFFlow_DarcyMixedFEMSteadyState(VFCtx *ctx,VFFields *field
 	ierr = FlowMatnVecAssemble(ctx->KVelP,ctx->RHSVelP,fields,ctx);CHKERRQ(ierr);
 	ierr = KSPSolve(ctx->kspVelP,ctx->RHSVelP,fields->VelnPress);CHKERRQ(ierr);
 	
-	/*
+/*
 	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrix.txt",&viewer);CHKERRQ(ierr);
 	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
 	ierr = MatView(ctx->KVelP,viewer);CHKERRQ(ierr);
@@ -46,7 +46,11 @@ extern PetscErrorCode VFFlow_DarcyMixedFEMSteadyState(VFCtx *ctx,VFFields *field
 	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS.txt",&viewer);CHKERRQ(ierr);
 	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
 	ierr = VecView(ctx->RHSVelP,viewer);CHKERRQ(ierr);
-	*/
+
+	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Solution.txt",&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	ierr = VecView(fields->VelnPress,viewer);CHKERRQ(ierr);
+*/
 	
 	ierr = KSPGetConvergedReason(ctx->kspVelP,&reason);CHKERRQ(ierr);
 	if (reason < 0) {
@@ -1242,17 +1246,46 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->RHSVelP);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject)ctx->RHSVelP,"RHS of flow solver");CHKERRQ(ierr);
 	
-	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspVelP);CHKERRQ(ierr);
-	
-	ierr = KSPSetTolerances(ctx->kspVelP,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+/*
+	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspVelP);CHKERRQ(ierr);	
+	ierr = KSPSetTolerances(ctx->kspVelP,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
 	ierr = KSPSetOperators(ctx->kspVelP,ctx->KVelP,ctx->KVelP,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
 	ierr = KSPSetInitialGuessNonzero(ctx->kspVelP,PETSC_TRUE);CHKERRQ(ierr);
 	ierr = KSPAppendOptionsPrefix(ctx->kspVelP,"VelP_");CHKERRQ(ierr);
-	ierr = KSPSetType(ctx->kspVelP,KSPBICG);CHKERRQ(ierr);
+	ierr = KSPSetType(ctx->kspVelP,KSPBCGSL);CHKERRQ(ierr);
 	ierr = KSPSetFromOptions(ctx->kspVelP);CHKERRQ(ierr);
 	ierr = KSPGetPC(ctx->kspVelP,&ctx->pcVelP);CHKERRQ(ierr);
 	ierr = PCSetType(ctx->pcVelP,PCJACOBI);CHKERRQ(ierr);
 	ierr = PCSetFromOptions(ctx->pcVelP);CHKERRQ(ierr);
+*/
+	
+	
+
+	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspVelP);CHKERRQ(ierr);	
+	ierr = KSPSetTolerances(ctx->kspVelP,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+	ierr = KSPSetOperators(ctx->kspVelP,ctx->KVelP,ctx->KVelP,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
+	ierr = KSPSetInitialGuessNonzero(ctx->kspVelP,PETSC_TRUE);CHKERRQ(ierr);
+	ierr = KSPAppendOptionsPrefix(ctx->kspVelP,"VelP_");CHKERRQ(ierr);
+	ierr = KSPSetType(ctx->kspVelP,KSPFGMRES);CHKERRQ(ierr);
+	ierr = KSPGetPC(ctx->kspVelP,&ctx->pcVelP);CHKERRQ(ierr);
+	const PetscInt ufields[] = {0,1,2},pfields[] = {3};
+	ierr = PCSetType(ctx->pcVelP,PCFIELDSPLIT);CHKERRQ(ierr);
+	ierr = PCFieldSplitSetBlockSize(ctx->pcVelP,4);
+	ierr = PCFieldSplitSetFields(ctx->pcVelP,"u",3,ufields,ufields);CHKERRQ(ierr);
+	ierr = PCFieldSplitSetFields(ctx->pcVelP,"p",1,pfields,pfields);CHKERRQ(ierr);
+	ierr = PetscOptionsSetValue("-VelP_fieldsplit_u_pc_type","mg");CHKERRQ(ierr); //mg is a type of SOR (see -VelP_ksp_view)
+	ierr = PetscOptionsSetValue("-VelP_fieldsplit_p_pc_type","none");CHKERRQ(ierr);
+	ierr = PetscOptionsSetValue("-VelP_fieldsplit_u_ksp_type","bcgsl");CHKERRQ(ierr);
+	ierr = PetscOptionsSetValue("-VelP_fieldsplit_p_ksp_type","fgmres");CHKERRQ(ierr);
+	ierr = PetscOptionsSetValue("-VelP_pc_fieldsplit_type","schur");CHKERRQ(ierr);
+	ierr = PetscOptionsSetValue("-VelP_ksp_atol","5e-9");CHKERRQ(ierr);
+	ierr = PetscOptionsSetValue("-VelP_ksp_rtol","5e-9");CHKERRQ(ierr);
+//	ierr = PetscOptionsSetValue("-VelP_pc_ﬁeldsplit_schur_precondition","self");CHKERRQ(ierr);
+	ierr = PetscOptionsSetValue("-VelP_pc_fieldsplit_detect_saddle_point","true");CHKERRQ(ierr);
+	ierr = PCSetFromOptions(ctx->pcVelP);CHKERRQ(ierr);
+	ierr = KSPSetFromOptions(ctx->kspVelP);CHKERRQ(ierr);
+
+	
 	
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
 	ierr = SETFlowBC(&ctx->bcFlow[0],ctx->flowcase);CHKERRQ(ierr);
