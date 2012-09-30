@@ -27,13 +27,15 @@ static const char *FLOWBCTYPE_NAME[] = {
 };
 
 typedef struct {
-	PetscReal       mu;			/* Fluid viscosity						*/
-	PetscReal       rho;        /* Fluid density						*/
+	PetscReal       mu;					/* Fluid viscosity						*/
+	PetscReal       rho;				/* Fluid density						*/
 	PetscReal		por;
-	PetscReal       cf;         /* Fluid compressibility				*/
-	PetscReal		beta;		/* Conversion constant					*/
-	PetscReal		gamma;		/*Conversion parameter					*/
-	PetscReal		alpha;		/*Conversion parameter					*/
+	PetscReal       cf;					/* Fluid compressibility				*/
+	PetscReal		beta;				/* Conversion constant					*/
+	PetscReal		gamma;				/*Conversion parameter					*/
+	PetscReal		alpha;				/*Conversion parameter					*/
+	PetscReal		theta;				/*Time parameter						*/
+	PetscReal		timestepsize;		/*Time step size						*/
 	PetscReal		g[3];
 } FlowProp; 
 
@@ -315,6 +317,7 @@ typedef struct {
 	 Global variables for Mixed Darcy Flow
 	 */
 	Mat						      KVelP;
+	Mat						      KVelPrhs;
 	PC						      pcVelP;
 	KSP						      kspVelP;
 	FLOWBC				      bcFlow[4];

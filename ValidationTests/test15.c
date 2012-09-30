@@ -333,6 +333,7 @@ int main(int argc,char **argv)
 	
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, injected volume %g\n",ctx.timestep,q*ctx.timestep);CHKERRQ(ierr);
+		ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr); 
 		do {
 			p_old = p;
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"  Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit, p);CHKERRQ(ierr);
@@ -341,7 +342,7 @@ int main(int argc,char **argv)
 			ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 			p = q*ctx.timestep/ctx.CrackVolume;
 			ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
-			ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr); // VIrrev shouldn't be set while iterating V-P
+//			ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr); // VIrrev shouldn't be set while iterating V-P
 			ierr = VecScale(fields.U,p);CHKERRQ(ierr);
 			ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 			ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
