@@ -20,7 +20,7 @@ extern PetscErrorCode SETFlowBC(FLOWBC *BC, FlowCases flowcase);
 //extern PetscErrorCode VecApplyFlowBC(Vec RHS, FLOWBC *BC, VFCtx *ctx);
 extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal ****UnPre_array);
 extern PetscErrorCode MatApplyFlowBC(Mat K, DM da, FLOWBC *BC);
-extern PetscErrorCode FlowMatnVecAssemble(Mat K, Vec RHS, VFFields *fields, VFCtx *ctx);
+extern PetscErrorCode FlowMatnVecAssemble(Mat K, Mat Krhs, Vec RHS, VFFields *fields, VFCtx *ctx);
 extern PetscErrorCode FLow_Vecg(PetscReal *Kg_local, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, FlowProp flowpropty, PetscReal ****perm_array);
 extern PetscErrorCode FLow_Vecf(PetscReal *Kf_ele, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, PetscInt c, FlowProp flowpropty, PetscReal ****perm_array);
 extern PetscErrorCode FLow_MatD(PetscReal *Kd_ele, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, FlowProp flowpropty, PetscReal ****perm_array);
