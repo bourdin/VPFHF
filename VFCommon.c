@@ -1030,9 +1030,9 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	
 	ierr = DMDestroy(&ctx->daVect);CHKERRQ(ierr);
 	ierr = DMDestroy(&ctx->daScal);CHKERRQ(ierr);
-	ierr = DMDestroy(&ctx->daFlow);CHKERRQ(ierr);
 	ierr = DMDestroy(&ctx->daVFperm);CHKERRQ(ierr);
-	
+	ierr = DMDestroy(&ctx->daFlow);CHKERRQ(ierr);
+
 	ierr = KSPDestroy(&ctx->kspU);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->KU);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSU);CHKERRQ(ierr); 
@@ -1040,6 +1040,16 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = KSPDestroy(&ctx->kspV);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->KV);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSV);CHKERRQ(ierr); 
+	
+	ierr = KSPDestroy(&ctx->kspVelP);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->VelnPress);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->vfperm);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->velocity);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->FVCell);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->FVCellndof);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->VolCrackOpening);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->FlowBCArray);CHKERRQ(ierr);
+	ierr = VecDestroy(&ctx->Source);CHKERRQ(ierr);
 	
 	ierr = KSPDestroy(&ctx->kspP);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->KP);CHKERRQ(ierr);
@@ -1058,12 +1068,6 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = VecDestroy(&fields->pressure);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->pressureRef);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->pmult);CHKERRQ(ierr);
-	ierr = VecDestroy(&fields->VelnPress);CHKERRQ(ierr);
-	ierr = VecDestroy(&fields->vfperm);CHKERRQ(ierr);
-	ierr = VecDestroy(&fields->velocity);CHKERRQ(ierr);
-	ierr = VecDestroy(&fields->FVCell);CHKERRQ(ierr);
-	ierr = VecDestroy(&fields->FVCellndof);CHKERRQ(ierr);
-	ierr = VecDestroy(&fields->VolCrackOpening);CHKERRQ(ierr);
 
 	ierr = PetscViewerDestroy(&ctx->energyviewer);CHKERRQ(ierr);
 	

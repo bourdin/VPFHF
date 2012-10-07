@@ -99,7 +99,7 @@ int main(int argc,char **argv)
 	/* 
 	 Now done with all initializations
 	 */
-	ctx.maxtimestep = 3;
+	ctx.maxtimestep = 1;
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
 		ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
@@ -125,7 +125,7 @@ int main(int argc,char **argv)
 		ierr = PetscViewerDestroy(&logviewer);
 	}
 	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
-	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
+//	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
 }

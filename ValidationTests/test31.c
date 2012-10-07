@@ -102,7 +102,7 @@ int main(int argc,char **argv)
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ctx.maxtimestep = 3;
+	ctx.maxtimestep = 1;
 	/* 
 	 Now done with all initializations
 	 */
