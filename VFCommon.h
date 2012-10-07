@@ -328,6 +328,8 @@ typedef struct {
 	FlowUnit			      units;
 	FlowCases			      flowcase;
 	Vec				  	      Source;
+	DM						  daVFperm;
+	DM						daScalCell;
 
 	
 	/*
