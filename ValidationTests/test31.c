@@ -134,7 +134,7 @@ int main(int argc,char **argv)
 	
 	
 	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
-	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
+//	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
 }

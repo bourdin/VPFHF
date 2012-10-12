@@ -724,7 +724,6 @@ extern PetscErrorCode SETSourceTerms(Vec Src,FlowProp flowpropty)
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
 				source_array[ek][ej][ei] = beta_c/mu*cos(pi*ek*hz)*cos(pi*ej*hy)*cos(pi*ei*hx); 
-//				source_array[ek][ej][ei] = 4.*pi*pi*3.*beta_c/mu*sin(2.*pi*ek*hz)*sin(2.*pi*ej*hy)*sin(2.*pi*ei*hx);
 			}
 		}
 	}
@@ -758,11 +757,8 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 	MatStencil     *row,*row1;
 	PetscReal      ***source_array;
 	Vec            source_local;
-//	PetscReal		 ****velnpre_array;
-//	Vec            velnpre_local;
 	PetscReal      M_inv = 0.;
 
-	
 	PetscFunctionBegin;
 	beta_c = ctx->flowprop.beta;
 	theta = ctx->flowprop.theta;
@@ -772,13 +768,12 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 	gy     = ctx->flowprop.g[1];
 	gz     = ctx->flowprop.g[2];
 	
-	ierr = DMDAGetInfo(ctx->daFlow,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	/* This line ensures that the number of cells is one less than the number of nodes. Force processing of cells to stop once the second to the last node is processed */
 	ierr = MatZeroEntries(K);CHKERRQ(ierr);
 	ierr = MatZeroEntries(Krhs);CHKERRQ(ierr);
 	ierr = VecSet(RHS,0.);CHKERRQ(ierr);
-	
 	/* Get coordinates from daVect since ctx->coordinates was created as an object in daVect */
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DMGetLocalVector(ctx->daFlow,&RHS_localVec);CHKERRQ(ierr);
@@ -807,9 +802,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 	ierr = PetscMalloc3(nrow,PetscReal,&RHS_local,
 						nrow,MatStencil,&row,
 						nrow,MatStencil,&row1);CHKERRQ(ierr);
-	if (xs+xm == nx) xm--;
-	if (ys+ym == ny) ym--;
-	if (zs+zm == nz) zm--;
+
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -892,11 +885,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 				}
 			}
 		}
-	}
-	if (xs+xm == nx) xm++;
-	if (ys+ym == ny) ym++;
-	if (zs+zm == nz) zm++;
-	
+	}	
 	ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatApplyFlowBC(K,ctx->daFlow,&ctx->bcFlow[0]);CHKERRQ(ierr);
@@ -1167,9 +1156,9 @@ extern PetscErrorCode SETBoundaryTerms(VFCtx *ctx, VFFields *fields)
 	PetscReal		hi,hj,hk;
 	
 	PetscFunctionBegin;
-	ierr = DMDAGetInfo(ctx->daFlow,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+	ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,fields->vfperm,&perm_array);CHKERRQ(ierr); 
 	ierr = DMDAVecGetArrayDOF(ctx->daFlow,fields->FlowBCArray,&velnpress_array);CHKERRQ(ierr); 
 	pi      = 6.*asin(0.5);
@@ -1183,7 +1172,7 @@ extern PetscErrorCode SETBoundaryTerms(VFCtx *ctx, VFFields *fields)
 	hi = 1./(nx-1.);
 	hj = 1./(ny-1.);
 	hk = 1./(nz-1.);
-	for (ek = zs; ek < zs + zm; ek++) {
+	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
 				for(c = 3; c < 6; c++){
@@ -1192,6 +1181,9 @@ extern PetscErrorCode SETBoundaryTerms(VFCtx *ctx, VFFields *fields)
 			}
 		}
 	}
+	ierr = DMDAGetInfo(ctx->daFlow,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	for (ek = zs; ek < zs + zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -1199,7 +1191,6 @@ extern PetscErrorCode SETBoundaryTerms(VFCtx *ctx, VFFields *fields)
 				velnpress_array[ek][ej][ei][1] = beta_c/mu*(cos(pi*ei*hi)*sin(pi*ej*hj)*cos(pi*ek*hk)-gamma_c*rho*gy)/(3.*pi);
 				velnpress_array[ek][ej][ei][2] = beta_c/mu*(cos(pi*ei*hi)*cos(pi*ej*hj)*sin(pi*ek*hk)-gamma_c*rho*gz)/(3.*pi);
 				velnpress_array[ek][ej][ei][3] = sin(2.*pi*ek*hk)*sin(2.*pi*ej*hj)*sin(2.*pi*ei*hi);
-					//	printf("\nbc[2] = %f\n", velnpress_array[ek][ej][ei][2]);
 			}
 		}
 	}

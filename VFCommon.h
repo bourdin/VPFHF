@@ -178,6 +178,9 @@ typedef struct {
 	PetscReal       Gc;         /* Fracture toughness              */
 	PetscReal       beta;       /* Biot's constant                 */
 	PetscReal       rho;        /* density                         */
+	Vec				phi;        /* porosity                        */
+	Vec				Ks;			/* Bulk modulus of rock            */
+	Vec				Kw;			/* Modulus of liquid               */
 } MatProp; //change them to Vec later
 
 typedef struct {
@@ -328,7 +331,6 @@ typedef struct {
 	FlowUnit			      units;
 	FlowCases			      flowcase;
 	Vec				  	      Source;
-	DM						  daVFperm;
 	DM						daScalCell;
 
 	
