@@ -28,6 +28,9 @@ extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 		case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:       
 			ierr = MixedFEMFlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
 			break;
+		case FLOWSOLVER_TSMIXEDFEM:       
+			ierr = MixedFEMTSFlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
+			break;
 		case FLOWSOLVER_FEM:
 			break; 
 		case FLOWSOLVER_TS:
@@ -50,6 +53,9 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 	switch (ctx->flowsolver) {
 		case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:       
 			ierr = MixedFEMFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
+			break;
+		case FLOWSOLVER_TSMIXEDFEM:       
+			ierr = MixedFEMTSFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
 			break;
 		case FLOWSOLVER_TS:
 		    break;
@@ -139,9 +145,12 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
     case FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE:
       ierr = VFFlow_DarcyMixedFEMSteadyState(ctx,fields);CHKERRQ(ierr);
       break;
-    case FLOWSOLVER_FAKE:
-      ierr = VFFlow_Fake(ctx,fields);CHKERRQ(ierr);
-      break; 
+	  case FLOWSOLVER_TSMIXEDFEM:
+		  ierr = MixedFlowFEMTSSolve(ctx,fields);CHKERRQ(ierr);
+		  break;
+	  case FLOWSOLVER_FAKE:
+		  ierr = VFFlow_Fake(ctx,fields);CHKERRQ(ierr);
+		  break; 
     case FLOWSOLVER_READFROMFILES:
       //ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
       switch (ctx->fileformat) {
