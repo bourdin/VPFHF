@@ -660,7 +660,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 	ierr = DMCreateGlobalVector(ctx->daScal,&fields->pmult);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject) fields->pmult,"PermeabilityMultiplier");CHKERRQ(ierr);
 	ierr = VecSet(fields->pmult,0.0);CHKERRQ(ierr);
-	
+
 	ierr = DMCreateGlobalVector(ctx->daFlow,&fields->VelnPress);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject) fields->VelnPress,"Velocity and Pressure");CHKERRQ(ierr);
 	ierr = VecSet(fields->VelnPress,0.0);CHKERRQ(ierr);
@@ -1075,15 +1075,15 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = MatDestroy(&ctx->KV);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSV);CHKERRQ(ierr); 
 	
-	ierr = KSPDestroy(&ctx->kspVelP);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->VelnPress);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->vfperm);CHKERRQ(ierr);
-	ierr = VecDestroy(&fields->velocity);CHKERRQ(ierr);
-	ierr = VecDestroy(&fields->FVCell);CHKERRQ(ierr);
+//	ierr = VecDestroy(&fields->velocity);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->FVCell);CHKERRQ(ierr);	
 	ierr = VecDestroy(&fields->FVCellndof);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->VolCrackOpening);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->FlowBCArray);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->Source);CHKERRQ(ierr);
+	
 	
 	ierr = KSPDestroy(&ctx->kspP);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->KP);CHKERRQ(ierr);

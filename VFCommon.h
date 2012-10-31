@@ -108,6 +108,7 @@ typedef enum {
 	FLOWSOLVER_SNES,
 	FLOWSOLVER_FEM,
 	FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE,
+	FLOWSOLVER_TSMIXEDFEM,
 	FLOWSOLVER_FAKE,
 	FLOWSOLVER_READFROMFILES,
 } VFFlowSolverType;
@@ -319,19 +320,26 @@ typedef struct {
 	/* 
 	 Global variables for Mixed Darcy Flow
 	 */
-	Mat						      KVelP;
-	Mat						      KVelPrhs;
-	PC						      pcVelP;
-	KSP						      kspVelP;
-	FLOWBC				      bcFlow[4];
-	DM						      daFlow;
-	DM						      daVFperm;
-	FlowProp			      flowprop;
-	Vec			    	      RHSVelP;
-	FlowUnit			      units;
-	FlowCases			      flowcase;
-	Vec				  	      Source;
-	DM						daScalCell;
+	Mat					KVelP;
+	Mat					KVelPrhs;
+	PC					pcVelP;
+	KSP					kspVelP;
+	FLOWBC				bcFlow[4];
+	DM					daFlow;
+	DM					daVFperm;
+	FlowProp			flowprop;
+	Vec			        RHSVelP;
+	FlowUnit		    units;
+	FlowCases		    flowcase;
+	Vec				    Source;
+	DM					daScalCell;
+	Mat					KVelPlhs;
+	Mat					JacVelP;
+	TS					tsVelP;
+	SNES				snesVelP;
+	Vec				    FlowFunct;
+	Vec					Perm;
+	Vec					FlowBC;
 
 	
 	/*
