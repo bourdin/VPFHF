@@ -31,6 +31,9 @@ extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 		case FLOWSOLVER_TSMIXEDFEM:       
 			ierr = MixedFEMTSFlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
 			break;
+		case FLOWSOLVER_SNESMIXEDFEM:       
+			ierr = MixedFEMSNESFlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
+			break;
 		case FLOWSOLVER_FEM:
 			break; 
 		case FLOWSOLVER_TS:
@@ -56,6 +59,9 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 			break;
 		case FLOWSOLVER_TSMIXEDFEM:       
 			ierr = MixedFEMTSFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
+			break;
+		case FLOWSOLVER_SNESMIXEDFEM:       
+			ierr = MixedFEMSNESFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
 			break;
 		case FLOWSOLVER_TS:
 		    break;
@@ -147,6 +153,9 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
       break;
 	  case FLOWSOLVER_TSMIXEDFEM:
 		  ierr = MixedFlowFEMTSSolve(ctx,fields);CHKERRQ(ierr);
+		  break;
+	  case FLOWSOLVER_SNESMIXEDFEM:
+		  ierr = MixedFlowFEMSNESSolve(ctx,fields);CHKERRQ(ierr);
 		  break;
 	  case FLOWSOLVER_FAKE:
 		  ierr = VFFlow_Fake(ctx,fields);CHKERRQ(ierr);

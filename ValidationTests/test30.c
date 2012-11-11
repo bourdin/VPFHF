@@ -1,5 +1,5 @@
 /*
- test30.c: 2D Case hydraulic fracturing: Simulates pressure driven propagation of line cracks, mimicking the hydraulic fracturing process, using VFRectangularCaracks.
+ test33.c: 3D Flow problem with source term [pressure = 1/(3*pi^2)*cos(pi*x)*cos(pi*y)*cos(pi*z)]. All velocity boundary condition
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  */
 
@@ -8,7 +8,7 @@
 #include "VFCommon.h"
 #include "VFV.h"
 #include "VFU.h"
-#include "VFPermfield.h"
+#include "VFFlow.h"
 
 VFCtx               ctx;
 VFFields            fields;
@@ -16,309 +16,132 @@ VFFields            fields;
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
-{
+{	
 	PetscErrorCode  ierr;
-	PetscViewer			viewer;
+	PetscViewer		viewer;
 	PetscViewer     logviewer;
-	PetscReal       length = .2;
-	PetscReal       center[3]={0.,0.,.5};
-	PetscInt        mode=1;
-	PetscInt        nopts=3;
-	PetscInt        i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+	char			filename[FILENAME_MAX];
+	PetscInt		i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+	PetscReal		BBmin[3],BBmax[3];
+	PetscReal		****flowbc_array;
+	PetscReal		***src_array;
 	PetscReal		****coords_array;
-	char            filename[FILENAME_MAX];
-	PetscReal       p;
-	PetscReal       p_old;
-	PetscReal       p_epsilon = 1.e-5;
-	PetscInt			  altminit=1;
-	Vec					    Vold;
-	PetscReal			  errV=1e+10;
-	PetscReal			  q,maxvol = .03;
-	VFRectangularCrack *crack;
-	PetscInt     nc = 0;
-	char         prefix[PETSC_MAX_PATH_LEN+1];
-	Vec          V;
-
-	
+	PetscReal		hx,hy,hz;
+	PetscReal		gx,gy,gz;
+	PetscReal		gamma, beta, rho, mu;
+	PetscReal		pi;
+		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      ######################################################\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #													#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #	    			Test30!!!						#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #													#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #			2D hydraulic fracturing					#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #			using VFRectangularCracks				#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #													#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #   Inputs:											#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #	  1. number of rectangular cracks				#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #	  2. 9 components of coords. of the				#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #		 3 specified points as below				#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #													#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #			 (6,7,8)								#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				+--------------------+				#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				|					 |				#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				|					 |				#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				|					 |				#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				|					 |				#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				|					 |				#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #				+--------------------+				#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #			 (0,1,2)			  (3,4,5)			#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      #													#\n");CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      ######################################################\n\n\n");CHKERRQ(ierr);
+	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
+	
+	/*	Set flow solver type	*/
+	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
+	ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx.flowsolver,(PetscEnum*)&ctx.flowsolver,PETSC_NULL);CHKERRQ(ierr);
 
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-length",&length,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-q",&q,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&nc,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-mode",&mode,PETSC_NULL);CHKERRQ(ierr);
+	ierr = FlowSolverInitialize(&ctx,&fields);CHKERRQ(ierr);
+	
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);	
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-maxvol",&maxvol,PETSC_NULL);CHKERRQ(ierr);
-  /*
-    Overwrite ctx.maxtimestep with something more reasonable
-  */
-  ctx.maxtimestep = 150;
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-	q = maxvol / ctx.maxtimestep;
+	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
+	ierr = VecSet(fields.FlowBCArray,0.);CHKERRQ(ierr);
+	ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
 	
-	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-	ierr = PetscMalloc(nc*sizeof(VFRectangularCrack),&crack);CHKERRQ(ierr);
-	for (i = 0; i < nc; i++) {
-		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
-		ierr = VFRectangularCrackCreate(&crack[i]);CHKERRQ(ierr);
-		ierr = VFRectangularCrackGet(prefix,&crack[i]);CHKERRQ(ierr);
-		ierr = VFRectangularCrackView(&crack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-	}
-	ierr = DMCreateGlobalVector(ctx.daScal,&V);CHKERRQ(ierr);
-	ierr = VecSet(V,1.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
-	for (c = 0; c < nc; c++) {
-		ierr = VFRectangularCrackBuildVAT2(V,&crack[c],&ctx);CHKERRQ(ierr);
-		ierr = VecPointwiseMin(fields.V,V,fields.V);CHKERRQ(ierr);
-	}
-	ierr = VecDestroy(&V);CHKERRQ(ierr);
-	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
+	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
+
+	pi = 6.*asin(0.5);
+	hx = 1./(nx-1);
+	hy = 1./(nx-1);
+	hz = 1./(nz-1);	
+	rho = ctx.flowprop.rho;									 
+	mu = ctx.flowprop.mu;     
+	beta = ctx.flowprop.beta;		
+	gamma = ctx.flowprop.gamma;									
+    gx = ctx.flowprop.g[0];
+    gy = ctx.flowprop.g[1];
+    gz = ctx.flowprop.g[2];
 	/*
-	 Reset all BC for U and V
+	 Reset all Flow BC for velocity and P
 	 */
 	for (i = 0; i < 6; i++) {
-		ctx.bcV[0].face[i]=NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].face[i] = NONE;
+		for (c = 0; c < 4; c++) {
+			ctx.bcFlow[c].face[i] = NOBC;
 		}
 	}
 	for (i = 0; i < 12; i++) {
-		ctx.bcV[0].edge[i]=NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].edge[i] = NONE;
+		for (c = 0; c < 4; c++) {
+			ctx.bcFlow[c].edge[i] = NOBC;
 		}
 	}
 	for (i = 0; i < 8; i++) {
-		ctx.bcV[0].vertex[i]=NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].vertex[i] = NONE;
+		for (c = 0; c < 4; c++) {
+			ctx.bcFlow[c].vertex[i] = NOBC;
 		}
 	}
-	switch (mode) {
-		case 1:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[1].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[1].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-			ctx.bcU[0].face[Y0]= ZERO;
-			ctx.bcU[1].face[Y0]= ZERO;
-			ctx.bcU[2].face[Y0]= ZERO;
-			/*	face Y1	*/
-			ctx.bcU[0].face[Y1]= ZERO;		  
-			ctx.bcU[1].face[Y1]= ZERO;		  
-			ctx.bcU[2].face[Y1]= ZERO;		  
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			break;
-		case 2:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-			ctx.bcU[1].face[Y0]= ZERO;
-			ctx.bcU[2].face[Y0]= ZERO;
-			/*	face Y1	*/
-			ctx.bcU[1].face[Y1]= ZERO;
-			ctx.bcU[2].face[Y1]= ZERO;		  
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			break;
-		case 3:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[1].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[1].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-			ctx.bcU[1].face[Y0]= ZERO;
-			ctx.bcU[2].face[Y0]= ZERO;
-			/*	face Y1	*/
-			ctx.bcU[1].face[Y1]= ZERO;		  
-			ctx.bcU[2].face[Y1]= ZERO;		  
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			break;
-		case 4:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-			ctx.bcU[0].face[Y0]= ZERO;
-			ctx.bcU[1].face[Y0]= ZERO;
-			ctx.bcU[2].face[Y0]= ZERO;
-			/*	face Y1	*/
-			ctx.bcU[0].face[Y1]= ZERO;		  
-			ctx.bcU[1].face[Y1]= ZERO;		  
-			ctx.bcU[2].face[Y1]= ZERO;		  
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			break;
-		case 5:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-				/*.....FREE.......*/
-			/*	face Y1	*/
-				/*.....FREE.......*/
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			break;
-		case 6:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[1].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[1].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-			/*.....FREE.......*/
-			/*	face Y1	*/
-			/*.....FREE.......*/
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			break;
-		default:
-			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: mode should be one of {1,2,3,4,5,6}, got %i\n",mode);
-			break;
-	}  
-	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);	
-	ctx.hasCrackPressure = PETSC_TRUE;
-	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
-	ierr = PetscViewerCreate(PETSC_COMM_WORLD, &viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetType(viewer, PETSCVIEWERASCII);CHKERRQ(ierr);
-	ierr = PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);CHKERRQ(ierr);
-  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.pres",ctx.prefix);CHKERRQ(ierr);
-	ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
-	ierr = PetscViewerASCIIPrintf(viewer, "#Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \t TotalMechEnergy \n");CHKERRQ(ierr);
+	for (i = 0; i < 6; i++) {
+		ctx.bcFlow[3].face[X0] = PRESSURE;
+	}
 	
-	p = 1.;
-	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
-	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
-	ctx.timevalue = 0;	
-	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, injected volume %g\n",ctx.timestep,q*ctx.timestep);CHKERRQ(ierr);
-		do {
-			p_old = p;
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"  Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit, p);CHKERRQ(ierr);
-			ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-			ierr = VecScale(fields.U,1./p);CHKERRQ(ierr);
-			ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
-			p = q*ctx.timestep/ctx.CrackVolume;
-			ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
-			ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
-			ierr = VecScale(fields.U,p);CHKERRQ(ierr);
-			ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
-			ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
-
-			ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
-			ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"    Max. change on V: %e\n",errV);CHKERRQ(ierr);
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"    Max. change on p: %e\n", PetscAbs(p-p_old));CHKERRQ(ierr);
-			altminit++;
-		} while (PetscAbs(p-p_old) >= p_epsilon && altminit <= ctx.altminmaxit);
-		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) {
+				flowbc_array[k][j][i][0] = -beta/mu*(2.*pi*cos(2.*pi*i*hx)*sin(2.*pi*j*hy)*sin(2.*pi*k*hz)-gamma*rho*gx);
+				flowbc_array[k][j][i][1] = -beta/mu*(2.*pi*sin(2.*pi*i*hx)*cos(2.*pi*j*hy)*sin(2.*pi*k*hz)-gamma*rho*gy);
+				flowbc_array[k][j][i][2] = -beta/mu*(2.*pi*sin(2.*pi*i*hx)*sin(2.*pi*j*hy)*cos(2.*pi*k*hz)-gamma*rho*gz);
+				flowbc_array[k][j][i][3] = sin(2.*pi*i*hx)*sin(2.*pi*j*hy)*sin(2.*pi*k*hz);
+			}
+		}
+	}	
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) {
+				src_array[k][j][i] = 4.*pi*pi*3.*beta/mu*sin(2.*pi*k*hz)*sin(2.*pi*j*hy)*sin(2.*pi*i*hx); 
+			}
+		}
+	}
+	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+	/* 
+	 Now done with all initializations
+	 */
+	ctx.maxtimestep = 1;
+	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
+		ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
+		/*
+		 Do flow solver step 
+		 */
+		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+		/*
+		 Save fields and write statistics about current run
+		 */    
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
-				ierr = FieldsH5Write(&ctx,&fields);CHKERRQ(ierr);
+				ierr = FieldsH5Write(&ctx,&fields);
 				break;
 			case FILEFORMAT_BIN:
-				ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
+				ierr = FieldsBinaryWrite(&ctx,&fields);
 				break; 
-		}
+		} 
 		ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
 		ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
 		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
-		ierr = PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
-		ctx.ElasticEnergy=0;
-		ctx.InsituWork=0;
-		ctx.PressureWork = 0.;
-		ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
-		ierr = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
-		ctx.TotalEnergy = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork + ctx.SurfaceEnergy;
-		ierr = PetscViewerASCIIPrintf(viewer, "%d \t %e \t %e \t %e \t %e \t %e \t %e\n", ctx.timestep , ctx.CrackVolume, p, ctx.SurfaceEnergy, ctx.ElasticEnergy, ctx.PressureWork, ctx.TotalEnergy);CHKERRQ(ierr);
-    ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ctx.ElasticEnergy,
-                                  ctx.InsituWork,ctx.SurfaceEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
-		altminit = 0.;
+		ierr = PetscViewerDestroy(&logviewer);
 	}
-	ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
-	ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
-	ierr = VecDestroy(&Vold);CHKERRQ(ierr);
-	ierr = PetscFree(crack);CHKERRQ(ierr);
+	Vec error;
+	PetscReal norm_1,norm_2,norm_inf;
+	ierr = VecDuplicate(fields.VelnPress,&error);
+	ierr = VecWAXPY(error,-1.0,fields.VelnPress,fields.FlowBCArray);
+	ierr = VecNorm(error,NORM_1,&norm_1);
+	ierr = VecNorm(error,NORM_2,&norm_2);
+	ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1_NORM = %f \n 2_norm = %f \n inf_norm = %f \n",norm_1, norm_2,norm_inf);CHKERRQ(ierr);	
+	
+	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);

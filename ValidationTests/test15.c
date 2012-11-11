@@ -1,5 +1,5 @@
 /*
- test13.c: solves for the displacement and v-field in a pressurized line crack in 2d (Sneddon 2D)
+ test15.c: solves for the displacement and v-field in a pressurized line crack in 2d (Sneddon 2D)
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 
