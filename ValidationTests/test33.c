@@ -87,6 +87,7 @@ int main(int argc,char **argv)
 				flowbc_array[k][j][i][0] = beta/mu*(sin(pi*i*hx)*cos(pi*j*hy)*cos(pi*k*hz)-gamma*rho*gx)/(3.*pi);
 				flowbc_array[k][j][i][1] = beta/mu*(cos(pi*i*hx)*sin(pi*j*hy)*cos(pi*k*hz)-gamma*rho*gy)/(3.*pi);
 				flowbc_array[k][j][i][2] = beta/mu*(cos(pi*i*hx)*cos(pi*j*hy)*sin(pi*k*hz)-gamma*rho*gz)/(3.*pi);
+				flowbc_array[k][j][i][3] = (cos(pi*i*hx)*cos(pi*j*hy)*cos(pi*k*hz)-gamma*rho*gz)/(3.*pi*pi);
 			}
 		}
 	}	
@@ -128,6 +129,16 @@ int main(int argc,char **argv)
 		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
 		ierr = PetscViewerDestroy(&logviewer);
 	}
+	Vec error;
+	PetscReal norm_1,norm_2,norm_inf;
+	ierr = VecDuplicate(fields.VelnPress,&error);
+	ierr = VecWAXPY(error,-1.0,fields.VelnPress,fields.FlowBCArray);
+	ierr = VecNorm(error,NORM_1,&norm_1);
+	ierr = VecNorm(error,NORM_2,&norm_2);
+	ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1_NORM = %f \n 2_norm = %f \n inf_norm = %f \n",norm_1, norm_2,norm_inf);CHKERRQ(ierr);	
+	
+
 	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 //	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();

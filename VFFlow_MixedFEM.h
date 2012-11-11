@@ -39,15 +39,25 @@ extern PetscErrorCode SETBoundaryTerms(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode MixedFEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode MixedFEMTSFlowSolverFinalize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FormIFunction(TS ts,PetscReal t,Vec VelnPress,Vec VelnPressdot,Vec Func,void *user);
-//extern PetscErrorCode VecApplyTSFlowBC(PetscReal ****subF_array,FLOWBC *BC,VFCtx *ctx);
 extern PetscErrorCode FormIJacobian(TS ts,PetscReal t,Vec VelnPress,Vec VelnPressdot,PetscReal shift,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user);
-extern PetscErrorCode ApplyJacobianBC(Mat K, Mat Klhs,FLOWBC *BC);
+extern PetscErrorCode ApplyTSJacobianBC(Mat K, Mat Klhs,FLOWBC *BC);
 extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx);
 extern PetscErrorCode MixedFlowFEMTSSolve(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FormInitialSolution(Vec VelnPress,Vec VelnPressBV,FLOWBC *BC,VFCtx *ctx);
 extern PetscErrorCode MixedFEMTSMonitor(TS ts,PetscInt timestep,PetscReal timevalue,Vec VelnPress,void*);
-
 extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec bcv_local, FLOWBC *BC,VFCtx *ctx);
+/*	SNES Functions*/
+extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx);
+extern PetscErrorCode FormSNESIJacobian(SNES ts,Vec VelnPress,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user);
+extern PetscErrorCode FormSNESIFunction(SNES ts,Vec VelnPress,Vec Func,void *user);
+extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields);
+extern PetscErrorCode MixedFEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields);
+extern PetscErrorCode MixedFEMSNESFlowSolverFinalize(VFCtx *ctx,VFFields *fields);
+extern PetscErrorCode ApplySNESJacobianBC(Mat K, Mat Klhs,FLOWBC *BC);
+
+
+
+
 
 
 
