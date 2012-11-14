@@ -31,6 +31,7 @@ typedef struct {
 	PetscReal       rho;				/* Fluid density						*/
 	PetscReal		por;
 	PetscReal       cf;					/* Fluid compressibility				*/
+	PetscReal       M_inv;					
 	PetscReal		beta;				/* Conversion constant					*/
 	PetscReal		gamma;				/*Conversion parameter					*/
 	PetscReal		alpha;				/*Conversion parameter					*/
@@ -322,7 +323,6 @@ typedef struct {
 	 Global variables for Mixed Darcy Flow
 	 */
 	Mat					KVelP;
-//	Mat					KVelPrhs;
 	PC					pcVelP;
 	KSP					kspVelP;
 	FLOWBC				bcFlow[4];
@@ -330,6 +330,7 @@ typedef struct {
 	DM					daVFperm;
 	FlowProp			flowprop;
 	Vec			        RHSVelP;
+	Vec			        RHSVelPpre;
 	FlowUnit		    units;
 	FlowCases		    flowcase;
 	Vec				    Source;

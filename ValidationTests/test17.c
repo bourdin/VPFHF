@@ -1,5 +1,5 @@
 /*
- test17.c: solves for the displacement and v-field in a pressurized line crack in 2d (Sneddon 2D)
+ test17.c: Solves for displacement and v-field in volume driven propagation of arbitrary number of line cracks in 2d using VFRectangularCrack
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 
