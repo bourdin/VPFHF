@@ -1602,7 +1602,7 @@ extern PetscErrorCode MixedFEMTSFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "MixedFEMTSSolve"
+#define __FUNCT__ "MixedFlowFEMTSSolve"
 extern PetscErrorCode MixedFlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 {
 	PetscErrorCode     ierr;
