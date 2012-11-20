@@ -104,9 +104,10 @@ int main(int argc,char **argv)
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	
 	/* Setting time parameters	*/
-	ctx.maxtimestep = 2;
-	ctx.maxtimevalue = 6.;
-	ctx.timevalue = 1.;
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
+	ctx.maxtimestep = 20;
+	ctx.maxtimevalue = 1.;
+	ctx.timevalue = 0.1;
 	/*	Do flow solver step	*/
 	ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 	/*	Save fields and write statistics about current run	*/    

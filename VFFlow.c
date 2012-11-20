@@ -8,9 +8,12 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
+#include "VFFlow.h"
 #include "VFFlow_FEM.h"
 #include "VFFlow_Fake.h"
-#include "VFFlow_MixedFEM.h"
+#include "VFFlow_KSPMixedFEM.h"
+#include "VFFlow_SNESMixedFEM.h"
+#include "VFFlow_TSMixedFEM.h"
 
 
 #undef __FUNCT__

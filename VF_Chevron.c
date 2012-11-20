@@ -9,10 +9,10 @@
 #include "VFV.h"
 #include "VFU.h"
 #include "VFFlow.h"
+#include "VFFlow_KSPMixedFEM.h"
 /*
   Remove this as soon as the functions are moved in the proper location
 */
-#include "VFFlow_MixedFEM.h"
 
 VFCtx               ctx;
 VFFields            fields;
