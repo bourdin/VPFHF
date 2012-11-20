@@ -8,6 +8,7 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
+#include "VFPermfield.h"
 
 #undef __FUNCT__
 #define __FUNCT__ "VolumetricCrackOpening"
