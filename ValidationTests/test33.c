@@ -197,7 +197,7 @@ int main(int argc,char **argv)
 		/*
 		 Do mechanics step 
 		 */
-		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+//		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
 		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);

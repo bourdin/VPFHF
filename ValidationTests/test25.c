@@ -76,13 +76,13 @@ int main(int argc,char **argv)
 		}
 	}
 	for (i = 0; i < 6; i++) {
-		ctx.bcFlow[3].face[X0] = PRESSURE;
+		ctx.bcFlow[3].face[i] = PRESSURE;
 	}
 	
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				flowbc_array[k][j][i][3] = sin(2.*pi*i*hx)*sin(2.*pi*j*hy)*cos(2.*pi*k*hz);
+				flowbc_array[k][j][i][3] = sin(2.*pi*i*hx)*sin(2.*pi*j*hy)*sin(2.*pi*k*hz);
 			}
 		}
 	}	
