@@ -102,8 +102,18 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	PetscInt           i,j,k,c,veldof = 3;
 	PetscInt           xs,xm,ys,ym,zs,zm;
 	PetscInt           its;
+//	Vec                VecRHS;
+//	PetscReal			theta,one_minus_theta,timestepsize;
+//	PetscReal			dt_dot_theta,dt_dot_one_minus_theta;
+
 	
 	PetscFunctionBegin;	
+	
+	
+//	ierr = VecDuplicate(ctx->RHSVelP,&VecRHS);CHKERRQ(ierr);
+
+	
+	
 /*	temporary created permfield in ctx so permeability can be in ctx	*/
 	ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
 	ierr = VecSet(ctx->Perm,0.0);CHKERRQ(ierr);
@@ -201,8 +211,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	Vec            RHS_localVec;
 	Vec            perm_local;
 	PetscReal      hx,hy,hz;
-	PetscReal      *KA_local,*KB_local,*KD_local,*KBTrans_local,*KS_local,*KDlhs_local;
-	PetscReal      *KArhs_local,*KBrhs_local,*KDrhs_local,*KBTransrhs_local;
+	PetscReal      *KA_local,*KB_local,*KD_local,*KBTrans_local,*KS_local;
 	PetscReal      beta_c,mu,gx,gy,gz;
 	PetscReal	   theta,timestepsize;
 	PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
@@ -210,12 +219,22 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	PetscReal      ***source_array;
 	Vec            source_local;
 	PetscReal      M_inv;
+	Mat			   K1,K2;
+	PetscReal		time_theta,time_one_minus_theta;
+	FACE			face;
+	PetscReal		****velnprebc_array;
+	Vec				velnprebc_local;
+	MatStructure	flg;
+
 
 	PetscFunctionBegin;
+	flg = SAME_NONZERO_PATTERN;
 	M_inv     = ctx->flowprop.M_inv;
 	beta_c = ctx->flowprop.beta;
 	theta = ctx->flowprop.theta;
 	timestepsize = ctx->flowprop.timestepsize;
+	time_theta = theta * timestepsize;
+	time_one_minus_theta = -1.*(1.-theta)*timestepsize;
 	mu     = ctx->flowprop.mu;
 	gx     = ctx->flowprop.g[0];
 	gy     = ctx->flowprop.g[1];
@@ -225,6 +244,8 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 		// This line ensures that the number of cells is one less than the number of nodes. Force processing of cells to stop once the second to the last node is processed 
 	ierr = MatZeroEntries(K);CHKERRQ(ierr);
 	ierr = MatZeroEntries(Klhs);CHKERRQ(ierr);
+	ierr = MatDuplicate(K,MAT_COPY_VALUES,&K1);CHKERRQ(ierr);
+	ierr = MatDuplicate(K,MAT_COPY_VALUES,&K2);CHKERRQ(ierr);
 	ierr = VecSet(RHS,0.);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DMGetLocalVector(ctx->daFlow,&RHS_localVec);CHKERRQ(ierr);
@@ -238,16 +259,18 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMGlobalToLocalBegin(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);	
+	
+	ierr = DMGetLocalVector(ctx->daFlow,&velnprebc_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daFlow,ctx->FlowBC,INSERT_VALUES,velnprebc_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daFlow,ctx->FlowBC,INSERT_VALUES,velnprebc_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daFlow,velnprebc_local,&velnprebc_array);CHKERRQ(ierr); 
+
+	
 	ierr = PetscMalloc5(nrow*nrow,PetscReal,&KA_local,
 						nrow*nrow,PetscReal,&KB_local,
 						nrow*nrow,PetscReal,&KD_local,
 						nrow*nrow,PetscReal,&KBTrans_local,
 						nrow*nrow,PetscReal,&KS_local);CHKERRQ(ierr);
-	ierr = PetscMalloc5(nrow*nrow,PetscReal,&KArhs_local,
-						nrow*nrow,PetscReal,&KBrhs_local,
-						nrow*nrow,PetscReal,&KBTransrhs_local,
-						nrow*nrow,PetscReal,&KDrhs_local,
-						nrow*nrow,PetscReal,&KDlhs_local);CHKERRQ(ierr);
 	ierr = PetscMalloc3(nrow,PetscReal,&RHS_local,
 						nrow,MatStencil,&row,
 						nrow,MatStencil,&row1);CHKERRQ(ierr);	
@@ -261,9 +284,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					//This computes the local contribution of the global A matrix
 				ierr = FLow_MatA(KA_local,&ctx->e3D,ek,ej,ei);CHKERRQ(ierr);
 				for (l = 0; l < nrow*nrow; l++) {
-					KS_local[l] = 2*M_inv*KA_local[l];
-					KArhs_local[l] = -1.*(1.-theta)*KA_local[l];
-					KA_local[l] = theta*KA_local[l];
+					KS_local[l] = -2*M_inv*KA_local[l];
 				}
 				for (c = 0; c < veldof; c++) {
 					ierr = FLow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c);CHKERRQ(ierr);
@@ -276,18 +297,9 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 							}
 						}
 					}
-					for (l = 0; l < nrow*nrow; l++) {
-						KBrhs_local[l] = -1.*timestepsize*(1.-theta)*KB_local[l];
-						KBTransrhs_local[l] = -1.*(1.-theta)*KBTrans_local[l];
-						KB_local[l] = timestepsize*theta*KB_local[l];
-						KBTrans_local[l] = theta*KBTrans_local[l];
-				}
-					ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KA_local,ADD_VALUES);CHKERRQ(ierr);
-					ierr = MatSetValuesStencil(K,nrow,row1,nrow,row,KB_local,ADD_VALUES);CHKERRQ(ierr);
-					ierr = MatSetValuesStencil(K,nrow,row,nrow,row1,KBTrans_local,ADD_VALUES);CHKERRQ(ierr);
-					ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,KArhs_local,ADD_VALUES);CHKERRQ(ierr);
-					ierr = MatSetValuesStencil(Klhs,nrow,row1,nrow,row,KBrhs_local,ADD_VALUES);CHKERRQ(ierr);
-					ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row1,KBTransrhs_local,ADD_VALUES);CHKERRQ(ierr);
+					ierr = MatSetValuesStencil(K1,nrow,row,nrow,row,KA_local,ADD_VALUES);CHKERRQ(ierr);			
+					ierr = MatSetValuesStencil(K1,nrow,row1,nrow,row,KB_local,ADD_VALUES);CHKERRQ(ierr);		
+					ierr = MatSetValuesStencil(K1,nrow,row,nrow,row1,KBTrans_local,ADD_VALUES);CHKERRQ(ierr);
 				}
 				ierr = FLow_MatD(KD_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
@@ -297,13 +309,9 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 						}
 					}
 				}
-				for (l = 0; l < nrow*nrow; l++) {
-					KDlhs_local[l] = KS_local[l]+timestepsize*theta*KD_local[l];
-					KDrhs_local[l] = KS_local[l]-timestepsize*(1.-theta)*KD_local[l];
-				}
-				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KDlhs_local,ADD_VALUES);CHKERRQ(ierr);
-				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,KDrhs_local,ADD_VALUES);CHKERRQ(ierr);
-					//Assembling the righthand side vector f
+				ierr = MatSetValuesStencil(K1,nrow,row,nrow,row,KD_local,ADD_VALUES);CHKERRQ(ierr);
+				ierr = MatSetValuesStencil(K2,nrow,row,nrow,row,KS_local,ADD_VALUES);CHKERRQ(ierr);
+				/*Assembling the righthand side vector f*/
 				for (c = 0; c < veldof; c++) {
 					ierr = FLow_Vecf(RHS_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array);CHKERRQ(ierr);
 					for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
@@ -314,12 +322,12 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 						}
 					}
 				}
-					//Assembling the righthand side vector g
+				/*Assembling the righthand side vector g*/
 				ierr = FLow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-							RHS_array[ek+k][ej+j][ei+i][3] += timestepsize*RHS_local[l];
+							RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l];
 						}
 					}
 				}
@@ -327,18 +335,120 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-							RHS_array[ek+k][ej+j][ei+i][3] += timestepsize*RHS_local[l];
+							RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l];
+						}
+					}
+				}
+				
+				if (ei == 0) {
+					/*					 Face X0			*/
+					face = X0;	
+					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
+							for (j = 0; j < ctx->e2D.nphiy; j++) {
+								for (i = 0; i < ctx->e2D.nphiz; i++, l++) {
+									RHS_array[ek+k][ej+j][ei+i][0] -= RHS_local[l];
+								}
+							}
+						}
+					}
+				}
+				if (ei == nx-1) {
+					/*					 Face X1		*/
+					face = X1;
+					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
+							for (j = 0; j < ctx->e2D.nphiy; j++) {
+								for (i = 0; i < ctx->e2D.nphiz; i++, l++) {
+									RHS_array[ek+k][ej+j][ei+1][0] += RHS_local[l];
+								}
+							}
+						}
+					}
+				}				
+				if (ej == 0) {
+					/*					 Face Y0		*/
+					face = Y0;
+					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
+							for (j = 0; j < ctx->e2D.nphiz; j++) {
+								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
+									RHS_array[ek+k][ej+j][ei+i][1] -= RHS_local[l];
+								}
+							}
+						}
+					}
+				}
+				if (ej == ny-1) {
+					/*					 Face Y1		*/
+					face = Y1;
+					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
+							for (j = 0; j < ctx->e2D.nphiz; j++) {
+								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
+									RHS_array[ek+k][ej+1][ei+i][1] += RHS_local[l];
+								}
+							}
+						}
+					}
+				}
+				if (ek == 0) {
+					/*					 Face Z0		*/
+					face = Z0;
+					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
+							for (j = 0; j < ctx->e2D.nphiy; j++) {
+								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
+									RHS_array[ek+k][ej+j][ei+i][2] -= RHS_local[l];
+								}
+							}
+						}
+					}
+				}
+				if (ek == nz-1) {
+					/*					 Face Z1		*/
+					face = Z1;
+					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
+							for (j = 0; j < ctx->e2D.nphiy; j++) {
+								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
+									RHS_array[ek+1][ej+j][ei+i][2] += RHS_local[l];
+								}
+							}
 						}
 					}
 				}
 			}
 		}
-	}	
+	}		
+	
+	
+	
+	ierr = MatAssemblyBegin(K2,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(K2,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyBegin(K1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(K1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAXPY(K,time_theta,K1,flg);CHKERRQ(ierr);
+	ierr = MatAXPY(K,1.0,K2,flg);CHKERRQ(ierr);
+	ierr = MatAXPY(Klhs,time_one_minus_theta,K1,flg);CHKERRQ(ierr);
+	ierr = MatAXPY(Klhs,1.0,K2,flg);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = ApplySNESJacobianBC(K,Klhs,&ctx->bcFlow[0]);CHKERRQ(ierr);
+	ierr = MatApplySNESVelocityBC(K,Klhs,&ctx->bcFlow[0]);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -352,8 +462,9 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMLocalToGlobalEnd(ctx->daFlow,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daFlow,&RHS_localVec);CHKERRQ(ierr);	
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,velnprebc_local,&velnprebc_array);CHKERRQ(ierr); 
+	ierr = DMRestoreLocalVector(ctx->daFlow,&velnprebc_local);CHKERRQ(ierr);
 	ierr = PetscFree5(KA_local,KB_local,KD_local,KBTrans_local,KS_local);CHKERRQ(ierr);
-	ierr = PetscFree5(KArhs_local,KBrhs_local,KBTransrhs_local,KDrhs_local,KDlhs_local);CHKERRQ(ierr);
 	ierr = PetscFree3(RHS_local,row,row1);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
@@ -365,29 +476,264 @@ extern PetscErrorCode FormSNESIFunction(SNES snes,Vec VelnPress,Vec Func,void *u
 	PetscErrorCode ierr;
 	VFCtx			*ctx=(VFCtx*)user;
 	PetscViewer     viewer;
-	Vec				vec;
-	PetscReal			theta,one_minus_theta;
+	Vec             VecRHS;
+	PetscReal		theta,timestepsize;
+	PetscReal		dt_dot_theta,dt_dot_one_minus_theta;
 
+	PetscFunctionBegin;
+	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
+	timestepsize = ctx->flowprop.timestepsize;
+	theta = ctx->flowprop.theta;
+	dt_dot_theta = timestepsize*theta;
+	dt_dot_one_minus_theta = timestepsize*(1.-theta);
+	ierr = VecDuplicate(ctx->RHSVelP,&VecRHS);CHKERRQ(ierr);
+	ierr = FormSNESMatricesnVector(ctx->KVelP,ctx->KVelPlhs,ctx->RHSVelP,ctx);CHKERRQ(ierr);
+	ierr = VecCopy(ctx->RHSVelP,VecRHS);CHKERRQ(ierr);
+	ierr = VecAXPBY(VecRHS,dt_dot_one_minus_theta,dt_dot_theta,ctx->RHSVelPpre);CHKERRQ(ierr);
+	ierr = MatMultAdd(ctx->KVelPlhs,ctx->PreFlowFields,VecRHS,VecRHS);CHKERRQ(ierr);	
+	ierr = VecApplySNESVelocityBC(VecRHS,ctx->FlowBC,&ctx->bcFlow[0],ctx);CHKERRQ(ierr);
+	ierr = MatMult(ctx->KVelP,VelnPress,Func);CHKERRQ(ierr);	
+	ierr = VecAXPY(Func,-1.0,VecRHS);CHKERRQ(ierr);
+	ierr = VecDestroy(&VecRHS);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VecApplySNESVelocityBC"
+extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
+{
+	PetscErrorCode ierr;
+	PetscInt       xs,xm,nx;
+	PetscInt       ys,ym,ny;
+	PetscInt       zs,zm,nz;
+	PetscInt       dim,dof;
+	PetscInt       i,j,k,c;
+	PetscReal		****bcv_array;
+	PetscReal		****RHS_array;
 	
 	PetscFunctionBegin;
-	theta = ctx->flowprop.theta;
-	one_minus_theta = (1.-theta);
-	ierr = VecDuplicate(ctx->RHSVelP,&vec);CHKERRQ(ierr);
-	ierr = FormSNESMatricesnVector(ctx->KVelP,ctx->KVelPlhs,ctx->RHSVelP,ctx);CHKERRQ(ierr);
-	ierr = VecAXPBY(ctx->RHSVelP,one_minus_theta,theta,ctx->RHSVelPpre);CHKERRQ(ierr);
-	ierr = VecApplyTSFlowBC(ctx->RHSVelP,ctx->FlowBC,&ctx->bcFlow[0],ctx);CHKERRQ(ierr);
-	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
-	ierr = VecSet(vec,0.0);CHKERRQ(ierr);
-	ierr = MatMult(ctx->KVelP,VelnPress,Func);CHKERRQ(ierr);	
-	ierr = MatMultAdd(ctx->KVelPlhs,ctx->PreFlowFields,ctx->RHSVelP,vec);CHKERRQ(ierr);	
-	ierr = VecAXPY(Func,-1.0,vec);CHKERRQ(ierr);
-	ierr = VecDestroy(&vec);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx->daFlow,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,&dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daFlow,BCV,&bcv_array);CHKERRQ(ierr); 	
+	ierr = DMDAVecGetArrayDOF(ctx->daFlow,RHS,&RHS_array);CHKERRQ(ierr); 		
+	for (c = 0; c < dof; c++) {
+		if (xs == 0) {
+			i = 0;
+			if (BC[c].face[X0] == VELOCITY) {
+				for (k = zs; k < zs+zm; k++) {
+					for (j = ys; j < ys+ym; j++) {
+						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					}
+				}
+			}
+		}
+		if (xs+xm == nx) {
+			i = nx-1;
+			if (BC[c].face[X1] == VELOCITY) {
+				for (k = zs; k < zs+zm; k++) {
+					for (j = ys; j < ys+ym; j++) {
+						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					}
+				}
+			}
+		}
+		if (ys == 0) {
+			j = 0;
+			if (BC[c].face[Y0] == VELOCITY) {
+				for (k = zs; k < zs+zm; k++) {
+					for (i = xs; i < xs+xm; i++) {
+						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					}
+				}
+			}
+		}
+		if (ys+ym == ny) {
+			j = ny-1;
+			if (BC[c].face[Y1] == VELOCITY) {
+				for (k = zs; k < zs+zm; k++) {
+					for (i = xs; i < xs+xm; i++) {
+						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+						
+					}
+				}
+			}
+		}
+		if (zs == 0) {
+			k = 0;
+			if (BC[c].face[Z0] == VELOCITY) {
+				for (j = ys; j < ys+ym; j++) {
+					for (i = xs; i < xs+xm; i++) {
+						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					}
+				}
+			}
+		}
+		if (zs+zm == nz) {
+			k = nz-1;
+			if (BC[c].face[Z1] == VELOCITY) {
+				for (j = ys; j < ys+ym; j++) {
+					for (i = xs; i < xs+xm; i++) {
+						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					}
+				}
+			}
+		}
+		if (xs == 0 && zs == 0) {
+			k = 0;i = 0;
+			if (BC[c].edge[X0Z0] == VELOCITY) {
+				for (j = ys; j < ys+ym; j++) {
+					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				}
+			}
+		}
+		if (xs+xm == nx && zs == 0) {
+			k = 0;i = nx-1;
+			if (BC[c].edge[X1Z0] == VELOCITY) {
+				for (j = ys; j < ys+ym; j++) {
+					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				}
+			}
+		}
+		if (ys == 0 && zs == 0) {
+			k = 0;j = 0;
+			if (BC[c].edge[Y0Z0] == VELOCITY) {
+				for (i = xs; i < xs+xm; i++) {
+					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				}
+			}
+		}
+		if (ys+ym == ny && zs == 0) {
+			k = 0;j = 0;
+			if (BC[c].edge[Y1Z0] == VELOCITY) {
+				for (i = xs; i < xs+xm; i++) {
+					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				}
+			}
+		}
+		if (xs == 0 && zs+zm == nz) {
+			k = nz-1;i = 0;
+			if (BC[c].edge[X0Z1] == VELOCITY) {
+				for (j = ys; j < ys+ym; j++) {
+					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				}
+			}
+		}
+		if (xs+xm == nx && zs+zm == nz) {
+			k = nz-1;i = nx-1;
+			if (BC[c].edge[X1Z1] == VELOCITY) {
+				for (j = ys; j < ys+ym; j++) {
+					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				}
+			}
+		}
+		if (ys == 0 && zs+zm == nz) {
+			k = nz-1;j = 0;
+			if (BC[c].edge[Y0Z1] == VELOCITY) {
+				for (i = xs; i < xs+xm; i++) {
+					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				}
+			}
+		}
+		if (ys+ym == ny && zs+zm == nz) {
+			k = nz-1;j = ny-1;
+			if (BC[c].edge[Y1Z1] == VELOCITY) {
+				for (i = xs; i < xs+xm; i++) {
+					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				}
+			}
+		}
+		if (xs == 0 && ys == 0) {
+			j = 0;i = 0;
+			if (BC[c].edge[X0Y0] == VELOCITY) {
+				for (k = zs; k < zs+zm; k++) {
+					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				}
+			}
+		}
+		if (xs == 0 && ys+ym == ny) {
+			j = ny-1;i = 0;
+			if (BC[c].edge[X0Y1] == VELOCITY) {
+				for (k = zs; k < zs+zm; k++) {
+					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				}
+			}
+		}
+		if (xs+xm == nx && ys == 0) {
+			j = 0;i = nx-1;
+			if (BC[c].edge[X1Y0] == VELOCITY) {
+				for (k = zs; k < zs+zm; k++) {
+					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				}
+			}
+		}
+		if (xs+xm == nx && ys+ym == ny) {
+			j = ny-1;i = nx-1;
+			if (BC[c].edge[X1Y1] == VELOCITY) {
+				for (k = zs; k < zs+zm; k++) {
+					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				}
+			}
+		}
+		if (xs == 0 && ys == 0 && zs == 0) {
+			k = 0;j = 0;i = 0;
+			if (BC[c].vertex[X0Y0Z0] == VELOCITY) {
+				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+			}
+		}
+		if (xs+xm == nx && ys == 0 && zs == 0) {
+			k = 0;j = 0;i = nx-1;
+			if (BC[c].vertex[X1Y0Z0] == VELOCITY) {
+				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+			}
+		}
+		if (xs == 0 && ys+ym == ny && zs == 0) {
+			k = 0;j = ny-1;i = 0;
+			if (BC[c].vertex[X0Y1Z0] == VELOCITY) {
+				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+			}
+		}
+		if (xs+xm == nx && ys+ym == ny && zs == 0) {
+			k = 0;j = ny-1;i = nx-1;
+			if (BC[c].vertex[X1Y1Z0] == VELOCITY) {
+				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+			}
+		}
+		if (xs == 0 && ys == 0 && zs+zm == nz) {
+			k = nz-1;j = 0;i = 0;
+			if (BC[c].vertex[X0Y0Z1] == VELOCITY) {
+				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+			}
+		}
+		if (xs+xm == nx && ys == 0 && zs+zm == nz) {
+			k = nz-1;j = 0;i = nx-1;
+			if (BC[c].vertex[X1Y0Z1] == VELOCITY) {
+				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+			}
+		}
+		if (xs == 0 && ys+ym == ny && zs+zm == nz) {
+			k = nz-1;j = ny-1;i = 0;
+
+			if (BC[c].vertex[X0Y1Z1] == VELOCITY) {
+				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+			}
+		}
+		if (xs+xm == nx && ys+ym == ny && zs+zm == nz) {
+			k = nz-1;j = ny-1;i = nx-1;
+			if (BC[c].vertex[X1Y1Z1] == VELOCITY) {
+				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+			}
+		}
+	}
+	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,BCV,&bcv_array);CHKERRQ(ierr); 	
+	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,RHS,&RHS_array);CHKERRQ(ierr); 	
 	PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "ApplySNESJacobianBC"
-extern PetscErrorCode ApplySNESJacobianBC(Mat K,Mat Klhs,FLOWBC *BC)
+#define __FUNCT__ "MatApplySNESVelocityBC"
+extern PetscErrorCode MatApplySNESVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
 {
 	PetscErrorCode ierr;
 	PetscInt       xs,xm,nx;
@@ -413,20 +759,20 @@ extern PetscErrorCode ApplySNESJacobianBC(Mat K,Mat Klhs,FLOWBC *BC)
 	 Edges and corners are counted multiple times (2 and 3 resp)
 	 */
 	for (c = 0; c < dof; c++){
-		if (xs == 0       && BC[c].face[X0] != NOBC)             numBC += ym * zm;
-		if (xs + xm == nx && BC[c].face[X1] != NOBC)             numBC += ym * zm;
-		if (ys == 0       && BC[c].face[Y0] != NOBC)             numBC += xm * zm;
-		if (ys + ym == ny && BC[c].face[Y1] != NOBC)             numBC += xm * zm;
-		if (zs == 0       && BC[c].face[Z0] != NOBC && dim == 3) numBC += xm * ym;
-		if (zs + zm == nz && BC[c].face[Z1] != NOBC && dim == 3) numBC += xm * ym;
-		if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] != NOBC) numBC++;
-		if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] != NOBC) numBC++;
-		if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] != NOBC) numBC++;
-		if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] != NOBC) numBC++;
-		if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] != NOBC && dim == 3) numBC++;
-		if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] != NOBC && dim == 3) numBC++;
-		if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] != NOBC && dim == 3) numBC++;
-		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] != NOBC && dim == 3) numBC++;
+		if (xs == 0       && BC[c].face[X0] == VELOCITY)             numBC += ym * zm;
+		if (xs + xm == nx && BC[c].face[X1] == VELOCITY)             numBC += ym * zm;
+		if (ys == 0       && BC[c].face[Y0] == VELOCITY)             numBC += xm * zm;
+		if (ys + ym == ny && BC[c].face[Y1] == VELOCITY)             numBC += xm * zm;
+		if (zs == 0       && BC[c].face[Z0] == VELOCITY && dim == 3) numBC += xm * ym;
+		if (zs + zm == nz && BC[c].face[Z1] == VELOCITY && dim == 3) numBC += xm * ym;
+		if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == VELOCITY) numBC++;
+		if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == VELOCITY) numBC++;
+		if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == VELOCITY) numBC++;
+		if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == VELOCITY) numBC++;
+		if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == VELOCITY && dim == 3) numBC++;
+		if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == VELOCITY && dim == 3) numBC++;
+		if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == VELOCITY && dim == 3) numBC++;
+		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == VELOCITY && dim == 3) numBC++;
 	}
 	ierr = PetscMalloc(numBC * sizeof(MatStencil),&row);CHKERRQ(ierr);
 	/*
@@ -436,7 +782,7 @@ extern PetscErrorCode ApplySNESJacobianBC(Mat K,Mat Klhs,FLOWBC *BC)
 	 i == 0
 	 */
 	for (c = 0; c < dof; c++) {
-		if (xs == 0 && BC[c].face[X0] != NOBC) {
+		if (xs == 0 && BC[c].face[X0] == VELOCITY) {
 			for (k = zs; k < zs + zm; k++) {
 				for (j = ys; j < ys + ym; j++) {
 					row[l].i = 0; row[l].j = j; row[l].k = k; row[l].c = c; 
@@ -447,7 +793,7 @@ extern PetscErrorCode ApplySNESJacobianBC(Mat K,Mat Klhs,FLOWBC *BC)
 		/* 
 		 i == nx-1
 		 */
-		if (xs + xm == nx && BC[c].face[X1] != NOBC) {
+		if (xs + xm == nx && BC[c].face[X1] == VELOCITY) {
 			for (k = zs; k < zs + zm; k++) {
 				for (j = ys; j < ys + ym; j++) {
 					row[l].i = nx-1; row[l].j = j; row[l].k = k; row[l].c = c; 
@@ -458,7 +804,7 @@ extern PetscErrorCode ApplySNESJacobianBC(Mat K,Mat Klhs,FLOWBC *BC)
 		/*
 		 y == 0
 		 */
-		if (ys == 0 && BC[c].face[Y0] != NOBC) {
+		if (ys == 0 && BC[c].face[Y0] == VELOCITY) {
 			for (k = zs; k < zs + zm; k++) {
 				for (i = xs; i < xs + xm; i++) {
 					row[l].i = i; row[l].j = 0; row[l].k = k; row[l].c = c; 
@@ -469,7 +815,7 @@ extern PetscErrorCode ApplySNESJacobianBC(Mat K,Mat Klhs,FLOWBC *BC)
 		/*
 		 y == ny-1
 		 */
-		if (ys + ym == ny && BC[c].face[Y1] != NOBC) {
+		if (ys + ym == ny && BC[c].face[Y1] == VELOCITY) {
 			for (k = zs; k < zs + zm; k++) {
 				for (i = xs; i < xs + xm; i++) {
 					row[l].i = i; row[l].j = ny-1; row[l].k = k; row[l].c = c; 
@@ -481,7 +827,7 @@ extern PetscErrorCode ApplySNESJacobianBC(Mat K,Mat Klhs,FLOWBC *BC)
 			/*
 			 z == 0
 			 */
-			if (zs == 0 && BC[c].face[Z0] != NOBC) {
+			if (zs == 0 && BC[c].face[Z0] == VELOCITY) {
 				for (j = ys; j < ys + ym; j++) {
 					for (i = xs; i < xs + xm; i++) {
 						row[l].i = i; row[l].j = j; row[l].k = 0; row[l].c = c; 
@@ -492,7 +838,7 @@ extern PetscErrorCode ApplySNESJacobianBC(Mat K,Mat Klhs,FLOWBC *BC)
 			/*
 			 z == nz-1
 			 */
-			if (zs + zm == nz && BC[c].face[Z1] != NOBC) {
+			if (zs + zm == nz && BC[c].face[Z1] == VELOCITY) {
 				for (j = ys; j < ys + ym; j++) {
 					for (i = xs; i < xs + xm; i++) {
 						row[l].i = i; row[l].j = j; row[l].k = nz-1; row[l].c = c; 
@@ -501,42 +847,42 @@ extern PetscErrorCode ApplySNESJacobianBC(Mat K,Mat Klhs,FLOWBC *BC)
 				}
 			}
 		}
-		if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] != NOBC) { 
+		if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == VELOCITY) { 
 			row[l].i = 0; row[l].j = 0; row[l].k = 0; row[l].c = c; 
 			l++;
 		}
-		if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] != NOBC && dim ==3) { 
+		if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == VELOCITY && dim ==3) { 
 			row[l].i = 0; row[l].j = 0; row[l].k = nz-1; row[l].c = c; 
 			l++;
 		}
-		if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] != NOBC) { 
+		if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == VELOCITY) { 
 			row[l].i = 0; row[l].j = ny-1; row[l].k = 0; row[l].c = c; 
 			l++;
 		}
-		if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] != NOBC && dim ==3) { 
+		if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == VELOCITY && dim ==3) { 
 			row[l].i = 0; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
 			l++;
 		}
-		if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] != NOBC) { 
+		if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == VELOCITY) { 
 			row[l].i = nx-1; row[l].j = 0; row[l].k = 0; row[l].c = c; 
 			l++;
 		}
-		if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] != NOBC && dim ==3) { 
+		if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == VELOCITY && dim ==3) { 
 			row[l].i = nx-1; row[l].j = 0; row[l].k = nz-1; row[l].c = c; 
 			l++;
 		}
-		if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] != NOBC) { 
+		if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == VELOCITY) { 
 			row[l].i = nx-1; row[l].j = ny-1; row[l].k = 0; row[l].c = c; 
 			l++;
 		}
-		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] != NOBC && dim ==3) { 
+		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == VELOCITY && dim ==3) { 
 			row[l].i = nx=1; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
 			l++;
 		}
 		
 	}
 	ierr = MatZeroRowsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = MatZeroRowsStencil(Klhs,numBC,row,zero,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+		//	ierr = MatZeroRowsStencil(Klhs,numBC,row,zero,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscFree(row);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }

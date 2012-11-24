@@ -81,7 +81,7 @@ int main(int argc,char **argv)
 		}
 	}
 	for (i = 0; i < 6; i++) {
-		ctx.bcFlow[3].face[X0] = PRESSURE;
+		ctx.bcFlow[3].face[i] = PRESSURE;
 	}
 	
 	for (k = zs; k < zs+zm; k++) {

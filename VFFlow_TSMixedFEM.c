@@ -188,8 +188,8 @@ extern PetscErrorCode FormIJacobian(TS ts,PetscReal t,Vec VelnPress,Vec VelnPres
 	PetscViewer        viewer;
 
 	PetscFunctionBegin;
-	*str = DIFFERENT_NONZERO_PATTERN;
-//	*str = SAME_NONZERO_PATTERN;
+//	*str = DIFFERENT_NONZERO_PATTERN;
+	*str = SAME_NONZERO_PATTERN;
 	ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
 	ierr = MatCopy(ctx->KVelP,*Jac,*str);
 	ierr = MatAXPY(*Jac,shift,ctx->KVelPlhs,*str);CHKERRQ(ierr);
@@ -202,9 +202,11 @@ extern PetscErrorCode FormIJacobian(TS ts,PetscReal t,Vec VelnPress,Vec VelnPres
 	PetscFunctionReturn(0);
 }
 
+
+
 #undef __FUNCT__
-#define __FUNCT__ "ApplyTSJacobianBC"
-extern PetscErrorCode ApplyTSJacobianBC(Mat K, Mat Klhs,FLOWBC *BC)
+#define __FUNCT__ "MatApplyTSVelocityBC"
+extern PetscErrorCode MatApplyTSVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
 {
 	PetscErrorCode ierr;
 	PetscInt       xs,xm,nx;
@@ -213,38 +215,43 @@ extern PetscErrorCode ApplyTSJacobianBC(Mat K, Mat Klhs,FLOWBC *BC)
 	PetscInt       i,j,k,c;
 	MatStencil    *row;
 	PetscReal      one=1.;
-	PetscReal      zero=0.0;
 	PetscInt       numBC=0,l=0;
 	PetscInt       dim,dof;
 	DM				da;
+	PetscReal      zero=0.0;
 	
-	PetscFunctionBegin;	
+	PetscFunctionBegin;
 	ierr = PetscObjectQuery((PetscObject) K,"DM",(PetscObject *) &da); CHKERRQ(ierr);
 	if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
 	
 	ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);	
+	ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	for (c = 0; c < dof; c++){
-		if (xs == 0       && BC[c].face[X0] != NOBC)             numBC += ym * zm;
-		if (xs + xm == nx && BC[c].face[X1] != NOBC)             numBC += ym * zm;
-		if (ys == 0       && BC[c].face[Y0] != NOBC)             numBC += xm * zm;
-		if (ys + ym == ny && BC[c].face[Y1] != NOBC)             numBC += xm * zm;
-		if (zs == 0       && BC[c].face[Z0] != NOBC && dim == 3) numBC += xm * ym;
-		if (zs + zm == nz && BC[c].face[Z1] != NOBC && dim == 3) numBC += xm * ym;
-		if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] != NOBC) numBC++;
-		if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] != NOBC) numBC++;
-		if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] != NOBC) numBC++;
-		if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] != NOBC) numBC++;
-		if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] != NOBC && dim == 3) numBC++;
-		if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] != NOBC && dim == 3) numBC++;
-		if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] != NOBC && dim == 3) numBC++;
-		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] != NOBC && dim == 3) numBC++;
+		if (xs == 0       && BC[c].face[X0] == VELOCITY)             numBC += ym * zm;
+		if (xs + xm == nx && BC[c].face[X1] == VELOCITY)             numBC += ym * zm;
+		if (ys == 0       && BC[c].face[Y0] == VELOCITY)             numBC += xm * zm;
+		if (ys + ym == ny && BC[c].face[Y1] == VELOCITY)             numBC += xm * zm;
+		if (zs == 0       && BC[c].face[Z0] == VELOCITY && dim == 3) numBC += xm * ym;
+		if (zs + zm == nz && BC[c].face[Z1] == VELOCITY && dim == 3) numBC += xm * ym;
+		if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == VELOCITY) numBC++;
+		if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == VELOCITY) numBC++;
+		if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == VELOCITY) numBC++;
+		if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == VELOCITY) numBC++;
+		if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == VELOCITY && dim == 3) numBC++;
+		if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == VELOCITY && dim == 3) numBC++;
+		if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == VELOCITY && dim == 3) numBC++;
+		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == VELOCITY && dim == 3) numBC++;
 	}
 	ierr = PetscMalloc(numBC * sizeof(MatStencil),&row);CHKERRQ(ierr);
-		// i == 0
+	/*
+	 Create an array of rows to be zeroed out
+	 */
+	/*
+	 i == 0
+	 */
 	for (c = 0; c < dof; c++) {
-		if (xs == 0 && BC[c].face[X0] != NOBC) {
+		if (xs == 0 && BC[c].face[X0] == VELOCITY) {
 			for (k = zs; k < zs + zm; k++) {
 				for (j = ys; j < ys + ym; j++) {
 					row[l].i = 0; row[l].j = j; row[l].k = k; row[l].c = c; 
@@ -252,8 +259,10 @@ extern PetscErrorCode ApplyTSJacobianBC(Mat K, Mat Klhs,FLOWBC *BC)
 				}
 			}
 		}
-			//i == nx-1
-		if (xs + xm == nx && BC[c].face[X1] != NOBC) {
+		/* 
+		 i == nx-1
+		 */
+		if (xs + xm == nx && BC[c].face[X1] == VELOCITY) {
 			for (k = zs; k < zs + zm; k++) {
 				for (j = ys; j < ys + ym; j++) {
 					row[l].i = nx-1; row[l].j = j; row[l].k = k; row[l].c = c; 
@@ -261,8 +270,10 @@ extern PetscErrorCode ApplyTSJacobianBC(Mat K, Mat Klhs,FLOWBC *BC)
 				}
 			}
 		}
-			//		 y == 0
-		if (ys == 0 && BC[c].face[Y0] != NOBC) {
+		/*
+		 y == 0
+		 */
+		if (ys == 0 && BC[c].face[Y0] == VELOCITY) {
 			for (k = zs; k < zs + zm; k++) {
 				for (i = xs; i < xs + xm; i++) {
 					row[l].i = i; row[l].j = 0; row[l].k = k; row[l].c = c; 
@@ -270,8 +281,10 @@ extern PetscErrorCode ApplyTSJacobianBC(Mat K, Mat Klhs,FLOWBC *BC)
 				}
 			}
 		}
-			//		 y == ny-1
-		if (ys + ym == ny && BC[c].face[Y1] != NOBC) {
+		/*
+		 y == ny-1
+		 */
+		if (ys + ym == ny && BC[c].face[Y1] == VELOCITY) {
 			for (k = zs; k < zs + zm; k++) {
 				for (i = xs; i < xs + xm; i++) {
 					row[l].i = i; row[l].j = ny-1; row[l].k = k; row[l].c = c; 
@@ -280,8 +293,10 @@ extern PetscErrorCode ApplyTSJacobianBC(Mat K, Mat Klhs,FLOWBC *BC)
 			}
 		}
 		if (dim==3){
-				//			 z == 0
-			if (zs == 0 && BC[c].face[Z0] != NOBC) {
+			/*
+			 z == 0
+			 */
+			if (zs == 0 && BC[c].face[Z0] == VELOCITY) {
 				for (j = ys; j < ys + ym; j++) {
 					for (i = xs; i < xs + xm; i++) {
 						row[l].i = i; row[l].j = j; row[l].k = 0; row[l].c = c; 
@@ -289,8 +304,10 @@ extern PetscErrorCode ApplyTSJacobianBC(Mat K, Mat Klhs,FLOWBC *BC)
 					}
 				}
 			}
-				//			 z == nz-1
-			if (zs + zm == nz && BC[c].face[Z1] != NOBC) {
+			/*
+			 z == nz-1
+			 */
+			if (zs + zm == nz && BC[c].face[Z1] == VELOCITY) {
 				for (j = ys; j < ys + ym; j++) {
 					for (i = xs; i < xs + xm; i++) {
 						row[l].i = i; row[l].j = j; row[l].k = nz-1; row[l].c = c; 
@@ -299,42 +316,42 @@ extern PetscErrorCode ApplyTSJacobianBC(Mat K, Mat Klhs,FLOWBC *BC)
 				}
 			}
 		}
-		if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] != NOBC) { 
+		if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == VELOCITY) { 
 			row[l].i = 0; row[l].j = 0; row[l].k = 0; row[l].c = c; 
 			l++;
 		}
-		if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] != NOBC && dim ==3) { 
+		if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == VELOCITY && dim ==3) { 
 			row[l].i = 0; row[l].j = 0; row[l].k = nz-1; row[l].c = c; 
 			l++;
 		}
-		if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] != NOBC) { 
+		if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == VELOCITY) { 
 			row[l].i = 0; row[l].j = ny-1; row[l].k = 0; row[l].c = c; 
 			l++;
 		}
-		if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] != NOBC && dim ==3) { 
+		if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == VELOCITY && dim ==3) { 
 			row[l].i = 0; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
 			l++;
 		}
-		if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] != NOBC) { 
+		if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == VELOCITY) { 
 			row[l].i = nx-1; row[l].j = 0; row[l].k = 0; row[l].c = c; 
 			l++;
 		}
-		if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] != NOBC && dim ==3) { 
+		if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == VELOCITY && dim ==3) { 
 			row[l].i = nx-1; row[l].j = 0; row[l].k = nz-1; row[l].c = c; 
 			l++;
 		}
-		if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] != NOBC) { 
+		if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == VELOCITY) { 
 			row[l].i = nx-1; row[l].j = ny-1; row[l].k = 0; row[l].c = c; 
 			l++;
 		}
-		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] != NOBC && dim ==3) { 
+		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == VELOCITY && dim ==3) { 
 			row[l].i = nx=1; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
 			l++;
 		}
 		
 	}
 	ierr = MatZeroRowsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = MatZeroRowsStencil(Klhs,numBC,row,zero,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);	
+		//	ierr = MatZeroRowsStencil(Klhs,numBC,row,zero,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscFree(row);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
@@ -365,7 +382,10 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	PetscReal      ***source_array;
 	Vec            source_local;
 	PetscReal      M_inv;
-	
+	FACE			face;
+	PetscReal		****velnprebc_array;
+	Vec				velnprebc_local;
+
 	PetscFunctionBegin;
 	M_inv     = ctx->flowprop.M_inv;
 	beta_c = ctx->flowprop.beta;
@@ -391,6 +411,15 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMGlobalToLocalBegin(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);	
+	
+	
+	ierr = DMGetLocalVector(ctx->daFlow,&velnprebc_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daFlow,ctx->FlowBC,INSERT_VALUES,velnprebc_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daFlow,ctx->FlowBC,INSERT_VALUES,velnprebc_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daFlow,velnprebc_local,&velnprebc_array);CHKERRQ(ierr); 
+
+	
+	
 	ierr = PetscMalloc5(nrow*nrow,PetscReal,&KA_local,
 						nrow*nrow,PetscReal,&KB_local,
 						nrow*nrow,PetscReal,&KD_local,
@@ -409,7 +438,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					//This computes the local contribution of the global A matrix
 				ierr = FLow_MatA(KA_local,&ctx->e3D,ek,ej,ei);CHKERRQ(ierr);
 				for (l = 0; l < nrow*nrow; l++) {
-					Klhs_local[l] = 2*M_inv*KA_local[l];
+					Klhs_local[l] = -2*M_inv*KA_local[l];
 				}
 				for (c = 0; c < veldof; c++) {
 					ierr = FLow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c);CHKERRQ(ierr);
@@ -436,7 +465,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				}
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KD_local,ADD_VALUES);CHKERRQ(ierr);
 				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,Klhs_local,ADD_VALUES);CHKERRQ(ierr);
-					//Assembling the righthand side vector f
+				/*Assembling the righthand side vector f*/
 				for (c = 0; c < veldof; c++) {
 					ierr = FLow_Vecf(RHS_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array);CHKERRQ(ierr);
 					for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
@@ -447,7 +476,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 						}
 					}
 				}
-					//Assembling the righthand side vector g
+				/*Assembling the righthand side vector g*/
 				ierr = FLow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -464,14 +493,105 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 						}
 					}
 				}
+				if (ei == 0) {
+					/*					 Face X0			*/
+					face = X0;	
+					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
+							for (j = 0; j < ctx->e2D.nphiy; j++) {
+								for (i = 0; i < ctx->e2D.nphiz; i++, l++) {
+									RHS_array[ek+k][ej+j][ei+i][0] -= RHS_local[l];
+								}
+							}
+						}
+					}
+				}
+				if (ei == nx-1) {
+					/*					 Face X1		*/
+					face = X1;
+					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
+							for (j = 0; j < ctx->e2D.nphiy; j++) {
+								for (i = 0; i < ctx->e2D.nphiz; i++, l++) {
+									RHS_array[ek+k][ej+j][ei+1][0] += RHS_local[l];
+								}
+							}
+						}
+					}
+				}				
+				if (ej == 0) {
+					/*					 Face Y0		*/
+					face = Y0;
+					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
+							for (j = 0; j < ctx->e2D.nphiz; j++) {
+								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
+									RHS_array[ek+k][ej+j][ei+i][1] -= RHS_local[l];
+								}
+							}
+						}
+					}
+				}
+				if (ej == ny-1) {
+					/*					 Face Y1		*/
+					face = Y1;
+					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
+							for (j = 0; j < ctx->e2D.nphiz; j++) {
+								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
+									RHS_array[ek+k][ej+1][ei+i][1] += RHS_local[l];
+								}
+							}
+						}
+					}
+				}
+				if (ek == 0) {
+					/*					 Face Z0		*/
+					face = Z0;
+					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
+							for (j = 0; j < ctx->e2D.nphiy; j++) {
+								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
+									RHS_array[ek+k][ej+j][ei+i][2] -= RHS_local[l];
+								}
+							}
+						}
+					}
+				}
+				if (ek == nz-1) {
+					/*					 Face Z1		*/
+					face = Z1;
+					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
+							for (j = 0; j < ctx->e2D.nphiy; j++) {
+								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
+									RHS_array[ek+1][ej+j][ei+i][2] += RHS_local[l];
+								}
+							}
+						}
+					}
+				}
 			}
 		}
-	}	
+	}		
+	
 	ierr = MatAssemblyBegin(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = ApplyTSJacobianBC(K,ctx->KVelPlhs,&ctx->bcFlow[0]);CHKERRQ(ierr);
+	ierr = MatApplyTSVelocityBC(K,ctx->KVelPlhs,&ctx->bcFlow[0]);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -486,17 +606,20 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMLocalToGlobalEnd(ctx->daFlow,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daFlow,&RHS_localVec);CHKERRQ(ierr);	
 	
-	ierr = VecApplyTSFlowBC(RHS,ctx->FlowBC,&ctx->bcFlow[0],ctx);CHKERRQ(ierr);
+	ierr = VecApplyTSVelocityBC(RHS,ctx->FlowBC,&ctx->bcFlow[0],ctx);CHKERRQ(ierr);
 
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,velnprebc_local,&velnprebc_array);CHKERRQ(ierr); 
+	ierr = DMRestoreLocalVector(ctx->daFlow,&velnprebc_local);CHKERRQ(ierr);
+
 	ierr = PetscFree5(KA_local,KB_local,KD_local,KBTrans_local,Klhs_local);CHKERRQ(ierr);
 	ierr = PetscFree3(RHS_local,row,row1);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VecApplyTSFlowBC"
-extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
+#define __FUNCT__ "VecApplyTSVelocityBC"
+extern PetscErrorCode VecApplyTSVelocityBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 {
 	PetscErrorCode ierr;
 	PetscInt       xs,xm,nx;
@@ -516,13 +639,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 	for (c = 0; c < dof; c++) {
 		if (xs == 0) {
 			i = 0;
-			if (BC[c].face[X0] == PRESSURE) {
-				for (k = zs; k < zs+zm; k++) {
-					for (j = ys; j < ys+ym; j++) {
-						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-					}
-				}
-			}
 			if (BC[c].face[X0] == VELOCITY) {
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
@@ -533,13 +649,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (xs+xm == nx) {
 			i = nx-1;
-			if (BC[c].face[X1] == PRESSURE) {
-				for (k = zs; k < zs+zm; k++) {
-					for (j = ys; j < ys+ym; j++) {
-						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-					}
-				}
-			}
 			if (BC[c].face[X1] == VELOCITY) {
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
@@ -550,13 +659,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (ys == 0) {
 			j = 0;
-			if (BC[c].face[Y0] == PRESSURE) {
-				for (k = zs; k < zs+zm; k++) {
-					for (i = xs; i < xs+xm; i++) {
-						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-					}
-				}
-			}
 			if (BC[c].face[Y0] == VELOCITY) {
 				for (k = zs; k < zs+zm; k++) {
 					for (i = xs; i < xs+xm; i++) {
@@ -567,13 +669,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (ys+ym == ny) {
 			j = ny-1;
-			if (BC[c].face[Y1] == PRESSURE) {
-				for (k = zs; k < zs+zm; k++) {
-					for (i = xs; i < xs+xm; i++) {
-						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-					}
-				}
-			}
 			if (BC[c].face[Y1] == VELOCITY) {
 				for (k = zs; k < zs+zm; k++) {
 					for (i = xs; i < xs+xm; i++) {
@@ -585,13 +680,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (zs == 0) {
 			k = 0;
-			if (BC[c].face[Z0] == PRESSURE) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) {
-						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-					}
-				}
-			}
 			if (BC[c].face[Z0] == VELOCITY) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) {
@@ -602,13 +690,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (zs+zm == nz) {
 			k = nz-1;
-			if (BC[c].face[Z1] == PRESSURE) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) {
-						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-					}
-				}
-			}
 			if (BC[c].face[Z1] == VELOCITY) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) {
@@ -619,11 +700,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (xs == 0 && zs == 0) {
 			k = 0;i = 0;
-			if (BC[c].edge[X0Z0] == PRESSURE) {
-				for (j = ys; j < ys+ym; j++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-				}
-			}
 			if (BC[c].edge[X0Z0] == VELOCITY) {
 				for (j = ys; j < ys+ym; j++) {
 					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
@@ -632,11 +708,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (xs+xm == nx && zs == 0) {
 			k = 0;i = nx-1;
-			if (BC[c].edge[X1Z0] == PRESSURE) {
-				for (j = ys; j < ys+ym; j++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-				}
-			}
 			if (BC[c].edge[X1Z0] == VELOCITY) {
 				for (j = ys; j < ys+ym; j++) {
 					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
@@ -645,11 +716,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (ys == 0 && zs == 0) {
 			k = 0;j = 0;
-			if (BC[c].edge[Y0Z0] == PRESSURE) {
-				for (i = xs; i < xs+xm; i++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-				}
-			}
 			if (BC[c].edge[Y0Z0] == VELOCITY) {
 				for (i = xs; i < xs+xm; i++) {
 					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
@@ -658,11 +724,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (ys+ym == ny && zs == 0) {
 			k = 0;j = 0;
-			if (BC[c].edge[Y1Z0] == PRESSURE) {
-				for (i = xs; i < xs+xm; i++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-				}
-			}
 			if (BC[c].edge[Y1Z0] == VELOCITY) {
 				for (i = xs; i < xs+xm; i++) {
 					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
@@ -671,11 +732,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (xs == 0 && zs+zm == nz) {
 			k = nz-1;i = 0;
-			if (BC[c].edge[X0Z1] == PRESSURE) {
-				for (j = ys; j < ys+ym; j++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-				}
-			}
 			if (BC[c].edge[X0Z1] == VELOCITY) {
 				for (j = ys; j < ys+ym; j++) {
 					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
@@ -684,11 +740,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (xs+xm == nx && zs+zm == nz) {
 			k = nz-1;i = nx-1;
-			if (BC[c].edge[X1Z1] == PRESSURE) {
-				for (j = ys; j < ys+ym; j++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-				}
-			}
 			if (BC[c].edge[X1Z1] == VELOCITY) {
 				for (j = ys; j < ys+ym; j++) {
 					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
@@ -697,11 +748,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (ys == 0 && zs+zm == nz) {
 			k = nz-1;j = 0;
-			if (BC[c].edge[Y0Z1] == PRESSURE) {
-				for (i = xs; i < xs+xm; i++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-				}
-			}
 			if (BC[c].edge[Y0Z1] == VELOCITY) {
 				for (i = xs; i < xs+xm; i++) {
 					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
@@ -710,11 +756,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (ys+ym == ny && zs+zm == nz) {
 			k = nz-1;j = ny-1;
-			if (BC[c].edge[Y1Z1] == PRESSURE) {
-				for (i = xs; i < xs+xm; i++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-				}
-			}
 			if (BC[c].edge[Y1Z1] == VELOCITY) {
 				for (i = xs; i < xs+xm; i++) {
 					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
@@ -723,11 +764,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (xs == 0 && ys == 0) {
 			j = 0;i = 0;
-			if (BC[c].edge[X0Y0] == PRESSURE) {
-				for (k = zs; k < zs+zm; k++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-				}
-			}
 			if (BC[c].edge[X0Y0] == VELOCITY) {
 				for (k = zs; k < zs+zm; k++) {
 					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
@@ -736,11 +772,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (xs == 0 && ys+ym == ny) {
 			j = ny-1;i = 0;
-			if (BC[c].edge[X0Y1] == PRESSURE) {
-				for (k = zs; k < zs+zm; k++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-				}
-			}
 			if (BC[c].edge[X0Y1] == VELOCITY) {
 				for (k = zs; k < zs+zm; k++) {
 					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
@@ -749,11 +780,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (xs+xm == nx && ys == 0) {
 			j = 0;i = nx-1;
-			if (BC[c].edge[X1Y0] == PRESSURE) {
-				for (k = zs; k < zs+zm; k++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-				}
-			}
 			if (BC[c].edge[X1Y0] == VELOCITY) {
 				for (k = zs; k < zs+zm; k++) {
 					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
@@ -762,11 +788,6 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (xs+xm == nx && ys+ym == ny) {
 			j = ny-1;i = nx-1;
-			if (BC[c].edge[X1Y1] == PRESSURE) {
-				for (k = zs; k < zs+zm; k++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-				}
-			}
 			if (BC[c].edge[X1Y1] == VELOCITY) {
 				for (k = zs; k < zs+zm; k++) {
 					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
@@ -775,72 +796,48 @@ extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx)
 		}
 		if (xs == 0 && ys == 0 && zs == 0) {
 			k = 0;j = 0;i = 0;
-			if (BC[c].vertex[X0Y0Z0] == PRESSURE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-			}
 			if (BC[c].vertex[X0Y0Z0] == VELOCITY) {
 				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
 			}
 		}
 		if (xs+xm == nx && ys == 0 && zs == 0) {
 			k = 0;j = 0;i = nx-1;
-			if (BC[c].vertex[X1Y0Z0] == PRESSURE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-			}
 			if (BC[c].vertex[X1Y0Z0] == VELOCITY) {
 				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
 			}
 		}
 		if (xs == 0 && ys+ym == ny && zs == 0) {
 			k = 0;j = ny-1;i = 0;
-			if (BC[c].vertex[X0Y1Z0] == PRESSURE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-			}
 			if (BC[c].vertex[X0Y1Z0] == VELOCITY) {
 				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
 			}
 		}
 		if (xs+xm == nx && ys+ym == ny && zs == 0) {
 			k = 0;j = ny-1;i = nx-1;
-			if (BC[c].vertex[X1Y1Z0] == PRESSURE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-			}
 			if (BC[c].vertex[X1Y1Z0] == VELOCITY) {
 				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
 			}
 		}
 		if (xs == 0 && ys == 0 && zs+zm == nz) {
 			k = nz-1;j = 0;i = 0;
-			if (BC[c].vertex[X0Y0Z1] == PRESSURE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-			}
 			if (BC[c].vertex[X0Y0Z1] == VELOCITY) {
 				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
 			}
 		}
 		if (xs+xm == nx && ys == 0 && zs+zm == nz) {
 			k = nz-1;j = 0;i = nx-1;
-			if (BC[c].vertex[X1Y0Z1] == PRESSURE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-			}
 			if (BC[c].vertex[X1Y0Z1] == VELOCITY) {
 				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
 			}
 		}
 		if (xs == 0 && ys+ym == ny && zs+zm == nz) {
 			k = nz-1;j = ny-1;i = 0;
-			if (BC[c].vertex[X0Y1Z1] == PRESSURE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-			}
 			if (BC[c].vertex[X0Y1Z1] == VELOCITY) {
 				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
 			}
 		}
 		if (xs+xm == nx && ys+ym == ny && zs+zm == nz) {
 			k = nz-1;j = ny-1;i = nx-1;
-			if (BC[c].vertex[X1Y1Z1] == PRESSURE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
-			}
 			if (BC[c].vertex[X1Y1Z1] == VELOCITY) {
 				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
 			}

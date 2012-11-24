@@ -14,9 +14,9 @@ extern PetscErrorCode MixedFEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *field
 extern PetscErrorCode MixedFEMTSFlowSolverFinalize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FormIFunction(TS ts,PetscReal t,Vec VelnPress,Vec VelnPressdot,Vec Func,void *user);
 extern PetscErrorCode FormIJacobian(TS ts,PetscReal t,Vec VelnPress,Vec VelnPressdot,PetscReal shift,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user);
-extern PetscErrorCode ApplyTSJacobianBC(Mat K, Mat Klhs,FLOWBC *BC);
+extern PetscErrorCode MatApplyTSVelocityBC(Mat K, Mat Klhs,FLOWBC *BC);
 extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx);
 extern PetscErrorCode FormInitialSolution(Vec VelnPress,Vec VelnPressBV,FLOWBC *BC,VFCtx *ctx);
 extern PetscErrorCode MixedFEMTSMonitor(TS ts,PetscInt timestep,PetscReal timevalue,Vec VelnPress,void*);
-extern PetscErrorCode VecApplyTSFlowBC(Vec RHS,Vec bcv_local, FLOWBC *BC,VFCtx *ctx);
+extern PetscErrorCode VecApplyTSVelocityBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx);
 #endif /* VFFLOW_MIXEDFEM_H */
