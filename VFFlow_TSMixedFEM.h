@@ -19,4 +19,6 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx);
 extern PetscErrorCode FormInitialSolution(Vec VelnPress,Vec VelnPressBV,FLOWBC *BC,VFCtx *ctx);
 extern PetscErrorCode MixedFEMTSMonitor(TS ts,PetscInt timestep,PetscReal timevalue,Vec VelnPress,void*);
 extern PetscErrorCode VecApplyTSVelocityBC(Vec RHS,Vec BCV, FLOWBC *BC,VFCtx *ctx);
+extern PetscErrorCode FormFunction(TS ts,PetscReal t,Vec vec1,Vec Func,void *user);
+
 #endif /* VFFLOW_MIXEDFEM_H */

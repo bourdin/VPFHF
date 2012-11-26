@@ -183,13 +183,13 @@ extern PetscErrorCode VecApplyWellFlowBC(PetscReal *Ks_local,PetscReal ***source
 {
 	PetscErrorCode ierr;
 	PetscInt       i,j,k,l;
-	PetscReal      beta_c;
+	PetscReal      alpha_c;
 	PetscReal      mu;
 	PetscReal      *loc_source;
 	PetscInt       eg;
 	
 	PetscFunctionBegin;
-	beta_c = ctx->flowprop.beta;
+	alpha_c = ctx->flowprop.alpha;
 	mu     = ctx->flowprop.mu;
 	ierr   = PetscMalloc(e->ng*sizeof(PetscReal),&loc_source);CHKERRQ(ierr);
 	
@@ -210,7 +210,7 @@ extern PetscErrorCode VecApplyWellFlowBC(PetscReal *Ks_local,PetscReal ***source
 				for (i = 0; i < e->nphix; i++,l++) {
 					Ks_local[l] = 0.;
 					for (eg = 0; eg < e->ng; eg++) {
-						Ks_local[l] += -loc_source[eg]*e->phi[k][j][i][eg]*e->weight[eg];
+						Ks_local[l] += -loc_source[eg]*e->phi[k][j][i][eg]*e->weight[eg]/alpha_c;
 					}
 					;
 				}
@@ -514,7 +514,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 	Vec            perm_local;
 	PetscReal      hx,hy,hz;
 	PetscReal      *KA_local,*KB_local,*KD_local,*KBTrans_local,*KS_local;
-	PetscReal      beta_c,mu,gx,gy,gz;
+	PetscReal      beta_c,alpha_c,mu,gx,gy,gz;
 	PetscReal	   theta,timestepsize;
 	PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
 	MatStencil     *row,*row1;
@@ -532,6 +532,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 	flg = SAME_NONZERO_PATTERN;
 	M_inv     = ctx->flowprop.M_inv;
 	beta_c = ctx->flowprop.beta;
+	alpha_c = ctx->flowprop.alpha;
 	theta = ctx->flowprop.theta;
 	timestepsize = ctx->flowprop.timestepsize;
 	time_theta = theta * timestepsize;
@@ -583,7 +584,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 				/*This computes the local contribution of the global A matrix*/
 				ierr = FLow_MatA(KA_local,&ctx->e3D,ek,ej,ei);CHKERRQ(ierr);
 				for (l = 0; l < nrow*nrow; l++) {
-					KS_local[l] = -2.*M_inv*KA_local[l];
+					KS_local[l] = -2.*M_inv*KA_local[l]/alpha_c;
 				}
 				for (c = 0; c < veldof; c++) {
 					ierr = FLow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c);CHKERRQ(ierr);
