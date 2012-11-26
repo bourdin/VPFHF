@@ -89,8 +89,7 @@ int main(int argc,char **argv)
 				flowbc_array[k][j][i][0] = -beta/mu*(2.*pi*cos(2.*pi*i*hx)*sin(2.*pi*j*hy)*sin(2.*pi*k*hz)-gamma*rho*gx);
 				flowbc_array[k][j][i][1] = -beta/mu*(2.*pi*sin(2.*pi*i*hx)*cos(2.*pi*j*hy)*sin(2.*pi*k*hz)-gamma*rho*gy);
 				flowbc_array[k][j][i][2] = -beta/mu*(2.*pi*sin(2.*pi*i*hx)*sin(2.*pi*j*hy)*cos(2.*pi*k*hz)-gamma*rho*gz);
-//					should comment out after trial
-//				flowbc_array[k][j][i][3] = (sin(2.*pi*i*hx)*sin(2.*pi*j*hy)*sin(2.*pi*k*hz));
+				flowbc_array[k][j][i][3] = (sin(2.*pi*i*hx)*sin(2.*pi*j*hy)*sin(2.*pi*k*hz));
 			}
 		}
 	}	
@@ -106,6 +105,12 @@ int main(int argc,char **argv)
 	ierr = DMDAVecRestoreArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	
+	PetscViewer     viewer;
+	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"BCValues.txt",&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	ierr = VecView(fields.FlowBCArray,viewer);CHKERRQ(ierr);
+
+	
 	/* Setting time parameters	*/
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
 	ctx.maxtimestep = 2;
@@ -115,10 +120,8 @@ int main(int argc,char **argv)
 	ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 	/*	Save fields and write statistics about current run	*/    
 	ierr = FieldsH5Write(&ctx,&fields);
- 
-
 	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
-//	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
+	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
 }

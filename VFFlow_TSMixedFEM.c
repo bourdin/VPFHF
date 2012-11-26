@@ -109,11 +109,11 @@ extern PetscErrorCode MixedFlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 	
 	ierr = TSSetIFunction(ctx->tsVelP,PETSC_NULL,FormIFunction,ctx);CHKERRQ(ierr);
     ierr = TSSetIJacobian(ctx->tsVelP,ctx->JacVelP,ctx->JacVelP,FormIJacobian,ctx);CHKERRQ(ierr);
+	ierr = TSSetRHSFunction(ctx->tsVelP,PETSC_NULL,FormFunction,ctx);CHKERRQ(ierr);
 
 	ierr = TSSetSolution(ctx->tsVelP,fields->VelnPress);CHKERRQ(ierr);
 	ierr = TSSetInitialTimeStep(ctx->tsVelP,0.0,ctx->timevalue);CHKERRQ(ierr);
     ierr = TSSetDuration(ctx->tsVelP,ctx->maxtimestep,ctx->maxtimevalue);CHKERRQ(ierr);
-//	ierr = VecCopy(fields->FlowBCArray,fields->VelnPress);
 //	ierr = FormInitialSolution(fields->VelnPress,fields->FlowBCArray,&ctx->bcFlow[0],ctx);CHKERRQ(ierr);
 
 	ierr = TSMonitorSet(ctx->tsVelP,MixedFEMTSMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -152,13 +152,22 @@ extern PetscErrorCode MixedFEMTSMonitor(TS ts,PetscInt timestep,PetscReal timeva
 	PetscErrorCode ierr;
 	PetscReal      norm,vmax,vmin;
 	MPI_Comm       comm;
-	
+	PetscViewer        viewer;
+	PetscBool drawcontours;
+
+
 	PetscFunctionBegin;
+	
+	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Solution.txt",&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	ierr = VecView(VelnPress,viewer);CHKERRQ(ierr);
+
 	ierr = VecNorm(VelnPress,NORM_1,&norm);CHKERRQ(ierr);
 	ierr = VecMax(VelnPress,PETSC_NULL,&vmax);CHKERRQ(ierr);
 	ierr = VecMin(VelnPress,PETSC_NULL,&vmin);CHKERRQ(ierr);
 	ierr = PetscObjectGetComm((PetscObject)ts,&comm);CHKERRQ(ierr);
 	ierr = PetscPrintf(comm,"timestep %D: time %G, solution norm %G, max %G, min %G\n",timestep,timevalue,norm,vmax,vmin);CHKERRQ(ierr);
+		
 	PetscFunctionReturn(0);
 }
 
@@ -175,9 +184,23 @@ extern PetscErrorCode FormIFunction(TS ts,PetscReal t,Vec VelnPress,Vec VelnPres
 	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
 	ierr = MatMult(ctx->KVelP,VelnPress,Func);CHKERRQ(ierr);	
 	ierr = MatMultAdd(ctx->KVelPlhs,VelnPressdot,Func,Func);CHKERRQ(ierr);
-	ierr = VecAXPY(Func,-1.0,ctx->RHSVelP);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "FormFunction"
+extern PetscErrorCode FormFunction(TS ts,PetscReal t,Vec vec1,Vec Func,void *user)
+{
+	PetscErrorCode ierr;
+	VFCtx			*ctx=(VFCtx*)user;
+	PetscViewer     viewer;
+	
+	PetscFunctionBegin;
+	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
+	ierr = VecCopy(ctx->RHSVelP,Func);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
 
 #undef __FUNCT__
 #define __FUNCT__ "FormIJacobian"
@@ -188,8 +211,8 @@ extern PetscErrorCode FormIJacobian(TS ts,PetscReal t,Vec VelnPress,Vec VelnPres
 	PetscViewer        viewer;
 
 	PetscFunctionBegin;
-//	*str = DIFFERENT_NONZERO_PATTERN;
-	*str = SAME_NONZERO_PATTERN;
+	*str = DIFFERENT_NONZERO_PATTERN;
+//	*str = SAME_NONZERO_PATTERN;
 	ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
 	ierr = MatCopy(ctx->KVelP,*Jac,*str);
 	ierr = MatAXPY(*Jac,shift,ctx->KVelPlhs,*str);CHKERRQ(ierr);
@@ -199,6 +222,12 @@ extern PetscErrorCode FormIJacobian(TS ts,PetscReal t,Vec VelnPress,Vec VelnPres
 		ierr = MatAssemblyBegin(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 		ierr = MatAssemblyEnd(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	}	
+	
+	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrix.txt",&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	ierr = MatView(*Jac,viewer);CHKERRQ(ierr);
+
+	
 	PetscFunctionReturn(0);
 }
 
@@ -351,7 +380,7 @@ extern PetscErrorCode MatApplyTSVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
 		
 	}
 	ierr = MatZeroRowsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-		//	ierr = MatZeroRowsStencil(Klhs,numBC,row,zero,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = MatZeroRowsStencil(Klhs,numBC,row,zero,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscFree(row);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
@@ -376,7 +405,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	Vec            perm_local;
 	PetscReal      hx,hy,hz;
 	PetscReal      *KA_local,*KB_local,*KD_local,*KBTrans_local,*Klhs_local;
-	PetscReal      beta_c,mu,gx,gy,gz;
+	PetscReal      beta_c,alpha_c,mu,gx,gy,gz;
 	PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
 	MatStencil     *row,*row1;
 	PetscReal      ***source_array;
@@ -389,6 +418,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	PetscFunctionBegin;
 	M_inv     = ctx->flowprop.M_inv;
 	beta_c = ctx->flowprop.beta;
+	alpha_c = ctx->flowprop.alpha;
 	mu     = ctx->flowprop.mu;
 	gx     = ctx->flowprop.g[0];
 	gy     = ctx->flowprop.g[1];
@@ -438,7 +468,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					//This computes the local contribution of the global A matrix
 				ierr = FLow_MatA(KA_local,&ctx->e3D,ek,ej,ei);CHKERRQ(ierr);
 				for (l = 0; l < nrow*nrow; l++) {
-					Klhs_local[l] = -2*M_inv*KA_local[l];
+					Klhs_local[l] = -2*M_inv*KA_local[l]/alpha_c;
 				}
 				for (c = 0; c < veldof; c++) {
 					ierr = FLow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c);CHKERRQ(ierr);
