@@ -254,7 +254,7 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
-		//ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr);
+	ctx.matprop[0].beta = 0.;
 	ctx.hasCrackPressure = PETSC_TRUE;
 	ierr = VF_StepU(&fields,&ctx);
 	ctx.ElasticEnergy=0;
