@@ -157,11 +157,11 @@ extern PetscErrorCode MixedFEMTSMonitor(TS ts,PetscInt timestep,PetscReal timeva
 
 
 	PetscFunctionBegin;
-	
+/*	
 	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Solution.txt",&viewer);CHKERRQ(ierr);
 	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
 	ierr = VecView(VelnPress,viewer);CHKERRQ(ierr);
-
+*/
 	ierr = VecNorm(VelnPress,NORM_1,&norm);CHKERRQ(ierr);
 	ierr = VecMax(VelnPress,PETSC_NULL,&vmax);CHKERRQ(ierr);
 	ierr = VecMin(VelnPress,PETSC_NULL,&vmin);CHKERRQ(ierr);
@@ -222,12 +222,11 @@ extern PetscErrorCode FormIJacobian(TS ts,PetscReal t,Vec VelnPress,Vec VelnPres
 		ierr = MatAssemblyBegin(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 		ierr = MatAssemblyEnd(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	}	
-	
+/*	
 	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrix.txt",&viewer);CHKERRQ(ierr);
 	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
 	ierr = MatView(*Jac,viewer);CHKERRQ(ierr);
-
-	
+*/
 	PetscFunctionReturn(0);
 }
 

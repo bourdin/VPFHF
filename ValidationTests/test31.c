@@ -112,8 +112,6 @@ int main(int argc,char **argv)
 	ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 	/*	Save fields and write statistics about current run	*/    
 	ierr = FieldsH5Write(&ctx,&fields);
- 
-
 	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();

@@ -101,8 +101,8 @@ int main(int argc,char **argv)
 */	
 	ctx.bcFlow[3].face[X0] = PRESSURE;
 	ctx.bcFlow[3].face[X1] = PRESSURE;
-	ctx.bcFlow[3].face[Y0] = PRESSURE;
-	ctx.bcFlow[3].face[Y1] = PRESSURE;
+	ctx.bcFlow[1].face[Y0] = VELOCITY;
+	ctx.bcFlow[1].face[Y1] = VELOCITY;
 	ctx.bcFlow[2].face[Z0] = VELOCITY;
 	ctx.bcFlow[2].face[Z1] = VELOCITY;
 
@@ -115,7 +115,7 @@ int main(int argc,char **argv)
 				flowbc_array[k][j][i][0] = 0.;
 				flowbc_array[k][j][i][1] = 0.;
 				flowbc_array[k][j][i][2] = 0.;
-				flowbc_array[k][j][i][3] = 10.;
+				flowbc_array[k][j][i][3] = 0.;
 			}
 		}
 	}	
