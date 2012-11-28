@@ -14,7 +14,6 @@
 extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
 {
   PetscInt       c,loc;
-  PetscErrorCode ierr;
 
   PetscFunctionBegin;
   for (loc = 0; loc < 6; loc++) {
@@ -69,7 +68,7 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       BC[2].face[Z1]       = ZERO;
       break;
     case TEST_MANUAL:
-  	 
+     
       break;
     default:
       SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
@@ -1285,7 +1284,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = DMLocalToGlobalEnd(ctx->daVect,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daVect,&RHS_localVec);CHKERRQ(ierr);
   ierr = VecApplyDirichletBC(RHS,fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
- 	
+  
 /*
     Cleanup
   */
