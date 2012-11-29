@@ -7,6 +7,10 @@ mpiexec -n 2 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length 2. \
       -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 \
       -Gc 1.e-1  -insitumin 0.,-1.e-4,0.,0.,0.,0. -insitumax 0.,-1.e-4,0.,0.,0.,0.
 
+ mpiexec -n 2 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length .1 \
+      -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 
+      -Gc 1.e+1  -insitumin 0.,-1.e-4,0.,0.,0.,0. -insitumax 0,-1e-4,0.,0.,0.,0.
+ 
  */
 
 #include "petsc.h"
@@ -43,7 +47,7 @@ int main(int argc,char **argv)
 	PetscReal       vol_s,vol_1;
 	PetscReal			  errV=1e+10;
 	PetscReal			  lx,ly,lz;
-	PetscReal			  q,maxvol = .03;
+	PetscReal			  q,maxvol = .03,minvol = 0.;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -59,12 +63,13 @@ int main(int argc,char **argv)
 	ierr = DMDAGetBoundingBox(ctx.daScal,BBmin,BBmax);CHKERRQ(ierr);
 	
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-maxvol",&maxvol,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-minvol",&minvol,PETSC_NULL);CHKERRQ(ierr);
   /*
     Overwrite ctx.maxtimestep with something more reasonable
   */
   ctx.maxtimestep = 150;
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-	q = maxvol / ctx.maxtimestep;
+	q = (maxvol - minvol) / (ctx.maxtimestep-1);
 	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
@@ -137,7 +142,7 @@ int main(int argc,char **argv)
 			ctx.bcU[0].face[X1]= ZERO;
 			//ctx.bcU[2].face[X1]= ZERO;
 			/*	face Y0	*/
-			//ctx.bcU[1].face[Y0]= ZERO;
+			ctx.bcU[1].face[Y0]= ZERO;
 			//ctx.bcU[2].face[Y0]= ZERO;
 			/*	face Y1	*/
 			//ctx.bcU[1].face[Y1]= ZERO;
@@ -343,14 +348,12 @@ int main(int argc,char **argv)
 	ctx.timevalue = 0;
 	//ctx.maxtimestep = 150;
 	
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"ctx.hasInsitu: %d\n",ctx.hasInsitu);CHKERRQ(ierr);
-	
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, injected volume %g\n",ctx.timestep,q*ctx.timestep);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr); 
 		do {
 			p_old = p;
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"  Time step %i,alt min step %i with pressure %g\n",ctx.timestep,altminit,p);CHKERRQ(ierr);
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"  Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit,p);CHKERRQ(ierr);
 			
 			/* 
 			  Update the pressure based on the relation
@@ -377,11 +380,11 @@ int main(int argc,char **argv)
       ierr = VecCopy(fields.U,U_s);CHKERRQ(ierr);
       
       // This will fail if vol_1 = 0, which should only happen when there are no cracks
-      p = (q*ctx.timestep - vol_s) / vol_1;
+      p = (minvol + q*ctx.timestep - vol_s) / vol_1;
       ierr = VecAXPY(fields.U,p,U_1);CHKERRQ(ierr);
 
       ctx.CrackVolume = vol_s + p * vol_1;
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"      vol_s: %e vol_1 %e volume\n",vol_s,vol_1,ctx.CrackVolume);
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"      vol_s: %e vol_1 %e volume %e (target vol: %e)\n",vol_s,vol_1,ctx.CrackVolume,minvol + q*ctx.timestep);
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"      Updated crack pressure: %e (was %e)\n",p,p_old);
 
 			ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
