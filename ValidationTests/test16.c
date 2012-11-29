@@ -7,10 +7,27 @@ mpiexec -n 2 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length 2. \
       -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 \
       -Gc 1.e-1  -insitumin 0.,-1.e-4,0.,0.,0.,0. -insitumax 0.,-1.e-4,0.,0.,0.,0.
 
- mpiexec -n 2 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length .1 \
+mpiexec -n 2 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length .1 \
       -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 
       -Gc 1.e+1  -insitumin 0.,-1.e-4,0.,0.,0.,0. -insitumax 0,-1e-4,0.,0.,0.,0.
- 
+
+mpiexec -n 2 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length .1 \
+      -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 \
+      -Gc 1.e+1  -insitumin 0.,-2.e+0,0.,0.,0.,0. -insitumax 0,-2e+0,0.,0.,0.,0. 
+      
+An example that doesn't work:
+mpiexec -n 4 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length .1 \
+      -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
+      -Gc 1.e+1  -insitumin 0.,-4.e+0,0.,0.,0.,0. -insitumax 0,-4e+0,0.,0.,0.,0. \
+      -U_ksp_atol 1e-7 -U_ksp_rtol 1e-7 -U_ksp_type cg 
+      
+Unsurprisingly, setting eta to 1e-10 helps a lot
+Using a finer mesh solves the issue:
+mpiexec -n 4 ./test16  -n 52,101,2 -l 0.5,1,0.02 -epsilon 0.01 -length .1 \
+        -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
+        -Gc 1.e+1  -insitumin 0.,-4.e+0,0.,0.,0.,0. -insitumax 0,-4e+0,0.,0.,0.,0. \
+        -U_ksp_atol 1e-7 -U_ksp_rtol 1e-7 -U_ksp_type cg -eta 1e-10
+Going back to default KSP is OK
  */
 
 #include "petsc.h"
@@ -41,7 +58,7 @@ int main(int argc,char **argv)
 	char            filename[FILENAME_MAX];
 	PetscReal       p;
 	PetscReal       p_old;
-	PetscReal       p_epsilon = 1.e-5;
+	PetscReal       p_epsilon = 1.e-2;
 	PetscInt			  altminit=1;
 	Vec					    Vold,U_s,U_1;
 	PetscReal       vol_s,vol_1;
@@ -331,7 +348,7 @@ int main(int argc,char **argv)
 
 	ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
 	ierr = PetscViewerSetType(viewer,PETSCVIEWERASCII);CHKERRQ(ierr);
-	ierr = PetscViewerFileSetMode(viewer,FILE_MODE_APPEND);CHKERRQ(ierr);
+	//ierr = PetscViewerFileSetMode(viewer,FILE_MODE_APPEND);CHKERRQ(ierr);
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.pres",ctx.prefix);CHKERRQ(ierr);
 	ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
 	ierr = PetscViewerASCIIPrintf(viewer,"#Time step \t Volume \t Pressure \t SurfaceEnergy \t ElasticEnergy \t PressureForces \t TotalMechEnergy \n");CHKERRQ(ierr);
@@ -351,6 +368,7 @@ int main(int argc,char **argv)
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, injected volume %g\n",ctx.timestep,q*ctx.timestep);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr); 
+		altminit = 0.;
 		do {
 			p_old = p;
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"  Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit,p);CHKERRQ(ierr);
@@ -396,7 +414,7 @@ int main(int argc,char **argv)
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"      Max. change on V: %e\n",errV);CHKERRQ(ierr);
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"      Max. change on p: %e\n",PetscAbs(p-p_old));CHKERRQ(ierr);
 			altminit++;
-		} while (PetscAbs(p-p_old) >= p_epsilon && altminit <= ctx.altminmaxit);
+		} while (PetscAbs(p-p_old)/abs(p) >= p_epsilon && altminit <= ctx.altminmaxit);
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);   
 		switch (ctx.fileformat) {
 			case FILEFORMAT_HDF5:       
@@ -411,16 +429,16 @@ int main(int argc,char **argv)
 		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
 		ierr = PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
 
+
 		ctx.ElasticEnergy=0;
 		ctx.InsituWork=0;
 		ctx.PressureWork = 0.;
 		ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
 		ierr = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
 		ctx.TotalEnergy = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork + ctx.SurfaceEnergy;
-		ierr = PetscViewerASCIIPrintf(viewer,"%d \t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep ,ctx.CrackVolume,p,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
+		ierr = PetscViewerASCIIPrintf(viewer,"%d \t\t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep ,ctx.CrackVolume,p,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
     ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ctx.ElasticEnergy,
                                   ctx.InsituWork,ctx.SurfaceEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
-		altminit = 0.;
 	}
 	ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
 	ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
