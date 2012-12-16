@@ -17,7 +17,6 @@
 extern PetscErrorCode VFFlow_Fake(VFCtx *ctx, VFFields *fields)
 {
 	PetscErrorCode ierr;
-	PetscReal			incremnt = 3.;
 	PetscInt			xs,xm,nx;
 	PetscInt			ys,ym,ny;
 	PetscInt			zs,zm,nz;
