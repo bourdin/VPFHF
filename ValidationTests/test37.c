@@ -31,11 +31,12 @@ int main(int argc,char **argv)
 	PetscReal		gamma, beta, rho, mu;
 	PetscReal		pi;
 	PetscReal		****perm_array;
+	PetscReal		****velnpre_array;
 
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
+	ctx.flowsolver = FLOWSOLVER_TSMIXEDFEM;
 	ierr = FlowSolverInitialize(&ctx,&fields);CHKERRQ(ierr);
 	
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -47,6 +48,7 @@ int main(int argc,char **argv)
 	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
 	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.VelnPress,&velnpre_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr); 
 
@@ -92,66 +94,61 @@ int main(int argc,char **argv)
 			ctx.bcFlow[c].vertex[i] = NOBC;
 		}
 	}
-
+	
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) {
+				velnpre_array[k][j][i][0] = 0.;
+				velnpre_array[k][j][i][1] = 0.;
+				velnpre_array[k][j][i][2] = 0.;
+				velnpre_array[k][j][i][3] = 2.;
+			}
+		}
+	}		
 	ctx.bcFlow[3].face[X0] = PRESSURE;
 	ctx.bcFlow[3].face[X1] = PRESSURE;
 	ctx.bcFlow[1].face[Y0] = VELOCITY;
 	ctx.bcFlow[1].face[Y1] = VELOCITY;
 	ctx.bcFlow[2].face[Z0] = VELOCITY;
 	ctx.bcFlow[2].face[Z1] = VELOCITY;
-
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				flowbc_array[k][j][i][3] = 0.;
+				if(i == 0 ){
+					flowbc_array[k][j][i][3] = 0.;
+				}
+				else {
+					flowbc_array[k][j][i][3] = 2.;
+				}
+				flowbc_array[k][j][i][0] = 0.;
+				flowbc_array[k][j][i][1] = 0.;
+				flowbc_array[k][j][i][2] = 0.;
 			}
 		}
 	}	
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
-			for (i = xs; i < xs+xm; i++) {				
-				src_array[k][j][i] = 1.;
+			for (i = xs; i < xs+xm; i++) {
+				src_array[k][j][i] = 0.;
 			}
 		}
 	}
+	ierr = DMDAVecRestoreArrayDOF(ctx.daFlow,fields.VelnPress,&velnpre_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);	
-
-	/* 
-	 Now done with all initializations
-	 */
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
+	/* Setting time parameters	*/
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
-
-	ctx.maxtimestep = 1;
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
-		ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
-		/*
-		 Do flow solver step 
-		 */
-		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-		/*
-		 Save fields and write statistics about current run
-		 */    
-		switch (ctx.fileformat) {
-			case FILEFORMAT_HDF5:       
-				ierr = FieldsH5Write(&ctx,&fields);
-				break;
-			case FILEFORMAT_BIN:
-				ierr = FieldsBinaryWrite(&ctx,&fields);
-				break; 
-		} 
-		ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
-		ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
-		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
-		ierr = PetscViewerDestroy(&logviewer);
-	}
+	ctx.maxtimestep = 20;
+	ctx.maxtimevalue = 100.;
+	ctx.timevalue = 0.1;
+	/*	Do flow solver step	*/
+	ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+	/*	Save fields and write statistics about current run	*/    
+	ierr = FieldsH5Write(&ctx,&fields);
+	
+	
 	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
