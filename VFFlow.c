@@ -41,6 +41,8 @@ extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 			break; 
 		case FLOWSOLVER_TS:
 		    break;
+		case FLOWSOLVER_SNES:
+		    break;
 		case FLOWSOLVER_FAKE:
 			break; 
 		case FLOWSOLVER_READFROMFILES:
@@ -70,6 +72,8 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 		    break;
 		case FLOWSOLVER_FEM:
 			break; 
+		case FLOWSOLVER_SNES:
+		    break;
 		case FLOWSOLVER_FAKE:
 			break; 
 		case FLOWSOLVER_READFROMFILES:
