@@ -1,5 +1,5 @@
 /*
- test25.c: 3D KSP. Flow problem with source term [pressure = sin(2*pi*x)*sin(2*pi*y)*sin(2(pi*z)]. All pressure boundary condition.
+ test38.c: 1D KSP. Flow problem with source term [pressure = sin(2*pi*x)*sin(2*pi*y)*sin(2(pi*z)]. All pressure boundary condition.
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  */
 
@@ -27,15 +27,17 @@ int main(int argc,char **argv)
 	PetscReal		***src_array;
 	PetscReal		****coords_array;
 	PetscReal		hx,hy,hz;
+	PetscReal		lx,ly,lz;
 	PetscReal		gx,gy,gz;
 	PetscReal		gamma, beta, rho, mu;
 	PetscReal		pi;
 	PetscReal		****perm_array;
+	PetscReal		****velnpre_array;
 
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
+	ctx.flowsolver = FLOWSOLVER_TSMIXEDFEM;
 	ierr = FlowSolverInitialize(&ctx,&fields);CHKERRQ(ierr);
 	
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -47,6 +49,7 @@ int main(int argc,char **argv)
 	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
 	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.VelnPress,&velnpre_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr); 
 
@@ -62,11 +65,13 @@ int main(int argc,char **argv)
 		}
 	}
 	
-	
 	pi = 6.*asin(0.5);
-	hx = 1./(nx-1);
-	hy = 1./(nx-1);
-	hz = 1./(nz-1);	
+	lz = BBmax[2]-BBmin[2];
+	ly = BBmax[1]-BBmin[1];
+	lx = BBmax[0]-BBmin[0];	
+	hx = lx/(nx-1);
+	hy = ly/(nx-1);
+	hz = lz/(nz-1);	
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
 	beta = ctx.flowprop.beta;		
@@ -92,41 +97,58 @@ int main(int argc,char **argv)
 			ctx.bcFlow[c].vertex[i] = NOBC;
 		}
 	}
-
+	
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) {
+				velnpre_array[k][j][i][0] = 0.;
+				velnpre_array[k][j][i][1] = 0.;
+				velnpre_array[k][j][i][2] = 0.;
+				velnpre_array[k][j][i][3] = 6.*sin(pi*hx*i/lx);
+			}
+		}
+	}		
 	ctx.bcFlow[3].face[X0] = PRESSURE;
 	ctx.bcFlow[3].face[X1] = PRESSURE;
 	ctx.bcFlow[1].face[Y0] = VELOCITY;
 	ctx.bcFlow[1].face[Y1] = VELOCITY;
 	ctx.bcFlow[2].face[Z0] = VELOCITY;
 	ctx.bcFlow[2].face[Z1] = VELOCITY;
-
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				flowbc_array[k][j][i][3] = 0.;
+				if(i == 0 ){
+					flowbc_array[k][j][i][3] = 0.;
+				}
+				else {
+					flowbc_array[k][j][i][3] = 0.;
+				}
+				flowbc_array[k][j][i][0] = 0.;
+				flowbc_array[k][j][i][1] = 0.;
+				flowbc_array[k][j][i][2] = 0.;
 			}
 		}
 	}	
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
-			for (i = xs; i < xs+xm; i++) {				
-				src_array[k][j][i] = 1.;
+			for (i = xs; i < xs+xm; i++) {
+				src_array[k][j][i] = 0.;
 			}
 		}
 	}
+	ierr = DMDAVecRestoreArrayDOF(ctx.daFlow,fields.VelnPress,&velnpre_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);	
-
+	/* Setting time parameters	*/
 	/* 
 	 Now done with all initializations
 	 */
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
-
-	ctx.maxtimestep = 1;
+	ctx.maxtimestep = 3;
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
@@ -152,6 +174,16 @@ int main(int argc,char **argv)
 		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
 		ierr = PetscViewerDestroy(&logviewer);
 	}
+	Vec error;
+	PetscReal norm_1,norm_2,norm_inf;
+	ierr = VecDuplicate(fields.VelnPress,&error);
+	ierr = VecWAXPY(error,-1.0,fields.VelnPress,fields.FlowBCArray);
+	ierr = VecNorm(error,NORM_1,&norm_1);
+	ierr = VecNorm(error,NORM_2,&norm_2);
+	ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1_NORM = %f \n 2_norm = %f \n inf_norm = %f \n",norm_1, norm_2,norm_inf);CHKERRQ(ierr);	
+		
+	
 	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
