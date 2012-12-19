@@ -6,26 +6,6 @@
  */
 static const char banner[] = "\n\nVF:\nNumerical implementation of the variational approach to fracture.\n(c) 2010-2012 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu\n\n";
 
-typedef enum {
-  VELOCITY,
-  PRESSURE,
-  NOBC
-} FlowBCTYPE;
-
-typedef struct {
-  FlowBCTYPE     face[6];
-  FlowBCTYPE     edge[12];
-  FlowBCTYPE     vertex[8];   
-} FLOWBC;
-
-static const char *FLOWBCTYPE_NAME[] = {
-  "NORMALVELOCITY",
-  "PRESSURE",
-  "FLOWBCTYPE_NAME",
-  "",
-  0
-};
-
 typedef struct {
   PetscReal   mu;             /* Fluid viscosity              */
   PetscReal   rho;            /* Fluid density                */
@@ -325,7 +305,6 @@ typedef struct {
   Mat                 KVelP;
   PC                  pcVelP;
   KSP                 kspVelP;
-  FLOWBC              bcFlow[4];
   DM                  daFlow;
   DM                  daVFperm;
   FlowProp            flowprop;
@@ -343,6 +322,7 @@ typedef struct {
   Vec                 PreFlowFields;
   Vec                 Perm;
   Vec                 FlowBC;
+  BC                  bcQ[3];
 
   
   /*

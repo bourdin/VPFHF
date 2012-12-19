@@ -61,26 +61,29 @@ int main(int argc,char **argv)
 	 Reset all Flow BC for velocity and P
 	 */
 	for (i = 0; i < 6; i++) {
-		for (c = 0; c < 4; c++) {
-			ctx.bcFlow[c].face[i] = NOBC;
+		ctx.bcP[0].face[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			ctx.bcQ[c].face[i] = NONE;
 		}
 	}
 	for (i = 0; i < 12; i++) {
-		for (c = 0; c < 4; c++) {
-			ctx.bcFlow[c].edge[i] = NOBC;
+		ctx.bcP[0].edge[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			ctx.bcQ[c].edge[i] = NONE;
 		}
 	}
 	for (i = 0; i < 8; i++) {
-		for (c = 0; c < 4; c++) {
-			ctx.bcFlow[c].vertex[i] = NOBC;
+		ctx.bcP[0].vertex[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			ctx.bcQ[c].vertex[i] = NONE;
 		}
 	}
-	ctx.bcFlow[0].face[X0] = VELOCITY;
-	ctx.bcFlow[0].face[X1] = VELOCITY;
-	ctx.bcFlow[1].face[Y0] = VELOCITY;
-	ctx.bcFlow[1].face[Y1] = VELOCITY;
-	ctx.bcFlow[2].face[Z0] = VELOCITY;
-	ctx.bcFlow[2].face[Z1] = VELOCITY;		
+	ctx.bcQ[0].face[X0] = VALUE;
+	ctx.bcQ[0].face[X1] = VALUE;
+	ctx.bcQ[1].face[Y0] = VALUE;
+	ctx.bcQ[1].face[Y1] = VALUE;
+	ctx.bcQ[2].face[Z0] = VALUE;
+	ctx.bcQ[2].face[Z1] = VALUE;		
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
@@ -141,18 +144,7 @@ int main(int argc,char **argv)
 	ierr = VecNorm(error,NORM_1,&norm_1);
 	ierr = VecNorm(error,NORM_2,&norm_2);
 	ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
-//	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1_NORM = %f \n 2_norm = %f \n inf_norm = %f \n",norm_1, norm_2,norm_inf);CHKERRQ(ierr);	
-
-/*
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrixx.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = MatView(ctx.KVelP,viewer);CHKERRQ(ierr);
-
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrixxlhs.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = MatView(ctx.KVelPlhs,viewer);CHKERRQ(ierr);
-*/
-	
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1_NORM = %f \n 2_norm = %f \n inf_norm = %f \n",norm_1, norm_2,norm_inf);CHKERRQ(ierr);	
 	
 	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);

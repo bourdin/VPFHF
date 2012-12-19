@@ -80,18 +80,21 @@ int main(int argc,char **argv)
 	 Reset all Flow BC for velocity and P
 	 */
 	for (i = 0; i < 6; i++) {
-		for (c = 0; c < 4; c++) {
-			ctx.bcFlow[c].face[i] = NOBC;
+		ctx.bcP[0].face[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			ctx.bcQ[c].face[i] = NONE;
 		}
 	}
 	for (i = 0; i < 12; i++) {
-		for (c = 0; c < 4; c++) {
-			ctx.bcFlow[c].edge[i] = NOBC;
+		ctx.bcP[0].edge[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			ctx.bcQ[c].edge[i] = NONE;
 		}
 	}
 	for (i = 0; i < 8; i++) {
-		for (c = 0; c < 4; c++) {
-			ctx.bcFlow[c].vertex[i] = NOBC;
+		ctx.bcP[0].vertex[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			ctx.bcQ[c].vertex[i] = NONE;
 		}
 	}
 	
@@ -105,12 +108,12 @@ int main(int argc,char **argv)
 			}
 		}
 	}		
-	ctx.bcFlow[3].face[X0] = PRESSURE;
-	ctx.bcFlow[3].face[X1] = PRESSURE;
-	ctx.bcFlow[1].face[Y0] = VELOCITY;
-	ctx.bcFlow[1].face[Y1] = VELOCITY;
-	ctx.bcFlow[2].face[Z0] = VELOCITY;
-	ctx.bcFlow[2].face[Z1] = VELOCITY;
+	ctx.bcP[0].face[X0] = VALUE;
+	ctx.bcP[0].face[X1] = VALUE;
+	ctx.bcQ[1].face[Y0] = VALUE;
+	ctx.bcQ[1].face[Y1] = VALUE;
+	ctx.bcQ[2].face[Z0] = VALUE;
+	ctx.bcQ[2].face[Z1] = VALUE;
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
