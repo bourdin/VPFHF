@@ -46,7 +46,7 @@ typedef struct {
 } FluidProp; //change them to Vec later
 
 extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode GetFlowBC(FLOWBC *BC, FlowCases setbc);
+//extern PetscErrorCode GetFlowBC(FLOWBC *BC, FlowCases setbc);
 //extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields);
 //extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx);
 
@@ -55,6 +55,7 @@ extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields);
 
 extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx);
 extern PetscErrorCode BCTInit(BC *BCT,VFCtx *ctx);
+extern PetscErrorCode BCQInit(BC *BCQ,VFCtx *ctx);
 
 #endif /* VFFLOW_H */
 

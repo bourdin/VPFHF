@@ -83,6 +83,19 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "BCQInit"
+extern PetscErrorCode BCQInit(BC *BCQ,VFCtx *ctx)
+{
+	PetscErrorCode ierr;
+	
+	PetscFunctionBegin;
+	ierr = BCInit(BCQ,3);CHKERRQ(ierr);
+
+	
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "BCPInit"
 extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx)
 {

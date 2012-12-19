@@ -10,6 +10,7 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
+#include "VFFlow.h"
 /* #include "PetscFixes.h" */
 #include "VFFlow_KSPMixedFEM.h"
 
@@ -54,7 +55,7 @@ extern PetscErrorCode VFFlow_DarcyMixedFEMSteadyState(VFCtx *ctx,VFFields *field
 	ierr = DMGlobalToLocalBegin(ctx->daFlow,fields->FlowBCArray,INSERT_VALUES,velnpre_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daFlow,fields->FlowBCArray,INSERT_VALUES,velnpre_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daFlow,velnpre_local,&velnpre_array);CHKERRQ(ierr); 
-	ierr = VecApplyFlowBC(VecRHS,&ctx->bcFlow[0],ctx,velnpre_array);CHKERRQ(ierr);
+	ierr = VecApplyFlowBC(VecRHS,&ctx->bcQ[0],ctx,velnpre_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,velnpre_local,&velnpre_array);CHKERRQ(ierr); 
 	ierr = DMRestoreLocalVector(ctx->daFlow,&velnpre_local);CHKERRQ(ierr);
 	ierr = KSPMonitorSet(ctx->kspVelP,MixedFEMKSPMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -86,7 +87,7 @@ extern PetscErrorCode VFFlow_DarcyMixedFEMSteadyState(VFCtx *ctx,VFFields *field
 	 ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Solution.txt",&viewer);CHKERRQ(ierr);
 	 ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
 	 ierr = VecView(fields->VelnPress,viewer);CHKERRQ(ierr);
-*/ 	
+ */	
 	ierr = KSPGetConvergedReason(ctx->kspVelP,&reason);CHKERRQ(ierr);
 	if (reason < 0) {
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] kspVelP diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
@@ -137,39 +138,42 @@ extern PetscErrorCode MixedFEMKSPMonitor(KSP ksp,PetscInt its,PetscReal fnorm,vo
 
 #undef __FUNCT__
 #define __FUNCT__ "SETFlowBC"
-extern PetscErrorCode SETFlowBC(FLOWBC *BC,FlowCases flowcase)
+extern PetscErrorCode SETFlowBC(BC *bcP,BC *bcQ, FlowCases flowcase)
 {
 	PetscInt i,c;
 	
 	PetscFunctionBegin;
 	for (i = 0; i < 6; i++) {
-		for (c = 0; c < 4; c++) {
-			BC[c].face[i] = NOBC;
+		bcP[0].face[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			bcQ[c].face[i] = NONE;
 		}
 	}
 	for (i = 0; i < 12; i++) {
-		for (c = 0; c < 4; c++) {
-			BC[c].edge[i] = NOBC;
+		bcP[0].face[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			bcQ[c].edge[i] = NONE;
 		}
 	}
 	for (i = 0; i < 8; i++) {
-		for (c = 0; c < 4; c++) {
-			BC[c].vertex[i] = NOBC;
+		bcP[0].face[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			bcQ[c].vertex[i] = NONE;
 		}
 	}
 	switch (flowcase) {
 		case ALLPRESSUREBC:
 			for (i = 0; i < 6; i++) {
-				BC[3].face[i] = PRESSURE;
+				bcP[0].face[i] = VALUE;
 			}
 			break;
 		case ALLNORMALFLOWBC:			
-			BC[0].face[X0] = VELOCITY;
-			BC[0].face[X1] = VELOCITY;
-			BC[1].face[Y0] = VELOCITY;
-			BC[1].face[Y1] = VELOCITY;
-			BC[2].face[Z0] = VELOCITY;
-			BC[2].face[Z1] = VELOCITY;
+			bcQ[0].face[X0] = VALUE;
+			bcQ[0].face[X1] = VALUE;
+			bcQ[1].face[Y0] = VALUE;
+			bcQ[1].face[Y1] = VALUE;
+			bcQ[2].face[Z0] = VALUE;
+			bcQ[2].face[Z1] = VALUE;
 			break;
 		default:
 			SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: [%s] unknown FLOWCASE %i .\n",__FUNCT__,flowcase);
@@ -220,13 +224,13 @@ extern PetscErrorCode VecApplyWellFlowBC(PetscReal *Ks_local,PetscReal ***source
 }
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyFlowBC"
-extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal ****UnPre_array)
+extern PetscErrorCode VecApplyFlowBC(Vec RHS,BC *bcQ,VFCtx *ctx, PetscReal ****UnPre_array)
 {
 	PetscErrorCode ierr;
 	PetscInt       xs,xm,nx;
 	PetscInt       ys,ym,ny;
 	PetscInt       zs,zm,nz;
-	PetscInt       dim,dof;
+	PetscInt       dim,dof=3;
 	PetscInt       i,j,k,c;
 	DM             da;
 	PetscReal      ****RHS_array;
@@ -236,14 +240,14 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 	ierr = PetscObjectQuery((PetscObject)RHS,"DM",(PetscObject*)&da);CHKERRQ(ierr);
 	if (!da) SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
 	
-	ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,&dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
 	hx   = 1./(nx-1);hy = 1./(ny-1);hz = 1./(nz-1);
 	for (c = 0; c < dof; c++) {
 		if (xs == 0) {
 			i = 0;
-			if (BC[c].face[X0] == VELOCITY) {
+			if (bcQ[c].face[X0] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
 						RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
@@ -253,7 +257,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (xs+xm == nx) {
 			i = nx-1;
-			if (BC[c].face[X1] == VELOCITY) {
+			if (bcQ[c].face[X1] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
 						RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
@@ -263,7 +267,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (ys == 0) {
 			j = 0;
-			if (BC[c].face[Y0] == VELOCITY) {
+			if (bcQ[c].face[Y0] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
 					for (i = xs; i < xs+xm; i++) {
 						RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
@@ -273,7 +277,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (ys+ym == ny) {
 			j = ny-1;
-			if (BC[c].face[Y1] == VELOCITY) {
+			if (bcQ[c].face[Y1] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
 					for (i = xs; i < xs+xm; i++) {
 						RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
@@ -284,7 +288,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (zs == 0) {
 			k = 0;
-			if (BC[c].face[Z0] == VELOCITY) {
+			if (bcQ[c].face[Z0] == VALUE) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) {
 						RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
@@ -294,7 +298,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (zs+zm == nz) {
 			k = nz-1;
-			if (BC[c].face[Z1] == VELOCITY) {
+			if (bcQ[c].face[Z1] == VALUE) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) {
 						RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
@@ -304,7 +308,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (xs == 0 && zs == 0) {
 			k = 0;i = 0;
-			if (BC[c].edge[X0Z0] == VELOCITY) {
+			if (bcQ[c].edge[X0Z0] == VALUE) {
 				for (j = ys; j < ys+ym; j++) {
 					RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 				}
@@ -312,7 +316,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (xs+xm == nx && zs == 0) {
 			k = 0;i = nx-1;
-			if (BC[c].edge[X1Z0] == VELOCITY) {
+			if (bcQ[c].edge[X1Z0] == VALUE) {
 				for (j = ys; j < ys+ym; j++) {
 					RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 				}
@@ -320,7 +324,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (ys == 0 && zs == 0) {
 			k = 0;j = 0;
-			if (BC[c].edge[Y0Z0] == VELOCITY) {
+			if (bcQ[c].edge[Y0Z0] == VALUE) {
 				for (i = xs; i < xs+xm; i++) {
 					RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 				}
@@ -328,7 +332,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (ys+ym == ny && zs == 0) {
 			k = 0;j = 0;
-			if (BC[c].edge[Y1Z0] == VELOCITY) {
+			if (bcQ[c].edge[Y1Z0] == VALUE) {
 				for (i = xs; i < xs+xm; i++) {
 					RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 				}
@@ -336,7 +340,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (xs == 0 && zs+zm == nz) {
 			k = nz-1;i = 0;
-			if (BC[c].edge[X0Z1] == VELOCITY) {
+			if (bcQ[c].edge[X0Z1] == VALUE) {
 				for (j = ys; j < ys+ym; j++) {
 					RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 				}
@@ -344,7 +348,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (xs+xm == nx && zs+zm == nz) {
 			k = nz-1;i = nx-1;
-			if (BC[c].edge[X1Z1] == VELOCITY) {
+			if (bcQ[c].edge[X1Z1] == VALUE) {
 				for (j = ys; j < ys+ym; j++) {
 					RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 				}
@@ -352,7 +356,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (ys == 0 && zs+zm == nz) {
 			k = nz-1;j = 0;
-			if (BC[c].edge[Y0Z1] == VELOCITY) {
+			if (bcQ[c].edge[Y0Z1] == VALUE) {
 				for (i = xs; i < xs+xm; i++) {
 					RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 				}
@@ -360,7 +364,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (ys+ym == ny && zs+zm == nz) {
 			k = nz-1;j = ny-1;
-			if (BC[c].edge[Y1Z1] == VELOCITY) {
+			if (bcQ[c].edge[Y1Z1] == VALUE) {
 				for (i = xs; i < xs+xm; i++) {
 					RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 				}
@@ -368,7 +372,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (xs == 0 && ys == 0) {
 			j = 0;i = 0;
-			if (BC[c].edge[X0Y0] == VELOCITY) {
+			if (bcQ[c].edge[X0Y0] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
 					RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 				}
@@ -376,7 +380,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (xs == 0 && ys+ym == ny) {
 			j = ny-1;i = 0;
-			if (BC[c].edge[X0Y1] == VELOCITY) {
+			if (bcQ[c].edge[X0Y1] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
 					RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 				}
@@ -384,7 +388,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (xs+xm == nx && ys == 0) {
 			j = 0;i = nx-1;
-			if (BC[c].edge[X1Y0] == VELOCITY) {
+			if (bcQ[c].edge[X1Y0] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
 					RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 				}
@@ -392,7 +396,7 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (xs+xm == nx && ys+ym == ny) {
 			j = ny-1;i = nx-1;
-			if (BC[c].edge[X1Y1] == VELOCITY) {
+			if (bcQ[c].edge[X1Y1] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
 					RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 				}
@@ -400,49 +404,49 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,FLOWBC *BC,VFCtx *ctx, PetscReal **
 		}
 		if (xs == 0 && ys == 0 && zs == 0) {
 			k = 0;j = 0;i = 0;
-			if (BC[c].vertex[X0Y0Z0] == VELOCITY) {
+			if (bcQ[c].vertex[X0Y0Z0] == VALUE) {
 				RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 			}
 		}
 		if (xs+xm == nx && ys == 0 && zs == 0) {
 			k = 0;j = 0;i = nx-1;
-			if (BC[c].vertex[X1Y0Z0] == VELOCITY) {
+			if (bcQ[c].vertex[X1Y0Z0] == VALUE) {
 				RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 			}
 		}
 		if (xs == 0 && ys+ym == ny && zs == 0) {
 			k = 0;j = ny-1;i = 0;
-			if (BC[c].vertex[X0Y1Z0] == VELOCITY) {
+			if (bcQ[c].vertex[X0Y1Z0] == VALUE) {
 				RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 			}
 		}
 		if (xs+xm == nx && ys+ym == ny && zs == 0) {
 			k = 0;j = ny-1;i = nx-1;
-			if (BC[c].vertex[X1Y1Z0] == VELOCITY) {
+			if (bcQ[c].vertex[X1Y1Z0] == VALUE) {
 				RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 			}
 		}
 		if (xs == 0 && ys == 0 && zs+zm == nz) {
 			k = nz-1;j = 0;i = 0;
-			if (BC[c].vertex[X0Y0Z1] == VELOCITY) {
+			if (bcQ[c].vertex[X0Y0Z1] == VALUE) {
 				RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 			}
 		}
 		if (xs+xm == nx && ys == 0 && zs+zm == nz) {
 			k = nz-1;j = 0;i = nx-1;
-			if (BC[c].vertex[X1Y0Z1] == VELOCITY) {
+			if (bcQ[c].vertex[X1Y0Z1] == VALUE) {
 				RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 			}
 		}
 		if (xs == 0 && ys+ym == ny && zs+zm == nz) {
 			k = nz-1;j = ny-1;i = 0;
-			if (BC[c].vertex[X0Y1Z1] == VELOCITY) {
+			if (bcQ[c].vertex[X0Y1Z1] == VALUE) {
 				RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 			}
 		}
 		if (xs+xm == nx && ys+ym == ny && zs+zm == nz) {
 			k = nz-1;j = ny-1;i = nx-1;
-			if (BC[c].vertex[X1Y1Z1] == VELOCITY) {
+			if (bcQ[c].vertex[X1Y1Z1] == VALUE) {
 				RHS_array[k][j][i][c] = UnPre_array[k][j][i][c];
 			}
 		}
@@ -643,7 +647,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 /*					 Face X0			*/
 					face = X0;	
 					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
-					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+					if (ctx->bcP[0].face[face] == VALUE) {
 						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
@@ -658,7 +662,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 /*					 Face X1		*/
 					face = X1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
-					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+					if (ctx->bcP[0].face[face] == VALUE) {
 						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
@@ -673,7 +677,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 /*					 Face Y0		*/
 					face = Y0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
-					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+					if (ctx->bcP[0].face[face] == VALUE) {
 						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
 							for (j = 0; j < ctx->e2D.nphiz; j++) {
@@ -688,7 +692,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 /*					 Face Y1		*/
 					face = Y1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
-					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+					if (ctx->bcP[0].face[face] == VALUE) {
 						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
 							for (j = 0; j < ctx->e2D.nphiz; j++) {
@@ -703,7 +707,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 /*					 Face Z0		*/
 					face = Z0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
-					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+					if (ctx->bcP[0].face[face] == VALUE) {
 						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
@@ -718,7 +722,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 /*					 Face Z1		*/
 					face = Z1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
-					if (ctx->bcFlow[3].face[face] == PRESSURE) {
+					if (ctx->bcP[0].face[face] == VALUE) {
 						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
@@ -744,7 +748,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 	ierr = MatAssemblyEnd(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = MatApplyKSPVelocityBC(K,Krhs,&ctx->bcFlow[0]);CHKERRQ(ierr);
+	ierr = MatApplyKSPVelocityBC(K,Krhs,&ctx->bcQ[0]);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -766,8 +770,6 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 	ierr = MatDestroy(&K2);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
-
-
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyPressureBC"
@@ -933,7 +935,7 @@ extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ****pre_
 
 #undef __FUNCT__
 #define __FUNCT__ "MatApplyKSPVelocityBC"
-extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
+extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,BC *bcQ)
 {
 	PetscErrorCode ierr;
 	PetscInt       xs,xm,nx;
@@ -943,7 +945,7 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
 	MatStencil    *row;
 	PetscReal      one=1.;
 	PetscInt       numBC=0,l=0;
-	PetscInt       dim,dof;
+	PetscInt       dim,dof=3;
 	DM				da;
 	PetscReal      zero=0.0;
 	
@@ -952,27 +954,27 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
 	if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
 	
 	ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-					   &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	/*
 	 Compute the number of boundary nodes on each processor. 
 	 Edges and corners are counted multiple times (2 and 3 resp)
 	 */
 	for (c = 0; c < dof; c++){
-		if (xs == 0       && BC[c].face[X0] == VELOCITY)             numBC += ym * zm;
-		if (xs + xm == nx && BC[c].face[X1] == VELOCITY)             numBC += ym * zm;
-		if (ys == 0       && BC[c].face[Y0] == VELOCITY)             numBC += xm * zm;
-		if (ys + ym == ny && BC[c].face[Y1] == VELOCITY)             numBC += xm * zm;
-		if (zs == 0       && BC[c].face[Z0] == VELOCITY && dim == 3) numBC += xm * ym;
-		if (zs + zm == nz && BC[c].face[Z1] == VELOCITY && dim == 3) numBC += xm * ym;
-		if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == VELOCITY) numBC++;
-		if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == VELOCITY) numBC++;
-		if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == VELOCITY) numBC++;
-		if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == VELOCITY) numBC++;
-		if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == VELOCITY && dim == 3) numBC++;
-		if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == VELOCITY && dim == 3) numBC++;
-		if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == VELOCITY && dim == 3) numBC++;
-		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == VELOCITY && dim == 3) numBC++;
+		if (xs == 0       && bcQ[c].face[X0] == VALUE)             numBC += ym * zm;
+		if (xs + xm == nx && bcQ[c].face[X1] == VALUE)             numBC += ym * zm;
+		if (ys == 0       && bcQ[c].face[Y0] == VALUE)             numBC += xm * zm;
+		if (ys + ym == ny && bcQ[c].face[Y1] == VALUE)             numBC += xm * zm;
+		if (zs == 0       && bcQ[c].face[Z0] == VALUE && dim == 3) numBC += xm * ym;
+		if (zs + zm == nz && bcQ[c].face[Z1] == VALUE && dim == 3) numBC += xm * ym;
+		if (xs == 0       && ys == 0       && zs == 0       && bcQ[c].vertex[X0Y0Z0] == VALUE) numBC++;
+		if (xs == 0       && ys + ym == ny && zs == 0       && bcQ[c].vertex[X0Y1Z0] == VALUE) numBC++;
+		if (xs + xm == nx && ys == 0       && zs == 0       && bcQ[c].vertex[X1Y0Z0] == VALUE) numBC++;
+		if (xs + xm == nx && ys + ym == ny && zs == 0       && bcQ[c].vertex[X1Y1Z0] == VALUE) numBC++;
+		if (xs == 0       && ys == 0       && zs + zm == nz && bcQ[c].vertex[X0Y0Z1] == VALUE && dim == 3) numBC++;
+		if (xs == 0       && ys + ym == ny && zs + zm == nz && bcQ[c].vertex[X0Y1Z1] == VALUE && dim == 3) numBC++;
+		if (xs + xm == nx && ys == 0       && zs + zm == nz && bcQ[c].vertex[X1Y0Z1] == VALUE && dim == 3) numBC++;
+		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && bcQ[c].vertex[X1Y1Z1] == VALUE && dim == 3) numBC++;
 	}
 	ierr = PetscMalloc(numBC * sizeof(MatStencil),&row);CHKERRQ(ierr);
 	/*
@@ -982,7 +984,7 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
 	 i == 0
 	 */
 	for (c = 0; c < dof; c++) {
-		if (xs == 0 && BC[c].face[X0] == VELOCITY) {
+		if (xs == 0 && bcQ[c].face[X0] == VALUE) {
 			for (k = zs; k < zs + zm; k++) {
 				for (j = ys; j < ys + ym; j++) {
 					row[l].i = 0; row[l].j = j; row[l].k = k; row[l].c = c; 
@@ -993,7 +995,7 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
 		/* 
 		 i == nx-1
 		 */
-		if (xs + xm == nx && BC[c].face[X1] == VELOCITY) {
+		if (xs + xm == nx && bcQ[c].face[X1] == VALUE) {
 			for (k = zs; k < zs + zm; k++) {
 				for (j = ys; j < ys + ym; j++) {
 					row[l].i = nx-1; row[l].j = j; row[l].k = k; row[l].c = c; 
@@ -1004,7 +1006,7 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
 		/*
 		 y == 0
 		 */
-		if (ys == 0 && BC[c].face[Y0] == VELOCITY) {
+		if (ys == 0 && bcQ[c].face[Y0] == VALUE) {
 			for (k = zs; k < zs + zm; k++) {
 				for (i = xs; i < xs + xm; i++) {
 					row[l].i = i; row[l].j = 0; row[l].k = k; row[l].c = c; 
@@ -1015,7 +1017,7 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
 		/*
 		 y == ny-1
 		 */
-		if (ys + ym == ny && BC[c].face[Y1] == VELOCITY) {
+		if (ys + ym == ny && bcQ[c].face[Y1] == VALUE) {
 			for (k = zs; k < zs + zm; k++) {
 				for (i = xs; i < xs + xm; i++) {
 					row[l].i = i; row[l].j = ny-1; row[l].k = k; row[l].c = c; 
@@ -1027,7 +1029,7 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
 			/*
 			 z == 0
 			 */
-			if (zs == 0 && BC[c].face[Z0] == VELOCITY) {
+			if (zs == 0 && bcQ[c].face[Z0] == VALUE) {
 				for (j = ys; j < ys + ym; j++) {
 					for (i = xs; i < xs + xm; i++) {
 						row[l].i = i; row[l].j = j; row[l].k = 0; row[l].c = c; 
@@ -1038,7 +1040,7 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
 			/*
 			 z == nz-1
 			 */
-			if (zs + zm == nz && BC[c].face[Z1] == VELOCITY) {
+			if (zs + zm == nz && bcQ[c].face[Z1] == VALUE) {
 				for (j = ys; j < ys + ym; j++) {
 					for (i = xs; i < xs + xm; i++) {
 						row[l].i = i; row[l].j = j; row[l].k = nz-1; row[l].c = c; 
@@ -1047,35 +1049,35 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,FLOWBC *BC)
 				}
 			}
 		}
-		if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == VELOCITY) { 
+		if (xs == 0       && ys == 0       && zs == 0       && bcQ[c].vertex[X0Y0Z0] == VALUE) { 
 			row[l].i = 0; row[l].j = 0; row[l].k = 0; row[l].c = c; 
 			l++;
 		}
-		if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == VELOCITY && dim ==3) { 
+		if (xs == 0       && ys == 0       && zs + zm == nz && bcQ[c].vertex[X0Y0Z1] == VALUE && dim ==3) { 
 			row[l].i = 0; row[l].j = 0; row[l].k = nz-1; row[l].c = c; 
 			l++;
 		}
-		if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == VELOCITY) { 
+		if (xs == 0       && ys + ym == ny && zs == 0       && bcQ[c].vertex[X0Y1Z0] == VALUE) { 
 			row[l].i = 0; row[l].j = ny-1; row[l].k = 0; row[l].c = c; 
 			l++;
 		}
-		if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == VELOCITY && dim ==3) { 
+		if (xs == 0       && ys + ym == ny && zs + zm == nz && bcQ[c].vertex[X0Y1Z1] == VALUE && dim ==3) { 
 			row[l].i = 0; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
 			l++;
 		}
-		if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == VELOCITY) { 
+		if (xs + xm == nx && ys == 0       && zs == 0       && bcQ[c].vertex[X1Y0Z0] == VALUE) { 
 			row[l].i = nx-1; row[l].j = 0; row[l].k = 0; row[l].c = c; 
 			l++;
 		}
-		if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == VELOCITY && dim ==3) { 
+		if (xs + xm == nx && ys == 0       && zs + zm == nz && bcQ[c].vertex[X1Y0Z1] == VALUE && dim ==3) { 
 			row[l].i = nx-1; row[l].j = 0; row[l].k = nz-1; row[l].c = c; 
 			l++;
 		}
-		if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == VELOCITY) { 
+		if (xs + xm == nx && ys + ym == ny && zs == 0       && bcQ[c].vertex[X1Y1Z0] == VALUE) { 
 			row[l].i = nx-1; row[l].j = ny-1; row[l].k = 0; row[l].c = c; 
 			l++;
 		}
-		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == VELOCITY && dim ==3) { 
+		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && bcQ[c].vertex[X1Y1Z1] == VALUE && dim ==3) { 
 			row[l].i = nx=1; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
 			l++;
 		}
@@ -1444,8 +1446,10 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	ierr = PCSetFromOptions(ctx->pcVelP);CHKERRQ(ierr);
 	ierr = KSPSetFromOptions(ctx->kspVelP);CHKERRQ(ierr);
 
+	ierr = BCPInit(&ctx->bcP[0],ctx);
+	ierr = BCQInit(&ctx->bcQ[0],ctx);
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-	ierr = SETFlowBC(&ctx->bcFlow[0],ctx->flowcase);CHKERRQ(ierr);
+	ierr = SETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
 	ierr = SETSourceTerms(ctx->Source,ctx->flowprop);
 	ierr = SETBoundaryTerms(ctx,fields);CHKERRQ(ierr);
 //	ierr = VecCopy(fields->FlowBCArray,fields->VelnPress);
@@ -1515,174 +1519,5 @@ extern PetscErrorCode GetFlowProp(FlowProp *flowprop,FlowUnit flowunit,ResProp r
 			SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: [%s] unknown FLOWCASE %i .\n",__FUNCT__,flowunit);
 			break;
 	}
-	PetscFunctionReturn(0);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#undef __FUNCT__
-#define __FUNCT__ "MatApplyFlowBC"
-extern PetscErrorCode MatApplyFlowBC(Mat K,DM da,FLOWBC *BC)
-{
-	PetscErrorCode ierr;
-	PetscInt       xs,xm,nx;
-	PetscInt       ys,ym,ny;
-	PetscInt       zs,zm,nz;
-	PetscInt       i,j,k,c;
-	MatStencil    *row;
-	PetscReal      one=1.;
-	PetscInt       numBC=0,l=0;
-	PetscInt       dim,dof;
-	
-	PetscFunctionBegin;
-	ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-					   &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-	
-	/*
-	 Compute the number of boundary nodes on each processor. 
-	 Edges and corners are counted multiple times (2 and 3 resp)
-	 */
-	for (c = 0; c < dof; c++){
-		if (xs == 0       && BC[c].face[X0] == VELOCITY)             numBC += ym * zm;
-		if (xs + xm == nx && BC[c].face[X1] == VELOCITY)             numBC += ym * zm;
-		if (ys == 0       && BC[c].face[Y0] == VELOCITY)             numBC += xm * zm;
-		if (ys + ym == ny && BC[c].face[Y1] == VELOCITY)             numBC += xm * zm;
-		if (zs == 0       && BC[c].face[Z0] == VELOCITY && dim == 3) numBC += xm * ym;
-		if (zs + zm == nz && BC[c].face[Z1] == VELOCITY && dim == 3) numBC += xm * ym;
-		if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == VELOCITY) numBC++;
-		if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == VELOCITY) numBC++;
-		if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == VELOCITY) numBC++;
-		if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == VELOCITY) numBC++;
-		if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == VELOCITY && dim == 3) numBC++;
-		if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == VELOCITY && dim == 3) numBC++;
-		if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == VELOCITY && dim == 3) numBC++;
-		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == VELOCITY && dim == 3) numBC++;
-	}
-	ierr = PetscMalloc(numBC * sizeof(MatStencil),&row);CHKERRQ(ierr);
-	/*
-	 Create an array of rows to be zeroed out
-	 */
-	/*
-	 i == 0
-	 */
-	for (c = 0; c < dof; c++) {
-		if (xs == 0 && BC[c].face[X0] == VELOCITY) {
-			for (k = zs; k < zs + zm; k++) {
-				for (j = ys; j < ys + ym; j++) {
-					row[l].i = 0; row[l].j = j; row[l].k = k; row[l].c = c; 
-					l++;
-				}
-			}
-		}
-		/* 
-		 i == nx-1
-		 */
-		if (xs + xm == nx && BC[c].face[X1] == VELOCITY) {
-			for (k = zs; k < zs + zm; k++) {
-				for (j = ys; j < ys + ym; j++) {
-					row[l].i = nx-1; row[l].j = j; row[l].k = k; row[l].c = c; 
-					l++;
-				}
-			}
-		}
-		/*
-		 y == 0
-		 */
-		if (ys == 0 && BC[c].face[Y0] == VELOCITY) {
-			for (k = zs; k < zs + zm; k++) {
-				for (i = xs; i < xs + xm; i++) {
-					row[l].i = i; row[l].j = 0; row[l].k = k; row[l].c = c; 
-					l++;
-				}
-			}
-		}
-		/*
-		 y == ny-1
-		 */
-		if (ys + ym == ny && BC[c].face[Y1] == VELOCITY) {
-			for (k = zs; k < zs + zm; k++) {
-				for (i = xs; i < xs + xm; i++) {
-					row[l].i = i; row[l].j = ny-1; row[l].k = k; row[l].c = c; 
-					l++;
-				}
-			}
-		}
-		if (dim==3){
-			/*
-			 z == 0
-			 */
-			if (zs == 0 && BC[c].face[Z0] == VELOCITY) {
-				for (j = ys; j < ys + ym; j++) {
-					for (i = xs; i < xs + xm; i++) {
-						row[l].i = i; row[l].j = j; row[l].k = 0; row[l].c = c; 
-						l++;
-					}
-				}
-			}
-			/*
-			 z == nz-1
-			 */
-			if (zs + zm == nz && BC[c].face[Z1] == VELOCITY) {
-				for (j = ys; j < ys + ym; j++) {
-					for (i = xs; i < xs + xm; i++) {
-						row[l].i = i; row[l].j = j; row[l].k = nz-1; row[l].c = c; 
-						l++;
-					}
-				}
-			}
-		}
-		if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == VELOCITY) { 
-			row[l].i = 0; row[l].j = 0; row[l].k = 0; row[l].c = c; 
-			l++;
-		}
-		if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == VELOCITY && dim ==3) { 
-			row[l].i = 0; row[l].j = 0; row[l].k = nz-1; row[l].c = c; 
-			l++;
-		}
-		if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] != VELOCITY) { 
-			row[l].i = 0; row[l].j = ny-1; row[l].k = 0; row[l].c = c; 
-			l++;
-		}
-		if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] != NOBC && dim ==3) { 
-			row[l].i = 0; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
-			l++;
-		}
-		if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] != NOBC) { 
-			row[l].i = nx-1; row[l].j = 0; row[l].k = 0; row[l].c = c; 
-			l++;
-		}
-		if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] != NOBC && dim ==3) { 
-			row[l].i = nx-1; row[l].j = 0; row[l].k = nz-1; row[l].c = c; 
-			l++;
-		}
-		if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] != VELOCITY) { 
-			row[l].i = nx-1; row[l].j = ny-1; row[l].k = 0; row[l].c = c; 
-			l++;
-		}
-		if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] != VELOCITY && dim ==3) { 
-			row[l].i = nx=1; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
-			l++;
-		}
-		
-	}
-	ierr = MatZeroRowsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscFree(row);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
