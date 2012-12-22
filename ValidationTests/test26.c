@@ -28,6 +28,7 @@ int main(int argc,char **argv)
 	PetscReal		****coords_array;
 	PetscReal		hx,hy,hz;
 	PetscReal		gx,gy,gz;
+	PetscReal		lx,ly,lz;
 	PetscReal		gamma, beta, rho, mu;
 	PetscReal		pi;
 		
@@ -47,9 +48,6 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 
 	pi = 6.*asin(0.5);
-	hx = 1./(nx-1);
-	hy = 1./(nx-1);
-	hz = 1./(nz-1);	
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
 	beta = ctx.flowprop.beta;		
@@ -57,6 +55,12 @@ int main(int argc,char **argv)
     gx = ctx.flowprop.g[0];
     gy = ctx.flowprop.g[1];
     gz = ctx.flowprop.g[2];
+	lz = BBmax[2]-BBmin[2];
+	ly = BBmax[1]-BBmin[1];
+	lx = BBmax[0]-BBmin[0];
+	hx = lx/(nx-1);
+	hy = ly/(nx-1);
+	hz = lz/(nz-1);	
 	/*
 	 Reset all Flow BC for velocity and P
 	 */
@@ -87,17 +91,17 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				flowbc_array[k][j][i][0] = beta/mu*(sin(pi*i*hx)*cos(pi*j*hy)*cos(pi*k*hz)-gamma*rho*gx)/(3.*pi);
-				flowbc_array[k][j][i][1] = beta/mu*(cos(pi*i*hx)*sin(pi*j*hy)*cos(pi*k*hz)-gamma*rho*gy)/(3.*pi);
-				flowbc_array[k][j][i][2] = beta/mu*(cos(pi*i*hx)*cos(pi*j*hy)*sin(pi*k*hz)-gamma*rho*gz)/(3.*pi);
-				flowbc_array[k][j][i][3] = (cos(pi*i*hx)*cos(pi*j*hy)*cos(pi*k*hz)-gamma*rho*gz)/(3.*pi*pi);
+				flowbc_array[k][j][i][0] = beta/mu*(sin(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gx)/(3.*pi);
+				flowbc_array[k][j][i][1] = beta/mu*(cos(pi*i*hx/lx)*sin(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gy)/(3.*pi);
+				flowbc_array[k][j][i][2] = beta/mu*(cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*sin(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi);
+				flowbc_array[k][j][i][3] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi*pi);
 			}
 		}
 	}	
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				src_array[k][j][i] = beta/mu*cos(pi*k*hz)*cos(pi*j*hy)*cos(pi*i*hx); 
+				src_array[k][j][i] = beta/mu*cos(pi*k*hz/lz)*cos(pi*j*hy/ly)*cos(pi*i*hx/lx)/3.*((1./(lx*lx))+(1./(ly*ly))+(1./(lz*lz))); 
 			}
 		}
 	}

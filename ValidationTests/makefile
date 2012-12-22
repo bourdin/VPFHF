@@ -356,7 +356,7 @@ runtest23: test23
 
 runtest24: test24
 	@echo "Running " $@
-	-@ARGS='-n 41,41,41 -epsilon .05 -nc 2 -c0_center .5,.5,.5 -c0_r .5 -c0_theta 45 -c0_phi 45 -c0_name crack1 -c1_r 0.5';\
+	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0 -velp_pc_type jacobi';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -365,7 +365,7 @@ runtest24: test24
 
 runtest25: test25
 	@echo "Running " $@
-	-@ARGS='-n 41,41,41 -epsilon .05 -nc 2 -c0_center .5,.5,.5 -c0_r .5 -c0_theta 45 -c0_phi 45 -c0_name crack1 -c1_r 0.5';\
+	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0 -velp_pc_type jacobi';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -374,7 +374,7 @@ runtest25: test25
 
 runtest26: test26
 	@echo "Running " $@
-	-@ARGS='-n 41,41,41 -epsilon .05 -nc 2 -c0_center .5,.5,.5 -c0_r .5 -c0_theta 45 -c0_phi 45 -c0_name crack1 -c1_r 0.5';\
+	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0 -velp_pc_type jacobi';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -383,7 +383,7 @@ runtest26: test26
 
 runtest27: test27
 	@echo "Running " $@
-	-@ARGS='-n 41,41,41 -epsilon .05 -nc 2 -c0_center .5,.5,.5 -c0_r .5 -c0_theta 45 -c0_phi 45 -c0_name crack1 -c1_r 0.5';\
+	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0 -velp_pc_type jacobi';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -392,7 +392,7 @@ runtest27: test27
 
 runtest28: test28
 	@echo "Running " $@
-	-@ARGS='-n 41,41,41 -epsilon .05 -nc 2 -c0_center .5,.5,.5 -c0_r .5 -c0_theta 45 -c0_phi 45 -c0_name crack1 -c1_r 0.5';\
+	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -401,7 +401,7 @@ runtest28: test28
 
 runtest29: test29
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -410,7 +410,7 @@ runtest29: test29
 
 runtest30: test30
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -419,7 +419,7 @@ runtest30: test30
 
 runtest31: test31
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -428,7 +428,7 @@ runtest31: test31
 
 runtest32: test32
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -437,7 +437,7 @@ runtest32: test32
 
 runtest33: test33
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -446,7 +446,7 @@ runtest33: test33
 
 runtest34: test34
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -455,7 +455,7 @@ runtest34: test34
 
 runtest35: test35
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -464,7 +464,7 @@ runtest35: test35
 
 runtest36: test36
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 0';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -473,7 +473,7 @@ runtest36: test36
 
 runtest37: test37
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 1';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -482,7 +482,7 @@ runtest37: test37
 
 runtest38: test38
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 0';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \

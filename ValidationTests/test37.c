@@ -1,5 +1,6 @@
 /*
- test25.c: 3D KSP. Flow problem with source term [pressure = sin(2*pi*x)*sin(2*pi*y)*sin(2(pi*z)]. All pressure boundary condition.
+ test37.c: 1D TS. Test for transient solver
+ http://tutorial.math.lamar.edu/Classes/DE/SolvingHeatEquation.aspx
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  */
 
@@ -27,6 +28,7 @@ int main(int argc,char **argv)
 	PetscReal		***src_array;
 	PetscReal		****coords_array;
 	PetscReal		hx,hy,hz;
+	PetscReal		lx,ly,lz;
 	PetscReal		gx,gy,gz;
 	PetscReal		gamma, beta, rho, mu;
 	PetscReal		pi;
@@ -64,11 +66,13 @@ int main(int argc,char **argv)
 		}
 	}
 	
-	
 	pi = 6.*asin(0.5);
-	hx = 1./(nx-1);
-	hy = 1./(nx-1);
-	hz = 1./(nz-1);	
+	lz = BBmax[2]-BBmin[2];
+	ly = BBmax[1]-BBmin[1];
+	lx = BBmax[0]-BBmin[0];	
+	hx = lx/(nx-1);
+	hy = ly/(nx-1);
+	hz = lz/(nz-1);	
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
 	beta = ctx.flowprop.beta;		
@@ -97,14 +101,13 @@ int main(int argc,char **argv)
 			ctx.bcQ[c].vertex[i] = NONE;
 		}
 	}
-	
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
 				velnpre_array[k][j][i][0] = 0.;
 				velnpre_array[k][j][i][1] = 0.;
 				velnpre_array[k][j][i][2] = 0.;
-				velnpre_array[k][j][i][3] = 2.;
+				velnpre_array[k][j][i][3] = 6.*sin(pi*hx*i/lx);
 			}
 		}
 	}		
@@ -121,7 +124,7 @@ int main(int argc,char **argv)
 					flowbc_array[k][j][i][3] = 0.;
 				}
 				else {
-					flowbc_array[k][j][i][3] = 2.;
+					flowbc_array[k][j][i][3] = 0.;
 				}
 				flowbc_array[k][j][i][0] = 0.;
 				flowbc_array[k][j][i][1] = 0.;

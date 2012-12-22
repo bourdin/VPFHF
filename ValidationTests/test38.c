@@ -99,7 +99,7 @@ int main(int argc,char **argv)
 		for (c = 0; c < 3; c++) {
 			ctx.bcQ[c].vertex[i] = NONE;
 		}
-	}
+	}	
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
@@ -144,15 +144,47 @@ int main(int argc,char **argv)
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);	
 	/* Setting time parameters	*/
+	/* 
+	 Now done with all initializations
+	 */
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
-	ctx.maxtimestep = 20;
-	ctx.maxtimevalue = 100.;
-	ctx.timevalue = 0.1;
-	/*	Do flow solver step	*/
-	ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-	/*	Save fields and write statistics about current run	*/    
-	ierr = FieldsH5Write(&ctx,&fields);
-	
+	ctx.maxtimestep = 3;
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
+	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
+		ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
+		/*
+		 Do flow solver step 
+		 */
+		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+		/*
+		 Save fields and write statistics about current run
+		 */    
+		switch (ctx.fileformat) {
+			case FILEFORMAT_HDF5:       
+				ierr = FieldsH5Write(&ctx,&fields);
+				break;
+			case FILEFORMAT_BIN:
+				ierr = FieldsBinaryWrite(&ctx,&fields);
+				break; 
+		} 
+		ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
+		ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
+		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
+		ierr = PetscViewerDestroy(&logviewer);
+	}
+	Vec error;
+	PetscReal norm_1,norm_2,norm_inf;
+	ierr = VecDuplicate(fields.VelnPress,&error);
+	ierr = VecWAXPY(error,-1.0,fields.VelnPress,fields.FlowBCArray);
+	ierr = VecNorm(error,NORM_1,&norm_1);
+	ierr = VecNorm(error,NORM_2,&norm_2);
+	ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1_NORM = %f \n 2_norm = %f \n inf_norm = %f \n",norm_1, norm_2,norm_inf);CHKERRQ(ierr);	
+		
 	
 	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);

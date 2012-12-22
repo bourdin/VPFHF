@@ -28,6 +28,7 @@ int main(int argc,char **argv)
 	PetscReal		****coords_array;
 	PetscReal		hx,hy,hz;
 	PetscReal		gx,gy,gz;
+	PetscReal		lx,ly,lz;
 	PetscReal		gamma, beta, rho, mu;
 	PetscReal		pi;
 		
@@ -47,9 +48,6 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 
 	pi = 6.*asin(0.5);
-	hx = 1./(nx-1);
-	hy = 1./(nx-1);
-	hz = 1./(nz-1);	
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
 	beta = ctx.flowprop.beta;		
@@ -57,6 +55,13 @@ int main(int argc,char **argv)
     gx = ctx.flowprop.g[0];
     gy = ctx.flowprop.g[1];
     gz = ctx.flowprop.g[2];
+	lz = BBmax[2]-BBmin[2];
+	ly = BBmax[1]-BBmin[1];
+	lx = BBmax[0]-BBmin[0];
+	hx = lx/(nx-1);
+	hy = ly/(nx-1);
+	hz = lz/(nz-1);	
+
 	/*
 	 Reset all Flow BC for velocity and P
 	 */
@@ -87,17 +92,17 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				flowbc_array[k][j][i][0] = -beta/mu*(2.*pi*cos(2.*pi*i*hx)*sin(2.*pi*j*hy)*sin(2.*pi*k*hz)-gamma*rho*gx);
-				flowbc_array[k][j][i][1] = -beta/mu*(2.*pi*sin(2.*pi*i*hx)*cos(2.*pi*j*hy)*sin(2.*pi*k*hz)-gamma*rho*gy);
-				flowbc_array[k][j][i][2] = -beta/mu*(2.*pi*sin(2.*pi*i*hx)*sin(2.*pi*j*hy)*cos(2.*pi*k*hz)-gamma*rho*gz);
-				flowbc_array[k][j][i][3] = sin(2.*pi*i*hx)*sin(2.*pi*j*hy)*sin(2.*pi*k*hz);
+				flowbc_array[k][j][i][0] = -beta/mu*(2.*pi/lx*cos(2.*pi*i*hx/lx)*sin(2.*pi*j*hy/ly)*sin(2.*pi*k*hz/lz)-gamma*rho*gx);
+				flowbc_array[k][j][i][1] = -beta/mu*(2.*pi/ly*sin(2.*pi*i*hx/lx)*cos(2.*pi*j*hy/ly)*sin(2.*pi*k*hz/lz)-gamma*rho*gy);
+				flowbc_array[k][j][i][2] = -beta/mu*(2.*pi/lz*sin(2.*pi*i*hx/lx)*sin(2.*pi*j*hy/ly)*cos(2.*pi*k*hz/lz)-gamma*rho*gz);
+				flowbc_array[k][j][i][3] = sin(2.*pi*i*hx/lx)*sin(2.*pi*j*hy/ly)*sin(2.*pi*k*hz/lz);
 			}
 		}
 	}	
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				src_array[k][j][i] = 4.*pi*pi*3.*beta/mu*sin(2.*pi*k*hz)*sin(2.*pi*j*hy)*sin(2.*pi*i*hx); 
+				src_array[k][j][i] = 4.*pi*pi*beta/mu*sin(2.*pi*k*hz/lz)*sin(2.*pi*j*hy/ly)*sin(2.*pi*i*hx/lx)*( (1/(lx*lx))+(1/(ly*ly))+(1/(lz*lz)) ); 
 			}
 		}
 	}
