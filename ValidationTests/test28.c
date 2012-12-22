@@ -1,5 +1,5 @@
 /*
- test28.c: 3D SNES. Flow problem with source term [pressure = sin(2*pi*x)*sin(2*pi*y)*sin(2(pi*z)]. All pressure boundary condition
+ test28.c: 3D SNES. Flow problem with source term [pressure = sin(2*pi*x)*sin(2*pi*y)*sin(2(pi*z)]. All velocity boundary condition
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  */
 
@@ -28,6 +28,7 @@ int main(int argc,char **argv)
 	PetscReal		****coords_array;
 	PetscReal		hx,hy,hz;
 	PetscReal		gx,gy,gz;
+	PetscReal		lx,ly,lz;
 	PetscReal		gamma, beta, rho, mu;
 	PetscReal		pi;
 		
@@ -52,9 +53,6 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 
 	pi = 6.*asin(0.5);
-	hx = 1./(nx-1);
-	hy = 1./(nx-1);
-	hz = 1./(nz-1);	
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
 	beta = ctx.flowprop.beta;		
@@ -62,6 +60,12 @@ int main(int argc,char **argv)
     gx = ctx.flowprop.g[0];
     gy = ctx.flowprop.g[1];
     gz = ctx.flowprop.g[2];
+	lz = BBmax[2]-BBmin[2];
+	ly = BBmax[1]-BBmin[1];
+	lx = BBmax[0]-BBmin[0];
+	hx = lx/(nx-1);
+	hy = ly/(nx-1);
+	hz = lz/(nz-1);	
 	/*
 	 Reset all Flow BC for velocity and P
 	 */
@@ -83,23 +87,26 @@ int main(int argc,char **argv)
 			ctx.bcQ[c].vertex[i] = NONE;
 		}
 	}
-	for (i = 0; i < 6; i++) {
-		ctx.bcP[0].face[i] = VALUE;
-	}
+	ctx.bcQ[0].face[X0] = VALUE;
+	ctx.bcQ[0].face[X1] = VALUE;
+	ctx.bcQ[1].face[Y0] = VALUE;
+	ctx.bcQ[1].face[Y1] = VALUE;
+	ctx.bcQ[2].face[Z0] = VALUE;
+	ctx.bcQ[2].face[Z1] = VALUE;		
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				flowbc_array[k][j][i][0] = -beta/mu*(2.*pi*cos(2.*pi*i*hx)*sin(2.*pi*j*hy)*sin(2.*pi*k*hz)-gamma*rho*gx);
-				flowbc_array[k][j][i][1] = -beta/mu*(2.*pi*sin(2.*pi*i*hx)*cos(2.*pi*j*hy)*sin(2.*pi*k*hz)-gamma*rho*gy);
-				flowbc_array[k][j][i][2] = -beta/mu*(2.*pi*sin(2.*pi*i*hx)*sin(2.*pi*j*hy)*cos(2.*pi*k*hz)-gamma*rho*gz);
-				flowbc_array[k][j][i][3] = sin(2.*pi*i*hx)*sin(2.*pi*j*hy)*sin(2.*pi*k*hz);
+				flowbc_array[k][j][i][0] = -beta/mu*(2.*pi/lx*cos(2.*pi*i*hx/lx)*sin(2.*pi*j*hy/ly)*sin(2.*pi*k*hz/lz)-gamma*rho*gx);
+				flowbc_array[k][j][i][1] = -beta/mu*(2.*pi/ly*sin(2.*pi*i*hx/lx)*cos(2.*pi*j*hy/ly)*sin(2.*pi*k*hz/lz)-gamma*rho*gy);
+				flowbc_array[k][j][i][2] = -beta/mu*(2.*pi/lz*sin(2.*pi*i*hx/lx)*sin(2.*pi*j*hy/ly)*cos(2.*pi*k*hz/lz)-gamma*rho*gz);
+				flowbc_array[k][j][i][3] = sin(2.*pi*i*hx/lx)*sin(2.*pi*j*hy/ly)*sin(2.*pi*k*hz/lz);
 			}
 		}
 	}	
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				src_array[k][j][i] = 4.*pi*pi*3.*beta/mu*sin(2.*pi*k*hz)*sin(2.*pi*j*hy)*sin(2.*pi*i*hx); 
+				src_array[k][j][i] = 4.*pi*pi*beta/mu*sin(2.*pi*k*hz/lz)*sin(2.*pi*j*hy/ly)*sin(2.*pi*i*hx/lx)*( (1/(lx*lx))+(1/(ly*ly))+(1/(lz*lz)) ); 
 			}
 		}
 	}
@@ -112,7 +119,6 @@ int main(int argc,char **argv)
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
-
 	ctx.maxtimestep = 1;
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){

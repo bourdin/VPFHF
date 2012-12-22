@@ -1,5 +1,5 @@
 /*
- test25.c: 3D KSP. Flow problem with source term [pressure = sin(2*pi*x)*sin(2*pi*y)*sin(2(pi*z)]. All pressure boundary condition.
+ test25.c: 1D KSP. Flow problem with source term [pressure = sin(2*pi*x)*sin(2*pi*y)*sin(2(pi*z)]. All pressure boundary condition.
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  */
 
