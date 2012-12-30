@@ -137,6 +137,7 @@ typedef struct {
   Vec FVCellndof;
   Vec FVCell;
   Vec VolCrackOpening;
+  Vec VolLeakOffRate;
   Vec FlowBCArray;
 } VFFields;
 
