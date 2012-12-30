@@ -1,8 +1,9 @@
 include ../makefile.include	
 CFLAGS='-I..'
 
-all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20 test21 test22 test23 test24 test25 test26  test27 test28 test29 test30 test31 test32 test33 test34 test34 test35 test36 test37 test38 test39
-test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17 runtest18 runtest19 runtest20 runtest21 runtest2 runtest23 runtest24 runtest25 runtest26 runtest27 runtest28  runtest29 runtest30 runtest31 runtest32 runtest33 runtest34 runtest35 runtest36 runtest37 runtest38 runtest39
+all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20 test21 test22 test23 test24 test25 test26  test27 test28 test29 test30 test31 test32 test33 test34 test34 test35 test36 test37 test38
+ 
+test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17 runtest18 runtest19 runtest20 runtest21 runtest2 runtest23 runtest24 runtest25 runtest26 runtest27 runtest28  runtest29 runtest30 runtest31 runtest32 runtest33 runtest34 runtest35 runtest36 runtest37 runtest38 
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
@@ -123,9 +124,6 @@ test37: test37.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 test38: test38.o ${VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
-
-test39: test39.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
 
@@ -359,9 +357,10 @@ runtest24: test24
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0 -velp_pc_type jacobi';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
-	if (${DIFF} -B results/$@.out $@.out) then true; \
+	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
+
 
 runtest25: test25
 	@echo "Running " $@
@@ -489,17 +488,7 @@ runtest38: test38
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
-runtest39: test39
-	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
-	if (${DIFF} -B results/$@.out $@.out) then true; \
-	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
-	${RM} -f $@.out
-
-
 clean::
-	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20 test21 test22 test23 test24 test25 test26 test27 test28 test29 test30 test31 test32 test33 test34 test35 test36 test37 test38 test39
+	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20 test21 test22 test23 test24 test25 test26 test27 test28 test29 test30 test31 test32 test33 test34 test35 test36 test37 test38 
 	-rm -f runtest*
 	-rm -f TEST*

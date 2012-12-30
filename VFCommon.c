@@ -674,19 +674,15 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daVect,&fields->velocity);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->velocity,"Fluid Velocity");CHKERRQ(ierr);
   ierr = VecSet(fields->velocity,0.0);CHKERRQ(ierr);
-  
-  ierr = DMCreateGlobalVector(ctx->daVect,&fields->FVCell);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) fields->FVCell,"FV Variable");CHKERRQ(ierr);
-  ierr = VecSet(fields->FVCell,0.0);CHKERRQ(ierr);
-  
-  ierr = DMCreateGlobalVector(ctx->daScal,&fields->FVCellndof);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) fields->FVCellndof,"FV Variablenodof");CHKERRQ(ierr);
-  ierr = VecSet(fields->FVCellndof,0.0);CHKERRQ(ierr);
-  
+    
   ierr = DMCreateGlobalVector(ctx->daScal,&fields->VolCrackOpening);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->VolCrackOpening,"Volumetric Crack Opening");CHKERRQ(ierr);
   ierr = VecSet(fields->VolCrackOpening,0.0);CHKERRQ(ierr);
-  
+
+  ierr = DMCreateGlobalVector(ctx->daScal,&fields->VolLeakOffRate);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->VolLeakOffRate,"Volumetric leakoff Rate");CHKERRQ(ierr);
+  ierr = VecSet(fields->VolLeakOffRate,0.0);CHKERRQ(ierr);
+	
   ierr = DMCreateGlobalVector(ctx->daFlow,&fields->FlowBCArray);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->FlowBCArray,"Velocity and Pressure Boundary Values");CHKERRQ(ierr);
   ierr = VecSet(fields->FlowBCArray,0.0);CHKERRQ(ierr);
@@ -694,8 +690,8 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->Source);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->Source,"Source Term");CHKERRQ(ierr);
   ierr = VecSet(ctx->Source,0.0);CHKERRQ(ierr);
-    
-  /*
+
+/*
    Create optional penny shaped cracks
    */
   ierr = VecSet(fields->V,1.0);CHKERRQ(ierr);
@@ -1081,12 +1077,10 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&fields->VelnPress);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->vfperm);CHKERRQ(ierr);
 //  ierr = VecDestroy(&fields->velocity);CHKERRQ(ierr);
-  ierr = VecDestroy(&fields->FVCell);CHKERRQ(ierr); 
-  ierr = VecDestroy(&fields->FVCellndof);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->VolCrackOpening);CHKERRQ(ierr);
+  ierr = VecDestroy(&fields->VolLeakOffRate);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->FlowBCArray);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->Source);CHKERRQ(ierr);
-  
   
   ierr = KSPDestroy(&ctx->kspP);CHKERRQ(ierr);
   ierr = MatDestroy(&ctx->KP);CHKERRQ(ierr);
@@ -1159,8 +1153,8 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   ierr = VecView(fields->pmult,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->theta,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->pressure,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->FVCell,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->FVCellndof,H5Viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->VolCrackOpening,H5Viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->VolLeakOffRate,H5Viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&H5Viewer);CHKERRQ(ierr);
   
   /*
@@ -1179,8 +1173,8 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Pressure");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"FV Variable");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"FV Variablenodof");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Volumetric Crack Opening");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Volumetric leakoff Rate");CHKERRQ(ierr);
   ierr = XDMFuniformgridFinalize(XDMFViewer);CHKERRQ(ierr); 
   ierr = PetscViewerDestroy(&XDMFViewer);CHKERRQ(ierr);
   /*
@@ -1216,7 +1210,8 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
   ierr = VecView(fields->pmult,viewer);CHKERRQ(ierr);
   ierr = VecView(fields->theta,viewer);CHKERRQ(ierr);
   ierr = VecView(fields->pressure,viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->FVCellndof,viewer);CHKERRQ(ierr);  
+  ierr = VecView(fields->VolCrackOpening,viewer);CHKERRQ(ierr);  
+  ierr = VecView(fields->VolLeakOffRate,viewer);CHKERRQ(ierr);  
   PetscFunctionReturn(0);
 }
 
