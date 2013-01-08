@@ -370,8 +370,10 @@ typedef struct {
   PetscReal           TotalEnergy;
   PetscInt            numWells;
   VFWell             *well;
-  PetscInt            numCracks;
-  VFPennyCrack       *crack;
+  PetscInt            numPennyCracks;
+  VFPennyCrack       *pennycrack;
+  PetscInt            numRectangularCracks;
+  VFRectangularCrack *rectangularcrack;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

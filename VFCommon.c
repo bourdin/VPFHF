@@ -253,15 +253,27 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->hasCrackPressure = PETSC_FALSE;
     ierr = PetscOptionsBool("-pressurize","\n\tPressurize cracks","",ctx->hasCrackPressure,&ctx->hasCrackPressure,PETSC_NULL);CHKERRQ(ierr);
     
-    ctx->numCracks = 0;
-    ierr = PetscOptionsInt("-nc","\n\tNumber of penny-shaped cracks to insert","",ctx->numCracks,&ctx->numCracks,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscMalloc(ctx->numCracks*sizeof(VFPennyCrack),&ctx->crack);CHKERRQ(ierr);
-    for (i = 0; i < ctx->numCracks; i++) {
+    ctx->numPennyCracks = 0;
+    ierr = PetscOptionsInt("-nc","\n\tNumber of penny-shaped cracks to insert","",ctx->numPennyCracks,&ctx->numPennyCracks,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscMalloc(ctx->numPennyCracks*sizeof(VFPennyCrack),&ctx->pennycrack);CHKERRQ(ierr);
+    for (i = 0; i < ctx->numPennyCracks; i++) {
       ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
-      ierr = VFPennyCrackCreate(&(ctx->crack[i]));CHKERRQ(ierr);
-      ierr = VFPennyCrackGet(prefix, &(ctx->crack[i]));CHKERRQ(ierr);
+      ierr = VFPennyCrackCreate(&(ctx->pennycrack[i]));CHKERRQ(ierr);
+      ierr = VFPennyCrackGet(prefix, &(ctx->pennycrack[i]));CHKERRQ(ierr);
       if (ctx->verbose > 0) {
-        ierr = VFPennyCrackView(&(ctx->crack[i]),PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+        ierr = VFPennyCrackView(&(ctx->pennycrack[i]),PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+      }
+    }
+    
+    ctx->numRectangularCracks = 0;
+    ierr = PetscOptionsInt("-nc","\n\tNumber of rectangular cracks to insert","",ctx->numRectangularCracks,&ctx->numRectangularCracks,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscMalloc(ctx->numRectangularCracks*sizeof(VFRectangularCrack),&ctx->rectangularcrack);CHKERRQ(ierr);
+    for (i = 0; i < ctx->numRectangularCracks; i++) {
+      ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"rc%d_",i);CHKERRQ(ierr);
+      ierr = VFRectangularCrackCreate(&(ctx->rectangularcrack[i]));CHKERRQ(ierr);
+      ierr = VFRectangularCrackGet(prefix, &(ctx->rectangularcrack[i]));CHKERRQ(ierr);
+      if (ctx->verbose > 0) {
+        ierr = VFRectangularCrackView(&(ctx->rectangularcrack[i]),PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
       }
     }
     
@@ -692,12 +704,16 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VecSet(ctx->Source,0.0);CHKERRQ(ierr);
 
 /*
-   Create optional penny shaped cracks
+   Create optional penny-shaped and rectangular cracks
    */
   ierr = VecSet(fields->V,1.0);CHKERRQ(ierr);
   ierr = VecSet(fields->VIrrev,1.0);CHKERRQ(ierr);
-  for (c = 0; c < ctx->numCracks; c++) {
-    ierr = VFPennyCrackBuildVAT2(fields->V,&(ctx->crack[c]),ctx);CHKERRQ(ierr);
+  for (c = 0; c < ctx->numPennyCracks; c++) {
+    ierr = VFPennyCrackBuildVAT2(fields->V,&(ctx->pennycrack[c]),ctx);CHKERRQ(ierr);
+    ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
+  }
+  for (c = 0; c < ctx->numRectangularCracks; c++) {
+    ierr = VFRectangularCrackBuildVAT2(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
     ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
   }
   /*
@@ -716,7 +732,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 #undef __FUNCT__
 #define __FUNCT__ "VFBCInitialize"
 /*
- VFBCInitialize: Creates and initialize bondary condition data structures
+ VFBCInitialize: Creates and initialize boundary condition data structures
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
@@ -761,12 +777,12 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
  */
 extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 {
-  PetscMPIInt    comm_size;
-  /*
-    MatNullSpace   matnull;
-    Vec            coordinates;
-  */
-  PetscErrorCode ierr;
+  PetscMPIInt     comm_size;
+  Vec             coordinates;
+  PetscReal      *coordinates_array;
+  PetscInt        nx,ny,nz,nloc;
+  MatNullSpace    matnull;
+  PetscErrorCode  ierr;
   
   PetscFunctionBegin;
   ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
@@ -857,16 +873,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = PCSetType(ctx->pcT,PCBJACOBI);CHKERRQ(ierr);
   ierr = PCSetFromOptions(ctx->pcT);CHKERRQ(ierr);
   
-  /*
-    At this point, it is not completely clear if setting the null space 
-    improves convergence.
-    Leaving it out for now
-  */
-  Vec           coordinates;
-  PetscReal    *coordinates_array;
-  PetscInt      nx,ny,nz,nloc;
-  //MatNullSpace  matnull;
-
   ierr = DMDAGetCoordinates(ctx->daVect,&coordinates);CHKERRQ(ierr);
   //ierr = DMDAVecGetArrayDOF(ctx->daVect,coordinates,&coordinates_array);CHKERRQ(ierr);
   ierr = VecGetArray(coordinates,&coordinates_array);CHKERRQ(ierr);
@@ -876,11 +882,18 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   nloc = nloc/3;
   ierr = PCSetCoordinates(ctx->pcU,3,nloc,coordinates_array);CHKERRQ(ierr);
   ierr = PCSetCoordinates(ctx->pcV,3,nloc,coordinates_array);CHKERRQ(ierr);
-  ///ierr = MatNullSpaceCreateRigidBody(coordinates,&matnull);CHKERRQ(ierr);
-  //ierr = MatSetNearNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
-  ////ierr = KSPSetNullSpace(ctx->kspU,matnull);CHKERRQ(ierr);
-  //ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
   ierr = VecRestoreArray(coordinates,&coordinates_array);CHKERRQ(ierr);
+  
+  /*
+    Null space is not convincing at this point
+  */
+  /*
+  ierr = MatNullSpaceCreateRigidBody(coordinates,&matnull);CHKERRQ(ierr);  
+  ierr = MatSetNearNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
+  //ierr = MatSetNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
+  //ierr = KSPSetNullSpace(ctx->kspU,matnull);CHKERRQ(ierr);
+  ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
+  */
   ierr = VecDestroy(&coordinates);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
@@ -1057,7 +1070,8 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = PetscFree(ctx->matprop);CHKERRQ(ierr);
   ierr = PetscFree(ctx->layer);CHKERRQ(ierr);
   ierr = PetscFree(ctx->layersep);CHKERRQ(ierr);
-  ierr = PetscFree(ctx->crack);CHKERRQ(ierr);
+  ierr = PetscFree(ctx->pennycrack);CHKERRQ(ierr);
+  ierr = PetscFree(ctx->rectangularcrack);CHKERRQ(ierr);
   ierr = PetscFree(ctx->well);CHKERRQ(ierr);
   
   ierr = DMDestroy(&ctx->daVect);CHKERRQ(ierr);

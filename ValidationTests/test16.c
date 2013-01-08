@@ -162,7 +162,7 @@ int main(int argc,char **argv)
 			ctx.bcU[1].face[Y0]= ZERO;
 			//ctx.bcU[2].face[Y0]= ZERO;
 			/*	face Y1	*/
-			//ctx.bcU[1].face[Y1]= ZERO;
+			ctx.bcU[1].face[Y1]= ZERO;
 			//ctx.bcU[2].face[Y1]= ZERO;		  
 			/*	face Z0	*/
 			ctx.bcU[2].face[Z0]= ZERO;
