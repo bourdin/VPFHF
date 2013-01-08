@@ -23,17 +23,12 @@ int main(int argc,char **argv)
   VFFields       fields;
   PetscErrorCode ierr;
 
-  PetscReal length      = .2;
   PetscInt  orientation = 2;
-  PetscInt  nopts       = 3;
   PetscInt  i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
   PetscReal ****coords_array;
   PetscReal ****bcu_array;
   PetscReal BBmin[3],BBmax[3];
-  PetscReal ElasticEnergy = 0;
   PetscReal InsituWork    = 0;
-  PetscReal SurfaceEnergy = 0;
-  char      filename[FILENAME_MAX];
   PetscReal bc = .5;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
