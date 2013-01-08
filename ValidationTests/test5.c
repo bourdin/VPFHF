@@ -23,17 +23,12 @@ int main(int argc,char **argv)
   VFFields       fields;
   PetscErrorCode ierr;
 
-  PetscReal length      = .2;
   PetscInt  orientation = 2;
-  PetscInt  nopts       = 3;
-  PetscInt  i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+  PetscInt  i,j,nx,ny,nz,xs,xm,ys,ym,zs,zm;
   PetscReal ****coords_array;
   PetscReal ***v_array;
   PetscReal BBmin[3],BBmax[3];
-  PetscReal ElasticEnergy = 0;
   PetscReal InsituWork    = 0;
-  PetscReal SurfaceEnergy = 0;
-  char      filename[FILENAME_MAX];
   PetscReal p = 1.e-3;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -85,8 +80,7 @@ int main(int argc,char **argv)
   }
   switch (orientation) {
   case 0:
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face X0\n",
-                       length);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face X0\n");CHKERRQ(ierr);
     ctx.bcU[0].face[X0] = NONE;ctx.bcU[1].face[X0] = NONE;ctx.bcU[2].face[X0] = NONE;ctx.bcV[0].face[X0] = ZERO;
     ctx.bcU[0].face[X1] = ZERO;ctx.bcU[1].face[X1] = ZERO;ctx.bcU[2].face[X1] = ZERO;ctx.bcV[0].face[X1] = NONE;
     ctx.bcU[0].face[Y0] = NONE;ctx.bcU[1].face[Y0] = NONE;ctx.bcU[2].face[Y0] = NONE;ctx.bcV[0].face[Y0] = NONE;
@@ -96,8 +90,7 @@ int main(int argc,char **argv)
     break;
 
   case 1:
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face X1\n",
-                       length);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face X1\n");CHKERRQ(ierr);
     ctx.bcU[0].face[X0] = ZERO;ctx.bcU[1].face[X0] = ZERO;ctx.bcU[2].face[X0] = ZERO;ctx.bcV[0].face[X0] = NONE;
     ctx.bcU[0].face[X1] = NONE;ctx.bcU[1].face[X1] = NONE;ctx.bcU[2].face[X1] = NONE;ctx.bcV[0].face[X1] = ZERO;
     ctx.bcU[0].face[Y0] = NONE;ctx.bcU[1].face[Y0] = NONE;ctx.bcU[2].face[Y0] = NONE;ctx.bcV[0].face[Y0] = NONE;
@@ -107,8 +100,7 @@ int main(int argc,char **argv)
     break;
 
   case 2:
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face Y0\n",
-                       length);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face Y0\n");CHKERRQ(ierr);
     ctx.bcU[0].face[X0] = NONE;ctx.bcU[1].face[X0] = NONE;ctx.bcU[2].face[X0] = NONE;ctx.bcV[0].face[X0] = NONE;
     ctx.bcU[0].face[X1] = NONE;ctx.bcU[1].face[X1] = NONE;ctx.bcU[2].face[X1] = NONE;ctx.bcV[0].face[X1] = NONE;
     ctx.bcU[0].face[Y0] = NONE;ctx.bcU[1].face[Y0] = NONE;ctx.bcU[2].face[Y0] = NONE;ctx.bcV[0].face[Y0] = ZERO;
@@ -118,8 +110,7 @@ int main(int argc,char **argv)
     break;
 
   case 3:
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face Y1\n",
-                       length);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face Y1\n");CHKERRQ(ierr);
     ctx.bcU[0].face[X0] = NONE;ctx.bcU[1].face[X0] = NONE;ctx.bcU[2].face[X0] = NONE;ctx.bcV[0].face[X0] = NONE;
     ctx.bcU[0].face[X1] = NONE;ctx.bcU[1].face[X1] = NONE;ctx.bcU[2].face[X1] = NONE;ctx.bcV[0].face[X1] = NONE;
     ctx.bcU[0].face[Y0] = ZERO;ctx.bcU[1].face[Y0] = ZERO;ctx.bcU[2].face[Y0] = ZERO;ctx.bcV[0].face[Y0] = NONE;
@@ -129,8 +120,7 @@ int main(int argc,char **argv)
     break;
 
   case 4:
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face Z0\n",
-                       length);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face Z0\n");CHKERRQ(ierr);
     ctx.bcU[0].face[X0] = NONE;ctx.bcU[1].face[X0] = NONE;ctx.bcU[2].face[X0] = NONE;ctx.bcV[0].face[X0] = NONE;
     ctx.bcU[0].face[X1] = NONE;ctx.bcU[1].face[X1] = NONE;ctx.bcU[2].face[X1] = NONE;ctx.bcV[0].face[X1] = NONE;
     ctx.bcU[0].face[Y0] = NONE;ctx.bcU[1].face[Y0] = NONE;ctx.bcU[2].face[Y0] = NONE;ctx.bcV[0].face[Y0] = NONE;
@@ -140,8 +130,7 @@ int main(int argc,char **argv)
     break;
 
   case 5:
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face Z1\n",
-                       length);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying pressure force on face Z1\n");CHKERRQ(ierr);
     ctx.bcU[0].face[X0] = NONE;ctx.bcU[1].face[X0] = NONE;ctx.bcU[2].face[X0] = NONE;ctx.bcV[0].face[X0] = NONE;
     ctx.bcU[0].face[X1] = NONE;ctx.bcU[1].face[X1] = NONE;ctx.bcU[2].face[X1] = NONE;ctx.bcV[0].face[X1] = NONE;
     ctx.bcU[0].face[Y0] = NONE;ctx.bcU[1].face[Y0] = NONE;ctx.bcU[2].face[Y0] = NONE;ctx.bcV[0].face[Y0] = NONE;
