@@ -85,7 +85,7 @@ static const char *VFUnilateralName[] = {
 };
 
 typedef enum {
-    FLOWSOLVER_TS,
+  FLOWSOLVER_TS,
   FLOWSOLVER_SNES,
   FLOWSOLVER_FEM,
   FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE,
@@ -291,6 +291,7 @@ typedef struct {
   PC                  pcU;
   KSP                 kspU;
   Vec                 RHSU;
+  MatNullSpace        nullspaceU;
   Mat                 KV;
   PC                  pcV;
   KSP                 kspV;

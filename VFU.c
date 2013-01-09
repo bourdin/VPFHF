@@ -1977,6 +1977,14 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   }
   
   //ierr = PetscLogStagePush(ctx->vflog.VF_USolverStage);CHKERRQ(ierr);
+  /* 
+    REMOVE THIS
+  */
+  //PetscBool flg = PETSC_FALSE;
+  //ierr = MatNullSpaceTest(ctx->nullspaceU,ctx->KU,&flg);CHKERRQ(ierr);
+  //ierr = MatNullSpaceRemove(ctx->nullspaceU,ctx->RHSU,PETSC_NULL);CHKERRQ(ierr);
+  //ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n\n Null space test returned %i %i\n\n\n",flg,PETSC_TRUE);CHKERRQ(ierr);
+  
   ierr = KSPSolve(ctx->kspU,ctx->RHSU,fields->U);CHKERRQ(ierr);
   //ierr = PetscLogStagePop();CHKERRQ(ierr);
 
