@@ -2,35 +2,49 @@
  test16.c: Solves for the displacement and v-field in a volume loaded line crack in 2d (Sneddon 2D)
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 
+
+mpiexec -n 2 ../test16 -n 26,2,50 -l .5,.02,1 -epsilon .04 -mode 1 eta 1e-8 \
+        -Gc 1e-1 -nu 0 -maxtimestep 2 -maxvol .001 -mechsolver ELASTICITY   \
+        -nc 1 -c0_r .1 -c0_center .25,.01,.5 
+
 Try:  
 mpiexec -n 2 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length 2. \
-      -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 \
+      -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 \
       -Gc 1.e-1  -insitumin 0.,-1.e-4,0.,0.,0.,0. -insitumax 0.,-1.e-4,0.,0.,0.,0.
 
 mpiexec -n 2 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length .1 \
-      -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 
+      -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 
       -Gc 1.e+1  -insitumin 0.,-1.e-4,0.,0.,0.,0. -insitumax 0,-1e-4,0.,0.,0.,0.
 
 mpiexec -n 2 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length .1 \
-      -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 \
+      -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 \
       -Gc 1.e+1  -insitumin 0.,-2.e+0,0.,0.,0.,0. -insitumax 0,-2e+0,0.,0.,0.,0. 
       
 An example that doesn't work:
 mpiexec -n 4 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length .1 \
-      -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
+      -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
       -Gc 1.e+1  -insitumin 0.,-4.e+0,0.,0.,0.,0. -insitumax 0,-4e+0,0.,0.,0.,0. \
       -U_ksp_atol 1e-7 -U_ksp_rtol 1e-7 -U_ksp_type cg 
       
 Unsurprisingly, setting eta to 1e-10 helps a lot
 Using a finer mesh solves the issue:
 mpiexec -n 4 ./test16  -n 52,101,2 -l 0.5,1,0.02 -epsilon 0.01 -length .1 \
-        -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
+        -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
         -Gc 1.e+1  -insitumin 0.,-4.e+0,0.,0.,0.,0. -insitumax 0,-4e+0,0.,0.,0.,0. \
         -U_ksp_atol 1e-7 -U_ksp_rtol 1e-7 -U_ksp_type cg -eta 1e-10
-        
+
+Same using gamg:
+mpiexec -n 4 ../test16  -n 52,101,2 -l 0.5,1,0.02 -epsilon 0.01 -length .1 \
+        -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
+        -Gc 1.e+1  -insitumin 0.,-4.e+0,0.,0.,0.,0. -insitumax 0,-4e+0,0.,0.,0.,0. \
+        -U_ksp_atol 1e-7 -U_ksp_rtol 1e-7 -U_ksp_type cg -eta 1e-10 \
+        -U_ksp_monitor_true_residual  -U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 \
+        -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 \
+        -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg        
+
 An even thiner mesh is required for higher in-situ stresses
 mpiexec -n 6 ../test16  -n 101,201,2 -l 0.5,1,0.02 -epsilon 0.005 -length .1 \
-        -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
+        -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
         -Gc 1.e+1  -insitumin 0.,-8.e+0,0.,0.,0.,0. -insitumax 0,-8e+0,0.,0.,0.,0. \
         -U_ksp_atol 1e-7 -U_ksp_rtol 1e-7 -eta 1e-10
  
@@ -43,6 +57,7 @@ Going back to default KSP is OK
 #include "VFV.h"
 #include "VFU.h"
 #include "VFPermfield.h"
+#include "VFCracks.h"
 
 VFCtx               ctx;
 VFFields            fields;
@@ -54,14 +69,9 @@ int main(int argc,char **argv)
 	PetscErrorCode  ierr;
 	PetscViewer			viewer;
 	PetscViewer     logviewer;
-	PetscReal       length = .2;
-	PetscReal       center[3]={0.,0.,.5};
-	PetscInt        orientation=1;
-	PetscInt        nopts=3;
-	PetscInt        i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-	PetscReal		****coords_array;
-	PetscReal		 ***v_array;  
-	PetscReal       BBmin[3],BBmax[3];
+	PetscInt        mode=1;
+	PetscInt        i,j;
+  PetscInt        c;
 	char            filename[FILENAME_MAX];
 	PetscReal       p;
 	PetscReal       p_old;
@@ -70,21 +80,12 @@ int main(int argc,char **argv)
 	Vec					    Vold,U_s,U_1;
 	PetscReal       vol_s,vol_1;
 	PetscReal			  errV=1e+10;
-	PetscReal			  lx,ly,lz;
-	PetscReal			  q,maxvol = .03,minvol = 0.;
+	PetscReal			  flowrate,maxvol = .03,minvol = 0.;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 		
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-length",&length,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-q",&q,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
-	
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-	ierr = DMDAGetBoundingBox(ctx.daScal,BBmin,BBmax);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-mode",&mode,PETSC_NULL);CHKERRQ(ierr);
 	
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-maxvol",&maxvol,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-minvol",&minvol,PETSC_NULL);CHKERRQ(ierr);
@@ -93,274 +94,129 @@ int main(int argc,char **argv)
   */
   ctx.maxtimestep = 150;
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-	q = (maxvol - minvol) / (ctx.maxtimestep-1);
+	flowrate = (maxvol - minvol) / (ctx.maxtimestep-1);
 	
-	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);    
-	lz = BBmax[2];
-	ly = BBmax[1];
-	lx = BBmax[0];	
 	/*
 	 Reset all BC for U and V
 	 */
 	for (i = 0; i < 6; i++) {
-		ctx.bcV[0].face[i]=NONE;
+		ctx.bcV[0].face[i] =NONE;
 		for (j = 0; j < 3; j++) {
 			ctx.bcU[j].face[i] = NONE;
 		}
 	}
 	for (i = 0; i < 12; i++) {
-		ctx.bcV[0].edge[i]=NONE;
+		ctx.bcV[0].edge[i] =NONE;
 		for (j = 0; j < 3; j++) {
 			ctx.bcU[j].edge[i] = NONE;
 		}
 	}
 	for (i = 0; i < 8; i++) {
-		ctx.bcV[0].vertex[i]=NONE;
+		ctx.bcV[0].vertex[i] =NONE;
 		for (j = 0; j < 3; j++) {
 			ctx.bcU[j].vertex[i] = NONE;
 		}
 	}
-	switch (orientation) {
-		case 1:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
+	switch (mode) {
+		case 0:
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D experiment with null-displacement on all faces\n");CHKERRQ(ierr);		  
 			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[1].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
+			ctx.bcU[0].face[X0] = ZERO;
+			ctx.bcU[1].face[X0] = ZERO;
+			ctx.bcU[2].face[X0] = ZERO;
 			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[1].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
+			ctx.bcU[0].face[X1] = ZERO;
+			ctx.bcU[1].face[X1] = ZERO;
+			ctx.bcU[2].face[X1] = ZERO;
 			/*	face Y0	*/
-			ctx.bcU[0].face[Y0]= ZERO;
-			ctx.bcU[1].face[Y0]= ZERO;
-			ctx.bcU[2].face[Y0]= ZERO;
+			ctx.bcU[0].face[Y0] = ZERO;
+			ctx.bcU[1].face[Y0] = ZERO;
+			ctx.bcU[2].face[Y0] = ZERO;
 			/*	face Y1	*/
-			ctx.bcU[0].face[Y1]= ZERO;		  
-			ctx.bcU[1].face[Y1]= ZERO;		  
-			ctx.bcU[2].face[Y1]= ZERO;		  
+			ctx.bcU[0].face[Y1] = ZERO;		  
+			ctx.bcU[1].face[Y1] = ZERO;		  
+			ctx.bcU[2].face[Y1] = ZERO;		  
 			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
+			ctx.bcU[0].face[Z0] = ZERO;
+			ctx.bcU[1].face[Z0] = ZERO;
+			ctx.bcU[2].face[Z0] = ZERO;
 			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
+			ctx.bcU[0].face[Z0] = ZERO;
+			ctx.bcU[1].face[Z0] = ZERO;
+			ctx.bcU[2].face[Z1] = ZERO;
+			break;
+		case 1:
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 2D experiment with null-displacement on all faces\n");CHKERRQ(ierr);		  
+			/*	face X0	*/
+			ctx.bcU[0].face[X0] = ZERO;
+			ctx.bcU[1].face[X0] = ZERO;
+			ctx.bcU[2].face[X0] = ZERO;
+			/*	face X1	*/
+			ctx.bcU[0].face[X1] = ZERO;
+			ctx.bcU[1].face[X1] = ZERO;
+			ctx.bcU[2].face[X1] = ZERO;
+			/*	face Y0	*/
+			ctx.bcU[1].face[Y0] = ZERO;
+			/*	face Y1	*/
+			ctx.bcU[1].face[Y1] = ZERO;		  
+			/*	face Z0	*/
+			ctx.bcU[0].face[Z0] = ZERO;
+			ctx.bcU[1].face[Z0] = ZERO;
+			ctx.bcU[2].face[Z0] = ZERO;
+			/*	face Z1	*/
+			ctx.bcU[0].face[Z1] = ZERO;
+			ctx.bcU[1].face[Z1] = ZERO;
+			ctx.bcU[2].face[Z1] = ZERO;
 			break;
 		case 2:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			//ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			//ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-			ctx.bcU[1].face[Y0]= ZERO;
-			//ctx.bcU[2].face[Y0]= ZERO;
-			/*	face Y1	*/
-			ctx.bcU[1].face[Y1]= ZERO;
-			//ctx.bcU[2].face[Y1]= ZERO;		  
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D experiment blocking only rigid motions (may be instable)\n");CHKERRQ(ierr);		  
+			ctx.bcU[0].vertex[X0Y0Z0] = ZERO;
+			ctx.bcU[1].vertex[X0Y0Z0] = ZERO;
+			ctx.bcU[2].vertex[X0Y0Z0] = ZERO;
+
+			ctx.bcU[2].vertex[X1Y0Z0] = ZERO;
+			ctx.bcU[0].vertex[X0Y1Z0] = ZERO;
+			ctx.bcU[1].vertex[X0Y0Z1] = ZERO;
 			break;
 		case 3:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[1].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[1].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-			ctx.bcU[1].face[Y0]= ZERO;
-			ctx.bcU[2].face[Y0]= ZERO;
-			/*	face Y1	*/
-			ctx.bcU[1].face[Y1]= ZERO;		  
-			ctx.bcU[2].face[Y1]= ZERO;		  
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 2D experiment blocking only rigid motions (may be instable)\n");CHKERRQ(ierr);		  
+			ctx.bcU[0].vertex[X0Y0Z0] = ZERO;
+			ctx.bcU[2].vertex[X0Y0Z0] = ZERO;
+
+			ctx.bcU[2].vertex[X1Y0Z0] = ZERO;
+
+			ctx.bcU[1].face[Y0] = ZERO;
+			ctx.bcU[1].face[Y1] = ZERO;
 			break;
 		case 4:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-			ctx.bcU[0].face[Y0]= ZERO;
-			ctx.bcU[1].face[Y0]= ZERO;
-			ctx.bcU[2].face[Y0]= ZERO;
-			/*	face Y1	*/
-			ctx.bcU[0].face[Y1]= ZERO;		  
-			ctx.bcU[1].face[Y1]= ZERO;		  
-			ctx.bcU[2].face[Y1]= ZERO;		  
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
-			break;
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D blocking normal displacement on 3 planes (may lead to asymmetric solutions)\n");CHKERRQ(ierr);		  
+      ctx.bcU[0].face[X0] = ZERO;
+      ctx.bcU[1].face[Y0] = ZERO;
+      ctx.bcU[2].face[Z0] = ZERO;
+		  break;
 		case 5:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-				/*.....FREE.......*/
-			/*	face Y1	*/
-				/*.....FREE.......*/
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
-			break;
-		case 6:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcU[1].face[X0]= ZERO;
-			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcU[1].face[X1]= ZERO;
-			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-			/*.....FREE.......*/
-			/*	face Y1	*/
-			/*.....FREE.......*/
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
-			ctx.bcU[2].face[Z1]= ZERO;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
-			break;
-		case 7:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack of length %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-							   length,center[0],center[1],center[2]);CHKERRQ(ierr);		  
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Setting up BC for in situ stress in the <0,0,1> direction only\n");CHKERRQ(ierr);
-			/*	face X0	*/
-			ctx.bcU[0].face[X0]= ZERO;
-			ctx.bcV[0].face[X0]= ONE;
-			//ctx.bcU[1].face[X0]= ZERO;
-			//ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
-			ctx.bcV[0].face[X1]= ONE;
-			//ctx.bcU[1].face[X1]= ZERO;
-			//ctx.bcU[2].face[X1]= ZERO;
-			/*	face Y0	*/
-			ctx.bcU[1].face[Y0]= ZERO;
-			//ctx.bcV[0].face[Y0]= FIXED;
-			/*	face Y1	*/
-			ctx.bcU[1].face[Y1]= ZERO;
-			//ctx.bcV[0].face[Y1]= FIXED;
-			/*	face Z0	*/
-			ctx.bcU[2].face[Z0]= ZERO;
-			ctx.bcV[0].face[Z0]= ONE;
-			/*	face Z1	*/
-			//ctx.bcU[2].face[Z1]= ZERO;
-			ctx.bcV[0].face[Z1]= ONE;
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((k == nz/2) || (k == nz/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
-			break;
-		case 8:
-		ctx.bcU[0].face[X0] = ZERO;
-		ctx.bcU[1].face[Y0] = ZERO;
-		ctx.bcU[2].face[Z0] = ZERO;
-		
-			for (k = zs; k < zs+zm; k++) {
-				for (j = ys; j < ys+ym; j++) {
-					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
-							v_array[k][j][i] = 0.;
-						}
-					}
-				}
-			}      
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 2D blocking normal displacement on 2 planes (may lead to asymmetric solutions)\n");CHKERRQ(ierr);		  
+      ctx.bcU[0].face[X0] = ZERO;
+      ctx.bcU[2].face[Z0] = ZERO;
+			ctx.bcU[1].face[Y0] = ZERO;
+			ctx.bcU[1].face[Y1] = ZERO;
 		  break;
 		default:
-			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be one of {1,2,3,4,5,6,7},got %i\n",orientation);
+			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: mode should be one of {0,1,2,3,4,5,6,7},got %i\n",mode);
 			break;
 	}  
-	ierr = DMDAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
+
+  for (c = 0; c < ctx.numPennyCracks; c++) {
+    ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
+    ierr = VFPennyCrackBuildVAT2(fields.VIrrev,&ctx.pennycrack[c],&ctx);CHKERRQ(ierr);
+    ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
+  }
+  for (c = 0; c < ctx.numRectangularCracks; c++) {
+    ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
+    ierr = VFRectangularCrackBuildVAT2(fields.VIrrev,&ctx.rectangularcrack[c],&ctx);CHKERRQ(ierr);
+    ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
+  }
+	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
 	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 	
 	ctx.hasCrackPressure = PETSC_TRUE;
@@ -388,7 +244,7 @@ int main(int argc,char **argv)
 	//ctx.maxtimestep = 150;
 	
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, injected volume %g\n",ctx.timestep,q*ctx.timestep);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, injected volume %g\n",ctx.timestep,flowrate*ctx.timestep);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr); 
 		altminit = 0.;
 		do {
@@ -420,11 +276,11 @@ int main(int argc,char **argv)
       ierr = VecCopy(fields.U,U_s);CHKERRQ(ierr);
       
       // This will fail if vol_1 = 0, which should only happen when there are no cracks
-      p = (minvol + q*ctx.timestep - vol_s) / vol_1;
+      p = (minvol + flowrate*ctx.timestep - vol_s) / vol_1;
       ierr = VecAXPY(fields.U,p,U_1);CHKERRQ(ierr);
 
       ctx.CrackVolume = vol_s + p * vol_1;
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"      vol_s: %e vol_1 %e volume %e (target vol: %e)\n",vol_s,vol_1,ctx.CrackVolume,minvol + q*ctx.timestep);
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"      vol_s: %e vol_1 %e volume %e (target vol: %e)\n",vol_s,vol_1,ctx.CrackVolume,minvol + flowrate*ctx.timestep);
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"      Updated crack pressure: %e (was %e)\n",p,p_old);
 
 			ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
