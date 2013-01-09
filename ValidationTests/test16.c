@@ -163,7 +163,7 @@ int main(int argc,char **argv)
 			ctx.bcU[0].face[X0]= ZERO;
 			//ctx.bcU[2].face[X0]= ZERO;
 			/*	face X1	*/
-			////ctx.bcU[0].face[X1]= ZERO;
+			ctx.bcU[0].face[X1]= ZERO;
 			//ctx.bcU[2].face[X1]= ZERO;
 			/*	face Y0	*/
 			ctx.bcU[1].face[Y0]= ZERO;
@@ -339,6 +339,21 @@ int main(int argc,char **argv)
 				}
 			}      
 			break;
+		case 8:
+		ctx.bcU[0].face[X0] = ZERO;
+		ctx.bcU[1].face[Y0] = ZERO;
+		ctx.bcU[2].face[Z0] = ZERO;
+		
+			for (k = zs; k < zs+zm; k++) {
+				for (j = ys; j < ys+ym; j++) {
+					for (i = xs; i < xs+xm; i++) { 
+						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
+							v_array[k][j][i] = 0.;
+						}
+					}
+				}
+			}      
+		  break;
 		default:
 			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be one of {1,2,3,4,5,6,7},got %i\n",orientation);
 			break;
@@ -454,6 +469,8 @@ int main(int argc,char **argv)
 	ierr = VecDestroy(&U_s);CHKERRQ(ierr);
 	ierr = VecDestroy(&U_1);CHKERRQ(ierr);
 
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n");
+  //ierr = BCView(ctx.bcU,PETSC_VIEWER_STDOUT_WORLD,3);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);

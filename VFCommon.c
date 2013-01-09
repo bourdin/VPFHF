@@ -781,7 +781,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   Vec             coordinates;
   PetscReal      *coordinates_array;
   PetscInt        nx,ny,nz,nloc;
-  MatNullSpace    matnull;
   PetscErrorCode  ierr;
   
   PetscFunctionBegin;
@@ -874,6 +873,11 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = PCSetFromOptions(ctx->pcT);CHKERRQ(ierr);
   
   ierr = DMDAGetCoordinates(ctx->daVect,&coordinates);CHKERRQ(ierr);
+  /*
+    Null space is not convincing at this point
+  */
+  ierr = MatNullSpaceCreateRigidBody(coordinates,&ctx->nullspaceU);CHKERRQ(ierr);  
+
   //ierr = DMDAVecGetArrayDOF(ctx->daVect,coordinates,&coordinates_array);CHKERRQ(ierr);
   ierr = VecGetArray(coordinates,&coordinates_array);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -883,16 +887,32 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = PCSetCoordinates(ctx->pcU,3,nloc,coordinates_array);CHKERRQ(ierr);
   ierr = PCSetCoordinates(ctx->pcV,3,nloc,coordinates_array);CHKERRQ(ierr);
   ierr = VecRestoreArray(coordinates,&coordinates_array);CHKERRQ(ierr);
+  ierr = MatSetNearNullSpace(ctx->KU,ctx->nullspaceU);CHKERRQ(ierr);
+  //ierr = MatSetNullSpace(ctx->KU,ctx->nullspaceU);CHKERRQ(ierr);
+  //ierr = KSPSetNullSpace(ctx->kspU,ctx->nullspaceU);CHKERRQ(ierr);
+  
   
   /*
-    Null space is not convincing at this point
+    Save Null Space
   */
   /*
-  ierr = MatNullSpaceCreateRigidBody(coordinates,&matnull);CHKERRQ(ierr);  
-  ierr = MatSetNearNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
-  //ierr = MatSetNullSpace(ctx->KU,matnull);CHKERRQ(ierr);
-  //ierr = KSPSetNullSpace(ctx->kspU,matnull);CHKERRQ(ierr);
-  ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
+  const Vec    *nspVec;
+  Vec           ioVec;
+  PetscViewer   nspviewer;
+  PetscInt      nnsp,i;
+  char          name[FILENAME_MAX];
+  
+  ierr = DMGetGlobalVector(ctx->daVect,&ioVec);CHKERRQ(ierr);
+  ierr = MatNullSpaceGetVecs(ctx->nullspaceU,PETSC_FALSE,&nnsp,&nspVec);CHKERRQ(ierr);
+  ierr = PetscViewerVTKOpen(PETSC_COMM_WORLD,"nullspace.vts",FILE_MODE_WRITE,&nspviewer);CHKERRQ(ierr);
+  for (i = 0; i < nnsp; i++) {
+    ierr = VecCopy(nspVec[i],ioVec);CHKERRQ(ierr);
+    ierr = PetscSNPrintf(name,FILENAME_MAX,"nsp_%i",i);CHKERRQ(ierr);  
+    ierr = PetscObjectSetName((PetscObject) ioVec,name);CHKERRQ(ierr);
+    ierr = VecView(ioVec,nspviewer);CHKERRQ(ierr);
+  }
+  ierr = PetscViewerDestroy(&nspviewer);CHKERRQ(ierr);
+  ierr = DMRestoreGlobalVector(ctx->daVect,&ioVec);CHKERRQ(ierr);
   */
   ierr = VecDestroy(&coordinates);CHKERRQ(ierr);
 
@@ -1083,6 +1103,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = KSPDestroy(&ctx->kspU);CHKERRQ(ierr);
   ierr = MatDestroy(&ctx->KU);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->RHSU);CHKERRQ(ierr); 
+  ierr = MatNullSpaceDestroy(&ctx->nullspaceU);CHKERRQ(ierr);
   
   ierr = KSPDestroy(&ctx->kspV);CHKERRQ(ierr);
   ierr = MatDestroy(&ctx->KV);CHKERRQ(ierr);
