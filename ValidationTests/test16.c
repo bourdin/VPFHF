@@ -27,6 +27,13 @@ mpiexec -n 4 ./test16  -n 52,101,2 -l 0.5,1,0.02 -epsilon 0.01 -length .1 \
         -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
         -Gc 1.e+1  -insitumin 0.,-4.e+0,0.,0.,0.,0. -insitumax 0,-4e+0,0.,0.,0.,0. \
         -U_ksp_atol 1e-7 -U_ksp_rtol 1e-7 -U_ksp_type cg -eta 1e-10
+        
+An even thiner mesh is required for higher in-situ stresses
+mpiexec -n 6 ../test16  -n 101,201,2 -l 0.5,1,0.02 -epsilon 0.005 -length .1 \
+        -center 0,0.5,0 -orientation 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
+        -Gc 1.e+1  -insitumin 0.,-8.e+0,0.,0.,0.,0. -insitumax 0,-8e+0,0.,0.,0.,0. \
+        -U_ksp_atol 1e-7 -U_ksp_rtol 1e-7 -eta 1e-10
+ 
 Going back to default KSP is OK
  */
 
@@ -156,7 +163,7 @@ int main(int argc,char **argv)
 			ctx.bcU[0].face[X0]= ZERO;
 			//ctx.bcU[2].face[X0]= ZERO;
 			/*	face X1	*/
-			ctx.bcU[0].face[X1]= ZERO;
+			////ctx.bcU[0].face[X1]= ZERO;
 			//ctx.bcU[2].face[X1]= ZERO;
 			/*	face Y0	*/
 			ctx.bcU[1].face[Y0]= ZERO;
