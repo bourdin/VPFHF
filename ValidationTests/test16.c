@@ -288,6 +288,7 @@ int main(int argc,char **argv)
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"      vol_s: %e vol_1 %e volume %e (target vol: %e)\n",vol_s,vol_1,ctx.CrackVolume,minvol + flowrate*ctx.timestep);
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"      Updated crack pressure: %e (was %e)\n",p,p_old);
 			
+			ctx.hasCrackPressure = PETSC_TRUE;
 			ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
 			ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 			ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
