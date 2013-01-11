@@ -171,7 +171,8 @@ int main(int argc,char **argv)
 			ctx.bcU[0].face[X1] = ZERO;
 			ctx.bcU[1].face[Y0] = ZERO;
 			ctx.bcU[1].face[Y1] = ZERO;
-			ctx.bcU[0].face[Z0] = ZERO; ctx.bcU[1].face[Z0] = ZERO; ctx.bcU[2].face[Z0] = ZERO;
+			ctx.bcU[2].face[Z0] = ZERO;
+			//ctx.bcU[2].face[Z1] = ZERO;
 		  break;
 		default:
 			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: mode should be one of {0,1,2,3,4,5,6,7},got %i\n",mode);
