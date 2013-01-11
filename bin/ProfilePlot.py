@@ -62,10 +62,10 @@ def main():
     ltext  = leg.get_texts()
     plt.setp(ltext, fontsize='small')
 
-    plt.xlabel('V')
-    plt.ylabel('p')
+    plt.xlabel('$x\ \  (\mathrm{m})$')
+    plt.ylabel('$v$')
     if not options.title:
-        plt.title('Phase file profile')
+        plt.title('Phase field profile')
     else:
         plt.title(options.title)
         

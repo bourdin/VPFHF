@@ -23,6 +23,7 @@ def parse(args=None):
     #parser.add_argument('inputfile',type=argparse.FileType('r'),nargs='*',help='Input file',default=sys.stdin)
     parser.add_argument('inputfile',nargs='*',help='Input file',default=sys.stdin)
     parser.add_argument('-o','--outputfile',help='output file',default=None)
+    parser.add_argument('-d','--dim',help='Dimension',type=int,default=2)
     parser.add_argument('-t','--title',help='Title',default=None)
     return parser.parse_args()
 
@@ -51,6 +52,7 @@ def main():
                     p = np.loadtxt(presfile)    
                     hx = D['LX']/(D['NX']+0.0)
                     l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['EPSILON']/hx,f)
+                    #l = '$h=%.2E$, $\epsilon/h=%.2f$'%(hx,D['EPSILON']/hx)
                     #plt.plot(p[:,1]/D['LZ'],p[:,2],lw=2,label=l)
                     plt.plot(p[:,1],p[:,2],lw=2,label=l)
                 
@@ -62,8 +64,11 @@ def main():
     ltext  = leg.get_texts()
     plt.setp(ltext, fontsize='small')
 
-    plt.xlabel('V')
-    plt.ylabel('p')
+    if options.dim ==2:
+        plt.xlabel('Injected volume $(\mathrm{m}^2)$')
+    else:
+        plt.xlabel('Injected volume $(\mathrm{m}^3)$')
+    plt.ylabel('Pressure $(\mathrm{MPa})$')
     if not options.title:
         plt.title('Pressure vs. injected volume')
     else:
