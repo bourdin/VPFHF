@@ -680,7 +680,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VecSet(fields->VolCrackOpening,0.0);CHKERRQ(ierr);
 
   ierr = DMCreateGlobalVector(ctx->daScal,&fields->VolLeakOffRate);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) fields->VolLeakOffRate,"Volumetric leakoff Rate");CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->VolLeakOffRate,"Volumetric Leakoff Rate");CHKERRQ(ierr);
   ierr = VecSet(fields->VolLeakOffRate,0.0);CHKERRQ(ierr);
 	
   ierr = DMCreateGlobalVector(ctx->daFlow,&fields->FlowBCArray);CHKERRQ(ierr);
@@ -1174,7 +1174,7 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Pressure");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Volumetric Crack Opening");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Volumetric leakoff Rate");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Volumetric Leakoff Rate");CHKERRQ(ierr);
   ierr = XDMFuniformgridFinalize(XDMFViewer);CHKERRQ(ierr); 
   ierr = PetscViewerDestroy(&XDMFViewer);CHKERRQ(ierr);
   /*

@@ -204,7 +204,6 @@ extern PetscErrorCode VecApplyWellFlowBC(PetscReal *Ks_local,PetscReal ***source
 				for (eg = 0; eg < e->ng; eg++) {
 					loc_source[eg] += source_array[ek+k][ej+j][ei+i]*e->phi[k][j][i][eg];
 				}
-				;
 			}
 		}
 	}
@@ -216,7 +215,6 @@ extern PetscErrorCode VecApplyWellFlowBC(PetscReal *Ks_local,PetscReal ***source
 					for (eg = 0; eg < e->ng; eg++) {
 						Ks_local[l] += -loc_source[eg]*e->phi[k][j][i][eg]*e->weight[eg]/alpha_c;
 					}
-					;
 				}
 			}
 		}
