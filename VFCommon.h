@@ -134,8 +134,6 @@ typedef struct {
   Vec VelnPress;
   Vec vfperm;
   Vec velocity;
-  Vec FVCellndof;
-  Vec FVCell;
   Vec VolCrackOpening;
   Vec VolLeakOffRate;
   Vec FlowBCArray;
@@ -301,6 +299,7 @@ typedef struct {
   KSP                 kspP;
   Vec                 RHSP;
   PetscReal           CrackVolume;
+  PetscReal           LeakOffRate;
   /* 
    Global variables for Mixed Darcy Flow
    */
