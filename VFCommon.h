@@ -176,15 +176,36 @@ typedef struct {
    */
 } VFProp;
 
+typedef enum {
+	PRESSURE,		
+	RATE				
+} WellConstraint; 
+
+static const char *WellConstraint_Name[] = {
+	"PRESSURE",
+	"RATE",
+	"WellConstraint_Name"
+	"",
+	0
+};
+
 typedef struct {
   char         name[256];
   PetscReal    top[3];
   PetscReal    bottom[3];
+	PetscInt    nodes[3];
+	PetscReal		wellrate;
+	PetscReal		Pw;
+	WellConstraint type;
   /*
    PetscReal    rate;
    BCTYPE       BCV;
    */
 } VFWell;
+
+
+
+
 
 typedef struct {
   char          name[256];
@@ -324,6 +345,7 @@ typedef struct {
   Vec                 Perm;
   Vec                 FlowBC;
   BC                  bcQ[3];
+  PetscBool           hasFlowWells;
 
   
   /*

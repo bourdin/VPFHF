@@ -1,5 +1,5 @@
 /*
- test39.c: 2D KSP. Five spot problem. 1 injector and 4 producersFlow problem with source term [pressure = sin(2*pi*x)*sin(2*pi*y)*sin(2(pi*z)]. All pressure boundary condition.
+ test39.c: 2D SNES. Five spot problem. 1 injector and 4 producers. All pressure boundary condition.
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  */
 
