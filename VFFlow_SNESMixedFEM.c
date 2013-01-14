@@ -13,10 +13,11 @@
 #include "VFFlow.h"
 #include "VFFlow_SNESMixedFEM.h"
 #include "VFFlow_KSPMixedFEM.h"
+#include "VFWell.h"
 
 /*
  VFFlow_DarcyMixedFEMSNES
-*/
+ */
 
 /*
  ################################################################################################################
@@ -66,9 +67,9 @@ extern PetscErrorCode MixedFEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fie
 	
 	ierr = BCPInit(&ctx->bcP[0],ctx);
 	ierr = BCQInit(&ctx->bcQ[0],ctx);
-
+	
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-//	ierr = SETFlowBC(&ctx->bcFlow[0],ctx->flowcase);CHKERRQ(ierr);
+		//	ierr = SETFlowBC(&ctx->bcFlow[0],ctx->flowcase);CHKERRQ(ierr);
 	ierr = SETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
 	ierr = SETSourceTerms(ctx->Source,ctx->flowprop);
 	ierr = SETBoundaryTerms(ctx,fields);CHKERRQ(ierr);
@@ -107,27 +108,17 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	PetscInt           i,j,k,c,veldof = 3;
 	PetscInt           xs,xm,ys,ym,zs,zm;
 	PetscInt           its;
-//	Vec                VecRHS;
-//	PetscReal			theta,one_minus_theta,timestepsize;
-//	PetscReal			dt_dot_theta,dt_dot_one_minus_theta;
-
 	
 	PetscFunctionBegin;	
-	
-	
-//	ierr = VecDuplicate(ctx->RHSVelP,&VecRHS);CHKERRQ(ierr);
-
-	
-	
-/*	temporary created permfield in ctx so permeability can be in ctx	*/
+	/*	temporary created permfield in ctx so permeability can be in ctx	*/
 	ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
 	ierr = VecSet(ctx->Perm,0.0);CHKERRQ(ierr);
 	ierr = VecCopy(fields->vfperm,ctx->Perm);CHKERRQ(ierr);
-/*	temporary created bcfield in ctx so bc values can be in ctx	*/
+	/*	temporary created bcfield in ctx so bc values can be in ctx	*/
 	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->FlowBC);CHKERRQ(ierr);
 	ierr = VecSet(ctx->FlowBC,0.0);CHKERRQ(ierr);
 	ierr = VecCopy(fields->FlowBCArray,ctx->FlowBC);CHKERRQ(ierr);
-/* Copying previous time step solution to the previous time step vector	*/
+	/* Copying previous time step solution to the previous time step vector	*/
 	ierr = VecCopy(fields->VelnPress,ctx->PreFlowFields);CHKERRQ(ierr);
 	ierr = SNESSetFunction(ctx->snesVelP,ctx->FlowFunct,FormSNESIFunction,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesVelP,ctx->JacVelP,ctx->JacVelP,FormSNESIJacobian,ctx);CHKERRQ(ierr);
@@ -206,7 +197,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	PetscInt       ys,ym,ny;
 	PetscInt       zs,zm,nz;
 	PetscInt       ek,ej,ei;
-	PetscInt       i,j,k,l;
+	PetscInt       i,j,k,l,ii;
 	PetscInt       veldof = 3;
 	PetscInt       c;
 	PetscReal      ****perm_array;
@@ -230,8 +221,8 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	PetscReal		****velnprebc_array;
 	Vec				velnprebc_local;
 	MatStructure	flg;
-
-
+	PetscReal		hwx, hwy, hwz;	
+	
 	PetscFunctionBegin;
 	flg = SAME_NONZERO_PATTERN;
 	M_inv     = ctx->flowprop.M_inv;
@@ -245,6 +236,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	gx     = ctx->flowprop.g[0];
 	gy     = ctx->flowprop.g[1];
 	gz     = ctx->flowprop.g[2];
+	
 	ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 		// This line ensures that the number of cells is one less than the number of nodes. Force processing of cells to stop once the second to the last node is processed 
@@ -270,7 +262,6 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMGlobalToLocalBegin(ctx->daFlow,ctx->FlowBC,INSERT_VALUES,velnprebc_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daFlow,ctx->FlowBC,INSERT_VALUES,velnprebc_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daFlow,velnprebc_local,&velnprebc_array);CHKERRQ(ierr); 
-
 	
 	ierr = PetscMalloc5(nrow*nrow,PetscReal,&KA_local,
 						nrow*nrow,PetscReal,&KB_local,
@@ -337,15 +328,16 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 						}
 					}
 				}
-				ierr = VecApplyWellFlowBC(RHS_local,source_array,&ctx->e3D,ek,ej,ei,ctx);
-				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
-					for (j = 0; j < ctx->e3D.nphiy; j++) {
-						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-							RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l];
+				if(ctx->hasFluidSources){
+					ierr = VecApplyWellFlowBC(RHS_local,source_array,&ctx->e3D,ek,ej,ei,ctx);
+					for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
+						for (j = 0; j < ctx->e3D.nphiy; j++) {
+							for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+								RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l];
+							}
 						}
 					}
 				}
-				
 				if (ei == 0) {
 					/*					 Face X0			*/
 					face = X0;	
@@ -439,9 +431,47 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 			}
 		}
 	}		
-	
-	
-	
+	if(ctx->hasFlowWells){
+			for(ii = 0; ii < ctx->numWells; ii++){
+			for (ek = zs; ek < zs+zm; ek++) {
+				for (ej = ys; ej < ys+ym; ej++) {
+					for (ei = xs; ei < xs+xm; ei++) {
+							if(  
+							   ((coords_array[ek][ej][ei+1][0] >= ctx->well[ii].coords[0]) && (coords_array[ek][ej][ei][0] <= ctx->well[ii].coords[0] ))	&&
+							   ((coords_array[ek][ej+1][ei][1] >= ctx->well[ii].coords[1]) && (coords_array[ek][ej][ei][1] <= ctx->well[ii].coords[1] ))	&&
+							   ((coords_array[ek+1][ej][ei][2] >= ctx->well[ii].coords[2]) && (coords_array[ek][ej][ei][2] <= ctx->well[ii].coords[2] ))
+							   )
+							{
+								hwx = (ctx->well[ii].coords[0]-coords_array[ek][ej][ei][0])/(coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0]); 
+								hwy = (ctx->well[ii].coords[1]-coords_array[ek][ej][ei][1])/(coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1]); 
+								hwz = (ctx->well[ii].coords[2]-coords_array[ek][ej][ei][2])/(coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2]); 
+								if(ctx->well[ii].condition == RATE){
+									ierr = VecApplyWEllFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
+									for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
+										for (j = 0; j < ctx->e3D.nphiy; j++) {
+											for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+												if(ctx->well[ii].type == INJECTOR){
+													RHS_array[ek+k][ej+j][ei+i][3] += -1*RHS_local[l];
+												}
+												else if(ctx->well[ii].type == PRODUCER)
+												{
+													RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l];
+												}
+											}
+										}
+									}
+								}
+								else if(ctx->well[ii].type == PRESSURE){
+									
+								}
+								goto outer;
+							}
+					}
+				}
+			}
+			outer:;
+		}
+	}
 	ierr = MatAssemblyBegin(K2,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(K2,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -485,7 +515,7 @@ extern PetscErrorCode FormSNESIFunction(SNES snes,Vec VelnPress,Vec Func,void *u
 	Vec             VecRHS;
 	PetscReal		theta,timestepsize;
 	PetscReal		dt_dot_theta,dt_dot_one_minus_theta;
-
+	
 	PetscFunctionBegin;
 	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
 	timestepsize = ctx->flowprop.timestepsize;
@@ -503,8 +533,6 @@ extern PetscErrorCode FormSNESIFunction(SNES snes,Vec VelnPress,Vec Func,void *u
 	ierr = VecDestroy(&VecRHS);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
-
-
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplySNESVelocityBC"
@@ -720,7 +748,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 		}
 		if (xs == 0 && ys+ym == ny && zs+zm == nz) {
 			k = nz-1;j = ny-1;i = 0;
-
+			
 			if (bcQ[c].vertex[X0Y1Z1] == VALUE) {
 				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
 			}

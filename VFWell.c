@@ -21,10 +21,12 @@ extern PetscErrorCode VFWellGet(const char prefix[],VFWell *well)
     nval = 3;
     ierr = PetscOptionsRealArray("-bottom","\n\t well bottom coordinates  (comma separated).","",well->bottom,&nval,PETSC_NULL);CHKERRQ(ierr);
     nval = 3;
-    ierr = PetscOptionsIntArray("-wellnodes","\n\t well nodes  (comma separated).","",well->nodes,&nval,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsReal("-wellrate","\n\t well flow rate","",well->wellrate,&well->wellrate,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsReal("-wellPw","\n\t well bottomhole pressure","",well->Pw,&well->Pw,PETSC_NULL);CHKERRQ(ierr);	  
-	ierr = PetscOptionsEnum("-welltype","\n\t\n\twell constraint type","",WellConstraint_Name,(PetscEnum)well->type,(PetscEnum*)&well->type,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-coords","\n\t well x, y & z coordinates  (comma separated).","",well->coords,&nval,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsReal("-Qw","\n\t well flow rate","",well->Qw,&well->Qw,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsReal("-Pw","\n\t well bottomhole pressure","",well->Pw,&well->Pw,PETSC_NULL);CHKERRQ(ierr);	  
+	ierr = PetscOptionsReal("-rw","\n\t well radius","",well->rw,&well->rw,PETSC_NULL);CHKERRQ(ierr);	  
+	ierr = PetscOptionsEnum("-constraint","\n\t\n\t well constraint type","",WellConstraint_Name,(PetscEnum)well->condition,(PetscEnum*)&well->condition,PETSC_NULL);CHKERRQ(ierr);
+	  ierr = PetscOptionsEnum("-type","\n\t\n\t well type","",WellType_Name,(PetscEnum)well->type,(PetscEnum*)&well->type,PETSC_NULL);CHKERRQ(ierr);
 
 	  /*
     ierr = PetscOptionsEnum("-bcV","\n\t boundary condition on V field","",BCTYPE_NAME,(PetscEnum)well->BCV,(PetscEnum*)&(well->BCV),PETSC_NULL);CHKERRQ(ierr);
@@ -50,10 +52,11 @@ extern PetscErrorCode VFWellCreate(VFWell *well)
   ierr = PetscStrcpy(well->name,"well");CHKERRQ(ierr);
   for (i=0; i<3; i++) well->top[i] = 0.;
   for (i=0; i<3; i++) well->bottom[i] = 0.;
-
-  for (i=0; i<3; i++) well->nodes[i] = 0.;
-  well->type = RATE;
-  well->wellrate = 0.;
+  for (i=0; i<3; i++) well->coords[i] = 0.;
+  well->condition = RATE;
+  well->type = PRODUCER;
+  well->Qw = 0.;
+  well->rw = 0.;	
   well->Pw = 0.;	
   /*
   well->BCV = NONE;
@@ -77,10 +80,11 @@ extern PetscErrorCode VFWellView(VFWell *well,PetscViewer viewer)
   ierr = PetscViewerASCIIPrintf(viewer,"top:    \t%e \t%e \t%e\n",well->top[0],well->top[1],well->top[2]);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(viewer,"bottom: \t%e \t%e \t%e\n",well->bottom[0],well->bottom[1],well->bottom[2]);CHKERRQ(ierr);
 	
-	ierr = PetscViewerASCIIPrintf(viewer,"wellnodes: \t%e \t%e \t%e\n",well->nodes[0],well->nodes[1],well->nodes[2]);CHKERRQ(ierr);
-	ierr = PetscViewerASCIIPrintf(viewer,"well rate:     \t%e\n",well->wellrate);CHKERRQ(ierr);
-	ierr = PetscViewerASCIIPrintf(viewer,"well Pw:     \t%e\n",well->Pw);CHKERRQ(ierr);
-	ierr = PetscViewerASCIIPrintf(viewer,"Well Constraint:	\"%s\"\n",WellConstraint_Name[well->type]);CHKERRQ(ierr);
+	ierr = PetscViewerASCIIPrintf(viewer,"wellnodes: \t%e \t%e \t%e\n",well->coords[0],well->coords[1],well->coords[2]);CHKERRQ(ierr);
+	ierr = PetscViewerASCIIPrintf(viewer,"well rate:     \t%e\n",well->Qw);CHKERRQ(ierr);
+	ierr = PetscViewerASCIIPrintf(viewer,"well pressure:     \t%e\n",well->Pw);CHKERRQ(ierr);
+	ierr = PetscViewerASCIIPrintf(viewer,"well radius:     \t%e\n",well->rw);CHKERRQ(ierr);
+	ierr = PetscViewerASCIIPrintf(viewer,"Well Type:	\"%s\" well under \"%s\" condition\n",WellType_Name[well->type],WellConstraint_Name[well->condition]);CHKERRQ(ierr);
 	
 	/*
   ierr = PetscViewerASCIIPrintf(viewer,"BCV:    \t%s\n",BCTYPE_NAME[well->BCV]);CHKERRQ(ierr);
