@@ -184,19 +184,36 @@ typedef enum {
 static const char *WellConstraint_Name[] = {
 	"PRESSURE",
 	"RATE",
-	"WellConstraint_Name"
+	"WellConstraint_Name",
 	"",
 	0
 };
+
+typedef enum {
+	INJECTOR,		
+	PRODUCER				
+} WellType; 
+
+static const char *WellType_Name[] = {
+	"INJECTOR",
+	"PRODUCER",
+	"WellType_Name",
+	"",
+	0
+};
+
+
 
 typedef struct {
   char         name[256];
   PetscReal    top[3];
   PetscReal    bottom[3];
-	PetscInt    nodes[3];
-	PetscReal		wellrate;
+	PetscReal    coords[3];
+	PetscReal		Qw;
 	PetscReal		Pw;
-	WellConstraint type;
+	PetscReal		rw;
+	WellConstraint  condition;
+	WellType		type;
   /*
    PetscReal    rate;
    BCTYPE       BCV;
@@ -346,6 +363,7 @@ typedef struct {
   Vec                 FlowBC;
   BC                  bcQ[3];
   PetscBool           hasFlowWells;
+  PetscBool           hasFluidSources;
 
   
   /*

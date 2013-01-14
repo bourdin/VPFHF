@@ -30,5 +30,6 @@ extern PetscErrorCode SETBoundaryTerms(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode MixedFEMKSPMonitor(KSP ksp,PetscInt its,PetscReal fnorm,void* ptr);
 extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,BC *bcQ);
 extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ****pre_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element2D *e,FlowProp flowpropty,PetscReal ****perm_array);
+extern PetscErrorCode VecApplyWEllFlowRate(PetscReal *RHS_local,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz);
 
 #endif /* VFFLOW_MIXEDFEM_H */

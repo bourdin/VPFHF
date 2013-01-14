@@ -218,6 +218,7 @@ extern PetscErrorCode VecApplyWellFlowBC(PetscReal *Ks_local,PetscReal ***source
 				}
 			}
 		}
+	PetscFree(loc_source);
 	PetscFunctionReturn(0);
 }
 #undef __FUNCT__
@@ -453,8 +454,6 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,BC *bcQ,VFCtx *ctx, PetscReal ****U
 	PetscFunctionReturn(0);
 }
 
-
-
 #undef __FUNCT__
 #define __FUNCT__ "SETSourceTerms"
 extern PetscErrorCode SETSourceTerms(Vec Src,FlowProp flowpropty)
@@ -505,7 +504,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 	PetscInt       ys,ym,ny;
 	PetscInt       zs,zm,nz;
 	PetscInt       ek,ej,ei;
-	PetscInt       i,j,k,l;
+	PetscInt       i,j,k,l,ii;
 	PetscInt       veldof = 3;
 	PetscInt       c;
 	PetscReal      ****perm_array;
@@ -529,6 +528,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 	PetscReal		****velnprebc_array;
 	Vec				velnprebc_local;
 	MatStructure	flg;
+	PetscReal		hwx, hwy, hwz;	
 
 	PetscFunctionBegin;
 	flg = SAME_NONZERO_PATTERN;
@@ -633,11 +633,13 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 						}
 					}
 				}
-				ierr = VecApplyWellFlowBC(RHS_local,source_array,&ctx->e3D,ek,ej,ei,ctx);
-				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
-					for (j = 0; j < ctx->e3D.nphiy; j++) {
-						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-							RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l];
+				if(ctx->hasFluidSources){
+					ierr = VecApplyWellFlowBC(RHS_local,source_array,&ctx->e3D,ek,ej,ei,ctx);
+					for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
+						for (j = 0; j < ctx->e3D.nphiy; j++) {
+							for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+								RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l];
+							}
 						}
 					}
 				}
@@ -734,6 +736,47 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 			}
 		}
 	}		
+	if(ctx->hasFlowWells){
+		for(ii = 0; ii < ctx->numWells; ii++){
+			for (ek = zs; ek < zs+zm; ek++) {
+				for (ej = ys; ej < ys+ym; ej++) {
+					for (ei = xs; ei < xs+xm; ei++) {
+						if(  
+						   ((coords_array[ek][ej][ei+1][0] >= ctx->well[ii].coords[0]) && (coords_array[ek][ej][ei][0] <= ctx->well[ii].coords[0] ))	&&
+						   ((coords_array[ek][ej+1][ei][1] >= ctx->well[ii].coords[1]) && (coords_array[ek][ej][ei][1] <= ctx->well[ii].coords[1] ))	&&
+						   ((coords_array[ek+1][ej][ei][2] >= ctx->well[ii].coords[2]) && (coords_array[ek][ej][ei][2] <= ctx->well[ii].coords[2] ))
+						   )
+						{
+							hwx = (ctx->well[ii].coords[0]-coords_array[ek][ej][ei][0])/(coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0]); 
+							hwy = (ctx->well[ii].coords[1]-coords_array[ek][ej][ei][1])/(coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1]); 
+							hwz = (ctx->well[ii].coords[2]-coords_array[ek][ej][ei][2])/(coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2]); 
+							if(ctx->well[ii].condition == RATE){
+								ierr = VecApplyWEllFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
+								for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
+									for (j = 0; j < ctx->e3D.nphiy; j++) {
+										for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+											if(ctx->well[ii].type == INJECTOR){
+												RHS_array[ek+k][ej+j][ei+i][3] += -1*RHS_local[l];
+											}
+											else if(ctx->well[ii].type == PRODUCER)
+											{
+												RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l];
+											}
+										}
+									}
+								}
+							}
+							else if(ctx->well[ii].type == PRESSURE){
+								
+							}
+							goto outer;
+						}
+					}
+				}
+			}
+		outer:;
+		}
+	}
 	ierr = MatAssemblyBegin(K2,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(K2,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -768,6 +811,37 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 	ierr = MatDestroy(&K2);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VecApplyWEllFlowRate"
+extern PetscErrorCode VecApplyWEllFlowRate(PetscReal *RHS_local,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz)
+{
+	PetscReal	phi[2][2][2];
+	PetscInt	i,j,k,l;
+	PetscErrorCode ierr;
+	
+	PetscFunctionBegin;
+	phi[0][0][0] = (1.-hwz)*(1.-hwy)*(1.-hwx);
+	phi[0][0][1] = (1.-hwz)*(1.-hwy)*hwx;
+	phi[0][1][0] = (1.-hwz)*hwy*(1.-hwx);
+	phi[0][1][1] = (1.-hwz)*hwy*hwx;
+	phi[1][0][0] = hwz*(1.-hwy)*(1.-hwx);
+	phi[1][0][1] = hwz*(1.-hwy)*hwx;
+	phi[1][1][0] = hwz*hwy*(1.-hwx);
+	phi[1][1][1] = hwz*hwy*hwx;
+	
+	for(l = 0, k = 0; k < 2; k++){
+		for(j = 0; j < 2; j++){
+			for(i = 0; i < 2; i++, l++){
+				RHS_local[l] = 0;
+				RHS_local[l] = Q*phi[k][j][i];
+			}
+		}
+	}
+	PetscFunctionReturn(0);
+}
+
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyPressureBC"
