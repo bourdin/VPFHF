@@ -26,21 +26,16 @@ int main(int argc,char **argv)
 	PetscReal		****flowbc_array;
 	PetscReal		***src_array;
 	PetscReal		****coords_array;
-//	PetscReal		hx,hy,hz;
 	PetscReal		gx,gy,gz;
 	PetscReal		gamma, beta, rho, mu;
-//	PetscReal		pi;
 	PetscReal		****perm_array;
 	PetscReal		****velnpre_array;
 	char			prefix[PETSC_MAX_PATH_LEN+1];
 
-
-		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
 	ierr = FlowSolverInitialize(&ctx,&fields);CHKERRQ(ierr);
-	
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -48,22 +43,16 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.FlowBCArray,0.);CHKERRQ(ierr);
 	ierr = VecSet(fields.VelnPress,0.);CHKERRQ(ierr);
 	ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
-	
-	
 	ctx.hasFlowWells = PETSC_TRUE;
 	ctx.hasFluidSources = PETSC_FALSE;
-
-	
-	
+//	ctx.hasFlowWells = PETSC_FALSE;
+//	ctx.hasFluidSources = PETSC_TRUE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
 	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.VelnPress,&velnpre_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr); 
 	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
-	
-	
-	
 	ctx.numWells = 0;	
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&ctx.numWells,PETSC_NULL);CHKERRQ(ierr);	
 	ierr = PetscMalloc(ctx.numWells*sizeof(VFWell),&ctx.well);CHKERRQ(ierr);
@@ -73,9 +62,6 @@ int main(int argc,char **argv)
 		ierr = VFWellGet(prefix,&ctx.well[i]);CHKERRQ(ierr);
 		ierr = VFWellView(&ctx.well[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 	}	
-
-	
-	
 	for (k = zs1; k < zs1+zm1; k++) {
 		for (j = ys1; j < ys1+ym1; j++) {
 				for (i = xs1; i < xs1+xm1; i++) {
@@ -83,10 +69,6 @@ int main(int argc,char **argv)
 			}
 		}
 	}
-//	pi = 6.*asin(0.5);
-//	hx = 1./(nx-1);
-//	hy = 1./(nx-1);
-//	hz = 1./(nz-1);	
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
 	beta = ctx.flowprop.beta;		
@@ -121,10 +103,6 @@ int main(int argc,char **argv)
 	ctx.bcP[0].face[Y1] = VALUE;
 	ctx.bcQ[2].face[Z0] = VALUE;
 	ctx.bcQ[2].face[Z1] = VALUE;
-
-	
-	
-	
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
@@ -140,20 +118,8 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				if(i == nx/4 && j == ny/4){
-					src_array[k][j][i] = -10.;
-				}
-				if(i == 3*nx/4 && j == 3*ny/4){
-					src_array[k][j][i] = -10.;
-				}
-				if(i == 3*nx/4 && j == ny/4){
-					src_array[k][j][i] = -10.;
-				}
-				if(i == nx/4 && j == 3*ny/4){
-					src_array[k][j][i] = -10.;
-				}
-				if(i == nx/2 && j == ny/2){
-					src_array[k][j][i] = 70.;
+				if ( (j == ny/2) && (i == nx/2 )){
+					src_array[k][j][i] = 1;
 				}
 			}
 		}

@@ -196,7 +196,7 @@ typedef enum {
 
 static const char *WellType_Name[] = {
 	"INJECTOR",
-	"PRODUCER",
+	"PRODUCTOR",
 	"WellType_Name",
 	"",
 	0

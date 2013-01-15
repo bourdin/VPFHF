@@ -766,7 +766,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 									}
 								}
 							}
-							else if(ctx->well[ii].type == PRESSURE){
+							else if(ctx->well[ii].condition == PRESSURE){
 								
 							}
 							goto outer;

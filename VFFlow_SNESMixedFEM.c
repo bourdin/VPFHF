@@ -461,7 +461,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 										}
 									}
 								}
-								else if(ctx->well[ii].type == PRESSURE){
+								else if(ctx->well[ii].condition == PRESSURE){
 									
 								}
 								goto outer;

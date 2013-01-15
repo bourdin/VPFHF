@@ -46,7 +46,8 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.FlowBCArray,0.);CHKERRQ(ierr);
 	ierr = VecSet(fields.VelnPress,0.);CHKERRQ(ierr);
 	ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
-	
+	ctx.hasFluidSources = PETSC_TRUE;
+	ctx.hasFlowWells = PETSC_FALSE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
 	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.VelnPress,&velnpre_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
