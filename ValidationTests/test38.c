@@ -26,11 +26,12 @@ int main(int argc,char **argv)
 	PetscReal		****flowbc_array;
 	PetscReal		***src_array;
 	PetscReal		****coords_array;
-	PetscReal		hx,hy,hz;
+//	PetscReal		hx,hy,hz;
 	PetscReal		gx,gy,gz;
 	PetscReal		gamma, beta, rho, mu;
-	PetscReal		pi;
+//	PetscReal		pi;
 	PetscReal		****perm_array;
+	char			prefix[PETSC_MAX_PATH_LEN+1];
 
 	
 	PetscReal       length = .2;
@@ -55,7 +56,8 @@ int main(int argc,char **argv)
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	ierr = VecSet(fields.FlowBCArray,0.);CHKERRQ(ierr);
 	ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
-	
+	ctx.hasFluidSources = PETSC_FALSE;
+	ctx.hasFlowWells = PETSC_TRUE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
 	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
@@ -64,6 +66,23 @@ int main(int argc,char **argv)
 	lz = BBmax[2]-BBmin[2];
 	ly = BBmax[1]-BBmin[1];
 	lx = BBmax[0]-BBmin[0];	
+	
+	ctx.numWells = 0;	
+	ctx.numWells = 1;
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&ctx.numWells,PETSC_NULL);CHKERRQ(ierr);	
+	ierr = PetscMalloc(ctx.numWells*sizeof(VFWell),&ctx.well);CHKERRQ(ierr);
+	for (i = 0; i < ctx.numWells; i++) {
+		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"w%d_",i);CHKERRQ(ierr);
+		ierr = VFWellCreate(&ctx.well[i]);CHKERRQ(ierr);
+		ierr = VFWellGet(prefix,&ctx.well[i]);CHKERRQ(ierr);
+		ierr = VFWellView(&ctx.well[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+	}	
+	ctx.well[0].Qw = 0.01;
+	ctx.well[0].coords[0] = lx/2.;
+	ctx.well[0].coords[1] = ly/2.;
+	ctx.well[0].coords[2] = lz/2.;
+	ctx.well[0].condition = RATE;
+	ctx.well[0].type = INJECTOR;
 
 //	Mechanical model settings
 	
@@ -167,10 +186,10 @@ int main(int argc,char **argv)
 			}
 		}
 	}
-	pi = 6.*asin(0.5);
-	hx = 1./(nx-1);
-	hy = 1./(nx-1);
-	hz = 1./(nz-1);	
+//	pi = 6.*asin(0.5);
+//	hx = 1./(nx-1);
+//	hy = 1./(nx-1);
+//	hz = 1./(nz-1);	
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
 	beta = ctx.flowprop.beta;		
