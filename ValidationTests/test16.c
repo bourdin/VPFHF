@@ -3,7 +3,10 @@
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 
 
-mpiexec -n 2 ../test16 -n 26,2,50 -l .5,.02,1 -epsilon .04 -mode 1 eta 1e-8 \
+ mpiexec -n 1 ../test16 -n 10,2,10 -l 4,.02,4 -epsilon .08 -mode 6 eta 1e-10 -Gc 1. -nu 0 -maxtimestep 2 -minvol .001  -maxvol .01 -nc 1 -c0_r .2 -c0_center 2,.01,2 -insitumin 0,0,0,0,0 -insitumax 0,0,0e-2,0,0,0 -U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg
+ 
+ 
+ mpiexec -n 2 ../test16 -n 26,2,50 -l .5,.02,1 -epsilon .04 -mode 1 eta 1e-8 \
         -Gc 1e-1 -nu 0 -maxtimestep 2 -maxvol .001 -mechsolver ELASTICITY   \
         -nc 1 -c0_r .1 -c0_center .25,.01,.5 
 
@@ -124,21 +127,21 @@ int main(int argc,char **argv)
 	switch (mode) {
 		case 0:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D computation with null-displacement on all faces\n");CHKERRQ(ierr);		  
-			ctx.bcU[0].face[X0] = ZERO; ctx.bcU[1].face[X0] = ZERO; ctx.bcU[2].face[X0] = ZERO;
-			ctx.bcU[0].face[X1] = ZERO; ctx.bcU[1].face[X1] = ZERO; ctx.bcU[2].face[X1] = ZERO;
-			ctx.bcU[0].face[Y0] = ZERO; ctx.bcU[1].face[Y0] = ZERO; ctx.bcU[2].face[Y0] = ZERO;
-			ctx.bcU[0].face[Y1] = ZERO; ctx.bcU[1].face[Y1] = ZERO; ctx.bcU[2].face[Y1] = ZERO;		  
-			ctx.bcU[0].face[Z0] = ZERO; ctx.bcU[1].face[Z0] = ZERO; ctx.bcU[2].face[Z0] = ZERO;
-			ctx.bcU[0].face[Z1] = ZERO; ctx.bcU[1].face[Z1] = ZERO; ctx.bcU[2].face[Z1] = ZERO;
+			ctx.bcU[0].face[X0] = ZERO; ctx.bcU[1].face[X0] = ZERO; ctx.bcU[2].face[X0] = ZERO; ctx.bcV[0].face[X0] = ONE;
+			ctx.bcU[0].face[X1] = ZERO; ctx.bcU[1].face[X1] = ZERO; ctx.bcU[2].face[X1] = ZERO; ctx.bcV[0].face[X1] = ONE;
+			ctx.bcU[0].face[Y0] = ZERO; ctx.bcU[1].face[Y0] = ZERO; ctx.bcU[2].face[Y0] = ZERO; ctx.bcV[0].face[Y0] = ONE;
+			ctx.bcU[0].face[Y1] = ZERO; ctx.bcU[1].face[Y1] = ZERO; ctx.bcU[2].face[Y1] = ZERO; ctx.bcV[0].face[Y1] = ONE;
+			ctx.bcU[0].face[Z0] = ZERO; ctx.bcU[1].face[Z0] = ZERO; ctx.bcU[2].face[Z0] = ZERO; ctx.bcV[0].face[Z0] = ONE;
+			ctx.bcU[0].face[Z1] = ZERO; ctx.bcU[1].face[Z1] = ZERO; ctx.bcU[2].face[Z1] = ZERO; ctx.bcV[0].face[Z1] = ONE;
 			break;
 		case 1:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 2D computation with null-displacement on all faces\n");CHKERRQ(ierr);		  
-			ctx.bcU[0].face[X0] = ZERO; ctx.bcU[1].face[X0] = ZERO; ctx.bcU[2].face[X0] = ZERO;
-			ctx.bcU[0].face[X1] = ZERO; ctx.bcU[1].face[X1] = ZERO; ctx.bcU[2].face[X1] = ZERO;
-			ctx.bcU[1].face[Y0] = ZERO;
-			ctx.bcU[1].face[Y1] = ZERO;		  
-			ctx.bcU[0].face[Z0] = ZERO; ctx.bcU[1].face[Z0] = ZERO; ctx.bcU[2].face[Z0] = ZERO;
-			ctx.bcU[0].face[Z1] = ZERO; ctx.bcU[1].face[Z1] = ZERO; ctx.bcU[2].face[Z1] = ZERO;
+			ctx.bcU[0].face[X0] = ZERO; ctx.bcU[1].face[X0] = ZERO; ctx.bcU[2].face[X0] = ZERO; ctx.bcV[0].face[X0] = ONE;
+			ctx.bcU[0].face[X1] = ZERO; ctx.bcU[1].face[X1] = ZERO; ctx.bcU[2].face[X1] = ZERO; ctx.bcV[0].face[X1] = ONE;
+			                            ctx.bcU[1].face[Y0] = ZERO;
+			                            ctx.bcU[1].face[Y1] = ZERO;
+			ctx.bcU[0].face[Z0] = ZERO; ctx.bcU[1].face[Z0] = ZERO; ctx.bcU[2].face[Z0] = ZERO; ctx.bcV[0].face[Z0] = ONE;
+			ctx.bcU[0].face[Z1] = ZERO; ctx.bcU[1].face[Z1] = ZERO; ctx.bcU[2].face[Z1] = ZERO; ctx.bcV[0].face[Z1] = ONE;
 			break;
 		case 2:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D computation blocking only rigid motions (may be instable)\n");CHKERRQ(ierr);		  
@@ -146,6 +149,13 @@ int main(int argc,char **argv)
 			ctx.bcU[2].vertex[X1Y0Z0] = ZERO; 
 			ctx.bcU[0].vertex[X0Y1Z0] = ZERO; 
 			ctx.bcU[1].vertex[X0Y0Z1] = ZERO;
+			ctx.bcV[0].face[X0] = ONE;
+      ctx.bcV[0].face[X1] = ONE;
+      ctx.bcV[0].face[Y0] = ONE;
+      ctx.bcV[0].face[Y1] = ONE;
+      ctx.bcV[0].face[Z0] = ONE;
+      ctx.bcV[0].face[Z1] = ONE;
+
 			break;
 		case 3:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 2D computation blocking only rigid motions (may be instable)\n");CHKERRQ(ierr);		  
@@ -153,10 +163,20 @@ int main(int argc,char **argv)
 			ctx.bcU[2].vertex[X1Y0Z0] = ZERO;
 			ctx.bcU[1].face[Y0] = ZERO;
 			ctx.bcU[1].face[Y1] = ZERO;
+			ctx.bcV[0].face[X0] = ONE;
+      ctx.bcV[0].face[X1] = ONE;
+      ctx.bcV[0].face[Z0] = ONE;
+      ctx.bcV[0].face[Z1] = ONE;
 			break;
 		case 4:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D computation blocking normal displacement on 3 planes (may lead to asymmetric solutions)\n");CHKERRQ(ierr);		  
       ctx.bcU[0].face[X0] = ZERO; ctx.bcU[1].face[Y0] = ZERO; ctx.bcU[2].face[Z0] = ZERO;
+			ctx.bcV[0].face[X0] = ONE;
+      ctx.bcV[0].face[X1] = ONE;
+      ctx.bcV[0].face[Y0] = ONE;
+      ctx.bcV[0].face[Y1] = ONE;
+      ctx.bcV[0].face[Z0] = ONE;
+      ctx.bcV[0].face[Z1] = ONE;
 		  break;
 		case 5:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 2D computation blocking normal displacement on 2 planes (may lead to asymmetric solutions)\n");CHKERRQ(ierr);		  
@@ -164,15 +184,28 @@ int main(int argc,char **argv)
       ctx.bcU[2].face[Z0] = ZERO;
 			ctx.bcU[1].face[Y0] = ZERO;
 			ctx.bcU[1].face[Y1] = ZERO;
+			ctx.bcV[0].face[X0] = ONE;
+      ctx.bcV[0].face[X1] = ONE;
+      ctx.bcV[0].face[Z0] = ONE;
+      ctx.bcV[0].face[Z1] = ONE;
 		  break;
 		case 6:
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a computation blocking normal displacement on all planes but Z1\n");CHKERRQ(ierr);		  
-			ctx.bcU[0].face[X0] = ZERO;
-			ctx.bcU[0].face[X1] = ZERO;
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D computation blocking normal displacement on all planes but Z1\n");CHKERRQ(ierr);		  
+			ctx.bcU[0].face[X0] = ZERO; ctx.bcV[0].face[X0] = ONE;
+			ctx.bcU[0].face[X1] = ZERO; ctx.bcV[0].face[X1] = ONE;
+			ctx.bcU[1].face[Y0] = ZERO; ctx.bcV[0].face[Y0] = ONE;
+			ctx.bcU[1].face[Y1] = ZERO; ctx.bcV[0].face[Y1] = ONE;
+			ctx.bcU[2].face[Z0] = ZERO; ctx.bcV[0].face[Z0] = ONE;
+			                            ctx.bcV[0].face[Z1] = ONE;
+		  break;
+		case 7:
+			ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 2D computation blocking normal displacement on all planes but Z1\n");CHKERRQ(ierr);		  
+			ctx.bcU[0].face[X0] = ZERO; ctx.bcV[0].face[X0] = ONE;
+			ctx.bcU[0].face[X1] = ZERO; ctx.bcV[0].face[X1] = ONE;
 			ctx.bcU[1].face[Y0] = ZERO;
 			ctx.bcU[1].face[Y1] = ZERO;
-			ctx.bcU[2].face[Z0] = ZERO;
-			//ctx.bcU[2].face[Z1] = ZERO;
+			ctx.bcU[2].face[Z0] = ZERO; ctx.bcV[0].face[Z0] = ONE;
+			                            ctx.bcV[0].face[Z1] = ONE;
 		  break;
 		default:
 			SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: mode should be one of {0,1,2,3,4,5,6,7},got %i\n",mode);
@@ -195,7 +228,9 @@ int main(int argc,char **argv)
 	ctx.hasCrackPressure = PETSC_TRUE;
 	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
 	ierr = VecDuplicate(fields.U,&U_s);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) U_s,"U_s");CHKERRQ(ierr);
 	ierr = VecDuplicate(fields.U,&U_1);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) U_1,"U_1");CHKERRQ(ierr);
 
 	ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
 	ierr = PetscViewerSetType(viewer,PETSCVIEWERASCII);CHKERRQ(ierr);
@@ -216,6 +251,7 @@ int main(int argc,char **argv)
 	ctx.matprop[0].beta = 0.;
 	ctx.timevalue = 0;
 	//ctx.maxtimestep = 150;
+	
 	
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 	  targetVol = minvol + flowrate * ctx.timestep;
@@ -301,7 +337,7 @@ int main(int argc,char **argv)
 	}
 	ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
 	ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
+	
 	ierr = VecDestroy(&Vold);CHKERRQ(ierr);
 	ierr = VecDestroy(&U_s);CHKERRQ(ierr);
 	ierr = VecDestroy(&U_1);CHKERRQ(ierr);
