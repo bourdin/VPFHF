@@ -1,11 +1,10 @@
 #!/bin/bash      
-#PBS -V                   # Inherit the submission environment
-#PBS -N HS2D       # Job Name
-#PBS -lnodes=4:ppn=12
-#PBS -q normal            # Queue name "normal"
-#PBS -l walltime=12:00:00     # Run time (hh:mm:ss) - 1.5 hours
-#PBS -M bourdin@lsu.edu   # Use email notification address
-#PBS -m be                # Email at Begin and End of job
+#SBATCH -n 16
+#SBATCH -p normal
+#SBATCH -t 03:00:00
+#SBATCH -A ResSim
+#SBATCH -E
+#SBATCH -J HS2D
 
 
 if [ -z "NX" ]; then
@@ -57,8 +56,8 @@ if [ -z "MODE" ]; then
   export MODE=1
 fi
 
-export JOBID=${PBS_JOBID}
-export WORKDIR=${PBS_O_WORKDIR}/${PBS_JOBID}
+export JOBID=${SLURM_JOBID}
+export WORKDIR=${SLURM_SUBMIT_DIR}/${JOBID}
 mkdir -p ${WORKDIR}
 cd ${WORKDIR}
 
@@ -78,7 +77,7 @@ echo  ETA            $ETA         >> 00_INFO.txt
 echo  MODE           $MODE        >> 00_INFO.txt
 echo  EXTRAOPTS      $EXTRAOPTS   >> 00_INFO.txt
 
-mpiexec ${VFDIR}/ValidationTests/test16 -p ${JOBID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} \
+ibrun ${VFDIR}/ValidationTests/test16 -p ${JOBID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} \
        -epsilon ${EPSILON} -eta ${ETA} -gc ${GC} -c0_R ${R} -c0_theta ${C0_THETA} -c0_phi ${C0_PHI} \
        -mode ${MODE} -minvol ${MINVOL} -maxvol ${MAXVOL} -maxtimestep ${NUMSTEP} ${EXTRAOPTS}
 
