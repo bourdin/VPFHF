@@ -3,56 +3,64 @@
 #SBATCH -p normal
 #SBATCH -t 03:00:00
 #SBATCH -A ResSim
-#SBATCH -E
 #SBATCH -J HS2D
 
-
-if [ -z "NX" ]; then
+export VFDIR=${HOME}/Development/VF_Standalone
+if [ -z "$NX" ]; then
 	export NX=355
 fi
-if [ -z "NY" ]; then
+if [ -z "$NY" ]; then
 	export NY=2
 fi
-if [ -z "NZ" ]; then
+if [ -z "$NZ" ]; then
 	export NZ=355
 fi
-if [ -z "LX" ]; then
+if [ -z "$LX" ]; then
   export LX=8
 fi
-if [ -z "LY" ]; then
+if [ -z "$LY" ]; then
   export LY=.01
 fi
-if [ -z "LZ" ]; then
+if [ -z "$LZ" ]; then
   export LZ=8.
 fi
-if [ -z "C0_R" ]; then
+if [ -z "$C0_X" ]; then
+  export C0_X=4.
+fi
+if [ -z "$C0_Y" ]; then
+  export C0_Y=.005
+fi
+if [ -z "$C0_Z" ]; then
+  export C0_Z=4.
+fi
+if [ -z "$C0_R" ]; then
   export C0_R=.2
 fi
-if [ -z "C0_THETA" ]; then
+if [ -z "$C0_THETA" ]; then
   export C0_THETA=0.
 fi
-if [ -z "C0_PHI" ]; then
+if [ -z "$C0_PHI" ]; then
   export C0_PHI=0.
 fi
-if [ -z "MINVOL" ]; then
+if [ -z "$MINVOL" ]; then
   export MINVOL=0.
 fi
-if [ -z "MAXVOL" ]; then
+if [ -z "$MAXVOL" ]; then
   export MAXVOL=0.025
 fi
-if [ -z "NUMSTEP" ]; then
+if [ -z "$NUMSTEP" ]; then
   export NUMSTEP=100
 fi
-if [ -z "EPSILON" ]; then
+if [ -z "$EPSILON" ]; then
   export EPSILON=.045
 fi
-if [ -z "GC" ]; then
+if [ -z "$GC" ]; then
   export GC=.8
 fi
-if [ -z "ETA" ]; then
+if [ -z "$ETA" ]; then
   export ETA=1e-8
 fi
-if [ -z "MODE" ]; then
+if [ -z "$MODE" ]; then
   export MODE=1
 fi
 
@@ -60,9 +68,9 @@ export JOBID=${SLURM_JOBID}
 export WORKDIR=${SLURM_SUBMIT_DIR}/${JOBID}
 mkdir -p ${WORKDIR}
 cd ${WORKDIR}
-
-echo  JOBID          $JOBID        > 00_INFO.txt
-echo  NX             $NX          >> 00_INFO.txt 
+touch 00_INFO.txt
+echo  JOBID          ${JOBID}    >> 00_INFO.txt
+echo  NX             ${NX}        >> 00_INFO.txt 
 echo  NY             $NY          >> 00_INFO.txt 
 echo  NZ             $NZ          >> 00_INFO.txt 
 echo  LX             $LX          >> 00_INFO.txt 
@@ -77,8 +85,10 @@ echo  ETA            $ETA         >> 00_INFO.txt
 echo  MODE           $MODE        >> 00_INFO.txt
 echo  EXTRAOPTS      $EXTRAOPTS   >> 00_INFO.txt
 
-ibrun ${VFDIR}/ValidationTests/test16 -p ${JOBID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} \
-       -epsilon ${EPSILON} -eta ${ETA} -gc ${GC} -c0_R ${R} -c0_theta ${C0_THETA} -c0_phi ${C0_PHI} \
-       -mode ${MODE} -minvol ${MINVOL} -maxvol ${MAXVOL} -maxtimestep ${NUMSTEP} ${EXTRAOPTS}
+ibrun ${VFDIR}/ValidationTests/test16 -p ${JOBID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} -epsilon ${EPSILON} -eta ${ETA} -gc ${GC} -nu 0. \
+      -nc 1 -c0_center ${C0_X},${C0_Y},${C0_Z} -c0_R ${C0_R} -c0_theta ${C0_THETA} -c0_phi ${C0_PHI} \
+      -mode ${MODE} -minvol ${MINVOL} -maxvol ${MAXVOL} -maxtimestep ${NUMSTEP} ${EXTRAOPTS} \
+      -U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor \
+      -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg -altmintol 1e-6 -altminmaxit 100
 
 
