@@ -1,0 +1,84 @@
+#!/bin/bash      
+#PBS -V                   # Inherit the submission environment
+#PBS -N HS2D       # Job Name
+#PBS -lnodes=4:ppn=12
+#PBS -q normal            # Queue name "normal"
+#PBS -l walltime=12:00:00     # Run time (hh:mm:ss) - 1.5 hours
+#PBS -M bourdin@lsu.edu   # Use email notification address
+#PBS -m be                # Email at Begin and End of job
+
+
+if [ -z "NX" ]; then
+	export NX=355
+fi
+if [ -z "NY" ]; then
+	export NY=2
+fi
+if [ -z "NZ" ]; then
+	export NZ=355
+fi
+if [ -z "LX" ]; then
+  export LX=8
+fi
+if [ -z "LY" ]; then
+  export LY=.01
+fi
+if [ -z "LZ" ]; then
+  export LZ=8.
+fi
+if [ -z "C0_R" ]; then
+  export C0_R=.2
+fi
+if [ -z "C0_THETA" ]; then
+  export C0_THETA=0.
+fi
+if [ -z "C0_PHI" ]; then
+  export C0_PHI=0.
+fi
+if [ -z "MINVOL" ]; then
+  export MINVOL=0.
+fi
+if [ -z "MAXVOL" ]; then
+  export MAXVOL=0.025
+fi
+if [ -z "NUMSTEP" ]; then
+  export NUMSTEP=100
+fi
+if [ -z "EPSILON" ]; then
+  export EPSILON=.045
+fi
+if [ -z "GC" ]; then
+  export GC=.8
+fi
+if [ -z "ETA" ]; then
+  export ETA=1e-8
+fi
+if [ -z "MODE" ]; then
+  export MODE=1
+fi
+
+export WORKDIR=${PBS_O_WORKDIR}/${PBS_JOBID}
+mkdir -p ${WORKDIR}
+cd ${WORKDIR}
+
+echo  PBS_JOBID      $JOB_ID       > 00_INFO.txt
+echo  NX             $NX          >> 00_INFO.txt 
+echo  NY             $NY          >> 00_INFO.txt 
+echo  NZ             $NZ          >> 00_INFO.txt 
+echo  LX             $LX          >> 00_INFO.txt 
+echo  LY             $LY          >> 00_INFO.txt 
+echo  LZ             $LZ          >> 00_INFO.txt 
+echo  GC             $GC          >> 00_INFO.txt
+echo  R              $R           >> 00_INFO.txt
+echo  THETA          $THETA       >> 00_INFO.txt
+echo  PHI            $PHI         >> 00_INFO.txt
+echo  EPSILON        $EPSILON     >> 00_INFO.txt
+echo  ETA            $ETA         >> 00_INFO.txt
+echo  MODE           $MODE        >> 00_INFO.txt
+echo  EXTRAOPTS      $EXTRAOPTS   >> 00_INFO.txt
+
+mpiexec ${VFDIR}/ValidationTests/test16 -p ${JOB_ID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} \
+       -epsilon ${EPSILON} -eta ${ETA} -gc ${GC} -c0_R ${R} -c0_theta ${C0_THETA} -c0_phi ${C0_PHI} \
+       -mode ${MODE} -minvol ${MINVOL} -maxvol ${MAXVOL} -maxtimestep ${NUMSTEP} ${EXTRAOPTS}
+
+
