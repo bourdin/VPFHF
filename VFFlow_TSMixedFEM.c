@@ -510,7 +510,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 						}
 					}
 				}
-				/*Assembling the righthand side vector g*/
+				/*Assembling the right hand side vector g*/
 				ierr = FLow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -647,7 +647,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMRestoreLocalVector(ctx->daFlow,&velnprebc_local);CHKERRQ(ierr);
 
 	ierr = PetscFree5(KA_local,KB_local,KD_local,KBTrans_local,Klhs_local);CHKERRQ(ierr);
-	ierr = PetscFree3(RHS_local,row,row1);CHKERRQ(ierr);
+	ierr = PetscFree4(RHS_local,row,row1,velnprebc_local);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
