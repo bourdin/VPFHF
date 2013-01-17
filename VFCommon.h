@@ -189,12 +189,13 @@ typedef struct {
 typedef struct {
   char          name[256];
   PetscReal     center[3];
-  PetscReal     r,phi,theta;
+  PetscReal     r,phi,theta,thickness;
 } VFPennyCrack;
 
 typedef struct {
   char          name[256];
   PetscReal     corners[9];
+  PetscReal     thickness;
   /*
   Corner allocation:
   
