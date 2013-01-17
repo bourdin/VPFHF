@@ -1,11 +1,18 @@
 #!/bin/bash      
-#SBATCH -n 16
-#SBATCH -p normal
-#SBATCH -t 03:00:00
-#SBATCH -A ResSim
-#SBATCH -J HS2D
+#PBS -V                   # Inherit the submission environment
+#PBS -N HS2D              # Job Name
+#PBS -lnodes=4:ppn=12
+#PBS -q normal            # Queue name "normal"
+#PBS -l walltime=12:00:00 # Run time (hh:mm:ss) - 1.5 hours
+#PBS -M bourdin@lsu.edu   # Use email notification address
+#PBS -m be                # Email at Begin and End of job
 
-export VFDIR=${HOME}/Development/VF_Standalone
+
+export JOBID=${PBS_JOBID}
+export WORKDIR=${PBS_O_WORKDIR}/${JOBID}
+mkdir -p ${WORKDIR}
+cd ${WORKDIR}
+
 if [ -z "$NX" ]; then
   export NX=354
 fi
@@ -73,11 +80,6 @@ if [ -z "$INSITUMAX" ]; then
   export INSITUMAX='0,0,0,0,0,0'
 fi
 
-export JOBID=${SLURM_JOBID}
-export WORKDIR=${SLURM_SUBMIT_DIR}/${JOBID}
-mkdir -p ${WORKDIR}
-cd ${WORKDIR}
-touch 00_INFO.txt
 echo  JOBID          ${JOBID}         >> 00_INFO.txt
 echo  NX             ${NX}            >> 00_INFO.txt 
 echo  NY             ${NY}            >> 00_INFO.txt 
@@ -90,12 +92,15 @@ echo  C0_R           ${C0_R}          >> 00_INFO.txt
 echo  C0_THETA       ${C0_THETA}      >> 00_INFO.txt
 echo  C0_PHI         ${C0_PHI}        >> 00_INFO.txt
 echo  C0_THICKNESS   ${C0_THICKNESS}  >> 00_INFO.txt
+echo  INSITUMIN      ${INSITUMIN}     >> 00_INFO.txt
+echo  INSITUMAX      ${INSITUMAX}     >> 00_INFO.txt
 echo  EPSILON        ${EPSILON}       >> 00_INFO.txt
 echo  ETA            ${ETA}           >> 00_INFO.txt
 echo  MODE           ${MODE}          >> 00_INFO.txt
 echo  EXTRAOPTS      ${EXTRAOPTS}     >> 00_INFO.txt
 
-ibrun ${VFDIR}/ValidationTests/test16 -p ${JOBID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} -epsilon ${EPSILON} -eta ${ETA} -gc ${GC} -nu 0. \
+
+mpiexec ${VFDIR}/ValidationTests/test16 -p ${JOBID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} -epsilon ${EPSILON} -eta ${ETA} -gc ${GC} -nu 0. \
       -nc 1 -c0_center ${C0_X},${C0_Y},${C0_Z} -c0_R ${C0_R} -c0_theta ${C0_THETA} -c0_phi ${C0_PHI} -c0_thickness ${C0_THICKNESS} \
       -mode ${MODE} -minvol ${MINVOL} -maxvol ${MAXVOL} -maxtimestep ${NUMSTEP} -insitumin ${INSITUMIN} -insitumax ${INSITUMAX} ${EXTRAOPTS} \
       -U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor \

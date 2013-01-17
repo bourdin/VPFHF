@@ -1,15 +1,14 @@
 #!/bin/bash      
-#$ -A TG-DMS060014
-#$ -V                   # Inherit the submission environment
-#$ -cwd
-#$ -N HS2D       # Job Name
-#$ -j y                 # Combine stderr and stdout
-#$ -pe 12way 240
-#$ -q normal            # Queue name "normal"
-#$ -l h_rt=5:00:00     # Run time (hh:mm:ss) - 1.5 hours
-#$ -M bourdin@lsu.edu   # Use email notification address
-#$ -m be                # Email at Begin and End of job
+#SBATCH -n 16
+#SBATCH -p normal
+#SBATCH -t 03:00:00
+#SBATCH -A ResSim
+#SBATCH -J HS2D
 
+export JOBID=${SLURM_JOBID}
+export WORKDIR=${SLURM_SUBMIT_DIR}/${JOBID}
+mkdir -p ${WORKDIR}
+cd ${WORKDIR}
 
 if [ -z "$NX" ]; then
   export NX=354
@@ -71,37 +70,40 @@ fi
 if [ -z "$MODE" ]; then
   export MODE=1
 fi
-
-export JOBID=${JOB_ID}
-export WORKDIR=${SGE_O_WORKDIR}/${JOBID}
-mkdir -p ${WORKDIR}
-cd ${WORKDIR}
+if [ -z "$INSITUMIN" ]; then
+  export INSITUMIN='0,0,0,0,0,0'
+fi
+if [ -z "$INSITUMAX" ]; then
+  export INSITUMAX='0,0,0,0,0,0'
+fi
 
 touch 00_INFO.txt
-echo  JOBID          ${JOBID}       >> 00_INFO.txt
-echo  NX             ${NX}          >> 00_INFO.txt 
-echo  NY             ${NY}          >> 00_INFO.txt 
-echo  NZ             ${NZ}          >> 00_INFO.txt 
-echo  LX             ${LX}          >> 00_INFO.txt 
-echo  LY             ${LY}          >> 00_INFO.txt 
-echo  LZ             ${LZ}          >> 00_INFO.txt 
-echo  GC             ${GC}          >> 00_INFO.txt
-echo  R              ${R}           >> 00_INFO.txt
-echo  THETA          ${THETA}       >> 00_INFO.txt
-echo  PHI            ${PHI}         >> 00_INFO.txt
-echo  EPSILON        ${EPSILON}     >> 00_INFO.txt
-echo  ETA            ${ETA}         >> 00_INFO.txt
-echo  MODE           ${MODE}        >> 00_INFO.txt
-echo  EXTRAOPTS      ${EXTRAOPTS}   >> 00_INFO.txt
+echo  JOBID          ${JOBID}         >> 00_INFO.txt
+echo  NX             ${NX}            >> 00_INFO.txt 
+echo  NY             ${NY}            >> 00_INFO.txt 
+echo  NZ             ${NZ}            >> 00_INFO.txt 
+echo  LX             ${LX}            >> 00_INFO.txt 
+echo  LY             ${LY}            >> 00_INFO.txt 
+echo  LZ             ${LZ}            >> 00_INFO.txt 
+echo  GC             ${GC}            >> 00_INFO.txt
+echo  C0_R           ${C0_R}          >> 00_INFO.txt
+echo  C0_THETA       ${C0_THETA}      >> 00_INFO.txt
+echo  C0_PHI         ${C0_PHI}        >> 00_INFO.txt
+echo  C0_THICKNESS   ${C0_THICKNESS}  >> 00_INFO.txt
+echo  INSITUMIN      ${INSITUMIN}     >> 00_INFO.txt
+echo  INSITUMAX      ${INSITUMAX}     >> 00_INFO.txt
+echo  EPSILON        ${EPSILON}       >> 00_INFO.txt
+echo  ETA            ${ETA}           >> 00_INFO.txt
+echo  MODE           ${MODE}          >> 00_INFO.txt
+echo  EXTRAOPTS      ${EXTRAOPTS}     >> 00_INFO.txt
 
 ibrun ${VFDIR}/ValidationTests/test16 -p ${JOBID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} -epsilon ${EPSILON} -eta ${ETA} -gc ${GC} -nu 0. \
       -nc 1 -c0_center ${C0_X},${C0_Y},${C0_Z} -c0_R ${C0_R} -c0_theta ${C0_THETA} -c0_phi ${C0_PHI} -c0_thickness ${C0_THICKNESS} \
-      -mode ${MODE} -minvol ${MINVOL} -maxvol ${MAXVOL} -maxtimestep ${NUMSTEP} ${EXTRAOPTS} \
+      -mode ${MODE} -minvol ${MINVOL} -maxvol ${MAXVOL} -maxtimestep ${NUMSTEP} -insitumin ${INSITUMIN} -insitumax ${INSITUMAX} ${EXTRAOPTS} \
       -U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor \
       -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg \
       -V_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -V_mg_levels_ksp_type chebyshev -V_mg_levels_pc_type sor \
       -V_pc_gamg_agg_nsmooths 1 -V_pc_gamg_threshold 0 -V_pc_gamg_type agg -V_pc_type gamg \
       -altmintol 1e-4 -altminmaxit 100
-
 
 
