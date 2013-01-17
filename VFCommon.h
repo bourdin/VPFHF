@@ -95,10 +95,12 @@ typedef enum {
   FLOWSOLVER_READFROMFILES,
 } VFFlowSolverType;
 static const char *VFFlowSolverName[] = {
-    "TS",
+  "TS",
   "SNES",
   "FEM",
-  "MixedFEM",
+  "DarcyMixedFEM",
+  "TSMixedFEM",
+  "SNESMixedFEM",
   "FAKE",
   "READFROMFILES",
   "",
@@ -119,7 +121,7 @@ static const char *VFFileFormatName[] = {
 
 /* 
  all fields involved in the computations
-w*/
+*/
 typedef struct {
   int numfields;
   Vec V;
@@ -137,6 +139,7 @@ typedef struct {
   Vec VolCrackOpening;
   Vec VolLeakOffRate;
   Vec FlowBCArray;
+  Vec PresBCArray;
 } VFFields;
 
 static const char *VFFieldNames[] = {
@@ -296,9 +299,14 @@ typedef struct {
   KSP                 kspV;
   Vec                 RHSV;
   Mat                 KP;
+  Mat                 KPlhs;
+  Mat                 JacP;
+  TS                  tsP;
   PC                  pcP;
   KSP                 kspP;
   Vec                 RHSP;
+  Vec                 PFunct;
+  Vec                 PresBC;
   PetscReal           CrackVolume;
   PetscReal           LeakOffRate;
   /* 
@@ -361,9 +369,12 @@ typedef struct {
   PetscViewer         energyviewer;
   PetscViewer         XDMFviewer;
   PetscReal           timevalue;
+  PetscReal           current_time;
+  PetscReal           dt;
   PetscInt            timestep;
   PetscReal           maxtimevalue;
   PetscInt            maxtimestep;
+  PetscInt            maxiterations;
   PetscReal           ElasticEnergy;
   PetscReal           SurfaceEnergy;
   PetscReal           InsituWork;

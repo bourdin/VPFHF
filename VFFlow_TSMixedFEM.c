@@ -510,7 +510,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 						}
 					}
 				}
-				/*Assembling the righthand side vector g*/
+				/*Assembling the right hand side vector g*/
 				ierr = FLow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -625,6 +625,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = MatAssemblyEnd(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	// below,the 2nd argument of MatApplyTSVelocityBC should be KVelPlhs instead of ctx->KVelPlhs?
 	ierr = MatApplyTSVelocityBC(K,ctx->KVelPlhs,&ctx->bcQ[0]);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -647,7 +648,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMRestoreLocalVector(ctx->daFlow,&velnprebc_local);CHKERRQ(ierr);
 
 	ierr = PetscFree5(KA_local,KB_local,KD_local,KBTrans_local,Klhs_local);CHKERRQ(ierr);
-	ierr = PetscFree3(RHS_local,row,row1);CHKERRQ(ierr);
+	ierr = PetscFree4(RHS_local,row,row1,velnprebc_local);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
