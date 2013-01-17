@@ -108,21 +108,14 @@ extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx)
 
 /*
   When positive value is given, boundary condiction has a numerical value
-*/
+
   if(ctx->BCpres[0] > -1.e-8) BCP[0].face[X0] = VALUE;
   if(ctx->BCpres[1] > -1.e-8) BCP[0].face[X1] = VALUE;
   if(ctx->BCpres[2] > -1.e-8) BCP[0].face[Y0] = VALUE;
   if(ctx->BCpres[3] > -1.e-8) BCP[0].face[Y1] = VALUE;
   if(ctx->BCpres[4] > -1.e-8) BCP[0].face[Z0] = VALUE;
-  if(ctx->BCpres[5] > -1.e-8) BCP[0].face[Z1] = VALUE;
-
-  BCP[0].face[X0] = VALUE;
-  BCP[0].face[X1] = VALUE;
-  BCP[0].face[Y0] = VALUE;
-  BCP[0].face[Y1] = VALUE;
-  BCP[0].face[Z0] = VALUE;
-  BCP[0].face[Z1] = VALUE;
-  
+  if(ctx->BCpres[5] > -1.e-8) BCP[0].face[Z1] = VALUE;*/
+ 
   PetscFunctionReturn(0);
 }
 

@@ -91,7 +91,7 @@ int main(int argc,char **argv)
 		}
 	}
 	for (i = 0; i < 6; i++) {
-//		ctx.bcP[0].face[i] = VALUE;
+		ctx.bcP[0].face[i] = VALUE;
 	}
 	
 	for (k = zs; k < zs+zm; k++) {
@@ -103,7 +103,7 @@ int main(int argc,char **argv)
 				    flowbc_array[k][j][i][2] = beta/mu*(cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*sin(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi);
 				    flowbc_array[k][j][i][3] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi*pi);
 				}else if (ctx.flowsolver == FLOWSOLVER_TS){
-//				    presbc_array[k][j][i] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi*pi);
+				    presbc_array[k][j][i] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi*pi);
 				}
 			}
 		}
@@ -112,7 +112,7 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-//				src_array[k][j][i] = beta/mu*cos(pi*k*hz/lz)*cos(pi*j*hy/ly)*cos(pi*i*hx/lx)/3.*((1./(lx*lx))+(1./(ly*ly))+(1./(lz*lz))); 
+				src_array[k][j][i] = beta/mu*cos(pi*k*hz/lz)*cos(pi*j*hy/ly)*cos(pi*i*hx/lx)/3.*((1./(lx*lx))+(1./(ly*ly))+(1./(lz*lz))); 
 			}
 		}
 	}
