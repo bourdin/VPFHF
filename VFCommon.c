@@ -705,7 +705,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   
   ierr = DMCreateGlobalVector(ctx->daScal,&fields->PresBCArray);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->PresBCArray,"Pressure Bondary Values");CHKERRQ(ierr);
-  ierr = VecSet(fields->pressure,0.0);CHKERRQ(ierr);
+  ierr = VecSet(fields->PresBCArray,0.0);CHKERRQ(ierr);
   
 /*
    Create optional penny-shaped and rectangular cracks
