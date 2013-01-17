@@ -72,21 +72,21 @@ export WORKDIR=${SLURM_SUBMIT_DIR}/${JOBID}
 mkdir -p ${WORKDIR}
 cd ${WORKDIR}
 touch 00_INFO.txt
-echo  JOBID          ${JOBID}    >> 00_INFO.txt
-echo  NX             ${NX}        >> 00_INFO.txt 
-echo  NY             $NY          >> 00_INFO.txt 
-echo  NZ             $NZ          >> 00_INFO.txt 
-echo  LX             $LX          >> 00_INFO.txt 
-echo  LY             $LY          >> 00_INFO.txt 
-echo  LZ             $LZ          >> 00_INFO.txt 
-echo  GC             $GC          >> 00_INFO.txt
-echo  R              $R           >> 00_INFO.txt
-echo  THETA          $THETA       >> 00_INFO.txt
-echo  PHI            $PHI         >> 00_INFO.txt
-echo  EPSILON        $EPSILON     >> 00_INFO.txt
-echo  ETA            $ETA         >> 00_INFO.txt
-echo  MODE           $MODE        >> 00_INFO.txt
-echo  EXTRAOPTS      $EXTRAOPTS   >> 00_INFO.txt
+echo  JOBID          ${JOBID}       >> 00_INFO.txt
+echo  NX             ${NX}          >> 00_INFO.txt 
+echo  NY             ${NY}          >> 00_INFO.txt 
+echo  NZ             ${NZ}          >> 00_INFO.txt 
+echo  LX             ${LX}          >> 00_INFO.txt 
+echo  LY             ${LY}          >> 00_INFO.txt 
+echo  LZ             ${LZ}          >> 00_INFO.txt 
+echo  GC             ${GC}          >> 00_INFO.txt
+echo  R              ${R}           >> 00_INFO.txt
+echo  THETA          ${THETA}       >> 00_INFO.txt
+echo  PHI            ${PHI}         >> 00_INFO.txt
+echo  EPSILON        ${EPSILON}     >> 00_INFO.txt
+echo  ETA            ${ETA}         >> 00_INFO.txt
+echo  MODE           ${MODE}        >> 00_INFO.txt
+echo  EXTRAOPTS      ${EXTRAOPTS}   >> 00_INFO.txt
 
 ibrun ${VFDIR}/ValidationTests/test16 -p ${JOBID} -n ${NX},${NY},${NZ} -l ${LX},${LY},${LZ} -epsilon ${EPSILON} -eta ${ETA} -gc ${GC} -nu 0. \
       -nc 1 -c0_center ${C0_X},${C0_Y},${C0_Z} -c0_R ${C0_R} -c0_theta ${C0_THETA} -c0_phi ${C0_PHI} -c0_thickness ${C0_THICKNESS} \
