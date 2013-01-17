@@ -7,13 +7,13 @@
 
 export VFDIR=${HOME}/Development/VF_Standalone
 if [ -z "$NX" ]; then
-  export NX=355
+  export NX=354
 fi
 if [ -z "$NY" ]; then
   export NY=2
 fi
 if [ -z "$NZ" ]; then
-  export NZ=355
+  export NZ=354
 fi
 if [ -z "$LX" ]; then
   export LX=8
@@ -43,7 +43,7 @@ if [ -z "$C0_PHI" ]; then
   export C0_PHI=0.
 fi
 if [ -z "$C0_THICKNESS" ]; then
-  export C0_THICKNESS=.04
+  export C0_THICKNESS=.045
 fi
 if [ -z "$MINVOL" ]; then
   export MINVOL=0.
@@ -92,6 +92,9 @@ ibrun ${VFDIR}/ValidationTests/test16 -p ${JOBID} -n ${NX},${NY},${NZ} -l ${LX},
       -nc 1 -c0_center ${C0_X},${C0_Y},${C0_Z} -c0_R ${C0_R} -c0_theta ${C0_THETA} -c0_phi ${C0_PHI} -c0_thickness ${C0_THICKNESS} \
       -mode ${MODE} -minvol ${MINVOL} -maxvol ${MAXVOL} -maxtimestep ${NUMSTEP} ${EXTRAOPTS} \
       -U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor \
-      -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg -altmintol 1e-6 -altminmaxit 100
+      -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg \
+      -V_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -V_mg_levels_ksp_type chebyshev -V_mg_levels_pc_type sor \
+      -V_pc_gamg_agg_nsmooths 1 -V_pc_gamg_threshold 0 -V_pc_gamg_type agg -V_pc_type gamg \
+      -altmintol 1e-4 -altminmaxit 100
 
 
