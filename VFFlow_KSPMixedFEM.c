@@ -454,7 +454,9 @@ extern PetscErrorCode VecApplyFlowBC(Vec RHS,BC *bcQ,VFCtx *ctx, PetscReal ****U
 }
 
 
-
+/*
+   Do we want to initialize source term with cosine functions?
+*/
 #undef __FUNCT__
 #define __FUNCT__ "SETSourceTerms"
 extern PetscErrorCode SETSourceTerms(Vec Src,FlowProp flowpropty)
