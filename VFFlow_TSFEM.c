@@ -125,11 +125,9 @@ extern PetscErrorCode FEMTSMonitor(TS ts,PetscInt timestep,PetscReal timevalue,V
 
 
 	PetscFunctionBegin;
-	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Solution.txt",&viewer);CHKERRQ(ierr);
+/*	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Solution.txt",&viewer);CHKERRQ(ierr);
 	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(pressure,viewer);CHKERRQ(ierr);
-
+	ierr = VecView(pressure,viewer);CHKERRQ(ierr); */
 	ierr = VecNorm(pressure,NORM_1,&norm);CHKERRQ(ierr);
 	ierr = VecMax(pressure,PETSC_NULL,&vmax);CHKERRQ(ierr);
 	ierr = VecMin(pressure,PETSC_NULL,&vmin);CHKERRQ(ierr);
@@ -148,12 +146,10 @@ extern PetscErrorCode FormIFunction_P(TS ts,PetscReal t,Vec pressure,Vec pressur
 	PetscViewer     viewer;
 	
 	PetscFunctionBegin;
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"\nFormIFunction_P\n");CHKERRQ(ierr);	
 	ierr = FormTSMatricesnVector_P(ctx->KP,ctx->KPlhs,ctx->RHSP,ctx);CHKERRQ(ierr);
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSVector.txt",&viewer);CHKERRQ(ierr);
+/*	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSVector.txt",&viewer);CHKERRQ(ierr);
 	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(ctx->RHSP,viewer);CHKERRQ(ierr);	
-	
+	ierr = VecView(ctx->RHSP,viewer);CHKERRQ(ierr);	*/
 	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
 	ierr = MatMult(ctx->KP,pressure,Func);CHKERRQ(ierr);	
 	ierr = MatMultAdd(ctx->KPlhs,pressuredot,Func,Func);CHKERRQ(ierr);
@@ -168,7 +164,6 @@ extern PetscErrorCode FormFunction_P(TS ts,PetscReal t,Vec vec1,Vec Func,void *u
 	VFCtx			*ctx=(VFCtx*)user;
 	
 	PetscFunctionBegin;
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"\nFormFunction_P\n");CHKERRQ(ierr);	
 	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
 	ierr = VecCopy(ctx->RHSP,Func);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
