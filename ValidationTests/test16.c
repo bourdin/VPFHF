@@ -309,7 +309,7 @@ int main(int argc,char **argv)
       ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"      Max. change on V: %e\n",errV);CHKERRQ(ierr);
       altminit++;
-    } while (errP >= p_epsilon && errV >= ctx.altmintol && altminit <= ctx.altminmaxit);
+    } while ((errP >= p_epsilon || errV >= ctx.altmintol) && altminit <= ctx.altminmaxit);
     ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);   
     switch (ctx.fileformat) {
       case FILEFORMAT_HDF5:       
@@ -349,4 +349,3 @@ int main(int argc,char **argv)
   return(0);
 }
 
-/errP
