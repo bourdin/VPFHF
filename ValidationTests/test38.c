@@ -85,6 +85,7 @@ int main(int argc,char **argv)
 	ctx.well[0].type = INJECTOR;
 
 //	Mechanical model settings
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-Qw",&ctx.well[0].Qw,PETSC_NULL);CHKERRQ(ierr);
 	
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-length",&length,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-q",&q,PETSC_NULL);CHKERRQ(ierr);
@@ -186,10 +187,6 @@ int main(int argc,char **argv)
 			}
 		}
 	}
-//	pi = 6.*asin(0.5);
-//	hx = 1./(nx-1);
-//	hy = 1./(nx-1);
-//	hz = 1./(nz-1);	
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
 	beta = ctx.flowprop.beta;		
@@ -235,7 +232,7 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {				
-				if ( ((j == ny/2) || (j == ny/2-1) ) && (i == nx/2 )){// && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
+				if ( ((j == ny/2) || (j == ny/2-1) ) && (i == nx/2 )){
 					src_array[k][j][i] = 1.;
 				}
 			}
@@ -259,15 +256,24 @@ int main(int argc,char **argv)
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
 		ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
+		
+/* Initial computation to provide initial data*/	
+		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
+
+		
 //		do{
 			ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 			ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
 			ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+			ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);   
+			ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);   
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"\nInjectedVol = %e,\tCrackVolume =%e\tLeak-off = %e\n",0.01*ctx.flowprop.timestepsize,ctx.CrackVolume,ctx.LeakOffRate);CHKERRQ(ierr);
+
 //		}
 //		while()
 		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
-		ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);   
-		ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);   
 		ierr = FieldsH5Write(&ctx,&fields);
 	
 		ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);

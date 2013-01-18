@@ -129,16 +129,32 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = DMDAVecGetArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daFlow,fields->VelnPress,&VelnPress_array);CHKERRQ(ierr);
+	ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetType(viewer,PETSCVIEWERASCII);CHKERRQ(ierr);
+//ierr = PetscViewerFileSetName(viewer,"Solution");CHKERRQ(ierr);
+//	ierr = PetscViewerASCIIPrintf(viewer,"nodex \t nodey \t nodez \t pressure \t velx\n");CHKERRQ(ierr);
+
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
 				Press_array[k][j][i] = VelnPress_array[k][j][i][3];
 				for (c = 0; c < veldof; c++) {
 					vel_array[k][j][i][c] =  VelnPress_array[k][j][i][c];
+//					ierr = PetscPrintf(PETSC_COMM_WORLD,"\tvel[%d][%d][%d][%d] = %e",k,j,i,c,vel_array[k][j][i][c]);CHKERRQ(ierr);	
 				}
+//				ierr = PetscPrintf(PETSC_COMM_WORLD,"\n");CHKERRQ(ierr);	
+//				if( (j == 25) && (k == 0)){
+//					ierr = PetscViewerASCIIPrintf(viewer,"%d \t %d \t %d \t %e \t %e\n",i,j,k,Press_array[k][j][i],vel_array[k][j][i][0]);CHKERRQ(ierr);
+//				}
 			}
 		}
 	}
+	
+	ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
+	ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+
+	
+	
 	ierr = DMDAVecRestoreArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,fields->VelnPress,&VelnPress_array);CHKERRQ(ierr);
@@ -185,6 +201,12 @@ extern PetscErrorCode FormSNESIJacobian(SNES snes,Vec VelnPress,Mat *Jac,Mat *Ja
 		ierr = MatAssemblyBegin(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 		ierr = MatAssemblyEnd(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	}
+/*	
+	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrix.txt",&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	ierr = MatView(*Jac,viewer);CHKERRQ(ierr);
+*/
+	
 	PetscFunctionReturn(0);
 }
 
@@ -526,6 +548,13 @@ extern PetscErrorCode FormSNESIFunction(SNES snes,Vec VelnPress,Vec Func,void *u
 	ierr = FormSNESMatricesnVector(ctx->KVelP,ctx->KVelPlhs,ctx->RHSVelP,ctx);CHKERRQ(ierr);
 	ierr = VecCopy(ctx->RHSVelP,VecRHS);CHKERRQ(ierr);
 	ierr = VecAXPBY(VecRHS,dt_dot_one_minus_theta,dt_dot_theta,ctx->RHSVelPpre);CHKERRQ(ierr);
+	
+/*	
+	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS.txt",&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	ierr = VecView(VecRHS,viewer);CHKERRQ(ierr);
+*/
+	
 	ierr = MatMultAdd(ctx->KVelPlhs,ctx->PreFlowFields,VecRHS,VecRHS);CHKERRQ(ierr);	
 	ierr = VecApplySNESVelocityBC(VecRHS,ctx->FlowBC,&ctx->bcQ[0],ctx);CHKERRQ(ierr);
 	ierr = MatMult(ctx->KVelP,VelnPress,Func);CHKERRQ(ierr);	
