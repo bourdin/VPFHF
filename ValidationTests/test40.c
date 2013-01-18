@@ -56,6 +56,7 @@ int main(int argc,char **argv)
 	ctx.numWells = 0;	
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&ctx.numWells,PETSC_NULL);CHKERRQ(ierr);	
 	ierr = PetscMalloc(ctx.numWells*sizeof(VFWell),&ctx.well);CHKERRQ(ierr);
+	if(ctx.hasFlowWells == PETSC_TRUE){
 	for (i = 0; i < ctx.numWells; i++) {
 		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"w%d_",i);CHKERRQ(ierr);
 		ierr = VFWellCreate(&ctx.well[i]);CHKERRQ(ierr);
@@ -68,6 +69,7 @@ int main(int argc,char **argv)
 				perm_array[k][j][i][2] = 0.;
 			}
 		}
+	}
 	}
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
@@ -119,7 +121,7 @@ int main(int argc,char **argv)
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
 				if ( (j == ny/2) && (i == nx/2 )){
-					src_array[k][j][i] = 1;
+					src_array[k][j][i] = 10;
 				}
 			}
 		}
