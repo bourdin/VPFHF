@@ -25,6 +25,7 @@ extern PetscErrorCode VFPennyCrackGet(const char prefix[],VFPennyCrack *PennyCra
     ierr = PetscOptionsReal("-r","\n\t Penny-shaped crack radius","",PennyCrack->r,&PennyCrack->r,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsReal("-theta","\n\t Penny-shaped crack polar angle (in degrees)","",PennyCrack->theta,&PennyCrack->theta,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsReal("-phi","\n\t Penny-shaped crack co-latitude (in degrees)","",PennyCrack->phi,&PennyCrack->phi,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-thickness","\n\t Penny-shaped crack thickness","",PennyCrack->thickness,&PennyCrack->thickness,PETSC_NULL);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -45,9 +46,10 @@ extern PetscErrorCode VFPennyCrackCreate(VFPennyCrack *PennyCrack)
   PetscFunctionBegin;
   ierr = PetscStrcpy(PennyCrack->name,"PennyCrack");CHKERRQ(ierr);
   for (i=0; i<3; i++) PennyCrack->center[i] = 0.;
-  PennyCrack->r        = 0.;
-  PennyCrack->theta    = 0.;
-  PennyCrack->phi      = 0.;
+  PennyCrack->r           = 0.;
+  PennyCrack->theta       = 0.;
+  PennyCrack->phi         = 0.;
+  PennyCrack->thickness   = 0.;
   PetscFunctionReturn(0);
 }
 
@@ -64,10 +66,11 @@ extern PetscErrorCode VFPennyCrackView(VFPennyCrack *PennyCrack,PetscViewer view
   
   PetscFunctionBegin;
   ierr = PetscViewerASCIIPrintf(viewer,"PennyCrack object \"%s\":\n",PennyCrack->name);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIPrintf(viewer,"center:   \t%e \t%e \t%e\n",PennyCrack->center[0],PennyCrack->center[1],PennyCrack->center[2]);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(viewer,"center:     \t%e \t%e \t%e\n",PennyCrack->center[0],PennyCrack->center[1],PennyCrack->center[2]);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(viewer,"radius:     \t%e\n",PennyCrack->r);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(viewer,"polar angle:\t%e\n",PennyCrack->theta);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(viewer,"co-latitude:\t%e\n",PennyCrack->phi);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(viewer,"thickness:\t%e\n",PennyCrack->thickness);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -162,7 +165,7 @@ extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx
         }
         else {
           ierr = VFDistanceToPennyCrack(&dist,x,crack);CHKERRQ(ierr); 
-          if(dist <= ctx->vfprop.epsilon * 0.75){
+          if (dist <= crack->thickness/2.){
             v_array[k][j][i] = 0.;
           }
           else {
@@ -191,6 +194,7 @@ extern PetscErrorCode VFRectangularCrackGet(const char prefix[],VFRectangularCra
     ierr = PetscOptionsString("-name","\n\tRectangular-shaped crack name","",RectangularCrack->name,RectangularCrack->name,sizeof(RectangularCrack->name),PETSC_NULL);CHKERRQ(ierr);
     nval = 9;    
     ierr = PetscOptionsRealArray("-corners","\n\tRectangular-shaped crack corners coordinates (x0,y0,z0, x1,y1,z1, x2,y2,z2)  (comma separated).","",RectangularCrack->corners,&nval,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-thickness","\n\t Penny-shaped crack thickness","",RectangularCrack->thickness,&RectangularCrack->thickness,PETSC_NULL);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -228,6 +232,7 @@ extern PetscErrorCode VFRectangularCrackView(VFRectangularCrack *RectangularCrac
                   RectangularCrack->corners[0],RectangularCrack->corners[1],RectangularCrack->corners[2],
                   RectangularCrack->corners[3],RectangularCrack->corners[4],RectangularCrack->corners[5],
                   RectangularCrack->corners[6],RectangularCrack->corners[7],RectangularCrack->corners[8]);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(viewer,"thickness:\t%e\n",RectangularCrack->thickness);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -406,7 +411,7 @@ extern PetscErrorCode VFRectangularCrackBuildVAT2(Vec V,VFRectangularCrack *crac
         x[1] = coords_array[k][j][i][1];
         x[0] = coords_array[k][j][i][0];
         ierr = VFDistanceToRectangularCrack(&dist,x,crack);CHKERRQ(ierr); 
-        if(dist <= ctx->vfprop.epsilon*0.75){
+        if(dist <= crack->thickness){
           v_array[k][j][i] = 0.;
         }
         else {
