@@ -702,7 +702,11 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->Source);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->Source,"Source Term");CHKERRQ(ierr);
   ierr = VecSet(ctx->Source,0.0);CHKERRQ(ierr);
-
+  
+  ierr = DMCreateGlobalVector(ctx->daScal,&fields->PresBCArray);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->PresBCArray,"Pressure Bondary Values");CHKERRQ(ierr);
+  ierr = VecSet(fields->PresBCArray,0.0);CHKERRQ(ierr);
+  
 /*
    Create optional penny-shaped and rectangular cracks
    */
@@ -829,15 +833,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = KSPGetPC(ctx->kspV,&ctx->pcV);CHKERRQ(ierr);
   ierr = PCSetType(ctx->pcV,PCBJACOBI);CHKERRQ(ierr);
   ierr = PCSetFromOptions(ctx->pcV);CHKERRQ(ierr);
-  
-  if (comm_size == 1) {
-    ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->KP);CHKERRQ(ierr);
-  } else {
-    ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->KP);CHKERRQ(ierr);
-  }
-  ierr = MatSetOption(ctx->KP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSP);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) ctx->RHSP,"RHSP");CHKERRQ(ierr);
+
   
   ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspP);CHKERRQ(ierr);
   
@@ -1118,8 +1114,6 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&ctx->Source);CHKERRQ(ierr);
   
   ierr = KSPDestroy(&ctx->kspP);CHKERRQ(ierr);
-  ierr = MatDestroy(&ctx->KP);CHKERRQ(ierr);
-  ierr = VecDestroy(&ctx->RHSP);CHKERRQ(ierr); 
   
   ierr = KSPDestroy(&ctx->kspT);CHKERRQ(ierr);
   ierr = MatDestroy(&ctx->KT);CHKERRQ(ierr);

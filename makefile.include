@@ -6,9 +6,10 @@ VFOBJ = ${VFDIR}/VFCommon.o                \
         ${VFDIR}/VFFlow.o                  \
         ${VFDIR}/VFFlow_Fake.o             \
         ${VFDIR}/VFFlow_FEM.o              \
+        ${VFDIR}/VFFlow_TSFEM.o       \
         ${VFDIR}/VFFlow_KSPMixedFEM.o      \
         ${VFDIR}/VFFlow_SNESMixedFEM.o     \
         ${VFDIR}/VFFlow_TSMixedFEM.o       \
-	${VFDIR}/VFPermfield.o             \
+        ${VFDIR}/VFPermfield.o             \
         ${VFDIR}/CartFE.o                  \
         ${VFDIR}/xdmf.o
