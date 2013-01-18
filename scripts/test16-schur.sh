@@ -1,11 +1,9 @@
 #!/bin/bash      
-#PBS -V                   # Inherit the submission environment
-#PBS -N HS2D              # Job Name
+#PBS -V
+#PBS -N test16
 #PBS -lnodes=4:ppn=12
-#PBS -q normal            # Queue name "normal"
-#PBS -l walltime=12:00:00 # Run time (hh:mm:ss) - 1.5 hours
-#PBS -M bourdin@lsu.edu   # Use email notification address
-#PBS -m be                # Email at Begin and End of job
+#PBS -q normal
+#PBS -l walltime=4:00:00
 
 
 export JOBID=${PBS_JOBID}
