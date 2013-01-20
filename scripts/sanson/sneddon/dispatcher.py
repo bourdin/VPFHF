@@ -28,11 +28,11 @@ class all(SNEDDONAction):
             except KeyError:
                 print '00_INFO.txt file has no JOBID entry, skipping' 
 
-            if args.plotener or args.all: 
+            if args.plotener: 
                 infile = prefix+'.pres'
                 outfile = prefix+'_ener.pdf'
                 if not check_mtime(infile, outfile):
-                    print "Generating energy plot %s"%outfile
+                    print "Generating energy plot   %s"%outfile
                     cmd = 'python %s %s -o %s'%(energyplotscript,infile,outfile)
                     os.system(cmd)
 
