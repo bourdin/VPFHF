@@ -39,7 +39,6 @@ def main():
     
     for f in options.inputfile:
         if (os.path.isfile(f)):
-            print '%s is a file'%f
             p = np.loadtxt(f)    
             plt.plot(p[:,1],p[:,2],'--',lw=2,label=f)
         if (os.path.isdir(f)):
