@@ -31,6 +31,6 @@ class SNEDDONAction(Action):
     self.parser.add_argument('--plotmov', default=False,action='store_true',
                              help='generates a movie [req. VisIt]')
     self.parser.add_argument('--all', default=False,action='store_true',
-                             help='Do all of the above')
+                             help='Do all of the above except plotenergy and plotmov')
 
 __all__ = [scan, check_mtime, SNEDDONAction]
