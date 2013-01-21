@@ -114,12 +114,12 @@ fi
 echo  INSITUMAX      ${INSITUMAX} >> 00_INFO.txt
 
 if [ -z "$KSPUOPTS" ]; then
-  export KSPUOPTS='-U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg'
+  export KSPUOPTS='-U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_ksp_type cg -U_pc_type gamg'
 fi
 echo  KSPUOPTS       ${KSPUOPTS} >> 00_INFO.txt
 
 if [ -z "$KSPVOPTS" ]; then
-  export KSPVOPTS='-V_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -V_mg_levels_ksp_type chebyshev -V_mg_levels_pc_type sor -V_pc_gamg_agg_nsmooths 1 -V_pc_gamg_threshold 0 -V_pc_gamg_type agg -V_pc_type gamg'
+  export KSPVOPTS='-V_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -V_mg_levels_ksp_type chebyshev -V_mg_levels_pc_type sor -V_pc_gamg_agg_nsmooths 1 -V_pc_gamg_threshold 0 -V_pc_gamg_type agg -V ksp_type cg -V_pc_type gamg'
 fi
 echo  KSPVOPTS       ${KSPVOPTS} >> 00_INFO.txt
 
