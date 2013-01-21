@@ -54,7 +54,8 @@ def main():
                     p = np.loadtxt(presfile)    
                     hx = D['LX']/(D['NX']+0.0)
                     l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['EPSILON']/hx,f)
-                    l = '$h=%.2E$, $\epsilon/h=%.2f$'%(hx,D['EPSILON']/hx)
+                    #l = '$ \phi=%s \ (%s)$'%(D['C0_PHI'],f)
+                    #l = '$h=%.2E$, $\epsilon/h=%.2f$'%(hx,D['EPSILON']/hx)
                     #plt.plot(p[:,1]/D['LZ'],p[:,3]/D['LZ'],label=l,lw=2)
                     pp = p[:,3]
                     if options.dim ==2:
@@ -71,7 +72,7 @@ def main():
 
     ax = plt.gca()
     ax.grid()
-    #ax.axis([0,.025,0,.015])
+    ax.axis([0,.025,0,.015])
     plt.legend(loc=0,labelspacing=.1)
     leg = plt.gca().get_legend()
     ltext  = leg.get_texts()

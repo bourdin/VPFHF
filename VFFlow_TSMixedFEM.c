@@ -682,7 +682,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,velnprebc_local,&velnprebc_array);CHKERRQ(ierr); 
 	ierr = DMRestoreLocalVector(ctx->daFlow,&velnprebc_local);CHKERRQ(ierr);
 	ierr = PetscFree5(KA_local,KB_local,KD_local,KBTrans_local,Klhs_local);CHKERRQ(ierr);
-	ierr = PetscFree4(RHS_local,row,row1);CHKERRQ(ierr);
+	ierr = PetscFree3(RHS_local,row,row1);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
