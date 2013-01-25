@@ -638,11 +638,11 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 									for (j = 0; j < ctx->e3D.nphiy; j++) {
 										for (i = 0; i < ctx->e3D.nphix; i++,l++) {
 											if(ctx->well[ii].type == INJECTOR){
-												RHS_array[ek+k][ej+j][ei+i][3] += -1*RHS_local[l];
+												RHS_array[ek+k][ej+j][ei+i][3] -= RHS_local[l];
 											}
 											else if(ctx->well[ii].type == PRODUCER)
 											{
-												RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l];
+												RHS_array[ek+k][ej+j][ei+i][3] -= -1*RHS_local[l];
 											}
 										}
 									}
@@ -682,7 +682,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,velnprebc_local,&velnprebc_array);CHKERRQ(ierr); 
 	ierr = DMRestoreLocalVector(ctx->daFlow,&velnprebc_local);CHKERRQ(ierr);
 	ierr = PetscFree5(KA_local,KB_local,KD_local,KBTrans_local,Klhs_local);CHKERRQ(ierr);
-	ierr = PetscFree4(RHS_local,row,row1);CHKERRQ(ierr);
+	ierr = PetscFree3(RHS_local,row,row1);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 

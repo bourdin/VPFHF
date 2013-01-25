@@ -156,7 +156,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
     ctx->mechsolver = FRACTURE;
     ierr = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,PETSC_NULL);CHKERRQ(ierr);
-    ctx->flowsolver = FLOWSOLVER_DARCYMIXEDFEMSTEADYSTATE;
+    ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
     ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
     
     ctx->hasInsitu = PETSC_FALSE;

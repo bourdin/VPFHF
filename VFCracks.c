@@ -194,7 +194,7 @@ extern PetscErrorCode VFRectangularCrackGet(const char prefix[],VFRectangularCra
     ierr = PetscOptionsString("-name","\n\tRectangular-shaped crack name","",RectangularCrack->name,RectangularCrack->name,sizeof(RectangularCrack->name),PETSC_NULL);CHKERRQ(ierr);
     nval = 9;    
     ierr = PetscOptionsRealArray("-corners","\n\tRectangular-shaped crack corners coordinates (x0,y0,z0, x1,y1,z1, x2,y2,z2)  (comma separated).","",RectangularCrack->corners,&nval,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-thickness","\n\t Penny-shaped crack thickness","",RectangularCrack->thickness,&RectangularCrack->thickness,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-thickness","\n\tRectangular-shaped crack thickness","",RectangularCrack->thickness,&RectangularCrack->thickness,PETSC_NULL);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -213,6 +213,8 @@ extern PetscErrorCode VFRectangularCrackCreate(VFRectangularCrack *RectangularCr
   PetscFunctionBegin;
   ierr = PetscStrcpy(RectangularCrack->name,"RectangularCrack");CHKERRQ(ierr);
   for (i=0; i<9; i++) RectangularCrack->corners[i] = 0.;
+	
+	RectangularCrack->thickness = 0.;
   PetscFunctionReturn(0);
 }
 

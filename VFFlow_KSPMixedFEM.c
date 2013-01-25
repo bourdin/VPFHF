@@ -756,11 +756,11 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 									for (j = 0; j < ctx->e3D.nphiy; j++) {
 										for (i = 0; i < ctx->e3D.nphix; i++,l++) {
 											if(ctx->well[ii].type == INJECTOR){
-												RHS_array[ek+k][ej+j][ei+i][3] += -1*RHS_local[l];
+												RHS_array[ek+k][ej+j][ei+i][3] -= RHS_local[l];
 											}
 											else if(ctx->well[ii].type == PRODUCER)
 											{
-												RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l];
+												RHS_array[ek+k][ej+j][ei+i][3] -= -1*RHS_local[l];
 											}
 										}
 									}
