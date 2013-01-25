@@ -39,7 +39,6 @@ def main():
     
     for f in options.inputfile:
         if (os.path.isfile(f)):
-            print '%s is a file'%f
             p = np.loadtxt(f)    
             plt.plot(p[:,1],p[:,2],'--',lw=2,label=f)
         if (os.path.isdir(f)):
@@ -52,13 +51,14 @@ def main():
                     p = np.loadtxt(presfile)    
                     hx = D['LX']/(D['NX']+0.0)
                     l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['EPSILON']/hx,f)
+                    l = '$ \phi=%s \ (%s)$'%(D['C0_PHI'],f)
                     #l = '$h=%.2E$, $\epsilon/h=%.2f$'%(hx,D['EPSILON']/hx)
                     #plt.plot(p[:,1]/D['LZ'],p[:,2],lw=2,label=l)
                     plt.plot(p[:,1],p[:,2],lw=2,label=l)
                 
     ax = plt.gca()
     ax.grid()
-    #ax.axis([0,.025,0,1.5])
+    ax.axis([0,.025,0,1.5])
     plt.legend(loc=0,labelspacing=.1)
     leg = plt.gca().get_legend()
     ltext  = leg.get_texts()
