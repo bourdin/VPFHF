@@ -47,10 +47,11 @@ def main():
         ##  
         ## Open the database
         ##
-        MyDatabase= str(Param['JOBID'])+'.*.xmf database'
-
+        MyDatabase = str(Param['JOBID'])+'.*.xmf database'
         error = OpenDatabase(MyDatabase,0)
-        print error        
+        if not error:
+            MyDatabase = str(Param['JOBID'])+'.xmf'
+            error = OpenDatabase(MyDatabase,0)
     
         ##
         ## Add pseudocolor plot of fracture field
@@ -68,7 +69,7 @@ def main():
         p.opacity = 1
         p.colorTableName = "hot"
         p.invertColorTable = 1
-        p.smoothingLevel = 0
+        p.smoothingLevel = 2
         p.pointSizeVarEnabled = 0
         p.pointSizeVar = "default"
         p.pointSizePixels = 2
@@ -126,9 +127,52 @@ def main():
             else:
                 geometry[0] = int(2000 * Param['NX'] / Param['NZ'])
                 geometry[1] = 2000;
-            pngname = SavePNG(str(Param['JOBID'])+'-',geometry)
-            shutil.move(pngname,Param['JOBID']+'.png')
-            
+        else:
+            View3DAtts = View3DAttributes()
+            View3DAtts.viewNormal = (0.657417, 0.711041, 0.249448)
+            View3DAtts.focus = (4, 4, 4)
+            View3DAtts.viewUp = (-0.166863, -0.18545, 0.968383)
+            View3DAtts.viewAngle = 15
+            View3DAtts.parallelScale = 6.9282
+            View3DAtts.nearPlane = -13.8564
+            View3DAtts.farPlane = 13.8564
+            View3DAtts.imagePan = (0, 0)
+            View3DAtts.imageZoom = 1
+            View3DAtts.perspective = 1
+            View3DAtts.eyeAngle = 2
+            View3DAtts.centerOfRotationSet = 0
+            View3DAtts.centerOfRotation = (4, 4, 4)
+            View3DAtts.axis3DScaleFlag = 0
+            View3DAtts.axis3DScales = (1, 1, 1)
+            View3DAtts.shear = (0, 0, 1)
+            SetView3D(View3DAtts)
+            ViewAxisArrayAtts = ViewAxisArrayAttributes()
+            ViewAxisArrayAtts.domainCoords = (0, 1)
+            ViewAxisArrayAtts.rangeCoords = (0, 1)
+            ViewAxisArrayAtts.viewportCoords = (0.15, 0.9, 0.1, 0.85)
+            SetViewAxisArray(ViewAxisArrayAtts)
+
+            InvertBackgroundColor()
+        
+            AddOperator("Isosurface", 1)
+            SetActivePlots(0)
+            IsosurfaceAtts = IsosurfaceAttributes()
+            IsosurfaceAtts.contourNLevels = 10
+            IsosurfaceAtts.contourValue = (0.1)
+            IsosurfaceAtts.contourPercent = ()
+            IsosurfaceAtts.contourMethod = IsosurfaceAtts.Value  # Level, Value, Percent
+            IsosurfaceAtts.minFlag = 0
+            IsosurfaceAtts.min = 0
+            IsosurfaceAtts.maxFlag = 0
+            IsosurfaceAtts.max = 1
+            IsosurfaceAtts.scaling = IsosurfaceAtts.Linear  # Linear, Log
+            IsosurfaceAtts.variable = "Fracture"
+            SetOperatorOptions(IsosurfaceAtts, 1)
+            DrawPlots()
+
+        pngname = SavePNG(str(Param['JOBID']))
+        shutil.move(pngname,Param['JOBID']+'.png')
+
 
 import sys  
 if __name__ == "__main__":
