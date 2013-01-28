@@ -84,6 +84,8 @@ class all(SNEDDONAction):
                     print "Generating 3D movie frames"
                     cmd = 'cd %s; %s'%(job['path'],mov3Dscript)
                     #print cmd
+                    #os.system(cmd)
+                    cmd = "ffmpeg -i %s-3D-\%04d.png -vcodec mjpeg -qscale 0 %s-3D.avi"%(os.path.join(job['path'],"Frames",prefix),os.path.join(job['path'],prefix))
+                    print cmd
                     os.system(cmd)
-                    os.system("ffmpeg -i Frames/"+prefix+"-3D-%04d.png -vcodec mjpeg -qscale 0 "+prefix+"-3D.avi
 
