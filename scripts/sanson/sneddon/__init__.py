@@ -30,7 +30,7 @@ class SNEDDONAction(Action):
                              help='Plot last step [req. VisIt]')
     self.parser.add_argument('--movtransient', default=False,action='store_true',
                              help='generates a transient movie [req. VisIt]')
-    self.parser.add_argument('--mov3D', default=False,action='store_true',
+    self.parser.add_argument('--mov3d', default=False,action='store_true',
                              help='generates a 3D movie [req. VisIt]')
     self.parser.add_argument('--all', default=False,action='store_true',
                              help='Do all of the above except plotenergy, movtransient, and mov3d')
