@@ -79,10 +79,11 @@ class all(SNEDDONAction):
 
             if args.mov3d: 
                 infile = prefix+'.xmf'
-                outfile = os.path.join('Frames',prefix+'-3D-0000.png')
+                outfile = prefix+'.avi'
                 if not check_mtime(infile, outfile):
                     print "Generating 3D movie frames"
                     cmd = 'cd %s; %s'%(job['path'],mov3Dscript)
                     #print cmd
                     os.system(cmd)
+                    os.system("ffmpeg -i Frames/"+prefix+"-3D-%04d.png -vcodec mjpeg -qscale 0 "+prefix+"-3D.avi
 
