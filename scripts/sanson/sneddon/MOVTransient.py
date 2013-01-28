@@ -3,14 +3,6 @@ import infotxt
 import sys
 import os
 
-def getlaststep(fname):
-  ### open file
-  f=open(fname)
-  ### Read last line in a string
-  lastline = f.readlines()[-1]
-  laststep = lastline.rsplit()[0] 
-  return(int(laststep))
-
 def SavePNG(prefix,geometry=[1920,1080]):
     SaveWindowAtts = SaveWindowAttributes()
     SaveWindowAtts.outputToCurrentDirectory = 1
@@ -54,6 +46,7 @@ def main():
                 print "Cannot open database, exiting"
                 return 0
     
+        laststep = TimeSliderGetNStates()
         ##
         ## Add pseudocolor plot of fracture field
         ##
@@ -83,11 +76,6 @@ def main():
         p.min=0.0
         p.max=1.0
         p.legendFlag=0
-        
-        
-        
-        laststep = TimeSliderGetNStates()-1
-        SetTimeSliderState(laststep-1)
         SetPlotOptions(p)
     
         SetAnnotations()
@@ -166,9 +154,15 @@ def main():
             SetOperatorOptions(IsosurfaceAtts, 1)
 
         InvertBackgroundColor()        
-        DrawPlots()
-        pngname = SavePNG(str(Param['JOBID']))
-        shutil.move(pngname,Param['JOBID']+'.png')
+
+        outdir = "Frames"
+        if not os.path.isdir(outdir):
+            os.makedirs(outdir)
+        for step in range(laststep):
+            SetTimeSliderState(step)
+            DrawPlots()
+            pngname = SavePNG(os.path.join(outdir,Param['JOBID']+"-Transient-"))
+        #shutil.move(pngname,Param['JOBID']+'.png')
 
 
 import sys  
