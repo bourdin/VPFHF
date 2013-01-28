@@ -17,7 +17,8 @@ class all(SNEDDONAction):
         mov3Dscript = 'visit -cli -nowin -s ' + os.path.join(scriptpath,'MOV3D.py')
         jobs = data['jobs']
         print 'Project: {0}'.format(data['project'])
-    
+
+
         for jobid in sorted(jobs.keys()):
             job = jobs[jobid]
             print '{0:_^40}'.format(jobid)
@@ -80,12 +81,10 @@ class all(SNEDDONAction):
             if args.mov3d: 
                 infile = prefix+'.xmf'
                 outfile = prefix+'.avi'
+		print infile, outfile
                 if not check_mtime(infile, outfile):
                     print "Generating 3D movie frames"
                     cmd = 'cd %s; %s'%(job['path'],mov3Dscript)
                     #print cmd
-                    #os.system(cmd)
-                    cmd = "ffmpeg -i %s-3D-\%04d.png -vcodec mjpeg -qscale 0 %s-3D.avi"%(os.path.join(job['path'],"Frames",prefix),os.path.join(job['path'],prefix))
-                    print cmd
                     os.system(cmd)
 

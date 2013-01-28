@@ -35,6 +35,19 @@ def SetAnnotations():
     AnnotationAtts.axesArray.visible = 0
     SetAnnotationAttributes(AnnotationAtts)
 
+def SetAnnotations3D():
+    # Logging for SetAnnotationObjectOptions is not implemented yet.
+    AnnotationAtts = AnnotationAttributes()
+    AnnotationAtts.axes3D.xAxis.label.visible = 0
+    AnnotationAtts.axes3D.yAxis.label.visible = 0
+    AnnotationAtts.axes3D.zAxis.label.visible = 0
+    AnnotationAtts.userInfoFlag = 0
+    AnnotationAtts.databaseInfoFlag = 0
+    AnnotationAtts.legendInfoFlag = 0
+    AnnotationAtts.axesArray.visible = 0
+    AnnotationAtts.databaseInfoExpansionMode = AnnotationAtts.SmartDirectory
+    AnnotationAtts.axes3D.visible = 0
+    SetAnnotationAttributes(AnnotationAtts)
     
 def main():
     import os.path
@@ -89,7 +102,6 @@ def main():
         SetTimeSliderState(laststep-1)
         SetPlotOptions(p)
     
-        SetAnnotations()
 
         if Param['NY'] == 2:
             dim = 2
@@ -97,6 +109,7 @@ def main():
             dim = 3
 
         if dim == 2:
+            SetAnnotations()
             View3DAtts = View3DAttributes()
             View3DAtts.viewNormal = (0,-1.,0.)
             View3DAtts.focus = (4, 0.005, 4)
@@ -125,6 +138,7 @@ def main():
                 geometry[0] = int(2000 * Param['NX'] / Param['NZ'])
                 geometry[1] = 2000;
         else:
+            SetAnnotations3D()
             View3DAtts = View3DAttributes()
             View3DAtts.viewNormal = (0.657417, 0.711041, 0.249448)
             View3DAtts.focus = (4, 4, 4)
