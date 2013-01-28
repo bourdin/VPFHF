@@ -68,7 +68,7 @@ class all(SNEDDONAction):
                     #print cmd
                     os.system(cmd)
 
-            if args.plotmov: 
+            if args.movtransient: 
                 infile = prefix+'.xmf'
                 outfile = os.path.join('Frames',prefix+'-Transient-0000.png')
                 if not check_mtime(infile, outfile):
@@ -77,7 +77,7 @@ class all(SNEDDONAction):
                     #print cmd
                     os.system(cmd)
 
-            if args.plotmov: 
+            if args.mov3d: 
                 infile = prefix+'.xmf'
                 outfile = os.path.join('Frames',prefix+'-3D-0000.png')
                 if not check_mtime(infile, outfile):
