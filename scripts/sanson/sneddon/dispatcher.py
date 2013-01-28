@@ -12,12 +12,11 @@ class all(SNEDDONAction):
         energyplotscript = os.path.join(os.getenv('VFDIR'),'bin','plotener.py')
         lengthplotscript = os.path.join(os.getenv('VFDIR'),'bin','CrackLengthPlot.py')
         pressureplotscript = os.path.join(os.getenv('VFDIR'),'bin','PressurePlot2.py')
-        plotpngscript='visit -cli -nowin -s ' + os.path.join(scriptpath,'PNGplot.py')
-
+        pngscript = 'visit -cli -nowin -s ' + os.path.join(scriptpath,'PNGplot.py')
+        movtransientscript = 'visit -cli -nowin -s ' + os.path.join(scriptpath,'MOVTransient.py')
+        mov3Dscript = 'visit -cli -nowin -s ' + os.path.join(scriptpath,'MOV3D.py')
         jobs = data['jobs']
         print 'Project: {0}'.format(data['project'])
-        #print args
-        #print jobs
     
         for jobid in sorted(jobs.keys()):
             job = jobs[jobid]
@@ -65,11 +64,25 @@ class all(SNEDDONAction):
                 outfile = prefix+'.png'
                 if not check_mtime(infile, outfile):
                     print "Generating png plot %s"%outfile
-                    if (job['info']['NX'] == '2') or (job['info']['NY'] == '2') or (job['info']['NZ'] == '2'):
-                        dim = 2
-                    else:
-                        dim = 3
-                    cmd = 'cd %s; %s'%(job['path'],plotpngscript)
+                    cmd = 'cd %s; %s'%(job['path'],pngscript)
+                    #print cmd
+                    os.system(cmd)
+
+            if args.plotmov: 
+                infile = prefix+'.xmf'
+                outfile = os.path.join('Frames',prefix+'-Transient-0000.png')
+                if not check_mtime(infile, outfile):
+                    print "Generating transient movie frames"
+                    cmd = 'cd %s; %s'%(job['path'],movtransientscript)
+                    #print cmd
+                    os.system(cmd)
+
+            if args.plotmov: 
+                infile = prefix+'.xmf'
+                outfile = os.path.join('Frames',prefix+'-3D-0000.png')
+                if not check_mtime(infile, outfile):
+                    print "Generating 3D movie frames"
+                    cmd = 'cd %s; %s'%(job['path'],mov3Dscript)
                     #print cmd
                     os.system(cmd)
 
