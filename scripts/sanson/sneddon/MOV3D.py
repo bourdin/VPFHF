@@ -25,6 +25,21 @@ def SetAnnotations():
     AnnotationAtts.databaseInfoFlag = 0
     AnnotationAtts.legendInfoFlag = 0
     AnnotationAtts.axesArray.visible = 0
+    AnnotationAtts.databaseInfoExpansionMode = AnnotationAtts.SmartDirectory
+    SetAnnotationAttributes(AnnotationAtts)
+
+def SetAnnotations3D():
+    # Logging for SetAnnotationObjectOptions is not implemented yet.
+    AnnotationAtts = AnnotationAttributes()
+    AnnotationAtts.axes3D.xAxis.label.visible = 0
+    AnnotationAtts.axes3D.yAxis.label.visible = 0
+    AnnotationAtts.axes3D.zAxis.label.visible = 0
+    AnnotationAtts.userInfoFlag = 0
+    AnnotationAtts.databaseInfoFlag = 0
+    AnnotationAtts.legendInfoFlag = 0
+    AnnotationAtts.axesArray.visible = 0
+    AnnotationAtts.databaseInfoExpansionMode = AnnotationAtts.SmartDirectory
+    AnnotationAtts.axes3D.visible = 0
     SetAnnotationAttributes(AnnotationAtts)
 
     
@@ -32,6 +47,8 @@ def main():
     import os.path
     import shutil
     import math
+    import tempfile
+    
     if os.path.exists('00_INFO.txt'):
         Param = infotxt.Dictreadtxt('00_INFO.txt')
         if Param['NY'] > 2:
@@ -79,7 +96,7 @@ def main():
             p.max=1.0
             p.legendFlag=0
             SetPlotOptions(p)    
-            SetAnnotations()
+            SetAnnotations3D()
 
             View3DAtts = View3DAttributes()
             View3DAtts.viewNormal = (0.657417, 0.711041, 0.249448)
@@ -122,13 +139,10 @@ def main():
 
             InvertBackgroundColor()        
 
-            outdir = "Frames"
-            if not os.path.isdir(outdir):
-                os.makedirs(outdir)
-
-
+            tmpdir = tempfile.mkdtemp()
             SetTimeSliderState(laststep-1)
 
+            ### generate individual frames
             step = 5
             for theta in range(360/step+1):
                 v = (math.cos(math.radians(theta*step)),-math.sin(math.radians(theta*step)),0)
@@ -151,7 +165,15 @@ def main():
                 View3DAtts.shear = (0, 0, 1)
                 SetView3D(View3DAtts)
                 DrawPlots()
-                pngname = SavePNG(os.path.join(outdir,Param['JOBID']+"-3D-"))
+                pngname = SavePNG(os.path.join(tmpdir,Param['JOBID'])+"-",[1024,768])
+                
+            ### use ffmpeg to generate animation
+            pattern = os.path.join(tmpdir,Param['JOBID'])+"-%04d.png"
+            cmd = "ffmpeg -i %s -vcodec mjpeg -qscale 0 %s-3D.avi"%(pattern,Param['JOBID'])
+            print "Now running %s"%cmd
+            os.system(cmd)
+            shutil.rmtree(tmpdir)
+
 
 import sys  
 if __name__ == "__main__":

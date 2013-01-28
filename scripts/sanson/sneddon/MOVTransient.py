@@ -25,15 +25,32 @@ def SetAnnotations():
     AnnotationAtts.databaseInfoFlag = 0
     AnnotationAtts.legendInfoFlag = 0
     AnnotationAtts.axesArray.visible = 0
+    AnnotationAtts.databaseInfoExpansionMode = AnnotationAtts.SmartDirectory
+    SetAnnotationAttributes(AnnotationAtts)
+
+def SetAnnotations3D():
+    # Logging for SetAnnotationObjectOptions is not implemented yet.
+    AnnotationAtts = AnnotationAttributes()
+    AnnotationAtts.axes3D.xAxis.label.visible = 0
+    AnnotationAtts.axes3D.yAxis.label.visible = 0
+    AnnotationAtts.axes3D.zAxis.label.visible = 0
+    AnnotationAtts.userInfoFlag = 0
+    AnnotationAtts.databaseInfoFlag = 0
+    AnnotationAtts.legendInfoFlag = 0
+    AnnotationAtts.axesArray.visible = 0
+    AnnotationAtts.databaseInfoExpansionMode = AnnotationAtts.SmartDirectory
+    AnnotationAtts.axes3D.visible = 0
     SetAnnotationAttributes(AnnotationAtts)
 
     
 def main():
     import os.path
     import shutil
+    import math
+    import tempfile
+    
     if os.path.exists('00_INFO.txt'):
         Param = infotxt.Dictreadtxt('00_INFO.txt')
-    
         ##  
         ## Open the database
         ##
@@ -45,14 +62,14 @@ def main():
             if not status:
                 print "Cannot open database, exiting"
                 return 0
-    
+
         laststep = TimeSliderGetNStates()
         ##
         ## Add pseudocolor plot of fracture field
         ##
         AddPlot('Pseudocolor', 'Fracture')
         p = PseudocolorAttributes()
-    
+
         p.lightingFlag = 1
         p.centering = p.Natural  # Natural, Nodal, Zonal
         p.scaling = p.Linear  # Linear, Log, Skew
@@ -76,16 +93,11 @@ def main():
         p.min=0.0
         p.max=1.0
         p.legendFlag=0
-        SetPlotOptions(p)
-    
-        SetAnnotations()
-
+        SetPlotOptions(p)    
+        
         if Param['NY'] == 2:
             dim = 2
-        else:
-            dim = 3
-
-        if dim == 2:
+            SetAnnotations()
             View3DAtts = View3DAttributes()
             View3DAtts.viewNormal = (0,-1.,0.)
             View3DAtts.focus = (4, 0.005, 4)
@@ -114,6 +126,9 @@ def main():
                 geometry[0] = int(2000 * Param['NX'] / Param['NZ'])
                 geometry[1] = 2000;
         else:
+            dim = 3
+            SetAnnotations3D()
+
             View3DAtts = View3DAttributes()
             View3DAtts.viewNormal = (0.657417, 0.711041, 0.249448)
             View3DAtts.focus = (4, 4, 4)
@@ -153,16 +168,23 @@ def main():
             IsosurfaceAtts.variable = "Fracture"
             SetOperatorOptions(IsosurfaceAtts, 1)
 
+            geometry = [1024,768]
+
         InvertBackgroundColor()        
 
-        outdir = "Frames"
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
+        tmpdir = tempfile.mkdtemp()
+        ### generate individual frames
         for step in range(laststep):
             SetTimeSliderState(step)
             DrawPlots()
-            pngname = SavePNG(os.path.join(outdir,Param['JOBID']+"-Transient-"))
-        #shutil.move(pngname,Param['JOBID']+'.png')
+            pngname = SavePNG(os.path.join(tmpdir,Param['JOBID'])+"-",geometry)
+    
+        ### use ffmpeg to generate animation
+        pattern = os.path.join(tmpdir,Param['JOBID'])+"-%04d.png"
+        cmd = "ffmpeg -i %s -vcodec mjpeg -qscale 0 %s-3D.avi"%(pattern,Param['JOBID'])
+        print "Now running %s"%cmd
+        os.system(cmd)
+        shutil.rmtree(tmpdir)
 
 
 import sys  
