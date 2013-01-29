@@ -1,10 +1,8 @@
 /*
- test41.c: 2D SNES. Coupled flow and fracture problem using VFRectangularCrackCreate.
+ test41.c: 3D SNES. Single well problem. Source term implemented as dirac function and analytical solution is 3D Green's function. All pressure boundary condition.
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
- ./test41 -n 101,101,2 -epsilon 0.01 -Gc 0.6667  -l 1,1,0.01 -m_inv 0. -Qw 0.1 -maxtimestep 5 -nrc 1 -rc0_corners 0.45,0.5,0,0.55,0.5,0.0,0.44,0.5,0.01 -rc0_thickness 0.005
- 
- ./test41 -n 101,101,2 -epsilon 0.01 -Gc 0.6667  -l 1,1,0.01 -m_inv 5. -maxtimestep 5 -nrc 2 -rc0_corners 0.25,0.2,0,0.7,0.5,0.0,0.25,0.2,0.01 -rc0_thickness 0.008 -rc1_corners 0.5,0.6,0,0.7,0.3,0.,0.5,0.6,0.01 -rc1_thickness 0.008 -w0_coords 0.5,0.6,0.005 -w0_Qw 0.1 -maxtimestep 20
+ ./test41  -n 41,41,41 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nc 1 -w0_coords 0.50001,0.50001,0.50001 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type INJECTOR -m_inv 0.
  */
 
 #include "petsc.h"
@@ -13,6 +11,8 @@
 #include "VFV.h"
 #include "VFU.h"
 #include "VFFlow.h"
+#include "VFWell.h"
+#include "VFCracks.h"
 
 VFCtx               ctx;
 VFFields            fields;
@@ -27,21 +27,17 @@ int main(int argc,char **argv)
 	char			filename[FILENAME_MAX];
 	PetscInt		i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm,xs1,xm1,ys1,ym1,zs1,zm1;
 	PetscReal		BBmin[3],BBmax[3];
-	PetscReal		****flowbc_array;
+	PetscReal		***presbc_array;
 	PetscReal		****coords_array;
 	PetscReal		gx,gy,gz;
 	PetscReal		gamma, beta, rho, mu;
 	PetscReal		****perm_array;
+	PetscReal		****velnpre_array;
+	PetscReal		***pre_array;
 	char			prefix[PETSC_MAX_PATH_LEN+1];
-	PetscReal       p;
-	PetscReal       p_old;
-	PetscReal       p_epsilon = 1.e-5;
-	PetscInt			  altminit=1;
-	Vec					    Vold;
-	PetscReal			  errV=1e+10;
-	PetscReal			  lx,ly,lz;
-
-		
+	PetscReal		pi,dist;
+	
+	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
@@ -50,119 +46,37 @@ int main(int argc,char **argv)
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-	ierr = VecSet(fields.FlowBCArray,0.);CHKERRQ(ierr);
-	ctx.hasFluidSources = PETSC_FALSE;
+	ierr = VecSet(ctx.PresBCArray,0.);CHKERRQ(ierr);
+	ierr = VecSet(fields.VelnPress,0.);CHKERRQ(ierr);
+	ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
 	ctx.hasFlowWells = PETSC_TRUE;
+	ctx.hasFluidSources = PETSC_FALSE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
-	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.VelnPress,&velnpre_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr); 
 	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
-	lz = BBmax[2]-BBmin[2];
-	ly = BBmax[1]-BBmin[1];
-	lx = BBmax[0]-BBmin[0];	
-
-/*
-	 Reset all BC for U and V
-	 */
-	for (i = 0; i < 6; i++) {
-		ctx.bcV[0].face[i]=NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].face[i] = NONE;
-		}
-	}
-	for (i = 0; i < 12; i++) {
-		ctx.bcV[0].edge[i]=NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].edge[i] = NONE;
-		}
-	}
-	for (i = 0; i < 8; i++) {
-		ctx.bcV[0].vertex[i]=NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].vertex[i] = NONE;
-		}
-	}
-	/*	face X0	*/
-	ctx.bcU[0].face[X0]= ZERO;
-	ctx.bcU[1].face[X0]= ZERO;
-	ctx.bcU[2].face[X0]= ZERO;
-	/*	face X1	*/
-	ctx.bcU[0].face[X1]= ZERO;
-	ctx.bcU[1].face[X1]= ZERO;
-	ctx.bcU[2].face[X1]= ZERO;
-	/*	face Y0	*/
-	ctx.bcU[0].face[Y0]= ZERO;
-	ctx.bcU[1].face[Y0]= ZERO;
-	ctx.bcU[2].face[Y0]= ZERO;
-	/*	face Y1	*/
-	ctx.bcU[0].face[Y1]= ZERO;		  
-	ctx.bcU[1].face[Y1]= ZERO;		  
-	ctx.bcU[2].face[Y1]= ZERO;		  
-	/*	face Z0	*/
-	ctx.bcU[2].face[Z0]= ZERO;
-	/*	face Z1	*/
-	ctx.bcU[2].face[Z1]= ZERO;
-
-	/*Initializing the v-field*/
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-nrc",&ctx.numRectangularCracks,PETSC_NULL);CHKERRQ(ierr);
-	
-	ierr = PetscMalloc(ctx.numRectangularCracks*sizeof(VFRectangularCrack),&ctx.rectangularcrack);CHKERRQ(ierr);
-	for (i = 0; i < ctx.numRectangularCracks; i++) {
-		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"rc%d_",i);CHKERRQ(ierr);
-		ierr = VFRectangularCrackCreate(&ctx.rectangularcrack[i]);CHKERRQ(ierr);
-		ierr = VFRectangularCrackGet(prefix,&ctx.rectangularcrack[i]);CHKERRQ(ierr);
-		ierr = VFRectangularCrackView(&ctx.rectangularcrack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-	}
-	for (c = 0; c < ctx.numRectangularCracks; c++) {
-		ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-		ierr = VFRectangularCrackBuildVAT2(fields.VIrrev,&ctx.rectangularcrack[c],&ctx);CHKERRQ(ierr);
-		ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
-
-	}
-	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
-	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-	ctx.hasCrackPressure = PETSC_TRUE;
-	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
-	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.pressure,0.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-//	Flow Part
-	ctx.numWells = 1;
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-nw",&ctx.numWells,PETSC_NULL);CHKERRQ(ierr);	
+	ctx.numWells = 0;	
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&ctx.numWells,PETSC_NULL);CHKERRQ(ierr);	
 	ierr = PetscMalloc(ctx.numWells*sizeof(VFWell),&ctx.well);CHKERRQ(ierr);
-	for (i = 0; i < ctx.numWells; i++) {
-		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"w%d_",i);CHKERRQ(ierr);
-		ierr = VFWellCreate(&ctx.well[i]);CHKERRQ(ierr);
-		ctx.well[0].Qw = 0.01;
-		ctx.well[0].coords[0] = lx/2.;
-		ctx.well[0].coords[1] = ly/2.;
-		ctx.well[0].coords[2] = lz/2.;
-		ctx.well[0].condition = RATE;
-		ctx.well[0].type = INJECTOR;
-
-		ierr = VFWellGet(prefix,&ctx.well[i]);CHKERRQ(ierr);
-		ierr = VFWellView(&ctx.well[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-	}	
-//	ierr = PetscOptionsGetReal(PETSC_NULL,"-Qw",&ctx.well[0].Qw,PETSC_NULL);CHKERRQ(ierr);
-	for (k = zs1; k < zs1+zm1; k++) {
-		for (j = ys1; j < ys1+ym1; j++) {
+	if(ctx.hasFlowWells == PETSC_TRUE){
+		for (i = 0; i < ctx.numWells; i++) {
+			ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"w%d_",i);CHKERRQ(ierr);
+			ierr = VFWellCreate(&ctx.well[i]);CHKERRQ(ierr);
+			ierr = VFWellGet(prefix,&ctx.well[i]);CHKERRQ(ierr);
+			ierr = VFWellView(&ctx.well[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+		}	
+		for (k = zs1; k < zs1+zm1; k++) {
+			for (j = ys1; j < ys1+ym1; j++) {
 				for (i = xs1; i < xs1+xm1; i++) {
-				perm_array[k][j][i][2] = 0.;
+					for(c = 3; c < 6; c++){
+						perm_array[k][j][i][c] = 0.;
+					}
+				}
 			}
 		}
 	}
+	pi = 6.*asin(0.5);
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
 	beta = ctx.flowprop.beta;		
@@ -170,9 +84,6 @@ int main(int argc,char **argv)
     gx = ctx.flowprop.g[0];
     gy = ctx.flowprop.g[1];
     gz = ctx.flowprop.g[2];
-	/*
-	 Reset all Flow BC for velocity and P
-	 */
 	for (i = 0; i < 6; i++) {
 		ctx.bcP[0].face[i] = NONE;
 		for (c = 0; c < 3; c++) {
@@ -195,41 +106,66 @@ int main(int argc,char **argv)
 	ctx.bcP[0].face[X1] = VALUE;
 	ctx.bcP[0].face[Y0] = VALUE;
 	ctx.bcP[0].face[Y1] = VALUE;
-	ctx.bcQ[2].face[Z0] = VALUE;
-	ctx.bcQ[2].face[Z1] = VALUE;
-
-	for (k = zs; k < zs+zm; k++) {
-		for (j = ys; j < ys+ym; j++) {
-			for (i = xs; i < xs+xm; i++) {
-				flowbc_array[k][j][i][3] = 0.;
-			}
+	ctx.bcP[0].face[Z0] = VALUE;
+	ctx.bcP[0].face[Z1] = VALUE;
+	for(k = zs; k < zs+zm; k++){
+		for(j = ys; j < ys+ym; j++){
+			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][0][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][0][1]),2)+pow((ctx.well[0].coords[2]-coords_array[k][j][0][2]),2));
+			presbc_array[k][j][0] = -1./(4.*pi*dist);
+			
+			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][nx-1][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][nx-1][1]),2)+pow((ctx.well[0].coords[2]-coords_array[k][j][nx-1][2]),2));
+			presbc_array[k][j][nx-1] = -1./(4.*pi*dist);
+			
 		}
-	}	
-	ierr = DMDAVecRestoreArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);	
-
-	/* 
-	 Now done with all initializations
-	 */
-	ctx.maxtimestep = 1;
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
+	}
+	for(k = zs; k < zs+zm; k++){
+		for(i = xs; i < xs+xm; i++){
+			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][0][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][0][i][1]),2)+pow((ctx.well[0].coords[2]-coords_array[k][0][i][2]),2));
+			presbc_array[k][0][i] = -1./(4.*pi*dist);
+			
+			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][ny-1][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][ny-1][i][1]),2)+pow((ctx.well[0].coords[2]-coords_array[k][ny-1][i][2]),2));
+			presbc_array[k][ny-1][i] = -1./(4.*pi*dist);
+			
+		}
+	}
+	for(j = ys; j < ys+ym; j++){
+		for(i = xs; i < xs+xm; i++){
+			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[0][j][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[0][j][i][1]),2)+pow((ctx.well[0].coords[2]-coords_array[0][j][i][2]),2));
+			presbc_array[0][j][i] = -1./(4.*pi*dist);
+			
+			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[nz-1][j][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[nz-1][j][i][1]),2)+pow((ctx.well[0].coords[2]-coords_array[nz-1][j][i][2]),2));
+			presbc_array[nz-1][j][i] = -1./(4.*pi*dist);
+			
+		}
+	}
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
-		
 		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
-
-		ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
-		ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);   
-		ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);   
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"\nInjectedVol = %e,\tCrackVolume =%e\tLeak-off = %e\n",0.01*ctx.flowprop.timestepsize,ctx.CrackVolume,ctx.LeakOffRate);CHKERRQ(ierr);
-		ierr = FieldsH5Write(&ctx,&fields);	
+		ierr = FieldsH5Write(&ctx,&fields);
 	}
+	ierr = VecSet(fields.VelnPress,0.);CHKERRQ(ierr);
+	ierr = VecSet(fields.velocity,0.);CHKERRQ(ierr);
+	ierr = VecSet(fields.pressure,0.);CHKERRQ(ierr);
+	ierr = VecSet(fields.U,0.);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx.daScal,fields.pressure,&pre_array);CHKERRQ(ierr);
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) {
+				dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][i][1]),2)+pow((ctx.well[0].coords[2]-coords_array[k][j][i][2]),2));
+				pre_array[k][j][i] = -1./(4.*pi*dist);
+			}
+		}
+	}
+	ierr = DMDAVecRestoreArray(ctx.daScal,fields.pressure,&pre_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daFlow,fields.VelnPress,&velnpre_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);	
+	++ctx.timestep;
+	ierr = FieldsH5Write(&ctx,&fields);
+	
 	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
