@@ -224,7 +224,7 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
 	  ierr = VFFlow_SNES_FEM(ctx,fields);CHKERRQ(ierr);
       break;
     case FLOWSOLVER_KSPMIXEDFEM:
-      ierr = VFFlow_DarcyMixedFEMSteadyState(ctx,fields);CHKERRQ(ierr);
+      ierr = MixedFlowFEMKSPSolve(ctx,fields);CHKERRQ(ierr);
       break;
 	case FLOWSOLVER_TSMIXEDFEM:
 		ierr = MixedFlowFEMTSSolve(ctx,fields);CHKERRQ(ierr);
