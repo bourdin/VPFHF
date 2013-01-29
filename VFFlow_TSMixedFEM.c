@@ -63,9 +63,9 @@ extern PetscErrorCode MixedFEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *field
 	ierr = BCQInit(&ctx->bcQ[0],ctx);
 
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-	ierr = SETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
-	ierr = SETSourceTerms(ctx->Source,ctx->flowprop);
-	ierr = SETBoundaryTerms(ctx,fields);CHKERRQ(ierr);
+	ierr = ReSETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
+	ierr = ReSETSourceTerms(ctx->Source,ctx->flowprop);
+	ierr = ReSETBoundaryTerms(ctx,fields);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
