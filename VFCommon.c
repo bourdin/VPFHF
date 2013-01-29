@@ -707,6 +707,15 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) fields->PresBCArray,"Pressure Bondary Values");CHKERRQ(ierr);
   ierr = VecSet(fields->PresBCArray,0.0);CHKERRQ(ierr);
   
+	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->PresBCArray);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) ctx->PresBCArray,"Pressure Boundary Values in ctx");CHKERRQ(ierr);
+	ierr = VecSet(ctx->PresBCArray,0.0);CHKERRQ(ierr);
+	
+	ierr = DMCreateGlobalVector(ctx->daVect,&ctx->VelBCArray);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) ctx->VelBCArray,"Velocity boundary Values in ctx");CHKERRQ(ierr);
+	ierr = VecSet(ctx->VelBCArray,0.0);CHKERRQ(ierr);	
+
+	
 /*
    Create optional penny-shaped and rectangular cracks
    */
@@ -1112,6 +1121,10 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&fields->VolLeakOffRate);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->FlowBCArray);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->Source);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->PresBCArray);CHKERRQ(ierr);
+	ierr = VecDestroy(&ctx->PresBCArray);CHKERRQ(ierr);
+	ierr = VecDestroy(&ctx->VelBCArray);CHKERRQ(ierr);
+
   
   ierr = KSPDestroy(&ctx->kspP);CHKERRQ(ierr);
   

@@ -36,7 +36,6 @@ extern PetscErrorCode MixedFEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fie
 	{
 		ctx->units    = UnitaryUnits;
 		ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",FlowUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
-			//	ctx->flowcase = ALLPRESSUREBC; 
 		ctx->flowcase = ALLNORMALFLOWBC;
 		ierr          = PetscOptionsEnum("-flow boundary conditions","\n\tFlow solver","",FlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
 	}
@@ -64,12 +63,9 @@ extern PetscErrorCode MixedFEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fie
 	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->RHSVelPpre);CHKERRQ(ierr);
 	ierr = VecSet(ctx->RHSVelPpre,0.);CHKERRQ(ierr);
 	ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesVelP);CHKERRQ(ierr);
-	
 	ierr = BCPInit(&ctx->bcP[0],ctx);
-	ierr = BCQInit(&ctx->bcQ[0],ctx);
-	
+	ierr = BCQInit(&ctx->bcQ[0],ctx);	
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-		//	ierr = SETFlowBC(&ctx->bcFlow[0],ctx->flowcase);CHKERRQ(ierr);
 	ierr = SETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
 	ierr = SETSourceTerms(ctx->Source,ctx->flowprop);
 	ierr = SETBoundaryTerms(ctx,fields);CHKERRQ(ierr);
@@ -100,7 +96,6 @@ extern PetscErrorCode MixedFEMSNESFlowSolverFinalize(VFCtx *ctx,VFFields *fields
 extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 {
 	PetscErrorCode     ierr;
-	PetscViewer        viewer;
 	KSPConvergedReason reason;	
 	PetscReal          ****VelnPress_array;
 	PetscReal          ***Press_array;
@@ -114,11 +109,6 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
 	ierr = VecSet(ctx->Perm,0.0);CHKERRQ(ierr);
 	ierr = VecCopy(fields->vfperm,ctx->Perm);CHKERRQ(ierr);
-	/*	temporary created bcfield in ctx so bc values can be in ctx	*/
-	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->FlowBC);CHKERRQ(ierr);
-	ierr = VecSet(ctx->FlowBC,0.0);CHKERRQ(ierr);
-	ierr = VecCopy(fields->FlowBCArray,ctx->FlowBC);CHKERRQ(ierr);
-	/* Copying previous time step solution to the previous time step vector	*/
 	ierr = VecCopy(fields->VelnPress,ctx->PreFlowFields);CHKERRQ(ierr);
 	ierr = SNESSetFunction(ctx->snesVelP,ctx->FlowFunct,FormSNESIFunction,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesVelP,ctx->JacVelP,ctx->JacVelP,FormSNESIJacobian,ctx);CHKERRQ(ierr);
@@ -129,37 +119,20 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = DMDAVecGetArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daFlow,fields->VelnPress,&VelnPress_array);CHKERRQ(ierr);
-	ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetType(viewer,PETSCVIEWERASCII);CHKERRQ(ierr);
-//ierr = PetscViewerFileSetName(viewer,"Solution");CHKERRQ(ierr);
-//	ierr = PetscViewerASCIIPrintf(viewer,"nodex \t nodey \t nodez \t pressure \t velx\n");CHKERRQ(ierr);
-
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
 				Press_array[k][j][i] = VelnPress_array[k][j][i][3];
 				for (c = 0; c < veldof; c++) {
 					vel_array[k][j][i][c] =  VelnPress_array[k][j][i][c];
-//					ierr = PetscPrintf(PETSC_COMM_WORLD,"\tvel[%d][%d][%d][%d] = %e",k,j,i,c,vel_array[k][j][i][c]);CHKERRQ(ierr);	
 				}
-//				ierr = PetscPrintf(PETSC_COMM_WORLD,"\n");CHKERRQ(ierr);	
-//				if( (j == 25) && (k == 0)){
-//					ierr = PetscViewerASCIIPrintf(viewer,"%d \t %d \t %d \t %e \t %e\n",i,j,k,Press_array[k][j][i],vel_array[k][j][i][0]);CHKERRQ(ierr);
-//				}
 			}
 		}
 	}
-	
-	ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
-	ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-
-	
-	
 	ierr = DMDAVecRestoreArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,fields->VelnPress,&VelnPress_array);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->Perm);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->FlowBC);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
@@ -178,7 +151,7 @@ extern PetscErrorCode MixedFEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm
 	ierr = VecMax(solution,PETSC_NULL,&vmax);CHKERRQ(ierr);
 	ierr = VecMin(solution,PETSC_NULL,&vmin);CHKERRQ(ierr);
 	ierr = PetscObjectGetComm((PetscObject)snes,&comm);CHKERRQ(ierr);
-	ierr = PetscPrintf(comm,"iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",its,norm,vmax,vmin);CHKERRQ(ierr);
+	ierr = PetscPrintf(comm,"snes_iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",its,norm,vmax,vmin);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
@@ -189,7 +162,6 @@ extern PetscErrorCode FormSNESIJacobian(SNES snes,Vec VelnPress,Mat *Jac,Mat *Ja
 {
 	PetscErrorCode ierr;
 	VFCtx				*ctx=(VFCtx*)user;
-	PetscViewer        viewer;
 	
 	PetscFunctionBegin;
 	*str = DIFFERENT_NONZERO_PATTERN;
@@ -201,12 +173,6 @@ extern PetscErrorCode FormSNESIJacobian(SNES snes,Vec VelnPress,Mat *Jac,Mat *Ja
 		ierr = MatAssemblyBegin(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 		ierr = MatAssemblyEnd(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	}
-/*	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrix.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = MatView(*Jac,viewer);CHKERRQ(ierr);
-*/
-	
 	PetscFunctionReturn(0);
 }
 
@@ -240,8 +206,8 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	Mat			   K1,K2;
 	PetscReal		time_theta,time_one_minus_theta;
 	FACE			face;
-	PetscReal		****velnprebc_array;
-	Vec				velnprebc_local;
+	PetscReal		***prebc_array;
+	Vec				prebc_local;
 	MatStructure	flg;
 	PetscReal		hwx, hwy, hwz;	
 	
@@ -261,7 +227,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	
 	ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-		// This line ensures that the number of cells is one less than the number of nodes. Force processing of cells to stop once the second to the last node is processed 
+		/* This line ensures that the number of cells is one less than the number of nodes. Force processing of cells to stop once the second to the last node is processed */
 	ierr = MatZeroEntries(K);CHKERRQ(ierr);
 	ierr = MatZeroEntries(Klhs);CHKERRQ(ierr);
 	ierr = MatDuplicate(K,MAT_COPY_VALUES,&K1);CHKERRQ(ierr);
@@ -279,12 +245,10 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMGlobalToLocalBegin(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);	
-	
-	ierr = DMGetLocalVector(ctx->daFlow,&velnprebc_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daFlow,ctx->FlowBC,INSERT_VALUES,velnprebc_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daFlow,ctx->FlowBC,INSERT_VALUES,velnprebc_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daFlow,velnprebc_local,&velnprebc_array);CHKERRQ(ierr); 
-	
+	ierr = DMGetLocalVector(ctx->daScal,&prebc_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->PresBCArray,INSERT_VALUES,prebc_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->PresBCArray,INSERT_VALUES,prebc_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,prebc_local,&prebc_array);CHKERRQ(ierr); 
 	ierr = PetscMalloc5(nrow*nrow,PetscReal,&KA_local,
 						nrow*nrow,PetscReal,&KB_local,
 						nrow*nrow,PetscReal,&KD_local,
@@ -351,7 +315,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					}
 				}
 				if(ctx->hasFluidSources){
-					ierr = VecApplyWellFlowBC(RHS_local,source_array,&ctx->e3D,ek,ej,ei,ctx);
+					ierr = VecApplySourceTerms(RHS_local,source_array,&ctx->e3D,ek,ej,ei,ctx);
 					for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 						for (j = 0; j < ctx->e3D.nphiy; j++) {
 							for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -365,7 +329,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					face = X0;	
 					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == VALUE) {
-						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
 								for (i = 0; i < ctx->e2D.nphiz; i++, l++) {
@@ -380,7 +344,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					face = X1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == VALUE) {
-						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
 								for (i = 0; i < ctx->e2D.nphiz; i++, l++) {
@@ -395,7 +359,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					face = Y0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == VALUE) {
-						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
 							for (j = 0; j < ctx->e2D.nphiz; j++) {
 								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
@@ -410,7 +374,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					face = Y1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == VALUE) {
-						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
 							for (j = 0; j < ctx->e2D.nphiz; j++) {
 								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
@@ -425,7 +389,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					face = Z0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == VALUE) {
-						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
 								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
@@ -440,7 +404,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					face = Z1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == VALUE) {
-						ierr = VecApplyPressureBC(RHS_local,velnprebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
+						ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
 								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
@@ -520,8 +484,8 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMLocalToGlobalEnd(ctx->daFlow,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daFlow,&RHS_localVec);CHKERRQ(ierr);	
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,velnprebc_local,&velnprebc_array);CHKERRQ(ierr); 
-	ierr = DMRestoreLocalVector(ctx->daFlow,&velnprebc_local);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx->daScal,prebc_local,&prebc_array);CHKERRQ(ierr); 
+	ierr = DMRestoreLocalVector(ctx->daScal,&prebc_local);CHKERRQ(ierr);
 	ierr = PetscFree5(KA_local,KB_local,KD_local,KBTrans_local,KS_local);CHKERRQ(ierr);
 	ierr = PetscFree3(RHS_local,row,row1);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
@@ -547,16 +511,9 @@ extern PetscErrorCode FormSNESIFunction(SNES snes,Vec VelnPress,Vec Func,void *u
 	ierr = VecDuplicate(ctx->RHSVelP,&VecRHS);CHKERRQ(ierr);
 	ierr = FormSNESMatricesnVector(ctx->KVelP,ctx->KVelPlhs,ctx->RHSVelP,ctx);CHKERRQ(ierr);
 	ierr = VecCopy(ctx->RHSVelP,VecRHS);CHKERRQ(ierr);
-	ierr = VecAXPBY(VecRHS,dt_dot_one_minus_theta,dt_dot_theta,ctx->RHSVelPpre);CHKERRQ(ierr);
-	
-/*	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(VecRHS,viewer);CHKERRQ(ierr);
-*/
-	
+	ierr = VecAXPBY(VecRHS,dt_dot_one_minus_theta,dt_dot_theta,ctx->RHSVelPpre);CHKERRQ(ierr);	
 	ierr = MatMultAdd(ctx->KVelPlhs,ctx->PreFlowFields,VecRHS,VecRHS);CHKERRQ(ierr);	
-	ierr = VecApplySNESVelocityBC(VecRHS,ctx->FlowBC,&ctx->bcQ[0],ctx);CHKERRQ(ierr);
+	ierr = VecApplySNESVelocityBC(VecRHS,ctx->VelBCArray,&ctx->bcQ[0],ctx);CHKERRQ(ierr);
 	ierr = MatMult(ctx->KVelP,VelnPress,Func);CHKERRQ(ierr);	
 	ierr = VecAXPY(Func,-1.0,VecRHS);CHKERRQ(ierr);
 	ierr = VecDestroy(&VecRHS);CHKERRQ(ierr);
@@ -573,13 +530,13 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 	PetscInt       zs,zm,nz;
 	PetscInt       dim,dof=3;
 	PetscInt       i,j,k,c;
-	PetscReal		****bcv_array;
+	PetscReal		****velbc_array;
 	PetscReal		****RHS_array;
 	
 	PetscFunctionBegin;
 	ierr = DMDAGetInfo(ctx->daFlow,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daFlow,BCV,&bcv_array);CHKERRQ(ierr); 	
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,BCV,&velbc_array);CHKERRQ(ierr); 	
 	ierr = DMDAVecGetArrayDOF(ctx->daFlow,RHS,&RHS_array);CHKERRQ(ierr); 		
 	for (c = 0; c < dof; c++) {
 		if (xs == 0) {
@@ -587,7 +544,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			if (bcQ[c].face[X0] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
-						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+						RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 					}
 				}
 			}
@@ -597,7 +554,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			if (bcQ[c].face[X1] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
 					for (j = ys; j < ys+ym; j++) {
-						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+						RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 					}
 				}
 			}
@@ -607,7 +564,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			if (bcQ[c].face[Y0] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
 					for (i = xs; i < xs+xm; i++) {
-						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+						RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 					}
 				}
 			}
@@ -617,7 +574,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			if (bcQ[c].face[Y1] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
 					for (i = xs; i < xs+xm; i++) {
-						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+						RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 						
 					}
 				}
@@ -628,7 +585,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			if (bcQ[c].face[Z0] == VALUE) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) {
-						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+						RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 					}
 				}
 			}
@@ -638,7 +595,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			if (bcQ[c].face[Z1] == VALUE) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) {
-						RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+						RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 					}
 				}
 			}
@@ -647,7 +604,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			k = 0;i = 0;
 			if (bcQ[c].edge[X0Z0] == VALUE) {
 				for (j = ys; j < ys+ym; j++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 				}
 			}
 		}
@@ -655,7 +612,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			k = 0;i = nx-1;
 			if (bcQ[c].edge[X1Z0] == VALUE) {
 				for (j = ys; j < ys+ym; j++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 				}
 			}
 		}
@@ -663,7 +620,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			k = 0;j = 0;
 			if (bcQ[c].edge[Y0Z0] == VALUE) {
 				for (i = xs; i < xs+xm; i++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 				}
 			}
 		}
@@ -671,7 +628,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			k = 0;j = 0;
 			if (bcQ[c].edge[Y1Z0] == VALUE) {
 				for (i = xs; i < xs+xm; i++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 				}
 			}
 		}
@@ -679,7 +636,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			k = nz-1;i = 0;
 			if (bcQ[c].edge[X0Z1] == VALUE) {
 				for (j = ys; j < ys+ym; j++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 				}
 			}
 		}
@@ -687,7 +644,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			k = nz-1;i = nx-1;
 			if (bcQ[c].edge[X1Z1] == VALUE) {
 				for (j = ys; j < ys+ym; j++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 				}
 			}
 		}
@@ -695,7 +652,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			k = nz-1;j = 0;
 			if (bcQ[c].edge[Y0Z1] == VALUE) {
 				for (i = xs; i < xs+xm; i++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 				}
 			}
 		}
@@ -703,7 +660,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			k = nz-1;j = ny-1;
 			if (bcQ[c].edge[Y1Z1] == VALUE) {
 				for (i = xs; i < xs+xm; i++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 				}
 			}
 		}
@@ -711,7 +668,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			j = 0;i = 0;
 			if (bcQ[c].edge[X0Y0] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 				}
 			}
 		}
@@ -719,7 +676,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			j = ny-1;i = 0;
 			if (bcQ[c].edge[X0Y1] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 				}
 			}
 		}
@@ -727,7 +684,7 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			j = 0;i = nx-1;
 			if (bcQ[c].edge[X1Y0] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 				}
 			}
 		}
@@ -735,61 +692,61 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 			j = ny-1;i = nx-1;
 			if (bcQ[c].edge[X1Y1] == VALUE) {
 				for (k = zs; k < zs+zm; k++) {
-					RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+					RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 				}
 			}
 		}
 		if (xs == 0 && ys == 0 && zs == 0) {
 			k = 0;j = 0;i = 0;
 			if (bcQ[c].vertex[X0Y0Z0] == VALUE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 			}
 		}
 		if (xs+xm == nx && ys == 0 && zs == 0) {
 			k = 0;j = 0;i = nx-1;
 			if (bcQ[c].vertex[X1Y0Z0] == VALUE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 			}
 		}
 		if (xs == 0 && ys+ym == ny && zs == 0) {
 			k = 0;j = ny-1;i = 0;
 			if (bcQ[c].vertex[X0Y1Z0] == VALUE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 			}
 		}
 		if (xs+xm == nx && ys+ym == ny && zs == 0) {
 			k = 0;j = ny-1;i = nx-1;
 			if (bcQ[c].vertex[X1Y1Z0] == VALUE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 			}
 		}
 		if (xs == 0 && ys == 0 && zs+zm == nz) {
 			k = nz-1;j = 0;i = 0;
 			if (bcQ[c].vertex[X0Y0Z1] == VALUE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 			}
 		}
 		if (xs+xm == nx && ys == 0 && zs+zm == nz) {
 			k = nz-1;j = 0;i = nx-1;
 			if (bcQ[c].vertex[X1Y0Z1] == VALUE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 			}
 		}
 		if (xs == 0 && ys+ym == ny && zs+zm == nz) {
 			k = nz-1;j = ny-1;i = 0;
 			
 			if (bcQ[c].vertex[X0Y1Z1] == VALUE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 			}
 		}
 		if (xs+xm == nx && ys+ym == ny && zs+zm == nz) {
 			k = nz-1;j = ny-1;i = nx-1;
 			if (bcQ[c].vertex[X1Y1Z1] == VALUE) {
-				RHS_array[k][j][i][c] = bcv_array[k][j][i][c];
+				RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
 			}
 		}
 	}
-	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,BCV,&bcv_array);CHKERRQ(ierr); 	
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,BCV,&velbc_array);CHKERRQ(ierr); 	
 	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,RHS,&RHS_array);CHKERRQ(ierr); 	
 	PetscFunctionReturn(0);
 }
