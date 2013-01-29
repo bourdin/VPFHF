@@ -138,8 +138,8 @@ extern PetscErrorCode MixedFEMKSPMonitor(KSP ksp,PetscInt its,PetscReal fnorm,vo
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SETFlowBC"
-extern PetscErrorCode SETFlowBC(BC *bcP,BC *bcQ, FlowCases flowcase)
+#define __FUNCT__ "ReSETFlowBC"
+extern PetscErrorCode ReSETFlowBC(BC *bcP,BC *bcQ, FlowCases flowcase)
 {
 	PetscInt i,c;
 	
@@ -456,8 +456,8 @@ extern PetscErrorCode VecApplyVelocityBC(Vec RHS,BC *bcQ,VFCtx *ctx, PetscReal *
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SETSourceTerms"
-extern PetscErrorCode SETSourceTerms(Vec Src,FlowProp flowpropty)
+#define __FUNCT__ "ReSETSourceTerms"
+extern PetscErrorCode ReSETSourceTerms(Vec Src,FlowProp flowpropty)
 {
 	PetscErrorCode ierr;
 	PetscReal      pi;
@@ -488,7 +488,7 @@ extern PetscErrorCode SETSourceTerms(Vec Src,FlowProp flowpropty)
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
-				source_array[ek][ej][ei] = beta_c/mu*cos(pi*ek*hz)*cos(pi*ej*hy)*cos(pi*ei*hx); 
+				source_array[ek][ej][ei] = 0.; 
 			}
 		}
 	}
@@ -1393,37 +1393,26 @@ extern PetscErrorCode FLow_MatA(PetscReal *A_local,CartFE_Element3D *e,PetscInt 
 	PetscFunctionReturn(0);
 }
 #undef __FUNCT__
-#define __FUNCT__ "SETBoundaryTerms"
-extern PetscErrorCode SETBoundaryTerms(VFCtx *ctx, VFFields *fields)
+#define __FUNCT__ "ReSETBoundaryTerms"
+extern PetscErrorCode ReSETBoundaryTerms(VFCtx *ctx, VFFields *fields)
 {
 	PetscErrorCode ierr;
 	PetscReal		****perm_array;
-	PetscReal		****velnpress_array;
+	PetscReal		****vel_array;
+	PetscReal		***press_array;
 	PetscInt		xs,xm,nx;
 	PetscInt		ys,ym,ny;
 	PetscInt		zs,zm,nz;
 	PetscInt		dim, dof;
 	PetscInt		ei,ej,ek,c;
-	PetscReal		beta_c,gamma_c,rho,mu,pi,gx,gy,gz;
-	PetscReal		hi,hj,hk;
 	
 	PetscFunctionBegin;
 	ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,fields->vfperm,&perm_array);CHKERRQ(ierr); 
-	ierr = DMDAVecGetArrayDOF(ctx->daFlow,fields->FlowBCArray,&velnpress_array);CHKERRQ(ierr); 
-	pi      = 6.*asin(0.5);
-	beta_c = ctx->flowprop.beta;
-	gamma_c = ctx->flowprop.gamma;
-	rho     = ctx->flowprop.rho;
-	mu     = ctx->flowprop.mu;
-	gx = ctx->flowprop.g[0];
-	gy = ctx->flowprop.g[1];
-	gz = ctx->flowprop.g[2];
-	hi = 1./(nx-1.);
-	hj = 1./(ny-1.);
-	hk = 1./(nz-1.);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->VelBCArray,&vel_array);CHKERRQ(ierr); 
+	ierr = DMDAVecGetArray(ctx->daScal,ctx->PresBCArray,&press_array);CHKERRQ(ierr); 
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -1439,15 +1428,16 @@ extern PetscErrorCode SETBoundaryTerms(VFCtx *ctx, VFFields *fields)
 	for (ek = zs; ek < zs + zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
-				velnpress_array[ek][ej][ei][0] = beta_c/mu*(sin(pi*ei*hi)*cos(pi*ej*hj)*cos(pi*ek*hk)-gamma_c*rho*gx)/(3.*pi);
-				velnpress_array[ek][ej][ei][1] = beta_c/mu*(cos(pi*ei*hi)*sin(pi*ej*hj)*cos(pi*ek*hk)-gamma_c*rho*gy)/(3.*pi);
-				velnpress_array[ek][ej][ei][2] = beta_c/mu*(cos(pi*ei*hi)*cos(pi*ej*hj)*sin(pi*ek*hk)-gamma_c*rho*gz)/(3.*pi);
-				velnpress_array[ek][ej][ei][3] = sin(2.*pi*ek*hk)*sin(2.*pi*ej*hj)*sin(2.*pi*ei*hi);
+				vel_array[ek][ej][ei][0] = 0.;
+				vel_array[ek][ej][ei][1] = 0.;
+				vel_array[ek][ej][ei][2] = 0.;
+				press_array[ek][ej][ei] = 0.;
 			}
 		}
 	}
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,fields->vfperm,&perm_array);CHKERRQ(ierr);	
-	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,fields->FlowBCArray,&velnpress_array);CHKERRQ(ierr);	
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->VelBCArray,&vel_array);CHKERRQ(ierr);	
+	ierr = DMDAVecRestoreArray(ctx->daScal,ctx->PresBCArray,&press_array);CHKERRQ(ierr);	
 	PetscFunctionReturn(0);
 }
 #undef __FUNCT__
@@ -1464,7 +1454,7 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 		ctx->units    = UnitaryUnits;
 		ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",FlowUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
 		/*	ctx->flowcase = ALLPRESSUREBC; */
-		ctx->flowcase = ALLNORMALFLOWBC;
+//		ctx->flowcase = ALLNORMALFLOWBC;
 		ierr          = PetscOptionsEnum("-flow boundary conditions","\n\tFlow solver","",FlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
 	}
 	ierr = PetscOptionsEnd();CHKERRQ(ierr);	
@@ -1482,7 +1472,7 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	ierr = PetscObjectSetName((PetscObject)ctx->RHSVelP,"RHS of flow solver");CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->RHSVelPpre);CHKERRQ(ierr);
 	ierr = VecSet(ctx->RHSVelPpre,0.);CHKERRQ(ierr);
-/*
+
 	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspVelP);CHKERRQ(ierr);	
 	ierr = KSPSetTolerances(ctx->kspVelP,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
 	ierr = KSPSetOperators(ctx->kspVelP,ctx->KVelP,ctx->KVelP,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
@@ -1493,9 +1483,9 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	ierr = KSPGetPC(ctx->kspVelP,&ctx->pcVelP);CHKERRQ(ierr);
 	ierr = PCSetType(ctx->pcVelP,PCJACOBI);CHKERRQ(ierr);
 	ierr = PCSetFromOptions(ctx->pcVelP);CHKERRQ(ierr);
-*/
-	flg = SAME_NONZERO_PATTERN;
 
+	flg = SAME_NONZERO_PATTERN;
+/*
 	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspVelP);CHKERRQ(ierr);	
 	ierr = KSPSetTolerances(ctx->kspVelP,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
 	ierr = KSPSetOperators(ctx->kspVelP,ctx->KVelP,ctx->KVelP,flg);CHKERRQ(ierr);
@@ -1519,14 +1509,13 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	ierr = PetscOptionsSetValue("-VelP_pc_fieldsplit_detect_saddle_point","true");CHKERRQ(ierr);
 	ierr = PCSetFromOptions(ctx->pcVelP);CHKERRQ(ierr);
 	ierr = KSPSetFromOptions(ctx->kspVelP);CHKERRQ(ierr);
-
+*/
 	ierr = BCPInit(&ctx->bcP[0],ctx);
 	ierr = BCQInit(&ctx->bcQ[0],ctx);
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-	ierr = SETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
-	ierr = SETSourceTerms(ctx->Source,ctx->flowprop);
-	ierr = SETBoundaryTerms(ctx,fields);CHKERRQ(ierr);
-//	ierr = VecCopy(fields->FlowBCArray,fields->VelnPress);
+	ierr = ReSETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
+	ierr = ReSETSourceTerms(ctx->Source,ctx->flowprop);		
+	ierr = ReSETBoundaryTerms(ctx,fields);CHKERRQ(ierr);
 //	ierr = FormInitialSolution(fields->VelnPress,fields->FlowBCArray,&ctx->bcFlow[0],ctx);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
