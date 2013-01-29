@@ -89,18 +89,18 @@ typedef enum {
   FLOWSOLVER_SNES,
   FLOWSOLVER_FEM,
   FLOWSOLVER_KSPMIXEDFEM,
-  FLOWSOLVER_TSMIXEDFEM,
   FLOWSOLVER_SNESMIXEDFEM,
+  FLOWSOLVER_TSMIXEDFEM,
   FLOWSOLVER_FAKE,
   FLOWSOLVER_READFROMFILES,
 } VFFlowSolverType;
 static const char *VFFlowSolverName[] = {
-  "TS",
-  "SNES",
-  "FEM",
-  "DarcyMixedFEM",
-  "TSMixedFEM",
-  "SNESMixedFEM",
+  "FLOWSOLVER_TS",
+  "FLOWSOLVER_SNES",
+  "FLOWSOLVER_FEM",
+  "FLOWSOLVER_KSPMIXEDFEM",
+  "FLOWSOLVER_SNESMIXEDFEM",
+  "FLOWSOLVER_TSMIXEDFEM",
   "FAKE",
   "READFROMFILES",
   "",
@@ -373,6 +373,8 @@ typedef struct {
   BC                  bcQ[3];
   PetscBool           hasFlowWells;
   PetscBool           hasFluidSources;
+  Vec                 VelBCArray;
+  Vec				  PresBCArray;
 
   
   /*

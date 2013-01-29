@@ -2,6 +2,9 @@
  test37.c: 1D TS. Test for transient solver
  http://tutorial.math.lamar.edu/Classes/DE/SolvingHeatEquation.aspx
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
+ 
+ ./test37 -n 51,51,2 -l 1,1,0.01 -m_inv 1 -ts_dt 0.005 -ts_max_steps 20
+ 
  */
 
 #include "petsc.h"
@@ -24,7 +27,10 @@ int main(int argc,char **argv)
 	char			filename[FILENAME_MAX];
 	PetscInt		i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm,xs1,xm1,ys1,ym1,zs1,zm1;
 	PetscReal		BBmin[3],BBmax[3];
-	PetscReal		****flowbc_array;
+	PetscReal		***presbc_array;
+	PetscReal		****velbc_array;
+	PetscReal		***pres_ini_array;
+	PetscReal		****vel_ini_array;
 	PetscReal		***src_array;
 	PetscReal		****coords_array;
 	PetscReal		hx,hy,hz;
@@ -39,21 +45,25 @@ int main(int argc,char **argv)
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ctx.flowsolver = FLOWSOLVER_TSMIXEDFEM;
 	ierr = FlowSolverInitialize(&ctx,&fields);CHKERRQ(ierr);
-	
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-	ierr = VecSet(fields.FlowBCArray,0.);CHKERRQ(ierr);
+	ierr = VecSet(fields.velocity,0.);CHKERRQ(ierr);
+	ierr = VecSet(fields.pressure,0.);CHKERRQ(ierr);
+	ierr = VecSet(ctx.PresBCArray,0.);CHKERRQ(ierr);
+	ierr = VecSet(ctx.VelBCArray,0.);CHKERRQ(ierr);
 	ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
 	ctx.hasFluidSources = PETSC_TRUE;
 	ctx.hasFlowWells = PETSC_FALSE;	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
-	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx.daScal,fields.pressure,&pres_ini_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.velocity,&vel_ini_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.VelnPress,&velnpre_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr); 
-
 	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
 	for (k = zs1; k < zs1+zm1; k++) {
 		for (j = ys1; j < ys1+ym1; j++) {
@@ -100,13 +110,24 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				velnpre_array[k][j][i][0] = 0.;
-				velnpre_array[k][j][i][1] = 0.;
-				velnpre_array[k][j][i][2] = 0.;
-				velnpre_array[k][j][i][3] = 6.*sin(pi*hx*i/lx);
+				vel_ini_array[k][j][i][0] = 0.;
+				vel_ini_array[k][j][i][1] = 0.;
+				vel_ini_array[k][j][i][2] = 0.;
+				pres_ini_array[k][j][i] = 6.*sin(pi*hx*i/lx);
 			}
 		}
 	}		
+
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) {
+				velnpre_array[k][j][i][0] = vel_ini_array[k][j][i][0];
+				velnpre_array[k][j][i][1] = vel_ini_array[k][j][i][1];
+				velnpre_array[k][j][i][2] = vel_ini_array[k][j][i][2];
+				velnpre_array[k][j][i][3] = pres_ini_array[k][j][i];
+			}
+		}
+	}			
 	ctx.bcP[0].face[X0] = VALUE;
 	ctx.bcP[0].face[X1] = VALUE;
 	ctx.bcQ[1].face[Y0] = VALUE;
@@ -116,15 +137,10 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				if(i == 0 ){
-					flowbc_array[k][j][i][3] = 0.;
-				}
-				else {
-					flowbc_array[k][j][i][3] = 0.;
-				}
-				flowbc_array[k][j][i][0] = 0.;
-				flowbc_array[k][j][i][1] = 0.;
-				flowbc_array[k][j][i][2] = 0.;
+				velbc_array[k][j][i][0] = 0.;
+				velbc_array[k][j][i][1] = 0.;
+				velbc_array[k][j][i][2] = 0.;
+				presbc_array[k][j][i] = 0.;
 			}
 		}
 	}	
@@ -137,7 +153,10 @@ int main(int argc,char **argv)
 	}
 	ierr = DMDAVecRestoreArrayDOF(ctx.daFlow,fields.VelnPress,&velnpre_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArrayDOF(ctx.daFlow,fields.FlowBCArray,&flowbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx.daScal,fields.pressure,&pres_ini_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.velocity,&vel_ini_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);	
 	/* Setting time parameters	*/
@@ -145,10 +164,9 @@ int main(int argc,char **argv)
 	ctx.maxtimestep = 20;
 	ctx.maxtimevalue = 100.;
 	ctx.timevalue = 0.1;
-	/*	Do flow solver step	*/
 	ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-	/*	Save fields and write statistics about current run	*/    
 	ierr = FieldsH5Write(&ctx,&fields);
+	
 	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
