@@ -1157,6 +1157,10 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&optionsviewer);CHKERRQ(ierr);
   ierr = PetscLogView(optionsviewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&optionsviewer);CHKERRQ(ierr);
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.py",ctx->prefix);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&optionsviewer);CHKERRQ(ierr);
+  ierr = PetscLogViewPython(optionsviewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&optionsviewer);CHKERRQ(ierr);
   ierr = PetscOptionsAllUsed(&nopts);CHKERRQ(ierr);
   if (nopts > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nWARNING: \nSome options were unused. Check the command line for typos.\n");CHKERRQ(ierr);

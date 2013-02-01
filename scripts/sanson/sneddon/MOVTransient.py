@@ -181,7 +181,7 @@ def main():
     
         ### use ffmpeg to generate animation
         pattern = os.path.join(tmpdir,Param['JOBID'])+"-%04d.png"
-        cmd = "ffmpeg -i %s -vcodec mjpeg -qscale 0 %s-3D.avi"%(pattern,Param['JOBID'])
+        cmd = "ffmpeg -y -i %s -vcodec mjpeg -qscale 0 %s-Transient.avi"%(pattern,Param['JOBID'])
         print "Now running %s"%cmd
         os.system(cmd)
         shutil.rmtree(tmpdir)
