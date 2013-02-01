@@ -71,7 +71,7 @@ class all(SNEDDONAction):
 
             if args.movtransient: 
                 infile = prefix+'.xmf'
-                outfile = os.path.join('Frames',prefix+'-Transient-0000.png')
+                outfile = prefix+'-Transient.avi'
                 if not check_mtime(infile, outfile):
                     print "Generating transient movie frames"
                     cmd = 'cd %s; %s'%(job['path'],movtransientscript)
@@ -80,8 +80,7 @@ class all(SNEDDONAction):
 
             if args.mov3d: 
                 infile = prefix+'.xmf'
-                outfile = prefix+'.avi'
-		print infile, outfile
+                outfile = prefix+'-3D.avi'
                 if not check_mtime(infile, outfile):
                     print "Generating 3D movie frames"
                     cmd = 'cd %s; %s'%(job['path'],mov3Dscript)
