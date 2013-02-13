@@ -99,6 +99,11 @@ int main(int argc,char **argv)
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[2].face[Z1]= ZERO;
+			/* BCV*/
+			ctx.bcV[0].face[X0] = ONE;
+			ctx.bcV[0].face[X1] = ONE;
+			ctx.bcV[0].face[Y0] = ONE;
+			ctx.bcV[0].face[Y1] = ONE;
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
@@ -128,6 +133,11 @@ int main(int argc,char **argv)
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[2].face[Z1]= ZERO;
+			/* BCV*/
+			ctx.bcV[0].face[X0] = ONE;
+			ctx.bcV[0].face[X1] = ONE;
+			ctx.bcV[0].face[Y0] = ONE;
+			ctx.bcV[0].face[Y1] = ONE;
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
@@ -159,6 +169,11 @@ int main(int argc,char **argv)
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[2].face[Z1]= ZERO;
+			/* BCV*/
+			ctx.bcV[0].face[X0] = ONE;
+			ctx.bcV[0].face[X1] = ONE;
+			ctx.bcV[0].face[Y0] = ONE;
+			ctx.bcV[0].face[Y1] = ONE;
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
@@ -190,6 +205,11 @@ int main(int argc,char **argv)
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[2].face[Z1]= ZERO;
+			/* BCV*/
+			ctx.bcV[0].face[X0] = ONE;
+			ctx.bcV[0].face[X1] = ONE;
+			ctx.bcV[0].face[Y0] = ONE;
+			ctx.bcV[0].face[Y1] = ONE;
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
@@ -217,6 +237,11 @@ int main(int argc,char **argv)
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[2].face[Z1]= ZERO;
+			/* BCV*/
+			ctx.bcV[0].face[X0] = ONE;
+			ctx.bcV[0].face[X1] = ONE;
+			ctx.bcV[0].face[Y0] = ONE;
+			ctx.bcV[0].face[Y1] = ONE;
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
@@ -246,6 +271,11 @@ int main(int argc,char **argv)
 			ctx.bcU[2].face[Z0]= ZERO;
 			/*	face Z1	*/
 			ctx.bcU[2].face[Z1]= ZERO;
+			/* BCV*/
+			ctx.bcV[0].face[X0] = ONE;
+			ctx.bcV[0].face[X1] = ONE;
+			ctx.bcV[0].face[Y0] = ONE;
+			ctx.bcV[0].face[Y1] = ONE;
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 

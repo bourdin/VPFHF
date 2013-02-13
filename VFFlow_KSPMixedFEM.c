@@ -1532,7 +1532,6 @@ extern PetscErrorCode MixedFEMFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = MatDestroy(&ctx->KVelPlhs);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSVelP);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSVelPpre);CHKERRQ(ierr);
-//	ierr = VecDestroy(&fields->velocity);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 #undef __FUNCT__
