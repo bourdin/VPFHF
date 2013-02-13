@@ -3,14 +3,15 @@
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 
 
- mpiexec -n 1 ../test16 -n 10,2,10 -l 4,.02,4 -epsilon .08 -mode 6 eta 1e-10 -Gc 1. -nu 0 -maxtimestep 2 -minvol .001  -maxvol .01 -nc 1 -c0_r .2 -c0_center 2,.01,2 -insitumin 0,0,0,0,0 -insitumax 0,0,0e-2,0,0,0 -U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg
+ mpiexec -n 1 ./test16 -n 10,2,10 -l 4,.02,4 -epsilon .08 -mode 6 eta 1e-10 -Gc 1. -nu 0 -maxtimestep 2 -minvol .001  -maxvol .01 -nc 1 -c0_r .2 -c0_center 2,.01,2 -insitumin 0,0,0,0,0 -insitumax 0,0,0e-2,0,0,0 -U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg
  
+ mpiexec -n 1 ./test16 -n 101,2,101 -l 4,.01,4 -epsilon .08 -mode 3 eta 1e-8 -Gc 1. -nu 0 -maxtimestep 2 -minvol .0  -maxvol .01 -nc 1 -c0_r .2 -c0_center 2,.005,2 -insitumin 0,0,0,0,0 -insitumax 0,0,0e-2,0,0,0 -c0_thickness 0.03 -U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg
  
  mpiexec -n 2 ../test16 -n 26,2,50 -l .5,.02,1 -epsilon .04 -mode 1 eta 1e-8 \
         -Gc 1e-1 -nu 0 -maxtimestep 2 -maxvol .001 -mechsolver ELASTICITY   \
         -nc 1 -c0_r .1 -c0_center .25,.01,.5 
 
-mpiexec -n 4 ../test16 -n 100,2,100 -l 4,.02,4 -epsilon .08 -mode 6 eta 1e-8 \
+mpiexec -n 4 ./test16 -n 100,2,100 -l 4,.02,4 -epsilon .08 -mode 6 eta 1e-8 \
         -Gc 1. -nu 0 -maxtimestep 5 -minvol .001  -maxvol .015 -nc 1 -c0_r .2 \
         -c0_center 2,.01,2 -insitumin 0,0,0,0,0 -insitumax 0,0,-.1,0,0,0
 Try:  
@@ -64,7 +65,6 @@ Going back to default KSP is OK
 #include "VFU.h"
 #include "VFPermfield.h"
 #include "VFCracks.h"
-
 VFCtx               ctx;
 VFFields            fields;
 
@@ -91,9 +91,7 @@ int main(int argc,char **argv)
   
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-    
   ierr = PetscOptionsGetInt(PETSC_NULL,"-mode",&mode,PETSC_NULL);CHKERRQ(ierr);
-  
   ierr = PetscOptionsGetReal(PETSC_NULL,"-maxvol",&maxvol,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-minvol",&minvol,PETSC_NULL);CHKERRQ(ierr);
   /*
@@ -155,7 +153,6 @@ int main(int argc,char **argv)
       ctx.bcV[0].face[Y1] = ONE;
       ctx.bcV[0].face[Z0] = ONE;
       ctx.bcV[0].face[Z1] = ONE;
-
       break;
     case 3:
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 2D computation blocking only rigid motions (may be instable)\n");CHKERRQ(ierr);      

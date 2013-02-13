@@ -9,6 +9,8 @@
 #include "VFV.h"
 #include "VFU.h"
 #include "VFPermfield.h"
+#include "VFCracks.h"
+
 
 VFCtx               ctx;
 VFFields            fields;
@@ -36,14 +38,12 @@ int main(int argc,char **argv)
 	VFRectangularCrack *crack;
 	PetscInt			nc = 0;
 	char				prefix[PETSC_MAX_PATH_LEN+1];
-	Vec					V;
 
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-q",&q,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&nc,PETSC_NULL);CHKERRQ(ierr);	
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-maxvol",&maxvol,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -58,8 +58,6 @@ int main(int argc,char **argv)
 	q = maxvol / ctx.maxtimestep;
 	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = DMCreateGlobalVector(ctx.daScal,&V);CHKERRQ(ierr);
-	ierr = VecSet(V,1.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
 	lz = BBmax[2];
@@ -87,18 +85,35 @@ int main(int argc,char **argv)
 		}
 	}
 	/*Initializing the v-field*/	
-	ierr = PetscMalloc(nc*sizeof(VFRectangularCrack),&crack);CHKERRQ(ierr);
-	for (i = 0; i < nc; i++) {
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-nrc",&ctx.numRectangularCracks,PETSC_NULL);CHKERRQ(ierr);	
+	ierr = PetscMalloc(ctx.numRectangularCracks*sizeof(VFRectangularCrack),&ctx.rectangularcrack);CHKERRQ(ierr);
+	for (i = 0; i < ctx.numRectangularCracks; i++) {
 		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
-		ierr = VFRectangularCrackCreate(&crack[i]);CHKERRQ(ierr);
-		ierr = VFRectangularCrackGet(prefix,&crack[i]);CHKERRQ(ierr);
-		ierr = VFRectangularCrackView(&crack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+		ierr = VFRectangularCrackCreate(&ctx.rectangularcrack[i]);CHKERRQ(ierr);
+		ierr = VFRectangularCrackGet(prefix,&ctx.rectangularcrack[i]);CHKERRQ(ierr);
+		ierr = VFRectangularCrackView(&ctx.rectangularcrack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 	}
-	for (c = 0; c < nc; c++) {
-		ierr = VFRectangularCrackBuildVAT2(V,&crack[c],&ctx);CHKERRQ(ierr);
-		ierr = VecPointwiseMin(fields.V,V,fields.V);CHKERRQ(ierr);
+	for (c = 0; c < ctx.numRectangularCracks; c++) {
+		ierr = VFRectangularCrackBuildVAT2(fields.VIrrev,&ctx.rectangularcrack[c],&ctx);CHKERRQ(ierr);
+		ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
+
 	}
-	ierr = VecDestroy(&V);CHKERRQ(ierr);
+	
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-npc",&ctx.numPennyCracks,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscMalloc(ctx.numPennyCracks*sizeof(VFPennyCrack),&ctx.pennycrack);CHKERRQ(ierr);
+	for (i = 0; i < ctx.numPennyCracks; i++) {
+		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"pc%d_",i);CHKERRQ(ierr);
+		ierr = VFPennyCrackCreate(&ctx.pennycrack[i]);CHKERRQ(ierr);
+		ierr = VFPennyCrackGet(prefix,&ctx.pennycrack[i]);CHKERRQ(ierr);
+		ierr = VFPennyCrackView(&ctx.pennycrack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+	}	
+	for (c = 0; c < ctx.numPennyCracks; c++) {
+		ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
+		ierr = VFPennyCrackBuildVAT2(fields.VIrrev,&ctx.pennycrack[c],&ctx);CHKERRQ(ierr);
+		ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
+
+	}
+	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
 
 	switch (orientation) {
 		case 1:
@@ -258,12 +273,9 @@ int main(int argc,char **argv)
 			break;
 	}  
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
-	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-	
+	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);	
 	ctx.hasCrackPressure = PETSC_TRUE;
 	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
-
 	ierr = PetscViewerCreate(PETSC_COMM_WORLD, &viewer);CHKERRQ(ierr);
 	ierr = PetscViewerSetType(viewer, PETSCVIEWERASCII);CHKERRQ(ierr);
 	ierr = PetscViewerFileSetMode(viewer, FILE_MODE_APPEND);CHKERRQ(ierr);
@@ -279,8 +291,6 @@ int main(int argc,char **argv)
 	ctx.matprop[0].beta = 0.;
 	ctx.timevalue = 0;
 	//ctx.maxtimestep = 150;
-	
-	
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, injected volume %g\n",ctx.timestep,q*ctx.timestep);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr); 
