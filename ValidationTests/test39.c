@@ -105,8 +105,7 @@ int main(int argc,char **argv)
 	ctx.bcU[2].face[Z1]= ZERO;
 
 	/*Initializing the v-field*/
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-nrc",&ctx.numRectangularCracks,PETSC_NULL);CHKERRQ(ierr);
-	
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-nrc",&ctx.numRectangularCracks,PETSC_NULL);CHKERRQ(ierr);	
 	ierr = PetscMalloc(ctx.numRectangularCracks*sizeof(VFRectangularCrack),&ctx.rectangularcrack);CHKERRQ(ierr);
 	for (i = 0; i < ctx.numRectangularCracks; i++) {
 		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"rc%d_",i);CHKERRQ(ierr);
@@ -120,6 +119,28 @@ int main(int argc,char **argv)
 		ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
 
 	}
+	
+	
+	
+	
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-npc",&ctx.numPennyCracks,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscMalloc(ctx.numPennyCracks*sizeof(VFPennyCrack),&ctx.pennycrack);CHKERRQ(ierr);
+	for (i = 0; i < ctx.numPennyCracks; i++) {
+		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"pc%d_",i);CHKERRQ(ierr);
+		ierr = VFPennyCrackCreate(&ctx.pennycrack[i]);CHKERRQ(ierr);
+		ierr = VFPennyCrackGet(prefix,&ctx.pennycrack[i]);CHKERRQ(ierr);
+		ierr = VFPennyCrackView(&ctx.pennycrack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+	}	
+	for (c = 0; c < ctx.numPennyCracks; c++) {
+		ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
+		ierr = VFPennyCrackBuildVAT2(fields.VIrrev,&ctx.pennycrack[c],&ctx);CHKERRQ(ierr);
+		ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
+	}
+
+	
+	
+	
+	
 	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
 	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 	ctx.hasCrackPressure = PETSC_TRUE;
@@ -222,8 +243,15 @@ int main(int argc,char **argv)
 		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
 		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
+		/*
+		for(i = 0; i < 3; i++){
+			ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+			ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+			ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr); 
+			ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
+		}*/
+		ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr); 
 		ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
-		ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);   
 		ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);   
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\nInjectedVol = %e,\tCrackVolume =%e\tLeak-off = %e\n",0.01*ctx.flowprop.timestepsize,ctx.CrackVolume,ctx.LeakOffRate);CHKERRQ(ierr);
 		ierr = FieldsH5Write(&ctx,&fields);	
