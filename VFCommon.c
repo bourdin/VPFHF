@@ -843,7 +843,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = PCSetType(ctx->pcV,PCBJACOBI);CHKERRQ(ierr);
   ierr = PCSetFromOptions(ctx->pcV);CHKERRQ(ierr);
 
-  
+/*  
   ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspP);CHKERRQ(ierr);
   
   ierr = KSPSetTolerances(ctx->kspP,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
@@ -876,7 +876,8 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = KSPGetPC(ctx->kspT,&ctx->pcT);CHKERRQ(ierr);
   ierr = PCSetType(ctx->pcT,PCBJACOBI);CHKERRQ(ierr);
   ierr = PCSetFromOptions(ctx->pcT);CHKERRQ(ierr);
-  
+  */
+
   ierr = DMDAGetCoordinates(ctx->daVect,&coordinates);CHKERRQ(ierr);
   /*
     Null space is not convincing at this point
