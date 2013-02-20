@@ -660,6 +660,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMRestoreLocalVector(ctx->daScal,&prebc_local);CHKERRQ(ierr);
 	ierr = PetscFree5(KA_local,KB_local,KD_local,KBTrans_local,Klhs_local);CHKERRQ(ierr);
 	ierr = PetscFree3(RHS_local,row,row1);CHKERRQ(ierr);
+
 	PetscFunctionReturn(0);
 }
 
