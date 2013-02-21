@@ -1,6 +1,8 @@
 /*
  test15.c: Solves for the displacement and v-field in a pressurized penny crack in 2d (Sneddon 2D)
  (c) 2010-2012 Chukwudi CHukwudozie cchukw1@tigers.lsu.edu
+ 
+ ./test15 -n 201,201,2 -l 4,4,0.01 -epsilon 0.05 -length 0.2 -orientation 1 -Gc 0.6667
  */
 
 #include "petsc.h"
@@ -35,6 +37,11 @@ int main(int argc,char **argv)
 	char                filename[FILENAME_MAX];
 	PetscReal			lx,ly,lz;
 	PetscReal           p = 1e-3;
+	PetscReal			errV=1e+10,errP;
+	Vec					Vold;
+	PetscReal			p_epsilon = 1.e-4;
+	PetscInt			altminit=1;
+
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -295,15 +302,29 @@ int main(int argc,char **argv)
 	
 	ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
 	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-	ierr = VF_StepV(&fields,&ctx);
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 		//ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr);
 	ctx.matprop[0].beta = 0.;
-	ctx.hasCrackPressure = PETSC_TRUE;
-	ierr = VF_StepU(&fields,&ctx);
+	ctx.hasCrackPressure = PETSC_TRUE;	
+	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
+	altminit = 0.;
+	do {
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"  alt min step %i with errorV %g\n",altminit,errV);CHKERRQ(ierr);
+		
+		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
+		ierr = VF_StepU(&fields,&ctx);
+		ierr = VF_StepV(&fields,&ctx);
+		ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
+		ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
+		altminit++;
+	} while (errV >= ctx.altmintol && altminit <= ctx.altminmaxit);
+	
+
+	
+	
 	ctx.ElasticEnergy=0;
 	ctx.InsituWork=0;
 	ctx.PressureWork = 0.;
