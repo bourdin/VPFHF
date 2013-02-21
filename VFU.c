@@ -886,12 +886,9 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   
   PetscFunctionBegin;
   //ierr = PetscLogStagePush(ctx->vflog.VF_UAssemblyStage);CHKERRQ(ierr);
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  if (xs+xm == nx) xm--;
-  if (ys+ym == ny) ym--;
-  if (zs+zm == nz) zm--;
+  ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
   ierr = MatZeroEntries(K);CHKERRQ(ierr);
   ierr = VecSet(RHS,0.);CHKERRQ(ierr);
@@ -1652,12 +1649,9 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
 
   PetscFunctionBegin;
   //ierr = PetscLogStagePush(ctx->vflog.VF_EnergyStage);CHKERRQ(ierr);
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  if (xs+xm == nx) xm--;
-  if (ys+ym == ny) ym--;
-  if (zs+zm == nz) zm--;
+  ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
   /*
     Get coordinates
