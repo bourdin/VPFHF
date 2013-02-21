@@ -254,10 +254,10 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr = PetscOptionsBool("-pressurize","\n\tPressurize cracks","",ctx->hasCrackPressure,&ctx->hasCrackPressure,PETSC_NULL);CHKERRQ(ierr);
     
     ctx->numPennyCracks = 0;
-    ierr = PetscOptionsInt("-nc","\n\tNumber of penny-shaped cracks to insert","",ctx->numPennyCracks,&ctx->numPennyCracks,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsInt("-npc","\n\tNumber of penny-shaped cracks to insert","",ctx->numPennyCracks,&ctx->numPennyCracks,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscMalloc(ctx->numPennyCracks*sizeof(VFPennyCrack),&ctx->pennycrack);CHKERRQ(ierr);
     for (i = 0; i < ctx->numPennyCracks; i++) {
-      ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
+      ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"pc%d_",i);CHKERRQ(ierr);
       ierr = VFPennyCrackCreate(&(ctx->pennycrack[i]));CHKERRQ(ierr);
       ierr = VFPennyCrackGet(prefix, &(ctx->pennycrack[i]));CHKERRQ(ierr);
       if (ctx->verbose > 0) {
@@ -266,7 +266,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     }
     
     ctx->numRectangularCracks = 0;
-    ierr = PetscOptionsInt("-nc","\n\tNumber of rectangular cracks to insert","",ctx->numRectangularCracks,&ctx->numRectangularCracks,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsInt("-nrc","\n\tNumber of rectangular cracks to insert","",ctx->numRectangularCracks,&ctx->numRectangularCracks,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscMalloc(ctx->numRectangularCracks*sizeof(VFRectangularCrack),&ctx->rectangularcrack);CHKERRQ(ierr);
     for (i = 0; i < ctx->numRectangularCracks; i++) {
       ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"rc%d_",i);CHKERRQ(ierr);
@@ -1145,11 +1145,11 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&ctx->VelBCArray);CHKERRQ(ierr);
 
   
-  ierr = KSPDestroy(&ctx->kspP);CHKERRQ(ierr);
+//  ierr = KSPDestroy(&ctx->kspP);CHKERRQ(ierr);
   
-  ierr = KSPDestroy(&ctx->kspT);CHKERRQ(ierr);
-  ierr = MatDestroy(&ctx->KT);CHKERRQ(ierr);
-  ierr = VecDestroy(&ctx->RHST);CHKERRQ(ierr); 
+//  ierr = KSPDestroy(&ctx->kspT);CHKERRQ(ierr);
+//  ierr = MatDestroy(&ctx->KT);CHKERRQ(ierr);
+//  ierr = VecDestroy(&ctx->RHST);CHKERRQ(ierr); 
   
   ierr = VecDestroy(&fields->U);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->BCU);CHKERRQ(ierr);
