@@ -108,6 +108,16 @@ static const char *VFFlowSolverName[] = {
 };
 
 typedef enum {
+	HEATSOLVER_SNESFEM,
+} VFHeatSolverType;
+static const char *VFHeatSolverName[] = {
+	"HEATSOLVER_SNESFEM",
+	"READFROMFILES",
+	"",
+	0
+};
+
+typedef enum {
   FILEFORMAT_BIN,
   FILEFORMAT_HDF5
 } VFFileFormatType;
@@ -382,10 +392,19 @@ typedef struct {
    Global Variables for Heat Transfer
    */ 
   Mat                 KT;
-  PC                  pcT;
-  KSP                 kspT;
-  Vec                 RHST;
-  
+  Mat                 KTlhs;
+	PC                  pcT;
+	KSP                 kspT;
+	Mat                 JacT;
+	Vec                 PreHeatFields;
+	Vec                 RHST;
+	Vec                 HeatFunct;
+	Vec                 RHSTpre;
+  BC                  bcq[3];
+	SNES                snesT;
+	Vec                 HeatBC;
+	FlowUnit            Hunits;
+
   /* 
    SNES solver for Pressure (or flow - T&P)
    */
@@ -407,6 +426,7 @@ typedef struct {
   PetscReal           SrcRate;
   VFUnilateralType    unilateral;
   VFFlowSolverType    flowsolver;
+  VFHeatSolverType    heatsolver;
   VFMechSolverType    mechsolver;
   VFFileFormatType    fileformat;
   PetscViewer         energyviewer;

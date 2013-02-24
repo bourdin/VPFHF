@@ -9,7 +9,9 @@
 #include "VFV.h"
 #include "VFU.h"
 #include "VFFlow.h"
+#include "VFHeat.h"
 #include "VFFlow_KSPMixedFEM.h"
+#include "VFHeat_SNESFEM.h"
 /*
   Remove this as soon as the functions are moved in the proper location
 */
@@ -30,7 +32,7 @@ int main(int argc,char **argv)
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ierr = FlowSolverInitialize(&ctx,&fields);CHKERRQ(ierr);
+//  ierr = FlowSolverInitialize(&ctx,&fields);CHKERRQ(ierr);
 
 	if (ctx.printhelp){
 	  ierr = PetscFinalize();
@@ -98,7 +100,7 @@ int main(int argc,char **argv)
     ierr = PetscViewerDestroy(&logviewer);
   }
 
-	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
+//	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
   return(0);

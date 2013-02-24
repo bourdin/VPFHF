@@ -14,6 +14,41 @@
 #include "VFFlow_KSPMixedFEM.h"
 #include "VFFlow_SNESMixedFEM.h"
 #include "VFFlow_TSMixedFEM.h"
+#include "VFHeat_SNESFEM.h"
+
+
+
+#undef __FUNCT__
+#define __FUNCT__ "FlowSolverInitialize"
+extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
+{
+	PetscErrorCode ierr;
+	
+	PetscFunctionBegin;
+	switch (ctx->flowsolver) {
+		case FLOWSOLVER_KSPMIXEDFEM:       
+			ierr = MixedFEMFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
+			break;
+		case FLOWSOLVER_TSMIXEDFEM:       
+			ierr = MixedFEMTSFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
+			break;
+		case FLOWSOLVER_SNESMIXEDFEM:       
+			ierr = MixedFEMSNESFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
+			break;
+		case FLOWSOLVER_TS:
+		    ierr = FEMTSFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
+		    break;
+		case FLOWSOLVER_FEM:
+			break; 
+		case FLOWSOLVER_SNES:
+		    break;
+		case FLOWSOLVER_FAKE:
+			break; 
+		case FLOWSOLVER_READFROMFILES:
+			break;
+	}
+	PetscFunctionReturn(0);
+}
 
 
 #undef __FUNCT__
@@ -52,37 +87,6 @@ extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "FlowSolverInitialize"
-extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
-{
-	PetscErrorCode ierr;
-	
-	PetscFunctionBegin;
-	switch (ctx->flowsolver) {
-		case FLOWSOLVER_KSPMIXEDFEM:       
-			ierr = MixedFEMFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
-			break;
-		case FLOWSOLVER_TSMIXEDFEM:       
-			ierr = MixedFEMTSFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
-			break;
-		case FLOWSOLVER_SNESMIXEDFEM:       
-			ierr = MixedFEMSNESFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
-			break;
-		case FLOWSOLVER_TS:
-		    ierr = FEMTSFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
-		    break;
-		case FLOWSOLVER_FEM:
-			break; 
-		case FLOWSOLVER_SNES:
-		    break;
-		case FLOWSOLVER_FAKE:
-			break; 
-		case FLOWSOLVER_READFROMFILES:
-			break;
-	}
-	PetscFunctionReturn(0);
-}
 
 #undef __FUNCT__
 #define __FUNCT__ "BCQInit"
@@ -115,34 +119,7 @@ extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx)
   if(ctx->BCpres[5] > -1.e-8) BCP[0].face[Z1] = VALUE;*/
  
   PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "BCTInit"
-/*
-  BCTInit
-  Keita Yoshioka yoshk@chevron.com
-*/
-extern PetscErrorCode BCTInit(BC *BCT,VFCtx *ctx)
-{
-  PetscErrorCode ierr;
-  
-  PetscFunctionBegin;
-  ierr = BCInit(BCT,1);CHKERRQ(ierr);
-  
-/*
-  When positive value is given, boundary condiction has a numecial value
-*/
-  if(ctx->BCtheta[0] > -1.e-8) BCT[0].face[X0] = VALUE;
-  if(ctx->BCtheta[1] > -1.e-8) BCT[0].face[X1] = VALUE;
-  if(ctx->BCtheta[2] > -1.e-8) BCT[0].face[Y0] = VALUE;
-  if(ctx->BCtheta[3] > -1.e-8) BCT[0].face[Y1] = VALUE;
-  if(ctx->BCtheta[4] > -1.e-8) BCT[0].face[Z0] = VALUE;
-  if(ctx->BCtheta[5] > -1.e-8) BCT[0].face[Z1] = VALUE;
-
-  PetscFunctionReturn(0);
-}
-  
+}  
   
 #undef __FUNCT__
 #define __FUNCT__ "SETBoundaryTerms_P"
@@ -259,4 +236,13 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
 
 
 
-  
+
+
+
+
+
+
+
+
+
+

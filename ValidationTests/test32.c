@@ -33,9 +33,8 @@ int main(int argc,char **argv)
 	PetscReal		pi;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ctx.flowsolver = FLOWSOLVER_TSMIXEDFEM;
-	ierr = FlowSolverInitialize(&ctx,&fields);CHKERRQ(ierr);
+	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -111,8 +110,6 @@ int main(int argc,char **argv)
 	ctx.timevalue = 1;
 	ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 	ierr = FieldsH5Write(&ctx,&fields);
-	
-	ierr = FlowSolverFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
