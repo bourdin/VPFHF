@@ -4,12 +4,14 @@ VFOBJ = ${VFDIR}/VFCommon.o                \
         ${VFDIR}/VFV.o                     \
         ${VFDIR}/VFWell.o                  \
         ${VFDIR}/VFFlow.o                  \
+        ${VFDIR}/VFHeat.o                  \
         ${VFDIR}/VFFlow_Fake.o             \
         ${VFDIR}/VFFlow_FEM.o              \
-        ${VFDIR}/VFFlow_TSFEM.o       \
+        ${VFDIR}/VFFlow_TSFEM.o     	   \
         ${VFDIR}/VFFlow_KSPMixedFEM.o      \
         ${VFDIR}/VFFlow_SNESMixedFEM.o     \
         ${VFDIR}/VFFlow_TSMixedFEM.o       \
+        ${VFDIR}/VFHeat_SNESFEM.o          \
         ${VFDIR}/VFPermfield.o             \
         ${VFDIR}/CartFE.o                  \
         ${VFDIR}/xdmf.o

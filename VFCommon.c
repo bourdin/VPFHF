@@ -4,6 +4,7 @@
 #include "VFV.h"
 #include "VFU.h"
 #include "VFFlow.h"
+#include "VFHeat.h"
 #include "VFWell.h"
 #include "VFCracks.h"
 
@@ -59,6 +60,11 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VFFieldsInitialize(ctx,fields);CHKERRQ(ierr);
   ierr = VFBCInitialize(ctx);CHKERRQ(ierr);
   ierr = VFSolversInitialize(ctx);CHKERRQ(ierr);
+	
+	ctx->heatsolver = HEATSOLVER_SNESFEM;
+	ierr = FlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
+	ierr = HeatSolverInitialize(ctx,fields);CHKERRQ(ierr);
+
   
   /*
    Save command line options to a file
@@ -75,6 +81,9 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->energyviewer);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(ctx->energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Pressure Work,Total Energy\n");CHKERRQ(ierr);
   ierr = PetscViewerFlush(ctx->energyviewer);CHKERRQ(ierr);
+	
+	
+
   PetscFunctionReturn(0);
 }
 
@@ -862,92 +871,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = PCSetType(ctx->pcV,PCBJACOBI);CHKERRQ(ierr);
   ierr = PCSetFromOptions(ctx->pcV);CHKERRQ(ierr);
 
-	/* MixedFEM ksp flow solver initialize*/
-	if (comm_size == 1) {
-		ierr = DMCreateMatrix(ctx->daFlow,MATSEQAIJ,&ctx->KVelP);CHKERRQ(ierr);
-		ierr = DMCreateMatrix(ctx->daFlow,MATSEQAIJ,&ctx->KVelPlhs);CHKERRQ(ierr);
-	} else {
-		ierr = DMCreateMatrix(ctx->daFlow,MATMPIAIJ,&ctx->KVelP);CHKERRQ(ierr);
-		ierr = DMCreateMatrix(ctx->daFlow,MATMPIAIJ,&ctx->KVelPlhs);CHKERRQ(ierr);
-	}
-	ierr = MatSetOption(ctx->KVelP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = MatSetOption(ctx->KVelPlhs,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->RHSVelP);CHKERRQ(ierr);
-	ierr = VecSet(ctx->RHSVelP,0.);CHKERRQ(ierr);
-	ierr = PetscObjectSetName((PetscObject)ctx->RHSVelP,"RHS of flow solver");CHKERRQ(ierr);
-	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->RHSVelPpre);CHKERRQ(ierr);
-	ierr = VecSet(ctx->RHSVelPpre,0.);CHKERRQ(ierr);
-	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspVelP);CHKERRQ(ierr);	
-	ierr = KSPSetTolerances(ctx->kspVelP,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
-	ierr = KSPSetOperators(ctx->kspVelP,ctx->KVelP,ctx->KVelP,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
-	ierr = KSPSetInitialGuessNonzero(ctx->kspVelP,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = KSPAppendOptionsPrefix(ctx->kspVelP,"VelP_");CHKERRQ(ierr);
-	ierr = KSPSetType(ctx->kspVelP,KSPBCGSL);CHKERRQ(ierr);
-	ierr = KSPSetFromOptions(ctx->kspVelP);CHKERRQ(ierr);
-	ierr = KSPGetPC(ctx->kspVelP,&ctx->pcVelP);CHKERRQ(ierr);
-	ierr = PCSetType(ctx->pcVelP,PCJACOBI);CHKERRQ(ierr);
-	ierr = PCSetFromOptions(ctx->pcVelP);CHKERRQ(ierr);
-
-	/* MixedFEM SNES flow solver initialize*/
-	if (comm_size == 1) {
-		ierr = DMCreateMatrix(ctx->daFlow,MATSEQAIJ,&ctx->JacVelP);CHKERRQ(ierr);
-	} else {
-		ierr = DMCreateMatrix(ctx->daFlow,MATMPIAIJ,&ctx->JacVelP);CHKERRQ(ierr);
-	}
-	ierr = MatZeroEntries(ctx->JacVelP);CHKERRQ(ierr);
-	ierr = MatSetOption(ctx->JacVelP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->PreFlowFields);CHKERRQ(ierr);
-	ierr = VecSet(ctx->PreFlowFields,0.0);CHKERRQ(ierr);
-	ierr = PetscObjectSetName((PetscObject)ctx->PreFlowFields,"Previous flow fields");CHKERRQ(ierr);
-	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->FlowFunct);CHKERRQ(ierr);
-	ierr = VecSet(ctx->FlowFunct,0.0);CHKERRQ(ierr);
-	ierr = PetscObjectSetName((PetscObject)ctx->FlowFunct,"RHS of TS flow solver");CHKERRQ(ierr);
-	ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesVelP);CHKERRQ(ierr);
-
-	/* MixedFEM TS flow solver initialize*/	
-	ierr = TSCreate(PETSC_COMM_WORLD,&ctx->tsVelP);CHKERRQ(ierr);
-//	ierr = TSAppendOptionsPrefix(ctx->tsVelP,"VelP_");CHKERRQ(ierr);
-	ierr = TSSetDM(ctx->tsVelP,ctx->daFlow);CHKERRQ(ierr);
-	ierr = TSSetProblemType(ctx->tsVelP,TS_LINEAR);CHKERRQ(ierr);
-	ierr = TSSetType(ctx->tsVelP,TSBEULER);CHKERRQ(ierr);
-
-	
-	
-/*  
-  ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspP);CHKERRQ(ierr);
-  
-  ierr = KSPSetTolerances(ctx->kspP,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
-  ierr = KSPSetOperators(ctx->kspP,ctx->KP,ctx->KP,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
-  ierr = KSPSetInitialGuessNonzero(ctx->kspP,PETSC_TRUE);CHKERRQ(ierr);
-  ierr = KSPAppendOptionsPrefix(ctx->kspP,"P_");CHKERRQ(ierr);
-  ierr = KSPSetType(ctx->kspP,KSPBCGSL);CHKERRQ(ierr);
-  ierr = KSPSetFromOptions(ctx->kspP);CHKERRQ(ierr);
-  ierr = KSPGetPC(ctx->kspP,&ctx->pcP);CHKERRQ(ierr);
-  ierr = PCSetType(ctx->pcP,PCBJACOBI);CHKERRQ(ierr);
-  ierr = PCSetFromOptions(ctx->pcP);CHKERRQ(ierr);
-  
-  if (comm_size == 1) {
-    ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->KT);CHKERRQ(ierr);
-  } else {
-    ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->KT);CHKERRQ(ierr);
-  }
-  ierr = MatSetOption(ctx->KT,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHST);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) ctx->RHST,"RHST");CHKERRQ(ierr);
-  
-  ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspT);CHKERRQ(ierr);
-  
-  ierr = KSPSetTolerances(ctx->kspT,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
-  ierr = KSPSetOperators(ctx->kspT,ctx->KT,ctx->KT,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
-  ierr = KSPSetInitialGuessNonzero(ctx->kspT,PETSC_TRUE);CHKERRQ(ierr);
-  ierr = KSPAppendOptionsPrefix(ctx->kspT,"T_");CHKERRQ(ierr);
-  ierr = KSPSetType(ctx->kspT,KSPBCGSL);CHKERRQ(ierr);
-  ierr = KSPSetFromOptions(ctx->kspT);CHKERRQ(ierr);
-  ierr = KSPGetPC(ctx->kspT,&ctx->pcT);CHKERRQ(ierr);
-  ierr = PCSetType(ctx->pcT,PCBJACOBI);CHKERRQ(ierr);
-  ierr = PCSetFromOptions(ctx->pcT);CHKERRQ(ierr);
-  */
-
   ierr = DMDAGetCoordinates(ctx->daVect,&coordinates);CHKERRQ(ierr);
   /*
     Null space is not convincing at this point
@@ -1185,19 +1108,10 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = MatDestroy(&ctx->KV);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->RHSV);CHKERRQ(ierr); 
   
-	ierr = KSPDestroy(&ctx->kspVelP);CHKERRQ(ierr);
-	ierr = MatDestroy(&ctx->KVelP);CHKERRQ(ierr);
-	ierr = MatDestroy(&ctx->KVelPlhs);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->RHSVelP);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->RHSVelPpre);CHKERRQ(ierr);
+	
 
-	ierr = SNESDestroy(&ctx->snesVelP);CHKERRQ(ierr);
-	ierr = MatDestroy(&ctx->JacVelP);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->PreFlowFields);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->FlowFunct);CHKERRQ(ierr);
-
-	ierr = TSDestroy(&ctx->tsVelP);CHKERRQ(ierr);
-		
+	
+	
   ierr = VecDestroy(&fields->VelnPress);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->vfperm);CHKERRQ(ierr);
 //  ierr = VecDestroy(&fields->velocity);CHKERRQ(ierr);
@@ -1210,12 +1124,6 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&ctx->VelBCArray);CHKERRQ(ierr);
 
   
-//  ierr = KSPDestroy(&ctx->kspP);CHKERRQ(ierr);
-  
-//  ierr = KSPDestroy(&ctx->kspT);CHKERRQ(ierr);
-//  ierr = MatDestroy(&ctx->KT);CHKERRQ(ierr);
-//  ierr = VecDestroy(&ctx->RHST);CHKERRQ(ierr); 
-  
   ierr = VecDestroy(&fields->U);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->BCU);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->V);CHKERRQ(ierr);
@@ -1227,6 +1135,16 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&fields->pmult);CHKERRQ(ierr);
   
   ierr = PetscViewerDestroy(&ctx->energyviewer);CHKERRQ(ierr);
+
+	
+	
+	
+	
+	
+	ierr = HeatSolverFinalize(ctx,fields);CHKERRQ(ierr);
+	ierr = FlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
+
+	
   
   /*
    Close the xdmf multi-step file
