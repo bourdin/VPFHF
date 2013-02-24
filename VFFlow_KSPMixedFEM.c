@@ -1458,33 +1458,6 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 		ierr          = PetscOptionsEnum("-flow boundary conditions","\n\tFlow solver","",FlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
 	}
 	ierr = PetscOptionsEnd();CHKERRQ(ierr);	
-	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
-	if (comm_size == 1) {
-		ierr = DMCreateMatrix(ctx->daFlow,MATSEQAIJ,&ctx->KVelP);CHKERRQ(ierr);
-		ierr = DMCreateMatrix(ctx->daFlow,MATSEQAIJ,&ctx->KVelPlhs);CHKERRQ(ierr);
-	} else {
-		ierr = DMCreateMatrix(ctx->daFlow,MATMPIAIJ,&ctx->KVelP);CHKERRQ(ierr);
-		ierr = DMCreateMatrix(ctx->daFlow,MATMPIAIJ,&ctx->KVelPlhs);CHKERRQ(ierr);
-	}
-	ierr = MatSetOption(ctx->KVelP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = MatSetOption(ctx->KVelPlhs,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->RHSVelP);CHKERRQ(ierr);
-	ierr = PetscObjectSetName((PetscObject)ctx->RHSVelP,"RHS of flow solver");CHKERRQ(ierr);
-	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->RHSVelPpre);CHKERRQ(ierr);
-	ierr = VecSet(ctx->RHSVelPpre,0.);CHKERRQ(ierr);
-
-	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspVelP);CHKERRQ(ierr);	
-	ierr = KSPSetTolerances(ctx->kspVelP,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
-	ierr = KSPSetOperators(ctx->kspVelP,ctx->KVelP,ctx->KVelP,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
-	ierr = KSPSetInitialGuessNonzero(ctx->kspVelP,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = KSPAppendOptionsPrefix(ctx->kspVelP,"VelP_");CHKERRQ(ierr);
-	ierr = KSPSetType(ctx->kspVelP,KSPBCGSL);CHKERRQ(ierr);
-	ierr = KSPSetFromOptions(ctx->kspVelP);CHKERRQ(ierr);
-	ierr = KSPGetPC(ctx->kspVelP,&ctx->pcVelP);CHKERRQ(ierr);
-	ierr = PCSetType(ctx->pcVelP,PCJACOBI);CHKERRQ(ierr);
-	ierr = PCSetFromOptions(ctx->pcVelP);CHKERRQ(ierr);
-
-	flg = SAME_NONZERO_PATTERN;
 /*
 	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspVelP);CHKERRQ(ierr);	
 	ierr = KSPSetTolerances(ctx->kspVelP,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
@@ -1510,8 +1483,6 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	ierr = PCSetFromOptions(ctx->pcVelP);CHKERRQ(ierr);
 	ierr = KSPSetFromOptions(ctx->kspVelP);CHKERRQ(ierr);
 */
-	ierr = BCPInit(&ctx->bcP[0],ctx);
-	ierr = BCQInit(&ctx->bcQ[0],ctx);
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
 	ierr = ReSETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
 	ierr = ReSETSourceTerms(ctx->Source,ctx->flowprop);		
@@ -1527,11 +1498,6 @@ extern PetscErrorCode MixedFEMFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 	PetscErrorCode ierr;
 	
 	PetscFunctionBegin;
-	ierr = KSPDestroy(&ctx->kspVelP);CHKERRQ(ierr);
-	ierr = MatDestroy(&ctx->KVelP);CHKERRQ(ierr);
-	ierr = MatDestroy(&ctx->KVelPlhs);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->RHSVelP);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->RHSVelPpre);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 #undef __FUNCT__

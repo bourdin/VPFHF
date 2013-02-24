@@ -92,8 +92,6 @@ extern PetscErrorCode BCQInit(BC *BCQ,VFCtx *ctx)
 	
 	PetscFunctionBegin;
 	ierr = BCInit(BCQ,3);CHKERRQ(ierr);
-
-	
 	PetscFunctionReturn(0);
 }
 
