@@ -341,6 +341,12 @@ typedef struct {
   Mat                 KU;
   PC                  pcU;
   KSP                 kspU;
+	SNES                snesU;
+	SNES                snesV;
+	Vec                 UFunct;
+	Vec                 VFunct;
+
+
   Vec                 RHSU;
   MatNullSpace        nullspaceU;
   Mat                 KV;
