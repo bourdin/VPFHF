@@ -2,6 +2,7 @@
 #include "CartFE.h"
 #include "VFCommon.h"
 #include "VFU.h"
+#include "VFV.h"
 
 
 #undef __FUNCT__
@@ -335,17 +336,14 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   /* 
     Get global number of vertices along each coordinate axis on the ENTIRE mesh
   */
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   /*
     Get informations on LOCAL slice (i.e. subdomain)
     xs, ys, ym = 1st index in x,y,z direction
     xm, ym, zm = number of vertices in the x, y, z directions
   */
-  ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  if (xs+xm == nx) xm--;
-  if (ys+ym == ny) ym--;
-  if (zs+zm == nz) zm--;
+  ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
   ierr = MatZeroEntries(K);CHKERRQ(ierr);
   ierr = VecSet(RHS,0.);CHKERRQ(ierr);
@@ -701,7 +699,7 @@ extern PetscErrorCode VF_IrrevApplyEQ(Mat K,Vec RHS,Vec V,Vec VIrrev,VFProp *vfp
 extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode      ierr;
-  KSPConvergedReason  reason;
+  SNESConvergedReason  reason;
   PetscInt            its;
   PetscReal           Vmin,Vmax;
   
@@ -718,28 +716,31 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
     
     //ierr = MatView(ctx->KV,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
-  //ierr = PetscLogStagePush(ctx->vflog.VF_VSolverStage);CHKERRQ(ierr);
-  ierr = KSPSolve(ctx->kspV,ctx->RHSV,fields->V);CHKERRQ(ierr);
-  //ierr = PetscLogStagePop();CHKERRQ(ierr);
-  if (ctx->verbose > 1) {
-    ierr = VecView(fields->V,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-  }
-  
-  ierr = KSPGetConvergedReason(ctx->kspV,&reason);CHKERRQ(ierr);
-  if (reason < 0) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] kspV diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
-  } else {
-    ierr = KSPGetIterationNumber(ctx->kspV,&its);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"      kspV converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
-  }
-  /* Get Min / Max of V */
-  ierr = VecMin(fields->V,PETSC_NULL,&Vmin);CHKERRQ(ierr);
-  ierr = VecMax(fields->V,PETSC_NULL,&Vmax);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"      V min / max:     %e %e\n",Vmin,Vmax);CHKERRQ(ierr);
-  if (Vmin < -.5 || Vmax > 1.5) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] V is not in or near (0,1). Is EPSILON of the order of h?\n");CHKERRQ(ierr);  
-  }
-  
+	ierr = SNESSetFunction(ctx->snesV,ctx->VFunct,VF_VFunction,ctx);CHKERRQ(ierr);
+    ierr = SNESSetJacobian(ctx->snesV,ctx->JacV,ctx->JacV,VF_VIJacobian,ctx);CHKERRQ(ierr);
+	if (ctx->verbose > 1) {
+		ierr = SNESMonitorSet(ctx->snesVelP,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	}
+    ierr = SNESSolve(ctx->snesV,PETSC_NULL,fields->V);CHKERRQ(ierr);
+		//ierr = PetscLogStagePush(ctx->vflog.VF_VSolverStage);CHKERRQ(ierr);
+	if (ctx->verbose > 1) {
+		ierr = VecView(fields->V,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+	}
+	
+	ierr = SNESGetConvergedReason(ctx->snesV,&reason);CHKERRQ(ierr);
+	if (reason < 0) {
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesV diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+	} else {
+	  ierr = SNESGetIterationNumber(ctx->snesV,&its);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesV converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+	}
+	/* Get Min / Max of V */
+	ierr = VecMin(fields->V,PETSC_NULL,&Vmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->V,PETSC_NULL,&Vmax);CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      V min / max:     %e %e\n",Vmin,Vmax);CHKERRQ(ierr);
+	if (Vmin < -.5 || Vmax > 1.5) {
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] V is not in or near (0,1). Is EPSILON of the order of h?\n");CHKERRQ(ierr);  
+	}	
   /*
     Temporarily adding truncation
   */
@@ -754,3 +755,61 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
   ierr = DMRestoreGlobalVector(ctx->daScal,&V1);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_VFunction"
+extern PetscErrorCode VF_VFunction(SNES snes,Vec V,Vec Func,void *user)
+{
+	PetscErrorCode ierr;
+	VFCtx			*ctx=(VFCtx*)user;
+	
+	PetscFunctionBegin;
+	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
+	ierr = MatMult(ctx->KV,V,Func);CHKERRQ(ierr);	
+	ierr = VecAXPY(Func,-1.0,ctx->RHSV);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_VIJacobian"
+extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStructure *str,void *user)
+{
+	PetscErrorCode ierr;
+	VFCtx				*ctx=(VFCtx*)user;
+	
+	PetscFunctionBegin;
+	*str = DIFFERENT_NONZERO_PATTERN;
+	ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
+	ierr = MatCopy(ctx->KV,*Jac,*str);
+	ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	if (*Jac != *Jac1) {
+		ierr = MatAssemblyBegin(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+		ierr = MatAssemblyEnd(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	}
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__  
+#define __FUNCT__ "VF_VSNESMonitor"
+extern PetscErrorCode VF_VSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr)
+{
+	PetscErrorCode ierr;
+	PetscReal      norm,vmax,vmin;
+	MPI_Comm       comm;
+	Vec				V;
+	
+	PetscFunctionBegin;
+	ierr = SNESGetSolution(snes,&V);CHKERRQ(ierr);	
+	ierr = VecNorm(V,NORM_1,&norm);CHKERRQ(ierr);
+	ierr = VecMax(V,PETSC_NULL,&vmax);CHKERRQ(ierr);
+	ierr = VecMin(V,PETSC_NULL,&vmin);CHKERRQ(ierr);
+	ierr = PetscObjectGetComm((PetscObject)snes,&comm);CHKERRQ(ierr);
+	ierr = PetscPrintf(comm,"V_snes_iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",its,norm,vmax,vmin);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
+
+
+
+

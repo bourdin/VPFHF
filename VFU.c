@@ -2,6 +2,8 @@
 #include "CartFE.h"
 #include "VFCommon.h"
 #include "VFV.h"
+#include "VFU.h"
+
 
 #undef __FUNCT__
 #define __FUNCT__ "BCUInit"
@@ -1955,7 +1957,8 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
 extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode     ierr;
-  KSPConvergedReason reason;
+//  KSPConvergedReason reason;
+	SNESConvergedReason reason;
   PetscInt           its;
   PetscReal          Umin,Umax;
   
@@ -1978,10 +1981,13 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   //ierr = MatNullSpaceTest(ctx->nullspaceU,ctx->KU,&flg);CHKERRQ(ierr);
   //ierr = MatNullSpaceRemove(ctx->nullspaceU,ctx->RHSU,PETSC_NULL);CHKERRQ(ierr);
   //ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n\n Null space test returned %i %i\n\n\n",flg,PETSC_TRUE);CHKERRQ(ierr);
-  
-  ierr = KSPSolve(ctx->kspU,ctx->RHSU,fields->U);CHKERRQ(ierr);
-  //ierr = PetscLogStagePop();CHKERRQ(ierr);
-
+	ierr = SNESSetFunction(ctx->snesU,ctx->UFunct,VF_UFunction,ctx);CHKERRQ(ierr);
+    ierr = SNESSetJacobian(ctx->snesU,ctx->JacU,ctx->JacU,VF_UIJacobian,ctx);CHKERRQ(ierr);
+	if (ctx->verbose > 1) {
+		ierr = SNESMonitorSet(ctx->snesVelP,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	}
+    ierr = SNESSolve(ctx->snesU,PETSC_NULL,fields->U);CHKERRQ(ierr);
+//ierr = PetscLogStagePop();CHKERRQ(ierr);
   if (ctx->verbose > 1) {
     ierr = VecView(fields->U,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
@@ -1991,12 +1997,12 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Umin = %g, Umax = %g\n",Umin,Umax);CHKERRQ(ierr);
   }
   
-  ierr = KSPGetConvergedReason(ctx->kspU,&reason);CHKERRQ(ierr);
+  ierr = SNESGetConvergedReason(ctx->snesU,&reason);CHKERRQ(ierr);
   if (reason < 0) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] kspU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
   } else {
-    ierr = KSPGetIterationNumber(ctx->kspU,&its);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"      kspU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+    ierr = SNESGetIterationNumber(ctx->snesU,&its);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -2012,7 +2018,7 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
 extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode     ierr;
-  KSPConvergedReason reason;
+  SNESConvergedReason reason;
   PetscInt           its;
   PetscReal          Umin,Umax;
   
@@ -2028,7 +2034,12 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
   }
   
   //ierr = PetscLogStagePush(ctx->vflog.VF_USolverStage);CHKERRQ(ierr);
-  ierr = KSPSolve(ctx->kspU,ctx->RHSU,fields->BCU);CHKERRQ(ierr);
+	ierr = SNESSetFunction(ctx->snesU,ctx->UFunct,VF_UFunction,ctx);CHKERRQ(ierr);
+    ierr = SNESSetJacobian(ctx->snesU,ctx->JacU,ctx->JacU,VF_UIJacobian,ctx);CHKERRQ(ierr);
+	if (ctx->verbose > 1) {
+		ierr = SNESMonitorSet(ctx->snesVelP,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	}
+    ierr = SNESSolve(ctx->snesU,PETSC_NULL,fields->BCU);CHKERRQ(ierr);
   //ierr = PetscLogStagePop();CHKERRQ(ierr);
 
   if (ctx->verbose > 1) {
@@ -2040,12 +2051,12 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Umin = %g, Umax = %g\n",Umin,Umax);CHKERRQ(ierr);
   }
   
-  ierr = KSPGetConvergedReason(ctx->kspU,&reason);CHKERRQ(ierr);
+  ierr = SNESGetConvergedReason(ctx->kspU,&reason);CHKERRQ(ierr);
   if (reason < 0) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] kspU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
   } else {
-    ierr = KSPGetIterationNumber(ctx->kspU,&its);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"      kspU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+    ierr = SNESGetIterationNumber(ctx->kspU,&its);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
   }
 
   /*
@@ -2072,3 +2083,63 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "VF_UFunction"
+extern PetscErrorCode VF_UFunction(SNES snes,Vec U,Vec Func,void *user)
+{
+	PetscErrorCode ierr;
+	VFCtx			*ctx=(VFCtx*)user;
+	
+	PetscFunctionBegin;
+	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
+	ierr = MatMult(ctx->KU,U,Func);CHKERRQ(ierr);	
+	ierr = VecAXPY(Func,-1.0,ctx->RHSU);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_UIJacobian"
+extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *Jac,Mat *Jac1,MatStructure *str,void *user)
+{
+	PetscErrorCode ierr;
+	VFCtx				*ctx=(VFCtx*)user;
+	
+	PetscFunctionBegin;
+	*str = DIFFERENT_NONZERO_PATTERN;
+	ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
+	ierr = MatCopy(ctx->KU,*Jac,*str);
+	ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	if (*Jac != *Jac1) {
+		ierr = MatAssemblyBegin(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+		ierr = MatAssemblyEnd(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	}
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__  
+#define __FUNCT__ "VF_USNESMonitor"
+extern PetscErrorCode VF_USNESMonitor(SNES snes,PetscInt U_its,PetscReal fnorm,void* ptr)
+{
+	PetscErrorCode ierr;
+	PetscReal      norm,vmax,vmin;
+	MPI_Comm       comm;
+	Vec				U;
+	
+	PetscFunctionBegin;
+	ierr = SNESGetSolution(snes,&U);CHKERRQ(ierr);	
+	ierr = VecNorm(U,NORM_1,&norm);CHKERRQ(ierr);
+	ierr = VecMax(U,PETSC_NULL,&vmax);CHKERRQ(ierr);
+	ierr = VecMin(U,PETSC_NULL,&vmin);CHKERRQ(ierr);
+	ierr = PetscObjectGetComm((PetscObject)snes,&comm);CHKERRQ(ierr);
+	ierr = PetscPrintf(comm,"U_snes_iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",U_its,norm,vmax,vmin);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
+
+
+
+
+
+
+ 
