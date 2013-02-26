@@ -345,6 +345,8 @@ typedef struct {
 	SNES                snesV;
 	Vec                 UFunct;
 	Vec                 VFunct;
+	Mat                 JacU;
+	Mat                 JacV;
 
 
   Vec                 RHSU;

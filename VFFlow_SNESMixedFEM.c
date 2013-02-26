@@ -96,13 +96,15 @@ extern PetscErrorCode MixedFEMSNESFlowSolverFinalize(VFCtx *ctx,VFFields *fields
 extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 {
 	PetscErrorCode     ierr;
-	KSPConvergedReason reason;	
+	SNESConvergedReason reason;	
 	PetscReal          ****VelnPress_array;
 	PetscReal          ***Press_array;
 	PetscReal          ****vel_array;
 	PetscInt           i,j,k,c,veldof = 3;
 	PetscInt           xs,xm,ys,ym,zs,zm;
 	PetscInt           its;
+	PetscReal           VelPmin,VelPmax;
+
 	
 	PetscFunctionBegin;	
 	/*	temporary created permfield in ctx so permeability can be in ctx	*/
@@ -112,8 +114,20 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = VecCopy(fields->VelnPress,ctx->PreFlowFields);CHKERRQ(ierr);
 	ierr = SNESSetFunction(ctx->snesVelP,ctx->FlowFunct,FormSNESIFunction,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesVelP,ctx->JacVelP,ctx->JacVelP,FormSNESIJacobian,ctx);CHKERRQ(ierr);
-	ierr = SNESMonitorSet(ctx->snesVelP,MixedFEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	if (ctx->verbose > 1) {
+		ierr = SNESMonitorSet(ctx->snesVelP,MixedFEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	}	
     ierr = SNESSolve(ctx->snesVelP,PETSC_NULL,fields->VelnPress);CHKERRQ(ierr);
+	ierr = SNESGetConvergedReason(ctx->snesVelP,&reason);CHKERRQ(ierr);
+	if (reason < 0) {
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesVelP diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+	} else {
+		ierr = SNESGetIterationNumber(ctx->snesVelP,&its);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesVelP converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+	}
+	ierr = VecMin(fields->VelnPress,PETSC_NULL,&VelPmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->VelnPress,PETSC_NULL,&VelPmax);CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      VelP min / max:     %e %e\n",VelPmin,VelPmax);CHKERRQ(ierr);
 	ierr = VecCopy(ctx->RHSVelP,ctx->RHSVelPpre);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);

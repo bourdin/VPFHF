@@ -165,7 +165,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
     ctx->mechsolver = FRACTURE;
     ierr = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,PETSC_NULL);CHKERRQ(ierr);
-    ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
+//    ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
     ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
     
     ctx->hasInsitu = PETSC_FALSE;
@@ -831,11 +831,20 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   
   PetscFunctionBegin;
 	/* U solver initialize*/
+	
+	ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesU);CHKERRQ(ierr);
+	ierr = DMCreateGlobalVector(ctx->daVect,&ctx->UFunct);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) ctx->UFunct,"U_Function");CHKERRQ(ierr);
+
+	
+	
   ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
   if (comm_size == 1) {
     ierr = DMCreateMatrix(ctx->daVect,MATSEQAIJ,&ctx->KU);CHKERRQ(ierr);
+	ierr = DMCreateMatrix(ctx->daVect,MATSEQAIJ,&ctx->JacU);CHKERRQ(ierr);
   } else {
     ierr = DMCreateMatrix(ctx->daVect,MATMPIAIJ,&ctx->KU);CHKERRQ(ierr);
+	ierr = DMCreateMatrix(ctx->daVect,MATMPIAIJ,&ctx->JacU);CHKERRQ(ierr);
   }
   ierr = MatSetOption(ctx->KU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = DMCreateGlobalVector(ctx->daVect,&ctx->RHSU);CHKERRQ(ierr);
@@ -852,10 +861,18 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = PCSetFromOptions(ctx->pcU);CHKERRQ(ierr);
   
 	/* v solver initialize*/
+	
+	ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesV);CHKERRQ(ierr);
+	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->VFunct);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) ctx->VFunct,"V_Function");CHKERRQ(ierr);
+
+	
   if (comm_size == 1) {
     ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->KV);CHKERRQ(ierr);
+	ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->JacV);CHKERRQ(ierr);
   } else {
     ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->KV);CHKERRQ(ierr);
+	ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->JacV);CHKERRQ(ierr);
   }
   ierr = MatSetOption(ctx->KV,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSV);CHKERRQ(ierr);
@@ -1103,11 +1120,19 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = MatDestroy(&ctx->KU);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->RHSU);CHKERRQ(ierr); 
   ierr = MatNullSpaceDestroy(&ctx->nullspaceU);CHKERRQ(ierr);
+	ierr = VecDestroy(&ctx->UFunct);CHKERRQ(ierr);
+	ierr = SNESDestroy(&ctx->snesU);CHKERRQ(ierr);
+	ierr = MatDestroy(&ctx->JacU);CHKERRQ(ierr);
+
+
   
   ierr = KSPDestroy(&ctx->kspV);CHKERRQ(ierr);
   ierr = MatDestroy(&ctx->KV);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->RHSV);CHKERRQ(ierr); 
-  
+  	ierr = VecDestroy(&ctx->VFunct);CHKERRQ(ierr);
+	ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
+	ierr = MatDestroy(&ctx->JacV);CHKERRQ(ierr);
+
 	
 
 	

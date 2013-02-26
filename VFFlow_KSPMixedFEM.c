@@ -36,6 +36,8 @@ extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields)
 	PetscReal			theta,one_minus_theta,timestepsize;
 	PetscReal			dt_dot_theta,dt_dot_one_minus_theta;
 	Vec                vec;
+	PetscReal           VelPmin,VelPmax;
+
 
 	PetscFunctionBegin;
 	timestepsize = ctx->flowprop.timestepsize;
@@ -59,7 +61,9 @@ extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields)
 	ierr = VecApplyVelocityBC(VecRHS,&ctx->bcQ[0],ctx,velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,velbc_local,&velbc_array);CHKERRQ(ierr); 
 	ierr = DMRestoreLocalVector(ctx->daVect,&velbc_local);CHKERRQ(ierr);
-	ierr = KSPMonitorSet(ctx->kspVelP,MixedFEMKSPMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	if (ctx->verbose > 1) {
+		ierr = KSPMonitorSet(ctx->kspVelP,MixedFEMKSPMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	}
 	ierr = KSPSolve(ctx->kspVelP,VecRHS,fields->VelnPress);CHKERRQ(ierr);
 
 /*
@@ -96,6 +100,9 @@ extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields)
 		ierr = KSPGetIterationNumber(ctx->kspVelP,&its);CHKERRQ(ierr);
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"      kspVelP converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
 	}
+	ierr = VecMin(fields->VelnPress,PETSC_NULL,&VelPmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->VelnPress,PETSC_NULL,&VelPmax);CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      VelP min / max:     %e %e\n",VelPmin,VelPmax);CHKERRQ(ierr);
 	/*The next few lines equate the values of pressure calculated from the flow solver, to the pressure defined in da=daScal*/
 	ierr = DMDAVecGetArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);

@@ -91,13 +91,14 @@ extern PetscErrorCode MixedFlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 {
 	PetscErrorCode     ierr;
 	PetscViewer        viewer;
-	KSPConvergedReason reason;	
+	TSConvergedReason reason;	
 	PetscReal          ****VelnPress_array;
 	PetscReal          ***Press_array;
 	PetscReal          ****vel_array;
 	PetscInt           i,j,k,c,veldof = 3;
 	PetscInt           xs,xm,ys,ym,zs,zm;
 	PetscInt           its;
+	PetscReal           VelPmin,VelPmax;
 
 	PetscFunctionBegin;	
 //	temporary created permfield in ctx so permeability an be in ctx
@@ -111,10 +112,25 @@ extern PetscErrorCode MixedFlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 	ierr = TSSetInitialTimeStep(ctx->tsVelP,0.0,ctx->timevalue);CHKERRQ(ierr);
     ierr = TSSetDuration(ctx->tsVelP,ctx->maxtimestep,ctx->maxtimevalue);CHKERRQ(ierr);
 //	ierr = FormInitialSolution(fields->VelnPress,fields->FlowBCArray,&ctx->bcFlow[0],ctx);CHKERRQ(ierr);
-	ierr = TSMonitorSet(ctx->tsVelP,MixedFEMTSMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+//	if (ctx->verbose > 1) {
+		ierr = TSMonitorSet(ctx->tsVelP,MixedFEMTSMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+//	}	
 	ierr = TSSetFromOptions(ctx->tsVelP);CHKERRQ(ierr);	
     ierr = TSSolve(ctx->tsVelP,fields->VelnPress,&ctx->timevalue);CHKERRQ(ierr);
     ierr = TSGetTimeStepNumber(ctx->tsVelP,&ctx->timestep);CHKERRQ(ierr);
+	ierr = TSGetConvergedReason(ctx->tsVelP,&reason);CHKERRQ(ierr);
+//	 PetscPrintf(PETSC_COMM_WORLD,"%s at time %G after %D steps\n",TSConvergedReasons[reason],ctx->timevalue,ctx->timestep);
+/*
+	if (reason < 0) {
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] tsVelP diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+	} else {
+		ierr = TSGetIterationNumber(ctx->snesVelP,&its);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"      tsVelP converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+	}
+ */
+	ierr = VecMin(fields->VelnPress,PETSC_NULL,&VelPmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->VelnPress,PETSC_NULL,&VelPmax);CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      VelP min / max:     %e %e\n",VelPmin,VelPmax);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
