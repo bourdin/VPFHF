@@ -2051,11 +2051,11 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Umin = %g, Umax = %g\n",Umin,Umax);CHKERRQ(ierr);
   }
   
-  ierr = SNESGetConvergedReason(ctx->kspU,&reason);CHKERRQ(ierr);
+  ierr = SNESGetConvergedReason(ctx->snesU,&reason);CHKERRQ(ierr);
   if (reason < 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
   } else {
-    ierr = SNESGetIterationNumber(ctx->kspU,&its);CHKERRQ(ierr);
+    ierr = SNESGetIterationNumber(ctx->snesU,&its);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
   }
 
