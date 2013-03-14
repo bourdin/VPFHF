@@ -899,8 +899,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesV);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->VFunct);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject) ctx->VFunct,"V_Function");CHKERRQ(ierr);
-	
-	
 	if (comm_size == 1) {
 		ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->KV);CHKERRQ(ierr);
 		ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->JacV);CHKERRQ(ierr);
@@ -1134,7 +1132,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	char          filename[FILENAME_MAX];
 	PetscViewer   optionsviewer;
 	PetscInt      nopts;
-	
+
 	PetscFunctionBegin;
 	ierr = PetscFree(ctx->matprop);CHKERRQ(ierr);
 	ierr = PetscFree(ctx->layer);CHKERRQ(ierr);
@@ -1157,8 +1155,6 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = SNESDestroy(&ctx->snesU);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->JacU);CHKERRQ(ierr);
 	
-	
-	
 	ierr = KSPDestroy(&ctx->kspV);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->KV);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSV);CHKERRQ(ierr); 
@@ -1180,7 +1176,6 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = VecDestroy(&ctx->HeatFluxBCArray);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->Cond);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->TBCArray);CHKERRQ(ierr);
-	
 	
 	ierr = VecDestroy(&fields->U);CHKERRQ(ierr);
 	ierr = VecDestroy(&fields->BCU);CHKERRQ(ierr);
