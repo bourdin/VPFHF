@@ -95,39 +95,14 @@ extern PetscErrorCode VF_HeatFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	PetscInt           its;
 	PetscReal           Tmin,Tmax;
 	Vec					VecRHS;
-	PetscViewer        viewer;
-
 	
 	PetscFunctionBegin;	
 	ierr = VecCopy(fields->theta,ctx->prevT);CHKERRQ(ierr);	
 	ierr = VecDuplicate(ctx->RHST,&VecRHS);CHKERRQ(ierr);
 	ierr = FormHeatMatricesnVector(ctx->KT,ctx->KTlhs,ctx->RHST,ctx,fields);CHKERRQ(ierr);
-	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"JacMatrix1.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = MatView(ctx->KT,viewer);CHKERRQ(ierr);
-
-
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHST.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(ctx->RHST,viewer);CHKERRQ(ierr);
-
-	
 	ierr = VecCopy(ctx->RHST,VecRHS);CHKERRQ(ierr);
 	ierr = SNESSetFunction(ctx->snesT,ctx->HeatFunct,FormSNESHeatIFunction,ctx);CHKERRQ(ierr);
-    ierr = SNESSetJacobian(ctx->snesT,ctx->JacT,ctx->JacT,FormSNESHeatIJacobian,ctx);CHKERRQ(ierr);
-	
-	
-	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"JacMatrixKlhs.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = MatView(ctx->KTlhs,viewer);CHKERRQ(ierr);
-		
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(ctx->RHST,viewer);CHKERRQ(ierr);
-	
-	
+    ierr = SNESSetJacobian(ctx->snesT,ctx->JacT,ctx->JacT,FormSNESHeatIJacobian,ctx);CHKERRQ(ierr);	
 	if (ctx->verbose > 1) {
 		ierr = SNESMonitorSet(ctx->snesT,FEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	}	
@@ -142,19 +117,7 @@ extern PetscErrorCode VF_HeatFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = VecMin(fields->theta,PETSC_NULL,&Tmin);CHKERRQ(ierr);
 	ierr = VecMax(fields->theta,PETSC_NULL,&Tmax);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      T min / max:     %e %e\n",Tmin,Tmax);CHKERRQ(ierr);
-	ierr = VecCopy(VecRHS,ctx->RHSTpre);CHKERRQ(ierr);
-	
-	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS2.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(ctx->RHST,viewer);CHKERRQ(ierr);
-
-	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Solution.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(fields->theta,viewer);CHKERRQ(ierr);
-
-	
+	ierr = VecCopy(VecRHS,ctx->RHSTpre);CHKERRQ(ierr);	
 	ierr = VecDestroy(&VecRHS);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
@@ -176,13 +139,7 @@ extern PetscErrorCode FormSNESHeatIJacobian(SNES snes,Vec T,Mat *Jac,Mat *Jacpre
 	if (*Jac != *Jacpre) {
 		ierr = MatAssemblyBegin(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 		ierr = MatAssemblyEnd(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	}
-	
-	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"JacMatrixinside.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = MatView(*Jac,viewer);CHKERRQ(ierr);
-
+	}	
 	PetscFunctionReturn(0);
 }
 
@@ -197,54 +154,23 @@ extern PetscErrorCode FormSNESHeatIFunction(SNES snes,Vec T,Vec Func,void *user)
 	PetscReal		theta,timestepsize;
 	PetscReal		dt_dot_theta,dt_dot_one_minus_theta;
 	Vec             VecRHS;
-
-	PetscFunctionBegin;
-
 	
-	ierr = VecDuplicate(ctx->RHST,&VecRHS);CHKERRQ(ierr);
-	ierr = VecCopy(ctx->RHST,VecRHS);CHKERRQ(ierr);
-	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
-
+	PetscFunctionBegin;
 	timestepsize = ctx->flowprop.timestepsize;
 	theta = ctx->flowprop.theta;
 	dt_dot_theta = timestepsize*theta;
 	dt_dot_one_minus_theta = timestepsize*(1.-theta);
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS1inside.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(VecRHS,viewer);CHKERRQ(ierr);	
-
+	
+	ierr = VecDuplicate(ctx->RHST,&VecRHS);CHKERRQ(ierr);
+	ierr = VecCopy(ctx->RHST,VecRHS);CHKERRQ(ierr);
+	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
 	ierr = VecAXPBY(VecRHS,dt_dot_one_minus_theta,dt_dot_theta,ctx->RHSTpre);CHKERRQ(ierr);	
 	ierr = MatMultAdd(ctx->KTlhs,ctx->prevT,VecRHS,VecRHS);CHKERRQ(ierr);	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS2inside.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(VecRHS,viewer);CHKERRQ(ierr);	
-
 	ierr = VecApplyDirichletBC(VecRHS,ctx->TBCArray,&ctx->bcT[0]);CHKERRQ(ierr);
-	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS3inside.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(VecRHS,viewer);CHKERRQ(ierr);	
-		
 	ierr = MatMult(ctx->KT,T,Func);CHKERRQ(ierr);	
 	ierr = VecAXPY(Func,-1.0,VecRHS);CHKERRQ(ierr);
-	
-	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSFUNCTinside.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(Func,viewer);CHKERRQ(ierr);	
-	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSpreinside.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(ctx->RHSTpre,viewer);CHKERRQ(ierr);	
-
-	
-	
 	ierr = VecDestroy(&VecRHS);CHKERRQ(ierr);
-
 	PetscFunctionReturn(0);
-	
-	
-
 }
 
 #undef __FUNCT__
@@ -276,107 +202,76 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	Vec            heatsource_local;
 	Vec            vel_local;
 	PetscReal      ****vel_array;
-	
 	PetscReal		***fluxbc_array;
 	Vec				fluxbc_local;
-	
-	
-		//	Vec				rhoCp_eff_local;
+	/*	Vec				rhoCp_eff_local,rho_liq_local,Cp_liq_local,Cp_sol_local;	*/
 	PetscReal       rhoCp_eff_array;	
-		//	Vec				rho_liq_local;
 	PetscReal      rho_liq_array;
-		//	Vec				Cp_liq_local;
 	PetscReal      Cp_liq_array;
-		//	Vec				rho_sol_local;
 	PetscReal      rho_sol_array;
-		//	Vec				Cp_sol_local;
 	PetscReal      Cp_sol_array;
-	
-	
-	
-//	Mat			   M,Kk, N,C, BigK;
-
 	
 	PetscFunctionBegin;
 	
-	
-//	ierr = MatDuplicate(K,MAT_COPY_VALUES,&M);CHKERRQ(ierr);
-//	ierr = MatDuplicate(K,MAT_COPY_VALUES,&N);CHKERRQ(ierr);
-//	ierr = MatDuplicate(K,MAT_COPY_VALUES,&C);CHKERRQ(ierr);
-//	ierr = MatDuplicate(K,MAT_COPY_VALUES,&Kk);CHKERRQ(ierr);
-//	ierr = MatDuplicate(K,MAT_COPY_VALUES,&BigK);CHKERRQ(ierr);
-//	ierr = MatZeroEntries(M);CHKERRQ(ierr);
-//	ierr = MatZeroEntries(Kk);CHKERRQ(ierr);
-
-	
-	
 	flg = SAME_NONZERO_PATTERN;
 	timestepsize = ctx->flowprop.timestepsize;	
+	theta = ctx->flowprop.theta;
+	rho_liq_array = ctx->flowprop.rho;
+	Cp_liq_array = ctx->flowprop.Cp;
+	rho_sol_array = ctx->matprop[0].rho;
+	Cp_sol_array = ctx->matprop[0].Cp;
 	ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = MatZeroEntries(K);CHKERRQ(ierr);
 	ierr = MatZeroEntries(Klhs);CHKERRQ(ierr);
 	ierr = VecSet(RHS,0.);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-	
 	ierr = DMGetLocalVector(ctx->daScal,&RHS_localVec);CHKERRQ(ierr);
 	ierr = VecSet(RHS_localVec,0.);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,RHS_localVec,&RHS_array);CHKERRQ(ierr);	
 	
-	theta = ctx->flowprop.theta;
-	rho_liq_array = ctx->flowprop.rho;
-	Cp_liq_array = ctx->flowprop.Cp;
-	rho_sol_array = ctx->matprop[0].rho;
-	Cp_sol_array = ctx->matprop[0].Cp;
-	
-	
-		//	ierr = DMGetLocalVector(ctx->daScal,&rhoCp_eff_local);CHKERRQ(ierr);
-		//	ierr = DMGlobalToLocalBegin(ctx->daScal,,INSERT_VALUES,rhoCp_eff_local);CHKERRQ(ierr);
-		//	ierr = DMGlobalToLocalEnd(ctx->daScal,,INSERT_VALUES,rhoCp_eff_local);CHKERRQ(ierr);
-		//	ierr = DMDAVecGetArray(ctx->daScal,rhoCp_eff_local,&rhoCp_eff_array);CHKERRQ(ierr);
-	
-		//	ierr = DMGetLocalVector(ctx->daScal,&rho_liq_local);CHKERRQ(ierr);
-		//	ierr = DMGlobalToLocalBegin(ctx->daScal,,INSERT_VALUES,rho_liq_local);CHKERRQ(ierr);
-		//	ierr = DMGlobalToLocalEnd(ctx->daScal,,INSERT_VALUES,rho_liq_local);CHKERRQ(ierr);
-		//	ierr = DMDAVecGetArray(ctx->daScal,rho_liq_local,&rho_liq_array);CHKERRQ(ierr);
-	
-		//	ierr = DMGetLocalVector(ctx->daScal,&Cp_liq_local);CHKERRQ(ierr);
-		//	ierr = DMGlobalToLocalBegin(ctx->daScal,,INSERT_VALUES,Cp_liq_local);CHKERRQ(ierr);
-		//	ierr = DMGlobalToLocalEnd(ctx->daScal,,INSERT_VALUES,Cp_liq_local);CHKERRQ(ierr);
-		//	ierr = DMDAVecGetArray(ctx->daScal,Cp_liq_local,&Cp_liq_array);CHKERRQ(ierr);
-	
-		//	ierr = DMGetLocalVector(ctx->daScal,&rho_sol_local);CHKERRQ(ierr);
-		//	ierr = DMGlobalToLocalBegin(ctx->daScal,,INSERT_VALUES,rho_sol_local);CHKERRQ(ierr);
-		//	ierr = DMGlobalToLocalEnd(ctx->daScal,,INSERT_VALUES,rho_sol_local);CHKERRQ(ierr);
-		//	ierr = DMDAVecGetArray(ctx->daScal,rho_sol_local,&rho_sol_array);CHKERRQ(ierr);
-	
-		//	ierr = DMGetLocalVector(ctx->daScal,&Cp_sol_local);CHKERRQ(ierr);
-		//	ierr = DMGlobalToLocalBegin(ctx->daScal,,INSERT_VALUES,Cp_sol_local);CHKERRQ(ierr);
-		//	ierr = DMGlobalToLocalEnd(ctx->daScal,,INSERT_VALUES,Cp_sol_local);CHKERRQ(ierr);
-		//	ierr = DMDAVecGetArray(ctx->daScal,Cp_sol_local,&Cp_sol_array);CHKERRQ(ierr);
-	
-	
+	/*
+	 ierr = DMGetLocalVector(ctx->daScal,&rhoCp_eff_local);CHKERRQ(ierr);
+	 ierr = DMGlobalToLocalBegin(ctx->daScal,,INSERT_VALUES,rhoCp_eff_local);CHKERRQ(ierr);
+	 ierr = DMGlobalToLocalEnd(ctx->daScal,,INSERT_VALUES,rhoCp_eff_local);CHKERRQ(ierr);
+	 ierr = DMDAVecGetArray(ctx->daScal,rhoCp_eff_local,&rhoCp_eff_array);CHKERRQ(ierr);
+	 
+	 ierr = DMGetLocalVector(ctx->daScal,&rho_liq_local);CHKERRQ(ierr);
+	 ierr = DMGlobalToLocalBegin(ctx->daScal,,INSERT_VALUES,rho_liq_local);CHKERRQ(ierr);
+	 ierr = DMGlobalToLocalEnd(ctx->daScal,,INSERT_VALUES,rho_liq_local);CHKERRQ(ierr);
+	 ierr = DMDAVecGetArray(ctx->daScal,rho_liq_local,&rho_liq_array);CHKERRQ(ierr);
+	 
+	 ierr = DMGetLocalVector(ctx->daScal,&Cp_liq_local);CHKERRQ(ierr);
+	 ierr = DMGlobalToLocalBegin(ctx->daScal,,INSERT_VALUES,Cp_liq_local);CHKERRQ(ierr);
+	 ierr = DMGlobalToLocalEnd(ctx->daScal,,INSERT_VALUES,Cp_liq_local);CHKERRQ(ierr);
+	 ierr = DMDAVecGetArray(ctx->daScal,Cp_liq_local,&Cp_liq_array);CHKERRQ(ierr);
+	 
+	 ierr = DMGetLocalVector(ctx->daScal,&rho_sol_local);CHKERRQ(ierr);
+	 ierr = DMGlobalToLocalBegin(ctx->daScal,,INSERT_VALUES,rho_sol_local);CHKERRQ(
+	 ierr = DMGlobalToLocalEnd(ctx->daScal,,INSERT_VALUES,rho_sol_local);CHKERRQ(ierr);
+	 ierr = DMDAVecGetArray(ctx->daScal,rho_sol_local,&rho_sol_array);CHKERRQ(ierr);
+	 
+	 ierr = DMGetLocalVector(ctx->daScal,&Cp_sol_local);CHKERRQ(ierr);
+	 ierr = DMGlobalToLocalBegin(ctx->daScal,,INSERT_VALUES,Cp_sol_local);CHKERRQ(ierr);
+	 ierr = DMGlobalToLocalEnd(ctx->daScal,,INSERT_VALUES,Cp_sol_local);CHKERRQ(ierr);
+	 ierr = DMDAVecGetArray(ctx->daScal,Cp_sol_local,&Cp_sol_array);CHKERRQ(ierr);
+	 */
 	ierr = DMGetLocalVector(ctx->daScal,&fluxbc_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->HeatFluxBCArray,INSERT_VALUES,fluxbc_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->HeatFluxBCArray,INSERT_VALUES,fluxbc_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,fluxbc_local,&fluxbc_array);CHKERRQ(ierr); 
-	
-	
 	ierr = DMGetLocalVector(ctx->daScal,&heatsource_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->HeatSource,INSERT_VALUES,heatsource_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->HeatSource,INSERT_VALUES,heatsource_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,heatsource_local,&heatsource_array);CHKERRQ(ierr);
-	
 	ierr = DMGetLocalVector(ctx->daVFperm,&diffsvty_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalBegin(ctx->daVFperm,ctx->Cond,INSERT_VALUES,diffsvty_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daVFperm,ctx->Cond,INSERT_VALUES,diffsvty_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,diffsvty_local,&diffsvty_array);CHKERRQ(ierr);	
-	
 	ierr = DMGetLocalVector(ctx->daVect,&vel_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalBegin(ctx->daVect,fields->velocity,INSERT_VALUES,vel_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daVect,fields->velocity,INSERT_VALUES,vel_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,vel_local,&vel_array);CHKERRQ(ierr);	
-	
 	ierr = PetscMalloc5(nrow*nrow,PetscReal,&KM_local,
 						nrow*nrow,PetscReal,&KC_local,
 						nrow*nrow,PetscReal,&KD_local,
@@ -394,17 +289,12 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 				hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-					//				rhoCp_eff_array[ek][ej][ei]=rho_liq_array[ek][ej][ei]*Cp_liq_array[ek][ej][ei]+rho_liq_array[ek][ej][ei]*Cp_liq_array[ek][ej][ei];
-					//				for(c = 0; c < 6; c++){
-					//					diffsvty_array[ek][ej][ei][c] = diffsvty_arrays[ek][ej][ei]/rhoCp_eff_array[ek][ej][ei];
-					//				}
 				/*	Assembling the sub-Matrices	*/
 				rhoCp_eff_array=rho_liq_array*Cp_liq_array+rho_sol_array*Cp_sol_array;				
 				ierr = FLow_MatA(KM_local,&ctx->e3D,ek,ej,ei);CHKERRQ(ierr);
 				for (l = 0; l < nrow*nrow; l++) {
 					KM_local[l] = 2.0*KM_local[l];
 				}
-				
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -562,7 +452,6 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 			}
 		}
 	}
-	
 	ierr = MatAssemblyBegin(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -572,7 +461,6 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	ierr = MatAssemblyEnd(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-
 	ierr = DMDAVecRestoreArray(ctx->daScal,heatsource_local,&heatsource_array);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daScal,&heatsource_local);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,diffsvty_local,&diffsvty_array);CHKERRQ(ierr);
@@ -584,30 +472,24 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	ierr = DMLocalToGlobalEnd(ctx->daScal,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daScal,&RHS_localVec);CHKERRQ(ierr);	
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-		//	ierr = DMDAVecRestoreArray(ctx->daScal,rhoCp_eff_local,&rhoCp_eff_array);CHKERRQ(ierr);
-		//	ierr = DMRestoreLocalVector(ctx->daScal,&rhoCp_eff_local);CHKERRQ(ierr);
-		//	ierr = DMDAVecRestoreArray(ctx->daScal,rho_liq_local,&rho_liq_array);CHKERRQ(ierr);
-		//	ierr = DMRestoreLocalVector(ctx->daScal,&rho_liq_local);CHKERRQ(ierr);
-		//	ierr = DMDAVecRestoreArray(ctx->daScal,Cp_liq_local,&Cp_liq_array);CHKERRQ(ierr);
-		//	ierr = DMRestoreLocalVector(ctx->daScal,&Cp_liq_local);CHKERRQ(ierr);
-		//	ierr = DMDAVecRestoreArray(ctx->daScal,rho_sol_local,&rho_sol_array);CHKERRQ(ierr);
-		//	ierr = DMRestoreLocalVector(ctx->daScal,&rho_sol_local);CHKERRQ(ierr);
-		//	ierr = DMDAVecRestoreArray(ctx->daScal,Cp_sol_local,&Cp_sol_array);CHKERRQ(ierr);
-		//	ierr = DMRestoreLocalVector(ctx->daScal,&Cp_sol_local);CHKERRQ(ierr);
+	/*		
+	 ierr = DMDAVecRestoreArray(ctx->daScal,rhoCp_eff_local,&rhoCp_eff_array);CHKERRQ(ierr);
+	 ierr = DMRestoreLocalVector(ctx->daScal,&rhoCp_eff_local);CHKERRQ(ierr);
+	 ierr = DMDAVecRestoreArray(ctx->daScal,rho_liq_local,&rho_liq_array);CHKERRQ(ierr);
+	 ierr = DMRestoreLocalVector(ctx->daScal,&rho_liq_local);CHKERRQ(ierr);
+	 ierr = DMDAVecRestoreArray(ctx->daScal,Cp_liq_local,&Cp_liq_array);CHKERRQ(ierr);
+	 ierr = DMRestoreLocalVector(ctx->daScal,&Cp_liq_local);CHKERRQ(ierr);
+	 ierr = DMDAVecRestoreArray(ctx->daScal,rho_sol_local,&rho_sol_array);CHKERRQ(ierr);
+	 ierr = DMRestoreLocalVector(ctx->daScal,&rho_sol_local);CHKERRQ(ierr);
+	 ierr = DMDAVecRestoreArray(ctx->daScal,Cp_sol_local,&Cp_sol_array);CHKERRQ(ierr);
+	 ierr = DMRestoreLocalVector(ctx->daScal,&Cp_sol_local);CHKERRQ(ierr);
+	 */	
 	ierr = DMDAVecRestoreArray(ctx->daScal,fluxbc_local,&fluxbc_array);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daScal,&fluxbc_local);CHKERRQ(ierr);
-	
-	
-	
-	
-	PetscViewer        viewer;
 	ierr = PetscFree5(KM_local,KC_local,KD_local,K1_local,K2_local);CHKERRQ(ierr);
 	ierr = PetscFree5(KN_local,KS_local,RHS_local,RHS1_local,row);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
-
-
-
 
 #undef __FUNCT__
 #define __FUNCT__ "FLow_HMatD"
@@ -618,9 +500,7 @@ extern PetscErrorCode FLow_HMatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt 
 	PetscInt  ii,jj,kk;
 	PetscInt  eg;
 	PetscReal kx,ky,kz,kxy,kxz,kyz;	
-
 	
-
 	PetscFunctionBegin;
 	kx     = diffsvty_array[ek][ej][ei][0];
 	ky     = diffsvty_array[ek][ej][ei][1];
@@ -628,10 +508,6 @@ extern PetscErrorCode FLow_HMatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt 
 	kxy    = diffsvty_array[ek][ej][ei][3];
 	kxz    = diffsvty_array[ek][ej][ei][4];
 	kyz    = diffsvty_array[ek][ej][ei][5];
-	
-//	ierr = PetscPrintf(PETSC_COMM_WORLD,"%g,%g,%g,%g,%g,%g \n",kx,ky,kz,kxy,kxz,kyz);CHKERRQ(ierr);
-
-	
 	for (l = 0,k = 0; k < e->nphiz; k++) {
 		for (j = 0; j < e->nphiy; j++) {
 			for (i = 0; i < e->nphix; i++) {
@@ -640,10 +516,9 @@ extern PetscErrorCode FLow_HMatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt 
 						for (ii = 0; ii < e->nphix; ii++,l++) {
 							Kd_ele[l] = 0.;
 							for (eg = 0; eg < e->ng; eg++) {
-								/* Need to multiply by the permability when it is available*/
 								Kd_ele[l] += ((kx*e->dphi[k][j][i][0][eg]+kxy*e->dphi[k][j][i][1][eg]+kxz*e->dphi[k][j][i][2][eg])*e->dphi[kk][jj][ii][0][eg]
-								 +(kxy*e->dphi[k][j][i][0][eg]+ky*e->dphi[k][j][i][1][eg]+kyz*e->dphi[k][j][i][2][eg])*e->dphi[kk][jj][ii][1][eg]
-								 +(kxz*e->dphi[k][j][i][0][eg]+kyz*e->dphi[k][j][i][1][eg]+kz*e->dphi[k][j][i][2][eg])*e->dphi[kk][jj][ii][2][eg])*e->weight[eg];
+											  +(kxy*e->dphi[k][j][i][0][eg]+ky*e->dphi[k][j][i][1][eg]+kyz*e->dphi[k][j][i][2][eg])*e->dphi[kk][jj][ii][1][eg]
+											  +(kxz*e->dphi[k][j][i][0][eg]+kyz*e->dphi[k][j][i][1][eg]+kz*e->dphi[k][j][i][2][eg])*e->dphi[kk][jj][ii][2][eg])*e->weight[eg];
 							}
 						}
 					}
@@ -651,11 +526,6 @@ extern PetscErrorCode FLow_HMatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt 
 			}
 		}
 	}
-	
-	for (l = 0; l < 64; l++) {
-//		ierr = PetscPrintf(PETSC_COMM_WORLD,"l = %d Kd_ele[%d] = %e \n",l,Kd_ele[l]);CHKERRQ(ierr);
-	}
-	
 	PetscFunctionReturn(0);
 }
 
@@ -921,29 +791,18 @@ extern PetscErrorCode VecApplyHeatSourceTerms(PetscReal *K1_local,PetscReal *K2_
 			}
 		}
 	}
-	
-	for (eg = 0; eg < e->ng; eg++) {
-//		ierr = PetscPrintf(PETSC_COMM_WORLD," loc_source[%d] = %g, dsource_dx_loc[%d] = %g  \n",eg, loc_source[l], eg, dsource_dx_loc[l]);CHKERRQ(ierr);
-	}
-
-		for (l = 0,k = 0; k < e->nphiz; k++) {
-			for (j = 0; j < e->nphiy; j++) {
-				for (i = 0; i < e->nphix; i++,l++) {
-					K1_local[l] = 0.;
-					K2_local[l] = 0.;
-					for (eg = 0; eg < e->ng; eg++) {
-						K1_local[l] += loc_source[eg]*e->phi[k][j][i][eg]*e->weight[eg];
-						K2_local[l] += (velx_loc[eg]*dsource_dx_loc[eg]+vely_loc[eg]*dsource_dy_loc[eg]+velz_loc[eg]*dsource_dz_loc[eg])*e->phi[k][j][i][eg]*e->weight[eg];
-					}
-//					ierr = PetscPrintf(PETSC_COMM_WORLD,"l = %d, K1[%d] = %e, K2[%d] = %e  \n",l, l, K1_local[l], l, K2_local[l]);CHKERRQ(ierr);
-
+	for (l = 0,k = 0; k < e->nphiz; k++) {
+		for (j = 0; j < e->nphiy; j++) {
+			for (i = 0; i < e->nphix; i++,l++) {
+				K1_local[l] = 0.;
+				K2_local[l] = 0.;
+				for (eg = 0; eg < e->ng; eg++) {
+					K1_local[l] += loc_source[eg]*e->phi[k][j][i][eg]*e->weight[eg];
+					K2_local[l] += (velx_loc[eg]*dsource_dx_loc[eg]+vely_loc[eg]*dsource_dy_loc[eg]+velz_loc[eg]*dsource_dz_loc[eg])*e->phi[k][j][i][eg]*e->weight[eg];
 				}
 			}
 		}
-	
-//	for (l = 0; l < 8; l++) {
-//		ierr = PetscPrintf(PETSC_COMM_WORLD,"l = %d, K1[%d] = %e, K2[%d] = %e  \n",l, l, K1_local[l], l, K2_local[l]);CHKERRQ(ierr);
-//	}
+	}
 	PetscFree(loc_source);
 	ierr = PetscFree3(velx_loc,vely_loc,velz_loc);CHKERRQ(ierr);
 	ierr = PetscFree4(loc_source,dsource_dx_loc,dsource_dy_loc,dsource_dz_loc);CHKERRQ(ierr);
@@ -962,6 +821,7 @@ extern PetscErrorCode HeatMatC(PetscReal *KC_ele,CartFE_Element3D *e,PetscInt ek
 	PetscReal		*vely_loc;
 	PetscReal		*velz_loc;  
 	PetscFunctionBegin;
+	
 	ierr = PetscMalloc3(e->ng,PetscReal,&velx_loc,e->ng,PetscReal,&vely_loc,e->ng,PetscReal,&velz_loc);CHKERRQ(ierr);
 	for (eg = 0; eg < e->ng; eg++){
 		velx_loc[eg] = 0.;
