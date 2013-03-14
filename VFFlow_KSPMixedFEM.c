@@ -16,7 +16,7 @@
 
 /*
  MixedFlowFEMKSPSolve
-*/
+ */
 #undef __FUNCT__
 #define __FUNCT__ "MixedFlowFEMKSPSolve"
 extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields)
@@ -36,6 +36,7 @@ extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields)
 	PetscReal			theta,one_minus_theta,timestepsize;
 	PetscReal			dt_dot_theta,dt_dot_one_minus_theta;
 	Vec                vec;
+	PetscReal           VelPmin,VelPmax;
 
 	PetscFunctionBegin;
 	timestepsize = ctx->flowprop.timestepsize;
@@ -61,34 +62,34 @@ extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields)
 	ierr = DMRestoreLocalVector(ctx->daVect,&velbc_local);CHKERRQ(ierr);
 	ierr = KSPMonitorSet(ctx->kspVelP,MixedFEMKSPMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = KSPSolve(ctx->kspVelP,VecRHS,fields->VelnPress);CHKERRQ(ierr);
-
-/*
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSvec.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(vec,viewer);CHKERRQ(ierr);
-
-
+	
+	/*
+	 ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSvec.txt",&viewer);CHKERRQ(ierr);
+	 ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	 ierr = VecView(vec,viewer);CHKERRQ(ierr);
+	 
+	 
 	 ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrix.txt",&viewer);CHKERRQ(ierr);
 	 ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
 	 ierr = MatView(ctx->KVelP,viewer);CHKERRQ(ierr);
-
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrixlhs.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = MatView(ctx->KVelPlhs,viewer);CHKERRQ(ierr);
-	
+	 
+	 ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrixlhs.txt",&viewer);CHKERRQ(ierr);
+	 ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	 ierr = MatView(ctx->KVelPlhs,viewer);CHKERRQ(ierr);
+	 
 	 ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS.txt",&viewer);CHKERRQ(ierr);
 	 ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
 	 ierr = VecView(VecRHS,viewer);CHKERRQ(ierr);
-
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSor.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(ctx->RHSVelP,viewer);CHKERRQ(ierr);
-
-	
+	 
+	 ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSor.txt",&viewer);CHKERRQ(ierr);
+	 ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	 ierr = VecView(ctx->RHSVelP,viewer);CHKERRQ(ierr);
+	 
+	 
 	 ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Solution.txt",&viewer);CHKERRQ(ierr);
 	 ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
 	 ierr = VecView(fields->VelnPress,viewer);CHKERRQ(ierr);
- */	
+	 */	
 	ierr = KSPGetConvergedReason(ctx->kspVelP,&reason);CHKERRQ(ierr);
 	if (reason < 0) {
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] kspVelP diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
@@ -281,7 +282,7 @@ extern PetscErrorCode VecApplyVelocityBC(Vec RHS,BC *bcQ,VFCtx *ctx, PetscReal *
 				for (k = zs; k < zs+zm; k++) {
 					for (i = xs; i < xs+xm; i++) {
 						RHS_array[k][j][i][c] = velbc_array[k][j][i][c];
-
+						
 					}
 				}
 			}
@@ -530,7 +531,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 	Vec				prebc_local;
 	MatStructure	flg;
 	PetscReal		hwx, hwy, hwz;	
-
+	
 	PetscFunctionBegin;
 	flg = SAME_NONZERO_PATTERN;
 	M_inv     = ctx->flowprop.M_inv;
@@ -646,7 +647,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 					}
 				}
 				if (ei == 0) {
-/*					 Face X0			*/
+					/*					 Face X0			*/
 					face = X0;	
 					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == VALUE) {
@@ -661,7 +662,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 					}
 				}
 				if (ei == nx-1) {
-/*					 Face X1		*/
+					/*					 Face X1		*/
 					face = X1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == VALUE) {
@@ -676,7 +677,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 					}
 				}				
 				if (ej == 0) {
-/*					 Face Y0		*/
+					/*					 Face Y0		*/
 					face = Y0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == VALUE) {
@@ -691,7 +692,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 					}
 				}
 				if (ej == ny-1) {
-/*					 Face Y1		*/
+					/*					 Face Y1		*/
 					face = Y1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == VALUE) {
@@ -706,7 +707,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 					}
 				}
 				if (ek == 0) {
-/*					 Face Z0		*/
+					/*					 Face Z0		*/
 					face = Z0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == VALUE) {
@@ -721,7 +722,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
 					}
 				}
 				if (ek == nz-1) {
-/*					 Face Z1		*/
+					/*					 Face Z1		*/
 					face = Z1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == VALUE) {
@@ -854,7 +855,7 @@ extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_a
 	PetscReal      *pre_elem;
 	PetscReal		beta_c,mu;
 	PetscReal		kx,ky,kz;
-
+	
 	PetscFunctionBegin;
 	beta_c  = flowpropty.beta;
 	mu      = flowpropty.mu;
@@ -875,7 +876,7 @@ extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_a
 					}
 				}
 			}
-/*			Accumulate		*/
+			/*			Accumulate		*/
 			for (l=0,k = 0; k < e->nphix; k++) {
 				for (j = 0; j < e->nphiy; j++) {
 					for (i = 0; i < e->nphiz; i++, l++) {
@@ -898,7 +899,7 @@ extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_a
 					}
 				}
 			}
-/*			Accumulate		*/
+			/*			Accumulate		*/
 			for (l=0,k = 0; k < e->nphix; k++) {
 				for (j = 0; j < e->nphiy; j++) {
 					for (i = 0; i < e->nphiz; i++, l++) {
@@ -921,7 +922,7 @@ extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_a
 					}
 				}
 			}
-/*			Accumulate		*/
+			/*			Accumulate		*/
 			for (l=0,k = 0; k < e->nphiy; k++) {
 				for (j = 0; j < e->nphiz; j++) {
 					for (i = 0; i < e->nphix; i++, l++) {
@@ -944,7 +945,7 @@ extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_a
 					}
 				}
 			}
-/*			Accumulate		*/
+			/*			Accumulate		*/
 			for (l=0,k = 0; k < e->nphiy; k++) {
 				for (j = 0; j < e->nphiz; j++) {
 					for (i = 0; i < e->nphix; i++, l++) {
@@ -967,7 +968,7 @@ extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_a
 					}
 				}
 			}
-/*			Accumulate		*/
+			/*			Accumulate		*/
 			for (l=0,k = 0; k < e->nphiz; k++) {
 				for (j = 0; j < e->nphiy; j++) {
 					for (i = 0; i < e->nphix; i++, l++) {
@@ -990,7 +991,7 @@ extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_a
 					}
 				}
 			}
-/*			Accumulate		*/
+			/*			Accumulate		*/
 			for (l=0,k = 0; k < e->nphiz; k++) {
 				for (j = 0; j < e->nphiy; j++) {
 					for (i = 0; i < e->nphix; i++, l++) {
@@ -1158,7 +1159,7 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,BC *bcQ)
 		
 	}
 	ierr = MatZeroRowsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-//	ierr = MatZeroRowsStencil(Klhs,numBC,row,zero,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+		//	ierr = MatZeroRowsStencil(Klhs,numBC,row,zero,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscFree(row);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
@@ -1447,14 +1448,14 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	PetscMPIInt    comm_size;
 	PetscErrorCode ierr;
 	MatStructure flg;
-
+	
 	PetscFunctionBegin;
 	ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
 	{
 		ctx->units    = UnitaryUnits;
 		ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",FlowUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
 		/*	ctx->flowcase = ALLPRESSUREBC; */
-//		ctx->flowcase = ALLNORMALFLOWBC;
+			//		ctx->flowcase = ALLNORMALFLOWBC;
 		ierr          = PetscOptionsEnum("-flow boundary conditions","\n\tFlow solver","",FlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
 	}
 	ierr = PetscOptionsEnd();CHKERRQ(ierr);	
@@ -1484,39 +1485,39 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	ierr = KSPGetPC(ctx->kspVelP,&ctx->pcVelP);CHKERRQ(ierr);
 	ierr = PCSetType(ctx->pcVelP,PCJACOBI);CHKERRQ(ierr);
 	ierr = PCSetFromOptions(ctx->pcVelP);CHKERRQ(ierr);
-
-/*
-	ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspVelP);CHKERRQ(ierr);	
-	ierr = KSPSetTolerances(ctx->kspVelP,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
-	ierr = KSPSetOperators(ctx->kspVelP,ctx->KVelP,ctx->KVelP,flg);CHKERRQ(ierr);
-	ierr = KSPSetInitialGuessNonzero(ctx->kspVelP,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = KSPAppendOptionsPrefix(ctx->kspVelP,"VelP_");CHKERRQ(ierr);
-	ierr = KSPSetType(ctx->kspVelP,KSPFGMRES);CHKERRQ(ierr);
-	ierr = KSPGetPC(ctx->kspVelP,&ctx->pcVelP);CHKERRQ(ierr);
-	const PetscInt ufields[] = {0,1,2},pfields[] = {3};
-	ierr = PCSetType(ctx->pcVelP,PCFIELDSPLIT);CHKERRQ(ierr);
-	ierr = PCFieldSplitSetBlockSize(ctx->pcVelP,4);
-	ierr = PCFieldSplitSetFields(ctx->pcVelP,"u",3,ufields,ufields);CHKERRQ(ierr);
-	ierr = PCFieldSplitSetFields(ctx->pcVelP,"p",1,pfields,pfields);CHKERRQ(ierr);
-	ierr = PetscOptionsSetValue("-VelP_fieldsplit_u_pc_type","mg");CHKERRQ(ierr); //mg is a type of SOR (see -VelP_ksp_view)
-	ierr = PetscOptionsSetValue("-VelP_fieldsplit_p_pc_type","none");CHKERRQ(ierr);
-	ierr = PetscOptionsSetValue("-VelP_fieldsplit_u_ksp_type","bcgsl");CHKERRQ(ierr);
-	ierr = PetscOptionsSetValue("-VelP_fieldsplit_p_ksp_type","fgmres");CHKERRQ(ierr);
-	ierr = PetscOptionsSetValue("-VelP_pc_fieldsplit_type","schur");CHKERRQ(ierr);
-	ierr = PetscOptionsSetValue("-VelP_ksp_atol","5e-9");CHKERRQ(ierr);
-	ierr = PetscOptionsSetValue("-VelP_ksp_rtol","5e-9");CHKERRQ(ierr);
-//	ierr = PetscOptionsSetValue("-VelP_pc_ﬁeldsplit_schur_precondition","self");CHKERRQ(ierr);
-	ierr = PetscOptionsSetValue("-VelP_pc_fieldsplit_detect_saddle_point","true");CHKERRQ(ierr);
-	ierr = PCSetFromOptions(ctx->pcVelP);CHKERRQ(ierr);
-	ierr = KSPSetFromOptions(ctx->kspVelP);CHKERRQ(ierr);
-*/
+	
+	/*
+	 ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspVelP);CHKERRQ(ierr);	
+	 ierr = KSPSetTolerances(ctx->kspVelP,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+	 ierr = KSPSetOperators(ctx->kspVelP,ctx->KVelP,ctx->KVelP,flg);CHKERRQ(ierr);
+	 ierr = KSPSetInitialGuessNonzero(ctx->kspVelP,PETSC_TRUE);CHKERRQ(ierr);
+	 ierr = KSPAppendOptionsPrefix(ctx->kspVelP,"VelP_");CHKERRQ(ierr);
+	 ierr = KSPSetType(ctx->kspVelP,KSPFGMRES);CHKERRQ(ierr);
+	 ierr = KSPGetPC(ctx->kspVelP,&ctx->pcVelP);CHKERRQ(ierr);
+	 const PetscInt ufields[] = {0,1,2},pfields[] = {3};
+	 ierr = PCSetType(ctx->pcVelP,PCFIELDSPLIT);CHKERRQ(ierr);
+	 ierr = PCFieldSplitSetBlockSize(ctx->pcVelP,4);
+	 ierr = PCFieldSplitSetFields(ctx->pcVelP,"u",3,ufields,ufields);CHKERRQ(ierr);
+	 ierr = PCFieldSplitSetFields(ctx->pcVelP,"p",1,pfields,pfields);CHKERRQ(ierr);
+	 ierr = PetscOptionsSetValue("-VelP_fieldsplit_u_pc_type","mg");CHKERRQ(ierr); //mg is a type of SOR (see -VelP_ksp_view)
+	 ierr = PetscOptionsSetValue("-VelP_fieldsplit_p_pc_type","none");CHKERRQ(ierr);
+	 ierr = PetscOptionsSetValue("-VelP_fieldsplit_u_ksp_type","bcgsl");CHKERRQ(ierr);
+	 ierr = PetscOptionsSetValue("-VelP_fieldsplit_p_ksp_type","fgmres");CHKERRQ(ierr);
+	 ierr = PetscOptionsSetValue("-VelP_pc_fieldsplit_type","schur");CHKERRQ(ierr);
+	 ierr = PetscOptionsSetValue("-VelP_ksp_atol","5e-9");CHKERRQ(ierr);
+	 ierr = PetscOptionsSetValue("-VelP_ksp_rtol","5e-9");CHKERRQ(ierr);
+	 //	ierr = PetscOptionsSetValue("-VelP_pc_ﬁeldsplit_schur_precondition","self");CHKERRQ(ierr);
+	 ierr = PetscOptionsSetValue("-VelP_pc_fieldsplit_detect_saddle_point","true");CHKERRQ(ierr);
+	 ierr = PCSetFromOptions(ctx->pcVelP);CHKERRQ(ierr);
+	 ierr = KSPSetFromOptions(ctx->kspVelP);CHKERRQ(ierr);
+	 */
 	ierr = BCPInit(&ctx->bcP[0],ctx);
 	ierr = BCQInit(&ctx->bcQ[0],ctx);
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-//	ierr = ReSETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
+		//	ierr = ReSETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
 	ierr = ReSETSourceTerms(ctx->Source,ctx->flowprop);		
 	ierr = ReSETBoundaryTerms(ctx,fields);CHKERRQ(ierr);
-//	ierr = FormInitialSolution(fields->VelnPress,fields->FlowBCArray,&ctx->bcFlow[0],ctx);CHKERRQ(ierr);
+		//	ierr = FormInitialSolution(fields->VelnPress,fields->FlowBCArray,&ctx->bcFlow[0],ctx);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
@@ -1552,6 +1553,7 @@ extern PetscErrorCode GetFlowProp(FlowProp *flowprop,FlowUnit flowunit,ResProp r
 			flowprop->g[0]  = 0.;                     /*x-component of gravity. unit is ft/s^2*/
 			flowprop->g[1]  = 0.;                     /*y-component of gravity. unit is ft/s^2*/
 			flowprop->g[2]  = 0.;                     /* 32.17;									/ *z-component of gravity. unit is ft/s^2* / */
+			flowprop->Cp = 1.;                      /*Liquid specific heat capacity*/
 			break;
 		case FieldUnits: 
 			flowprop->mu = resprop.visc;				  /* viscosity in cp */ 
@@ -1563,6 +1565,7 @@ extern PetscErrorCode GetFlowProp(FlowProp *flowprop,FlowUnit flowunit,ResProp r
 			flowprop->g[0] = 0.;									/* x-componenet of gravity. unit is ft/s^2 */ 
 			flowprop->g[1] = 0.;									/* y-component of gravity. unit is ft/s^2 */ 
 			flowprop->g[2] = 0.;//32.17;					/* z-component of gravity. unit is ft/s^2 */ 
+			flowprop->Cp = 1.;                      /*Liquid specific heat capacity*/
 			break; 
 		case MetricUnits:
 			flowprop->mu    = 0.001*resprop.visc;     /*viscosity in Pa.s*/
@@ -1574,8 +1577,8 @@ extern PetscErrorCode GetFlowProp(FlowProp *flowprop,FlowUnit flowunit,ResProp r
 			flowprop->g[0]  = 0.;                     /*x-component of gravity. unit is m/s^2*/
 			flowprop->g[1]  = 0.;                     /*y-component of gravity. unit is m/s^2*/
 			flowprop->g[2]  = 9.81;                   /*z-component of gravity. unit is m/s^2*/
+			flowprop->Cp = 1.;                      /*Liquid specific heat capacity*/
 			break;
-			
 		default:
 			SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: [%s] unknown FLOWCASE %i .\n",__FUNCT__,flowunit);
 			break;
