@@ -1,19 +1,18 @@
 /*
-   VFHeat.h
-   Generic interface to flow solvers
-
-     (c) 2010-2012 Blaise Bourdin, LSU. bourdin@lsu.edu
-                    Keita Yoshioka, Chevron ETC
-*/
+ VFHeat.h
+ Generic interface to heat solvers
+ 
+ (c) 2011-2013 C. Chukwudozie, LSU
+ */
 
 #ifndef VFHEAT_H
 #define VFHEAT_H
 
 extern PetscErrorCode BCTInit(BC *BCT,VFCtx *ctx);
-extern PetscErrorCode HeatSolverFinalize(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode HeatSolverInitialize(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode BCQQInit(BC *BCq,VFCtx *ctx);
-extern PetscErrorCode VFHeatTimeStep(VFCtx *ctx,VFFields *fields);
+extern PetscErrorCode BCQTInit(BC *BCQT,VFCtx *ctx);
+extern PetscErrorCode VF_HeatSolverFinalize(VFCtx *ctx,VFFields *fields);
+extern PetscErrorCode VF_HeatSolverInitialize(VFCtx *ctx,VFFields *fields);
+extern PetscErrorCode VF_HeatTimeStep(VFCtx *ctx,VFFields *fields);
 
 
 

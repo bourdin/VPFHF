@@ -112,7 +112,9 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = VecCopy(fields->VelnPress,ctx->PreFlowFields);CHKERRQ(ierr);
 	ierr = SNESSetFunction(ctx->snesVelP,ctx->FlowFunct,FormSNESIFunction,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesVelP,ctx->JacVelP,ctx->JacVelP,FormSNESIJacobian,ctx);CHKERRQ(ierr);
-	ierr = SNESMonitorSet(ctx->snesVelP,MixedFEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	if (ctx->verbose > 1) {
+		ierr = SNESMonitorSet(ctx->snesVelP,FEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	}	
     ierr = SNESSolve(ctx->snesVelP,PETSC_NULL,fields->VelnPress);CHKERRQ(ierr);
 	ierr = VecCopy(ctx->RHSVelP,ctx->RHSVelPpre);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -137,8 +139,8 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 }
 
 #undef __FUNCT__  
-#define __FUNCT__ "MixedFEMSNESMonitor"
-extern PetscErrorCode MixedFEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr)
+#define __FUNCT__ "FEMSNESMonitor"
+extern PetscErrorCode FEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr)
 {
 	PetscErrorCode ierr;
 	PetscReal      norm,vmax,vmin;
