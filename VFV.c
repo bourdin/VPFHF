@@ -699,7 +699,7 @@ extern PetscErrorCode VF_IrrevApplyEQ(Mat K,Vec RHS,Vec V,Vec VIrrev,VFProp *vfp
 extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode      ierr;
-  SNESConvergedReason  reason;
+  SNESConvergedReason reason;
   PetscInt            its;
   PetscReal           Vmin,Vmax;
   
@@ -713,16 +713,15 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
   if (ctx->verbose > 1) {
     ierr = VecView(ctx->RHSV,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
     ierr = VecView(fields->U,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-    
-    //ierr = MatView(ctx->KV,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+    ierr = MatView(ctx->KV,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
-	ierr = SNESSetFunction(ctx->snesV,ctx->VFunct,VF_VFunction,ctx);CHKERRQ(ierr);
-    ierr = SNESSetJacobian(ctx->snesV,ctx->JacV,ctx->JacV,VF_VIJacobian,ctx);CHKERRQ(ierr);
+	ierr = SNESSetFunction(ctx->snesV,ctx->VResidual,VF_VResidual,ctx);CHKERRQ(ierr);
+  ierr = SNESSetJacobian(ctx->snesV,ctx->JacV,ctx->JacV,VF_VIJacobian,ctx);CHKERRQ(ierr);
 	if (ctx->verbose > 1) {
-		ierr = SNESMonitorSet(ctx->snesVelP,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+		ierr = SNESMonitorSet(ctx->snesV,VF_VSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	}
-    ierr = SNESSolve(ctx->snesV,PETSC_NULL,fields->V);CHKERRQ(ierr);
-		//ierr = PetscLogStagePush(ctx->vflog.VF_VSolverStage);CHKERRQ(ierr);
+  ierr = SNESSolve(ctx->snesV,PETSC_NULL,fields->V);CHKERRQ(ierr);
+  //ierr = PetscLogStagePush(ctx->vflog.VF_VSolverStage);CHKERRQ(ierr);
 	if (ctx->verbose > 1) {
 		ierr = VecView(fields->V,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 	}
@@ -738,27 +737,12 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
 	ierr = VecMin(fields->V,PETSC_NULL,&Vmin);CHKERRQ(ierr);
 	ierr = VecMax(fields->V,PETSC_NULL,&Vmax);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      V min / max:     %e %e\n",Vmin,Vmax);CHKERRQ(ierr);
-	if (Vmin < -.5 || Vmax > 1.5) {
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] V is not in or near (0,1). Is EPSILON of the order of h?\n");CHKERRQ(ierr);  
-	}	
-  /*
-    Temporarily adding truncation
-  */
-  Vec                 V0,V1;
-  ierr = DMGetGlobalVector(ctx->daScal,&V0);CHKERRQ(ierr);
-  ierr = VecSet(V0,0.0);CHKERRQ(ierr);
-  ierr = DMGetGlobalVector(ctx->daScal,&V1);CHKERRQ(ierr);
-  ierr = VecSet(V1,1.0);CHKERRQ(ierr);
-  ierr = VecPointwiseMax(fields->V,fields->V,V0);CHKERRQ(ierr);
-  ierr = VecPointwiseMin(fields->V,fields->V,V1);CHKERRQ(ierr);
-  ierr = DMRestoreGlobalVector(ctx->daScal,&V0);CHKERRQ(ierr);
-  ierr = DMRestoreGlobalVector(ctx->daScal,&V1);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_VFunction"
-extern PetscErrorCode VF_VFunction(SNES snes,Vec V,Vec Func,void *user)
+#define __FUNCT__ "VF_VResidual"
+extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec Func,void *user)
 {
 	PetscErrorCode ierr;
 	VFCtx			*ctx=(VFCtx*)user;
