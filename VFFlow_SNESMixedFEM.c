@@ -115,7 +115,7 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = SNESSetFunction(ctx->snesVelP,ctx->FlowFunct,FormSNESIFunction,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesVelP,ctx->JacVelP,ctx->JacVelP,FormSNESIJacobian,ctx);CHKERRQ(ierr);
 	if (ctx->verbose > 1) {
-		ierr = SNESMonitorSet(ctx->snesVelP,MixedFEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+		ierr = SNESMonitorSet(ctx->snesVelP,FEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	}	
     ierr = SNESSolve(ctx->snesVelP,PETSC_NULL,fields->VelnPress);CHKERRQ(ierr);
 	ierr = SNESGetConvergedReason(ctx->snesVelP,&reason);CHKERRQ(ierr);
