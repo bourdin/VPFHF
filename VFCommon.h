@@ -324,81 +324,80 @@ typedef struct {
 } VFLog;
 
 typedef struct {
-	PetscBool           printhelp;
-	PetscInt            nlayer;
-	PetscReal          *layersep;
-	PetscInt           *layer;         /* dim=nz+1. gives the layer number of a cell  */
-	BC                  bcU[3];
-	BC                  bcV[1];
-	BC                  bcP[1];
-	BC                  bcT[1];
-	DM                  daVect;
-	DM                  daScal;
-	CartFE_Element3D    e3D;
-	CartFE_Element2D    e2D;
-	char                prefix[PETSC_MAX_PATH_LEN];
-	Vec                 coordinates;
-	PetscInt            verbose;
-	VFPreset            preset;
-	Mat                 KU;
-	PC                  pcU;
-	KSP                 kspU;
+  PetscBool           printhelp;
+  PetscInt            nlayer;
+  PetscReal          *layersep;
+  PetscInt           *layer;         /* dim=nz+1. gives the layer number of a cell  */
+  BC                  bcU[3];
+  BC                  bcV[1];
+  BC                  bcP[1];
+  BC                  bcT[1];
+  Vec                 lbV,ubV;
+  DM                  daVect;
+  DM                  daScal;
+  CartFE_Element3D    e3D;
+  CartFE_Element2D    e2D;
+  char                prefix[PETSC_MAX_PATH_LEN];
+  Vec                 coordinates;
+  PetscInt            verbose;
+  VFPreset            preset;
+  Mat                 KU;
 	SNES                snesU;
 	SNES                snesV;
-	Vec                 UFunct;
-	Vec                 VFunct;
+	Vec                 UResidual;
+	Vec                 VResidual;
 	Mat                 JacU;
 	Mat                 JacV;
-	Vec                 RHSU;
-	MatNullSpace        nullspaceU;
-	Mat                 KV;
-	PC                  pcV;
-	KSP                 kspV;
-	Vec                 RHSV;
-	Mat                 KP;
-	Mat                 KPlhs;
-	Mat                 JacP;
-	TS                  tsP;
-	PC                  pcP;
-	KSP                 kspP;
-	Vec                 RHSP;
-	Vec                 PFunct;
-	Vec                 PresBC;
-	PetscReal           CrackVolume;
-	PetscReal           LeakOffRate;
-	/* 
-	 Global variables for Mixed Darcy Flow
-	 */
-	Mat                 KVelP;
-	PC                  pcVelP;
-	KSP                 kspVelP;
-	DM                  daFlow;
-	DM                  daVFperm;
-	FlowProp            flowprop;
-	Vec                 RHSVelP;
-	Vec                 RHSVelPpre;
-	FlowUnit            units;
-	FlowCases           flowcase;
-	Vec                 Source;
-	DM                  daScalCell;
-	Mat                 KVelPlhs;
-	Mat                 JacVelP;
-	TS                  tsVelP;
-	SNES                snesVelP;
-	Vec                 FlowFunct;
-	Vec                 PreFlowFields;
-	Vec                 Perm;
-	Vec                 FlowBC;
-	BC                  bcQ[3];
-	PetscBool           hasFlowWells;
-	PetscBool           hasFluidSources;
-	Vec                 VelBCArray;
-	Vec					PresBCArray;
-	/*
-	 Global Variables for Heat Transfer
-	 */ 
-	Mat                 KT;
-	Mat                 KTlhs;
+  Vec                 RHSU;
+  MatNullSpace        nullspaceU;
+  Mat                 KV;
+  Vec                 RHSV;
+  Mat                 KP;
+  Mat                 KPlhs;
+  Mat                 JacP;
+  TS                  tsP;
+  PC                  pcP;
+  KSP                 kspP;
+  Vec                 RHSP;
+  Vec                 PFunct;
+  Vec                 PresBC;
+  PetscReal           CrackVolume;
+  PetscReal           LeakOffRate;
+  /* 
+   Global variables for Mixed Darcy Flow
+   */
+  Mat                 KVelP;
+  PC                  pcVelP;
+  KSP                 kspVelP;
+  DM                  daFlow;
+  DM                  daVFperm;
+  FlowProp            flowprop;
+  Vec                 RHSVelP;
+  Vec                 RHSVelPpre;
+  FlowUnit            units;
+  FlowCases           flowcase;
+  Vec                 Source;
+  DM                  daScalCell;
+  Mat                 KVelPlhs;
+  Mat                 JacVelP;
+  TS                  tsVelP;
+  SNES                snesVelP;
+  Vec                 FlowFunct;
+  Vec                 PreFlowFields;
+  Vec                 Perm;
+  Vec                 FlowBC;
+  BC                  bcQ[3];
+  PetscBool           hasFlowWells;
+  PetscBool           hasFluidSources;
+  Vec                 VelBCArray;
+  Vec				  PresBCArray;
+
+  
+  /*
+   Global Variables for Heat Transfer
+   */ 
+  Mat                 KT;
+  Mat                 KTlhs;
 	PC                  pcT;
 	KSP                 kspT;
 	Mat                 JacT;

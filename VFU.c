@@ -1981,7 +1981,7 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   //ierr = MatNullSpaceTest(ctx->nullspaceU,ctx->KU,&flg);CHKERRQ(ierr);
   //ierr = MatNullSpaceRemove(ctx->nullspaceU,ctx->RHSU,PETSC_NULL);CHKERRQ(ierr);
   //ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n\n Null space test returned %i %i\n\n\n",flg,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = SNESSetFunction(ctx->snesU,ctx->UFunct,VF_UFunction,ctx);CHKERRQ(ierr);
+	ierr = SNESSetFunction(ctx->snesU,ctx->UResidual,VF_UResidual,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesU,ctx->JacU,ctx->JacU,VF_UIJacobian,ctx);CHKERRQ(ierr);
 	if (ctx->verbose > 1) {
 		ierr = SNESMonitorSet(ctx->snesVelP,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -2034,10 +2034,10 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
   }
   
   //ierr = PetscLogStagePush(ctx->vflog.VF_USolverStage);CHKERRQ(ierr);
-	ierr = SNESSetFunction(ctx->snesU,ctx->UFunct,VF_UFunction,ctx);CHKERRQ(ierr);
+	ierr = SNESSetFunction(ctx->snesU,ctx->UResidual,VF_UResidual,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesU,ctx->JacU,ctx->JacU,VF_UIJacobian,ctx);CHKERRQ(ierr);
-	if (ctx->verbose > 1) {
-		ierr = SNESMonitorSet(ctx->snesVelP,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	if (ctx->verbose > 0) {
+		ierr = SNESMonitorSet(ctx->snesU,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	}
     ierr = SNESSolve(ctx->snesU,PETSC_NULL,fields->BCU);CHKERRQ(ierr);
   //ierr = PetscLogStagePop();CHKERRQ(ierr);
@@ -2084,8 +2084,8 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_UFunction"
-extern PetscErrorCode VF_UFunction(SNES snes,Vec U,Vec Func,void *user)
+#define __FUNCT__ "VF_UResidual"
+extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec Func,void *user)
 {
 	PetscErrorCode ierr;
 	VFCtx			*ctx=(VFCtx*)user;

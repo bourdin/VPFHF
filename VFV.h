@@ -17,7 +17,7 @@ extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFC
 extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx);
 extern PetscErrorCode VF_VSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr);
 extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStructure *str,void *user);
-extern PetscErrorCode VF_VFunction(SNES snes,Vec V,Vec Func,void *user);
+extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec Func,void *user);
 
 
 #endif /* VFV_H */
