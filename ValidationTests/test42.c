@@ -1,8 +1,11 @@
 /*
- test42.c: 3D SNES. Flow problem with source term [pressure = sin(2*pi*x)*sin(2*pi*y)*sin(2(pi*z)]. All pressure boundary condition
- (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
+ test42.c: 1D SNES. Heat problem with heat source term = 1. All temperature boundary condition. [T(0) = 1; T(L) = 0. temperature boundaries.
+ (c) 2010-2013 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
- ./test42 -n 21,5,2 -l 1,0.4,0.01  -theta 1  -maxtimestep 1
+ ./test42 -n 51,5,2 -l 1,0.4,0.01  -theta 1  -timestepsize 0.01 -maxtimestep 100 -cond 1
+ ./test42 -n 51,5,2 -l 1,0.4,0.01  -theta 1  -timestepsize 0.05 -maxtimestep 150 -cond 0.1 
+ ./test42 -n 51,5,2 -l 1,0.4,0.01  -theta 1  -timestepsize 0.05 -maxtimestep 150 -cond 0.01
+ 
  */
 
 #include "petsc.h"
@@ -91,13 +94,13 @@ int main(int argc,char **argv)
 	ctx.bcT[0].face[X0] = FIXED;
 	ctx.bcT[0].face[X1] = FIXED;
 	
+/*	
 	PetscInt dof = 1;c = 0;
 	for (i = 0; i < 6; i++) {
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"    %s[%i]=%s ",FACE_NAME[i],c,BCTYPE_NAME[ ctx.bcT[0].face[i] ]);CHKERRQ(ierr);
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n");CHKERRQ(ierr);
 	}
-	
-
+*/
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
