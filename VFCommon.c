@@ -1128,14 +1128,10 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = KSPDestroy(&ctx->kspV);CHKERRQ(ierr);
   ierr = MatDestroy(&ctx->KV);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->RHSV);CHKERRQ(ierr); 
-<<<<<<< local
-=======
+
   	ierr = VecDestroy(&ctx->VFunct);CHKERRQ(ierr);
 	ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->JacV);CHKERRQ(ierr);
-
-	
->>>>>>> other
 
 	
   ierr = VecDestroy(&fields->VelnPress);CHKERRQ(ierr);
