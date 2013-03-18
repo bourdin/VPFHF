@@ -16,7 +16,7 @@ extern PetscErrorCode FormSNESIFunction(SNES snes,Vec VelnPress,Vec Func,void *u
 extern PetscErrorCode MixedFEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode MixedFEMSNESFlowSolverFinalize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode MatApplySNESVelocityBC(Mat K,Mat Klhs,BC *bcQ);
-extern PetscErrorCode FEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr);
+extern PetscErrorCode MixedFEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr);
 extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx);
 
 #endif /* VFFLOW_MIXEDFEM_H */

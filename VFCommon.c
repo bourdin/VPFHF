@@ -63,9 +63,6 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 	ierr = FlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
 	ierr = VF_HeatSolverInitialize(ctx,fields);CHKERRQ(ierr);
 	
-<<<<<<< local
-  PetscFunctionReturn(0);
-=======
 	
 	/*
 	 Save command line options to a file
@@ -86,7 +83,6 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 	
 	
 	PetscFunctionReturn(0);
->>>>>>> other
 }
 
 
