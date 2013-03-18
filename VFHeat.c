@@ -1,10 +1,10 @@
 /*
-   VFFlow.c
-   Generic interface to heat solvers
-
+ VFHeat.c
+ Generic interface to heat solvers
+ 
  (c) 2011-2013 C. Chukwudozie, LSU
-
-*/
+ 
+ */
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
@@ -15,7 +15,6 @@
 
 #undef __FUNCT__
 #define __FUNCT__ "BCTInit"
-
 extern PetscErrorCode BCTInit(BC *BCT,VFCtx *ctx)
 {
 	PetscErrorCode ierr;
@@ -25,12 +24,24 @@ extern PetscErrorCode BCTInit(BC *BCT,VFCtx *ctx)
 	PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "BCQTInit"
+extern PetscErrorCode BCQTInit(BC *BCQT,VFCtx *ctx)
+{
+	PetscErrorCode ierr;
+	
+	PetscFunctionBegin;
+	ierr = BCInit(BCQT,1);CHKERRQ(ierr);	
+	PetscFunctionReturn(0);
+}
+
+
 /*
  VFHeatTimeStep: Does one time step of the flow solver selected in ctx.heatsolver
  */
 #undef __FUNCT__
-#define __FUNCT__ "VFHeatTimeStep"
-extern PetscErrorCode VFHeatTimeStep(VFCtx *ctx,VFFields *fields)
+#define __FUNCT__ "VF_HeatTimeStep"
+extern PetscErrorCode VF_HeatTimeStep(VFCtx *ctx,VFFields *fields)
 {
 	char           filename[FILENAME_MAX];
 	PetscViewer    viewer;
@@ -39,7 +50,7 @@ extern PetscErrorCode VFHeatTimeStep(VFCtx *ctx,VFFields *fields)
 	PetscFunctionBegin;
 	switch (ctx->heatsolver) {
 		case HEATSOLVER_SNESFEM:
-			ierr = HeatFEMSNESSolve(ctx,fields);CHKERRQ(ierr);
+			ierr = VF_HeatFEMSNESSolve(ctx,fields);CHKERRQ(ierr);
 			break;
 	}
 	PetscFunctionReturn(0);
@@ -47,45 +58,35 @@ extern PetscErrorCode VFHeatTimeStep(VFCtx *ctx,VFFields *fields)
 
 
 #undef __FUNCT__
-#define __FUNCT__ "HeatSolverFinalize"
-extern PetscErrorCode HeatSolverFinalize(VFCtx *ctx,VFFields *fields)
+#define __FUNCT__ "VF_HeatSolverFinalize"
+extern PetscErrorCode VF_HeatSolverFinalize(VFCtx *ctx,VFFields *fields)
 {
 	PetscErrorCode ierr;
 	
 	PetscFunctionBegin;
 	switch (ctx->heatsolver) {
 		case HEATSOLVER_SNESFEM:       
-			ierr = FEMSNESHeatSolverFinalize(ctx,fields);CHKERRQ(ierr);
+			ierr = VF_FEMSNESHeatSolverFinalize(ctx,fields);CHKERRQ(ierr);
 			break;
 	}
 	PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "HeatSolverInitialize"
-extern PetscErrorCode HeatSolverInitialize(VFCtx *ctx,VFFields *fields)
+#define __FUNCT__ "VF_HeatSolverInitialize"
+extern PetscErrorCode VF_HeatSolverInitialize(VFCtx *ctx,VFFields *fields)
 {
 	PetscErrorCode ierr;
 	
 	PetscFunctionBegin;
 	switch (ctx->heatsolver) {
 		case HEATSOLVER_SNESFEM:       
-			ierr = FEMSNESHeatSolverInitialize(ctx,fields);CHKERRQ(ierr);
+			ierr = VF_FEMSNESHeatSolverInitialize(ctx,fields);CHKERRQ(ierr);
 			break;
 	}
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "BCqInit"
-extern PetscErrorCode BCqInit(BC *BCq,VFCtx *ctx)
-{
-	PetscErrorCode ierr;
-	
-	PetscFunctionBegin;
-	ierr = BCInit(BCq,3);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
-}
 
 
 
