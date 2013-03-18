@@ -59,6 +59,9 @@ int main(int argc,char **argv)
 		for (j = ys1; j < ys1+ym1; j++) {
 				for (i = xs1; i < xs1+xm1; i++) {
 				perm_array[k][j][i][2] = 0.;
+				perm_array[k][j][i][3] = 0.;
+				perm_array[k][j][i][4] = 0.;			
+				perm_array[k][j][i][5] = 0.;					
 			}
 		}
 	}
@@ -93,16 +96,16 @@ int main(int argc,char **argv)
 	}
 	ctx.bcP[0].face[X0] = VALUE;
 	ctx.bcP[0].face[X1] = VALUE;
-	ctx.bcQ[1].face[Y0] = VALUE;
+/*	ctx.bcQ[1].face[Y0] = VALUE;
 	ctx.bcQ[1].face[Y1] = VALUE;
 	ctx.bcQ[2].face[Z0] = VALUE;
-	ctx.bcQ[2].face[Z1] = VALUE;
+	ctx.bcQ[2].face[Z1] = VALUE;*/
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				velbc_array[k][j][i][0] = 0.;
+/*				velbc_array[k][j][i][0] = 0.;
 				velbc_array[k][j][i][1] = 0.;
-				velbc_array[k][j][i][2] = 0.;
+				velbc_array[k][j][i][2] = 0.;*/
 				presbc_array[k][j][i] = 0.;
 			}
 		}

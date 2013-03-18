@@ -219,9 +219,23 @@ int main(int argc,char **argv)
     ierr = VFRectangularCrackBuildVAT2(fields.VIrrev,&ctx.rectangularcrack[c],&ctx);CHKERRQ(ierr);
     ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
   }
+  for (c = 0; c < ctx.numWells; c++) {
+    ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);  
+    ierr = VFWellBuildVAT2(fields.VIrrev,&ctx.well[c],&ctx);CHKERRQ(ierr);
+    ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
+  }  
   ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-  
+ 
+    switch (ctx.fileformat) {
+      case FILEFORMAT_HDF5:       
+        ierr = FieldsH5Write(&ctx,&fields);CHKERRQ(ierr);
+        break;
+      case FILEFORMAT_BIN:
+        ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
+        break; 
+    }
+	
   ctx.hasCrackPressure = PETSC_TRUE;
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
   ierr = VecDuplicate(fields.U,&U_s);CHKERRQ(ierr);

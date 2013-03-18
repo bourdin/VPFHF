@@ -68,6 +68,9 @@ int main(int argc,char **argv)
 		for (j = ys1; j < ys1+ym1; j++) {
 				for (i = xs1; i < xs1+xm1; i++) {
 				perm_array[k][j][i][2] = 0.;
+				perm_array[k][j][i][3] = 0.;
+				perm_array[k][j][i][4] = 0.;			
+				perm_array[k][j][i][5] = 0.;					
 			}
 		}
 	}

@@ -355,13 +355,19 @@ typedef struct {
   PC                  pcV;
   KSP                 kspV;
   Vec                 RHSV;
-  Mat                 KP;
-  Mat                 KPlhs;
+/*  
+  Global variables for regular FEM Flow
+*/
+  Mat                 KP; //stifness
+  Mat                 KPlhs; // mass matrix
   Mat                 JacP;
   TS                  tsP;
   PC                  pcP;
   KSP                 kspP;
+  SNES                snesP;
   Vec                 RHSP;
+  Vec                 RHSPpre;
+  Vec                 PrePressure;
   Vec                 PFunct;
   Vec                 PresBC;
   PetscReal           CrackVolume;
@@ -395,23 +401,22 @@ typedef struct {
   Vec                 VelBCArray;
   Vec				  PresBCArray;
 
-  
   /*
    Global Variables for Heat Transfer
    */ 
   Mat                 KT;
   Mat                 KTlhs;
-	PC                  pcT;
-	KSP                 kspT;
-	Mat                 JacT;
-	Vec                 PreHeatFields;
-	Vec                 RHST;
-	Vec                 HeatFunct;
-	Vec                 RHSTpre;
+  PC                  pcT;
+  KSP                 kspT;
+  Mat                 JacT;
+  Vec                 PreHeatFields;
+  Vec                 RHST;
+  Vec                 HeatFunct;
+  Vec                 RHSTpre;
   BC                  bcq[3];
-	SNES                snesT;
-	Vec                 HeatBC;
-	FlowUnit            Hunits;
+  SNES                snesT;
+  Vec                 HeatBC;
+  FlowUnit            Hunits;
 
   /* 
    SNES solver for Pressure (or flow - T&P)

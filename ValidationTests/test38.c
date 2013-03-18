@@ -68,7 +68,7 @@ int main(int argc,char **argv)
 	lx = BBmax[0]-BBmin[0];		
 	ctx.numWells = 0;	
 	ctx.numWells = 1;
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&ctx.numWells,PETSC_NULL);CHKERRQ(ierr);	
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-nw",&ctx.numWells,PETSC_NULL);CHKERRQ(ierr);	
 	ierr = PetscMalloc(ctx.numWells*sizeof(VFWell),&ctx.well);CHKERRQ(ierr);
 	for (i = 0; i < ctx.numWells; i++) {
 		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"w%d_",i);CHKERRQ(ierr);
