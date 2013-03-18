@@ -10,7 +10,6 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 extern PetscErrorCode FormSNESIFunction_P(SNES snes,Vec pressure,Vec Func,void *user);
 extern PetscErrorCode FormSNESIJacobian_P(SNES snes,Vec pressure,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user);
 extern PetscErrorCode FlowFEMSNESSolve(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode FEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr);
 extern PetscErrorCode FEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode FEMSNESFlowSolverFinalize(VFCtx *ctx,VFFields *fields);
 
