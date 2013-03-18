@@ -12,6 +12,7 @@
 #include "VFHeat_SNESFEM.h"
 #include "VFFlow_KSPMixedFEM.h"
 #include "VFFlow_SNESMixedFEM.h"
+#include "VFFlow.h"
 
 /*
  VFHeat_SNESFEM

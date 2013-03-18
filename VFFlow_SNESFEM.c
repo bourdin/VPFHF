@@ -106,28 +106,6 @@ extern PetscErrorCode FlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__  
-#define __FUNCT__ "FEMSNESMonitor"
-extern PetscErrorCode FEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr)
-{
-	PetscErrorCode ierr;
-	PetscReal      norm,vmax,vmin;
-	MPI_Comm       comm;
-	Vec            solution;
-
-
-	PetscFunctionBegin;
-    ierr = SNESGetSolution(snes, &solution);CHKERRQ(ierr);
-	ierr = VecNorm(solution,NORM_1,&norm);CHKERRQ(ierr);
-	ierr = VecMax(solution,PETSC_NULL,&vmax);CHKERRQ(ierr);
-	ierr = VecMin(solution,PETSC_NULL,&vmin);CHKERRQ(ierr);
-	ierr = PetscObjectGetComm((PetscObject)snes,&comm);CHKERRQ(ierr);
-	ierr = PetscPrintf(comm,"snes_iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",its,norm,vmax,vmin);CHKERRQ(ierr);
-		
-	PetscFunctionReturn(0);
-}
-
-
 #undef __FUNCT__
 #define __FUNCT__ "FormSNESIJacobian_P"
 extern PetscErrorCode FormSNESIJacobian_P(SNES snes,Vec pressure,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user)

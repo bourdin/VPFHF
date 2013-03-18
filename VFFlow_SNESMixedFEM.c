@@ -115,7 +115,7 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = SNESSetFunction(ctx->snesVelP,ctx->FlowFunct,FormSNESIFunction,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesVelP,ctx->JacVelP,ctx->JacVelP,FormSNESIJacobian,ctx);CHKERRQ(ierr);
 	if (ctx->verbose > 1) {
-		ierr = SNESMonitorSet(ctx->snesVelP,MixedFEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+		ierr = SNESMonitorSet(ctx->snesVelP,FEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	}	
     ierr = SNESSolve(ctx->snesVelP,PETSC_NULL,fields->VelnPress);CHKERRQ(ierr);
 	ierr = SNESGetConvergedReason(ctx->snesVelP,&reason);CHKERRQ(ierr);
@@ -149,26 +149,6 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = VecDestroy(&ctx->Perm);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
-
-#undef __FUNCT__  
-#define __FUNCT__ "MixedFEMSNESMonitor"
-extern PetscErrorCode MixedFEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr)
-{
-	PetscErrorCode ierr;
-	PetscReal      norm,vmax,vmin;
-	MPI_Comm       comm;
-	Vec				solution;
-	
-	PetscFunctionBegin;
-	ierr = SNESGetSolution(snes,&solution);CHKERRQ(ierr);	
-	ierr = VecNorm(solution,NORM_1,&norm);CHKERRQ(ierr);
-	ierr = VecMax(solution,PETSC_NULL,&vmax);CHKERRQ(ierr);
-	ierr = VecMin(solution,PETSC_NULL,&vmin);CHKERRQ(ierr);
-	ierr = PetscObjectGetComm((PetscObject)snes,&comm);CHKERRQ(ierr);
-	ierr = PetscPrintf(comm,"snes_iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",its,norm,vmax,vmin);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
-}
-
 
 #undef __FUNCT__
 #define __FUNCT__ "FormSNESIJacobian"
