@@ -1,13 +1,12 @@
 /*
    VFFlow_FEM.c
-   A direct solver for the Stokes equation
-
-   (c) 2011 K. Yoshioka, CHEVRON ETC
+   Flow implementation with (regular) FEM
 */
 
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
+#include "VFFlow_FEM.h"
 
 
 #undef __FUNCT__

@@ -177,7 +177,7 @@ extern PetscErrorCode VFDistanceToWell(PetscReal *d,PetscReal *x,VFWell *well)
 #undef __FUNCT__
 #define __FUNCT__ "VFWellBuildVAT2"
 /*
-  VFPennyCrackBuildVAT2:  Build the V-field associated with an array of wells 
+  VFWellBuildVAT2:  Build the V-field associated with an array of wells 
                           following the construction in Bourdin-Francfort-Marigo '08.
   
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
@@ -207,7 +207,7 @@ extern PetscErrorCode VFWellBuildVAT2(Vec V,VFWell *well,VFCtx *ctx)
         x[1] = coords_array[k][j][i][1];
         x[0] = coords_array[k][j][i][0];
         ierr = VFDistanceToWell(&dist,x,well);CHKERRQ(ierr);
-		if(dist <= ctx->vfprop.epsilon*0.75){
+		if(dist <= ctx->well->rw*2.0){
 		  v_array[k][j][i] = 0.;
 		} else {
         v_array[k][j][i] = 1.-exp(-dist/2/ctx->vfprop.epsilon);

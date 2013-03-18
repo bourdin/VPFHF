@@ -82,8 +82,6 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscViewerASCIIPrintf(ctx->energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Pressure Work,Total Energy\n");CHKERRQ(ierr);
   ierr = PetscViewerFlush(ctx->energyviewer);CHKERRQ(ierr);
 	
-	
-
   PetscFunctionReturn(0);
 }
 
@@ -1103,13 +1101,14 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   PetscInt      nopts;
   
   PetscFunctionBegin;
+	
   ierr = PetscFree(ctx->matprop);CHKERRQ(ierr);
   ierr = PetscFree(ctx->layer);CHKERRQ(ierr);
   ierr = PetscFree(ctx->layersep);CHKERRQ(ierr);
   ierr = PetscFree(ctx->pennycrack);CHKERRQ(ierr);
   ierr = PetscFree(ctx->rectangularcrack);CHKERRQ(ierr);
   ierr = PetscFree(ctx->well);CHKERRQ(ierr);
-  
+
   ierr = DMDestroy(&ctx->daVect);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daScal);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daVFperm);CHKERRQ(ierr);
@@ -1129,13 +1128,15 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = KSPDestroy(&ctx->kspV);CHKERRQ(ierr);
   ierr = MatDestroy(&ctx->KV);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->RHSV);CHKERRQ(ierr); 
+<<<<<<< local
+=======
   	ierr = VecDestroy(&ctx->VFunct);CHKERRQ(ierr);
 	ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->JacV);CHKERRQ(ierr);
 
 	
+>>>>>>> other
 
-	
 	
   ierr = VecDestroy(&fields->VelnPress);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->vfperm);CHKERRQ(ierr);
@@ -1161,15 +1162,8 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   
   ierr = PetscViewerDestroy(&ctx->energyviewer);CHKERRQ(ierr);
 
-	
-	
-	
-	
-	
-	ierr = HeatSolverFinalize(ctx,fields);CHKERRQ(ierr);
-	ierr = FlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
-
-	
+  ierr = HeatSolverFinalize(ctx,fields);CHKERRQ(ierr);
+  ierr = FlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
   
   /*
    Close the xdmf multi-step file

@@ -33,10 +33,14 @@ int main(int argc,char **argv)
 	PetscReal		lx,ly,lz;
 	PetscReal		gamma, beta, rho, mu;
 	PetscReal		pi;
+	
+	PetscReal       ****perm_array;
+	PetscInt        xs1,xm1,ys1,ym1,zs1,zm1;
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ctx.flowsolver = FLOWSOLVER_KSPMIXEDFEM;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
+	
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -48,6 +52,19 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
+	
+	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);	
+	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr); 
+	for (k = zs1; k < zs1+zm1; k++) {
+		for (j = ys1; j < ys1+ym1; j++) {
+				for (i = xs1; i < xs1+xm1; i++) {
+				perm_array[k][j][i][3] = 0.;
+				perm_array[k][j][i][4] = 0.;			
+				perm_array[k][j][i][5] = 0.;				
+			}
+		}
+	}
+	
 	pi = 6.*asin(0.5);
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
@@ -81,25 +98,27 @@ int main(int argc,char **argv)
 		}
 	}
 	for (i = 0; i < 6; i++) {
-		ctx.bcP[0].face[i] = VALUE;
+		ctx.bcP[0].face[i] = VALUE;	
 	}	
+	
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
 				presbc_array[k][j][i] = sin(2.*pi*i*hx/lx)*sin(2.*pi*j*hy/ly)*sin(2.*pi*k*hz/lz);
 			}
 		}
-	}	
+	} 
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
 				src_array[k][j][i] = 4.*pi*pi*beta/mu*sin(2.*pi*k*hz/lz)*sin(2.*pi*j*hy/ly)*sin(2.*pi*i*hx/lx)*( (1/(lx*lx))+(1/(ly*ly))+(1/(lz*lz)) ); 
 			}
 		}
-	}
+	} 
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);		
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
@@ -122,8 +141,9 @@ int main(int argc,char **argv)
 		ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
 		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
 		ierr = PetscViewerDestroy(&logviewer);
-	}
+	}		
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
+
 	ierr = PetscFinalize();
 	return(0);
 }

@@ -31,6 +31,8 @@ int main(int argc,char **argv)
 	PetscReal		gx,gy,gz;
 	PetscReal		gamma, beta, rho, mu;
 	PetscReal		pi;
+	PetscReal       ****perm_array;
+	PetscInt        xs1,xm1,ys1,ym1,zs1,zm1;		
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ctx.flowsolver = FLOWSOLVER_TSMIXEDFEM;
@@ -46,6 +48,17 @@ int main(int argc,char **argv)
 	ctx.hasFlowWells = PETSC_FALSE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);		
+	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr); 
+	for (k = zs1; k < zs1+zm1; k++) {
+		for (j = ys1; j < ys1+ym1; j++) {
+				for (i = xs1; i < xs1+xm1; i++) {
+				perm_array[k][j][i][3] = 0.;
+				perm_array[k][j][i][4] = 0.;			
+				perm_array[k][j][i][5] = 0.;				
+			}
+		}
+	}	
 	pi = 6.*asin(0.5);
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
@@ -77,7 +90,7 @@ int main(int argc,char **argv)
 		for (c = 0; c < 3; c++) {
 			ctx.bcQ[c].vertex[i] = NONE;
 		}
-	}
+	} 
 	for (i = 0; i < 6; i++) {
 		ctx.bcP[0].face[i] = VALUE;
 	}
@@ -86,6 +99,24 @@ int main(int argc,char **argv)
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
 				presbc_array[k][j][i] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi*pi);
+        /*        if (i == 0) {
+                    presbc_array[k][j][i] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi*pi);			
+                }
+                else if (i == nx-1) {
+                    presbc_array[k][j][i] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi*pi);
+                }
+                else if (j == 0) {
+                    presbc_array[k][j][i] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi*pi);
+                }
+                else if (j == ny-1) {
+                    presbc_array[k][j][i] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi*pi);
+                }
+                else if (k == 0) {
+                    presbc_array[k][j][i] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi*pi);
+                }
+                else if (k == nz-1) {
+                    presbc_array[k][j][i] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi*pi);
+                }		*/			
 			}
 		}
 	}	
@@ -96,10 +127,11 @@ int main(int argc,char **argv)
 				src_array[k][j][i] = beta/mu*cos(pi*k*hz/lz)*cos(pi*j*hy/ly)*cos(pi*i*hx/lx)/3.*((1./(lx*lx))+(1./(ly*ly))+(1./(lz*lz))); 
 			}
 		}
-	}
+	} 
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);	
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
 	ctx.maxtimestep = 2;
 	ctx.maxtimevalue = 60.;

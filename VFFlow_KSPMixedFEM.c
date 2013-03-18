@@ -215,17 +215,17 @@ extern PetscErrorCode VecApplySourceTerms(PetscReal *Ks_local,PetscReal ***sourc
 			}
 		}
 	}
-	for (eg = 0; eg < e->ng; eg++)
-		for (l = 0,k = 0; k < e->nphiz; k++) {
-			for (j = 0; j < e->nphiy; j++) {
-				for (i = 0; i < e->nphix; i++,l++) {
-					Ks_local[l] = 0.;
-					for (eg = 0; eg < e->ng; eg++) {
-						Ks_local[l] += -loc_source[eg]*e->phi[k][j][i][eg]*e->weight[eg]/alpha_c;
-					}
+
+	for (l = 0,k = 0; k < e->nphiz; k++) {
+		for (j = 0; j < e->nphiy; j++) {
+			for (i = 0; i < e->nphix; i++,l++) {
+				Ks_local[l] = 0.;
+				for (eg = 0; eg < e->ng; eg++) {
+					Ks_local[l] += -loc_source[eg]*e->phi[k][j][i][eg]*e->weight[eg]/alpha_c;
 				}
 			}
 		}
+	}
 	PetscFree(loc_source);
 	PetscFunctionReturn(0);
 }
