@@ -531,7 +531,7 @@ runtest41: test41
 
 runtest42: test42
 	@echo "Running " $@
-	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 0';\
+	-@ARGS='-n 21,5,2 -l 1.,0.4,0.01';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -540,7 +540,7 @@ runtest42: test42
 
 runtest43: test43
 	@echo "Running " $@
-	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 0';\
+	-@ARGS='-n 21,5,2 -l 1.,0.4,0.01';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
