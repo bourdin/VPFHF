@@ -481,9 +481,11 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   /*
     Global Assembly and Boundary Conditions
   */
+  /*
   ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatApplyDirichletBC(K,ctx->daScal,&ctx->bcV[0]);CHKERRQ(ierr);
+  */
   ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   
@@ -491,7 +493,9 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = DMLocalToGlobalBegin(ctx->daScal,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
   ierr = DMLocalToGlobalEnd(ctx->daScal,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&RHS_localVec);CHKERRQ(ierr);
+  /*
   ierr = VecApplyDirichletBC(RHS,fields->V,&ctx->bcV[0]);CHKERRQ(ierr);
+  */
   /*
     Cleanup
   */
@@ -742,15 +746,21 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_VResidual"
-extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec Func,void *user)
+extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
 {
 	PetscErrorCode ierr;
 	VFCtx			*ctx=(VFCtx*)user;
 	
 	PetscFunctionBegin;
-	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
-	ierr = MatMult(ctx->KV,V,Func);CHKERRQ(ierr);	
-	ierr = VecAXPY(Func,-1.0,ctx->RHSV);CHKERRQ(ierr);
+	ierr = VecSet(residual,0.0);CHKERRQ(ierr);
+	ierr = MatMult(ctx->KV,V,residual);CHKERRQ(ierr);	
+	ierr = VecAXPY(residual,-1.0,ctx->RHSV);CHKERRQ(ierr);
+	ierr = ResidualApplyDirichletBC(residual,V,V,ctx->bcV);CHKERRQ(ierr);
+	/*
+	  UGLY HACK:
+  	We can pass V for the BC, because we know that the only BC used in the V problem are 0 and 1, so 
+	  the 3rd argument is never used
+	*/
 	PetscFunctionReturn(0);
 }
 
@@ -762,8 +772,8 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
 	VFCtx				*ctx=(VFCtx*)user;
 	
 	PetscFunctionBegin;
-	*str = DIFFERENT_NONZERO_PATTERN;
-	ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
+	*str = SAME_NONZERO_PATTERN;
+	//ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
 	ierr = MatCopy(ctx->KV,*Jac,*str);
 	ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -771,6 +781,7 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
 		ierr = MatAssemblyBegin(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 		ierr = MatAssemblyEnd(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	}
+	ierr = MatApplyDirichletBCRowCol(*Jac1,ctx->daScal,ctx->bcV);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
