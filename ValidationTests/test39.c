@@ -2,9 +2,11 @@
  test39.c: 2D SNES. Coupled flow and fracture problem using VFRectangularCrackCreate.
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
- ./test39 -n 101,101,2 -epsilon 0.01 -Gc 0.6667  -l 1,1,0.01 -m_inv 0. -Qw 0.1 -maxtimestep 5 -nrc 1 -rc0_corners 0.45,0.5,0,0.55,0.5,0.0,0.44,0.5,0.01 -rc0_thickness 0.005
+ ./test39 -n 101,101,2 -epsilon 0.01 -Gc 0.6667  -l 1,1,0.01 -m_inv 0. -Qw 0.1 -maxtimestep 5 -nrc 1 -rc0_corners 0.45,0.5,0,0.55,0.5,0.0,0.44,0.5,0.01 -rc0_thickness 0.005 -nw 1
  
- ./test39 -n 101,101,2 -epsilon 0.01 -Gc 0.6667  -l 1,1,0.01 -m_inv 5. -maxtimestep 5 -nrc 2 -rc0_corners 0.25,0.2,0,0.7,0.5,0.0,0.25,0.2,0.01 -rc0_thickness 0.008 -rc1_corners 0.5,0.6,0,0.7,0.3,0.,0.5,0.6,0.01 -rc1_thickness 0.008 -w0_coords 0.5,0.6,0.005 -w0_Qw 0.1 -maxtimestep 20
+ ./test39 -n 101,101,2 -epsilon 0.01 -Gc 0.6667  -l 1,1,0.01 -m_inv 5. -maxtimestep 5 -nrc 2 -rc0_corners 0.25,0.2,0,0.7,0.5,0.0,0.25,0.2,0.01 -rc0_thickness 0.008 -rc1_corners 0.5,0.6,0,0.7,0.3,0.,0.5,0.6,0.01 -rc1_thickness 0.008 -w0_coords 0.5,0.6,0.005 -w0_Qw 0.1 -maxtimestep 20 -nw 1
+ 
+ ./test39 -n 101,101,2 -epsilon 0.01 -Gc 0.6667  -l 1,1,0.01 -m_inv 5. -maxtimestep 5 -nrc 2 -rc0_corners 0.25,0.2,0,0.7,0.5,0.0,0.25,0.2,0.01 -rc0_thickness 0.008 -rc1_corners 0.5,0.6,0,0.7,0.3,0.,0.5,0.6,0.01 -rc1_thickness 0.008 -w0_coords 0.5,0.6,0.005 -w0_Qw 0.1 -maxtimestep 20 -nw 1
  */
 
 #include "petsc.h"
@@ -102,43 +104,6 @@ int main(int argc,char **argv)
 	ctx.bcU[2].face[Z0]= ZERO;
 	/*	face Z1	*/
 	ctx.bcU[2].face[Z1]= ZERO;
-
-	/*Initializing the v-field*/
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-nrc",&ctx.numRectangularCracks,PETSC_NULL);CHKERRQ(ierr);	
-	ierr = PetscMalloc(ctx.numRectangularCracks*sizeof(VFRectangularCrack),&ctx.rectangularcrack);CHKERRQ(ierr);
-	for (i = 0; i < ctx.numRectangularCracks; i++) {
-		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"rc%d_",i);CHKERRQ(ierr);
-		ierr = VFRectangularCrackCreate(&ctx.rectangularcrack[i]);CHKERRQ(ierr);
-		ierr = VFRectangularCrackGet(prefix,&ctx.rectangularcrack[i]);CHKERRQ(ierr);
-		ierr = VFRectangularCrackView(&ctx.rectangularcrack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-	}
-	for (c = 0; c < ctx.numRectangularCracks; c++) {
-		ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-		ierr = VFRectangularCrackBuildVAT2(fields.VIrrev,&ctx.rectangularcrack[c],&ctx);CHKERRQ(ierr);
-		ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
-
-	}
-	
-	
-	
-	
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-npc",&ctx.numPennyCracks,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscMalloc(ctx.numPennyCracks*sizeof(VFPennyCrack),&ctx.pennycrack);CHKERRQ(ierr);
-	for (i = 0; i < ctx.numPennyCracks; i++) {
-		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"pc%d_",i);CHKERRQ(ierr);
-		ierr = VFPennyCrackCreate(&ctx.pennycrack[i]);CHKERRQ(ierr);
-		ierr = VFPennyCrackGet(prefix,&ctx.pennycrack[i]);CHKERRQ(ierr);
-		ierr = VFPennyCrackView(&ctx.pennycrack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-	}	
-	for (c = 0; c < ctx.numPennyCracks; c++) {
-		ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-		ierr = VFPennyCrackBuildVAT2(fields.VIrrev,&ctx.pennycrack[c],&ctx);CHKERRQ(ierr);
-		ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
-	}
-
-	
-	
-	
 	
 	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
 	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
@@ -146,36 +111,17 @@ int main(int argc,char **argv)
 	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.pressure,0.0);CHKERRQ(ierr);
+	ierr = VecSet(fields.pressure,0.0001);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-/*	Flow Part	*/
-	ctx.numWells = 1;
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-nw",&ctx.numWells,PETSC_NULL);CHKERRQ(ierr);	
-	ierr = PetscMalloc(ctx.numWells*sizeof(VFWell),&ctx.well);CHKERRQ(ierr);
-	for (i = 0; i < ctx.numWells; i++) {
-		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"w%d_",i);CHKERRQ(ierr);
-		ierr = VFWellCreate(&ctx.well[i]);CHKERRQ(ierr);
-		ctx.well[0].Qw = 0.01;
-		ctx.well[0].coords[0] = lx/2.;
-		ctx.well[0].coords[1] = ly/2.;
-		ctx.well[0].coords[2] = lz/2.;
-		ctx.well[0].condition = RATE;
-		ctx.well[0].type = INJECTOR;
-
-		ierr = VFWellGet(prefix,&ctx.well[i]);CHKERRQ(ierr);
-		ierr = VFWellView(&ctx.well[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-	}	
+	ctx.well[0].Qw = 0.01;
+	ctx.well[0].coords[0] = lx/2.;
+	ctx.well[0].coords[1] = ly/2.;
+	ctx.well[0].coords[2] = lz/2.;
+	ctx.well[0].condition = RATE;
+	ctx.well[0].type = INJECTOR;
+		
 	for (k = zs1; k < zs1+zm1; k++) {
 		for (j = ys1; j < ys1+ym1; j++) {
 				for (i = xs1; i < xs1+xm1; i++) {
@@ -242,13 +188,11 @@ int main(int argc,char **argv)
 		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
 		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
-		/*
-		for(i = 0; i < 3; i++){
-			ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-			ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-			ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr); 
-			ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
-		}*/
+
+//		ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
+
+//		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr); 
 		ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
 		ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);   

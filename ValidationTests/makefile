@@ -238,7 +238,7 @@ runtest8-large: test8
 
 runtest9: test9
 	@echo "Running " $@
-	-@ARGS='-n 41,41,41 -epsilon .05 -nc 2 -c0_center .5,.5,.5 -c0_r .5 -c0_theta 45 -c0_phi 45 -c0_name crack1 -c1_r 0.5';\
+	-@ARGS='-n 51,2,51 -l 4,0.01,4 -epsilon .16 -npc 1 -pc0_center 2,.005,2 -pc0_r .2 -pc0_theta 0 -pc0_phi 45 -pc0_thickness 0.2 -pc0_name -orientation 2';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
@@ -248,7 +248,7 @@ runtest9: test9
 runtest10: test10
 	@echo "Running " $@
 	-@for or in 0; do \
-	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -length .2 -orientation $$or";\
+	-@ARGS='-n 51,2,51 -l 4,0.01,4 -epsilon .16 -npc 1 -pc0_center 2,.005,2 -pc0_r .2 -pc0_theta 0 -pc0_phi 45 -pc0_thickness 0.2 -pc0_name -orientation 2';\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
 	if (${DIFF} -B  results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
@@ -319,7 +319,7 @@ runtest17: test17
 
 runtest18: test18
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -length 1. -length1 .5 -orientation 2 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS='-n 41,41,41 -l 4,4,4 -epsilon .2 -npc 1 -pc0_center 2,2,2 -pc0_r .2 -pc0_theta 0 -pc0_phi 45 -pc0_thickness 0.2 -pc0_name -orientation 2';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
