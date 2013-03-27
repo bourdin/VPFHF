@@ -77,41 +77,6 @@ int main(int argc,char **argv)
 			ctx.bcU[j].vertex[i] = NONE;
 		}
 	}
-	/*Initializing the v-field*/	
-	/*
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-nrc",&ctx.numRectangularCracks,PETSC_NULL);CHKERRQ(ierr);	
-	ierr = PetscMalloc(ctx.numRectangularCracks*sizeof(VFRectangularCrack),&ctx.rectangularcrack);CHKERRQ(ierr);
-	for (i = 0; i < ctx.numRectangularCracks; i++) {
-		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
-		ierr = VFRectangularCrackCreate(&ctx.rectangularcrack[i]);CHKERRQ(ierr);
-		ierr = VFRectangularCrackGet(prefix,&ctx.rectangularcrack[i]);CHKERRQ(ierr);
-		ierr = VFRectangularCrackView(&ctx.rectangularcrack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-	}
-	for (c = 0; c < ctx.numRectangularCracks; c++) {
-		ierr = VFRectangularCrackBuildVAT2(fields.VIrrev,&ctx.rectangularcrack[c],&ctx);CHKERRQ(ierr);
-		ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
-		
-	}
-	
-	
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-npc",&ctx.numPennyCracks,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscMalloc(ctx.numPennyCracks*sizeof(VFPennyCrack),&ctx.pennycrack);CHKERRQ(ierr);
-	for (i = 0; i < ctx.numPennyCracks; i++) {
-		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"pc%d_",i);CHKERRQ(ierr);
-		ierr = VFPennyCrackCreate(&ctx.pennycrack[i]);CHKERRQ(ierr);
-		ierr = VFPennyCrackGet(prefix,&ctx.pennycrack[i]);CHKERRQ(ierr);
-		ierr = VFPennyCrackView(&ctx.pennycrack[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-	}	
-	for (c = 0; c < ctx.numPennyCracks; c++) {
-		ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-		ierr = VFPennyCrackBuildVAT2(fields.VIrrev,&ctx.pennycrack[c],&ctx);CHKERRQ(ierr);
-		ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
-		
-	}
-	
-	*/
-	
-	
 	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
 	switch (orientation) {
 		case 1:
