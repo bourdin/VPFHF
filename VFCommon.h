@@ -396,7 +396,7 @@ typedef struct {
   PetscBool           hasFlowWells;
   PetscBool           hasFluidSources;
   Vec                 VelBCArray;
-  Vec				  PresBCArray;
+  Vec				          PresBCArray;
 
   /*
    Global Variables for Heat Transfer
@@ -460,12 +460,12 @@ typedef struct {
 	PetscInt            numRectangularCracks;
 	VFRectangularCrack *rectangularcrack;
 	Vec                 HeatSource;
-	Vec					HeatFluxBCArray;
+	Vec					        HeatFluxBCArray;
 	PetscBool           hasHeatSources;
 	Vec                 prevT;
 	Vec                 Cond;
 	BC                  bcQT[1];
-	Vec					TBCArray;
+	Vec					        TBCArray;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

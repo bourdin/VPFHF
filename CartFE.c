@@ -499,6 +499,267 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
   }
   PetscFunctionReturn(0);
 }
+#undef __FUNCT__
+#define __FUNCT__ "ResidualApplyDirichletBC"
+/*
+  ResidualApplyDirichletBC
+
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode ResidualApplyDirichletBC(Vec residual,Vec U,Vec BCU,BC *BC)
+{
+  PetscErrorCode ierr;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       i,j,k,c;
+  DM             da;
+  PetscReal  ****residual_array;
+  PetscReal  ****BCU_array,****U_array;
+  PetscInt       dim,dof;
+  
+  PetscFunctionBegin;
+  ierr = PetscObjectQuery((PetscObject) residual,"DM",(PetscObject *) &da); CHKERRQ(ierr);
+    if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
+  
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                    &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  
+  if (dim == 2) {
+    ierr = PetscMalloc(sizeof(PetscReal ***),&residual_array);CHKERRQ(ierr);
+    ierr = PetscMalloc(sizeof(PetscReal ***),&BCU_array);CHKERRQ(ierr);
+    ierr = PetscMalloc(sizeof(PetscReal ***),&U_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,residual,&residual_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,U,&U_array[0]);CHKERRQ(ierr);
+  } else {
+    ierr = DMDAVecGetArrayDOF(da,residual,&residual_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,U,&U_array);CHKERRQ(ierr);
+  }
+  
+  for (c = 0;c < dof;c++) {
+    /* 
+      Faces
+    */
+    if (xs == 0) {
+      /*
+        x == 0
+      */
+      i = 0;
+      if (BC[c].face[X0] == FIXED) {
+        for (k = zs; k < zs + zm; k++) {
+          for (j = ys; j < ys + ym; j++) {
+            residual_array[k][j][i][c] = U_array[k][j][i][c]-BCU_array[k][j][i][c];
+          }
+        }
+      }
+      if (BC[c].face[X0] == ONE) {
+        for (k = zs; k < zs + zm; k++) {
+          for (j = ys; j < ys + ym; j++) {
+            residual_array[k][j][i][c] = U_array[k][j][i][c]-1.;
+          }
+        }
+      }
+      if (BC[c].face[X0] == ZERO) {
+        for (k = zs; k < zs + zm; k++) {
+          for (j = ys; j < ys + ym; j++) {
+            residual_array[k][j][i][c] = U_array[k][j][i][c];
+          }
+        }
+      }
+    }
+    if (xs + xm == nx) {
+      /*
+        x == nx-1
+      */
+      i = nx-1;
+      if (BC[c].face[X1] == FIXED) {
+        for (k = zs; k < zs + zm; k++) {
+          for (j = ys; j < ys + ym; j++) {
+            residual_array[k][j][i][c] = U_array[k][j][i][c]-BCU_array[k][j][i][c];
+          }
+        }
+      }
+      if (BC[c].face[X1] == ONE) {
+        for (k = zs; k < zs + zm; k++) {
+          for (j = ys; j < ys + ym; j++) {
+            residual_array[k][j][i][c] = U_array[k][j][i][c]-1.;
+          }
+        }
+      }
+      if (BC[c].face[X1] == ZERO) {
+        for (k = zs; k < zs + zm; k++) {
+          for (j = ys; j < ys + ym; j++) {
+            residual_array[k][j][i][c] = U_array[k][j][i][c];
+          }
+        }
+      }
+    }
+    if (ys == 0) {
+      /*
+        y == 0
+      */
+      j = 0;
+      if (BC[c].face[Y0] == FIXED) {
+        for (k = zs; k < zs + zm; k++) {
+          for (i = xs; i < xs + xm; i++) {
+            residual_array[k][j][i][c] = U_array[k][j][i][c]-BCU_array[k][j][i][c];
+          }
+        }
+      }
+      if (BC[c].face[Y0] == ONE) {
+        for (k = zs; k < zs + zm; k++) {
+          for (i = xs; i < xs + xm; i++) {
+            residual_array[k][j][i][c] = U_array[k][j][i][c]-1;
+          }
+        }
+      }
+      if (BC[c].face[Y0] == ZERO) {
+        for (k = zs; k < zs + zm; k++) {
+          for (i = xs; i < xs + xm; i++) {
+            residual_array[k][j][i][c] = U_array[k][j][i][c];
+          }
+        }
+      }
+    }
+    if (ys + ym == ny) {
+      /*
+        y == ny-1
+      */
+      j = ny-1;
+      if (BC[c].face[Y1] == FIXED) {
+        for (k = zs; k < zs + zm; k++) {
+          for (i = xs; i < xs + xm; i++) {
+            residual_array[k][j][i][c] = U_array[k][j][i][c]-BCU_array[k][j][i][c];
+          }
+        }
+      }
+      if (BC[c].face[Y1] == ONE) {
+        for (k = zs; k < zs + zm; k++) {
+          for (i = xs; i < xs + xm; i++) {
+            residual_array[k][j][i][c] = U_array[k][j][i][c]-1.;
+          }
+        }
+      }
+      if (BC[c].face[Y1] == ZERO) {
+        for (k = zs; k < zs + zm; k++) {
+          for (i = xs; i < xs + xm; i++) {
+            residual_array[k][j][i][c] = U_array[k][j][i][c];
+          }
+        }
+      }
+    }
+    if (dim == 3) {
+      if (zs == 0) {
+        /*
+          z == 0
+        */
+        k = 0;
+        if (BC[c].face[Z0] == FIXED) {
+          for (j = ys; j < ys + ym; j++) {
+            for (i = xs; i < xs + xm; i++) {
+              residual_array[k][j][i][c] = U_array[k][j][i][c]-BCU_array[k][j][i][c];
+            }
+          }
+        }
+        if (BC[c].face[Z0] == ONE) {
+          for (j = ys; j < ys + ym; j++) {
+            for (i = xs; i < xs + xm; i++) {
+              residual_array[k][j][i][c] = U_array[k][j][i][c]-1.;
+            }
+          }
+        }
+        if (BC[c].face[Z0] == ZERO) {
+          for (j = ys; j < ys + ym; j++) {
+            for (i = xs; i < xs + xm; i++) {
+              residual_array[k][j][i][c] = U_array[k][j][i][c];
+            }
+          }
+        }
+      }
+      if (zs + zm == nz) {
+        /*
+          z == nz-1
+        */
+        k = nz-1;
+        if (BC[c].face[Z1] == FIXED) {
+          for (j = ys; j < ys + ym; j++) {
+            for (i = xs; i < xs + xm; i++) {
+              residual_array[k][j][i][c] = U_array[k][j][i][c]-BCU_array[k][j][i][c];
+            }
+          }
+        }
+        if (BC[c].face[Z1] == ONE) {
+          for (j = ys; j < ys + ym; j++) {
+            for (i = xs; i < xs + xm; i++) {
+              residual_array[k][j][i][c] = U_array[k][j][i][c]-1.;
+            }
+          }
+        }
+        if (BC[c].face[Z1] == ZERO) {
+          for (j = ys; j < ys + ym; j++) {
+            for (i = xs; i < xs + xm; i++) {
+              residual_array[k][j][i][c] = U_array[k][j][i][c];
+            }
+          }
+        }
+      }
+    }
+    /*
+      edges
+    */
+    /* 
+      vertices
+    */
+    if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == FIXED) residual_array[0][0][0][c]          = U_array[0][0][0][c]-BCU_array[0][0][0][c];
+    if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == ONE)   residual_array[0][0][0][c]          = U_array[0][0][0][c]-1.;
+    if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == ZERO)  residual_array[0][0][0][c]          = U_array[0][0][0][c];
+
+    if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == FIXED) residual_array[nz-1][0][0][c]       = U_array[nz-1][0][0][c]-BCU_array[nz-1][0][0][c];
+    if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == ONE)   residual_array[nz-1][0][0][c]       = U_array[nz-1][0][0][c]-1.;
+    if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == ZERO)  residual_array[nz-1][0][0][c]       = U_array[nz-1][0][0][c];
+
+    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == FIXED) residual_array[0][ny-1][0][c]       = U_array[nz-1][0][0][c]-BCU_array[nz-1][0][0][c];
+    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == ONE)   residual_array[0][ny-1][0][c]       = U_array[nz-1][0][0][c]-1.;
+    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == ZERO)  residual_array[0][ny-1][0][c]       = U_array[nz-1][0][0][c];
+
+    if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == FIXED) residual_array[nz-1][ny-1][0][c]    = U_array[nz-1][ny-1][0][c]-BCU_array[nz-1][ny-1][0][c];
+    if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == ONE)   residual_array[nz-1][ny-1][0][c]    = U_array[nz-1][ny-1][0][c]-1.;
+    if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == ZERO)  residual_array[nz-1][ny-1][0][c]    = U_array[nz-1][ny-1][0][c];
+
+    if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == FIXED) residual_array[0][0][nx-1][c]       = U_array[0][0][nx-1][c]-BCU_array[0][0][nx-1][c];
+    if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == ONE)   residual_array[0][0][nx-1][c]       = U_array[0][0][nx-1][c]-1.;
+    if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == ZERO)  residual_array[0][0][nx-1][c]       = U_array[0][0][nx-1][c];
+
+    if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == FIXED) residual_array[nz-1][0][nx-1][c]    = U_array[nz-1][0][nx-1][c]-BCU_array[nz-1][0][nx-1][c];
+    if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == ONE)   residual_array[nz-1][0][nx-1][c]    = U_array[nz-1][0][nx-1][c]-1.;
+    if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == ZERO)  residual_array[nz-1][0][nx-1][c]    = U_array[nz-1][0][nx-1][c];
+
+    if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == FIXED) residual_array[0][ny-1][nx-1][c]    = U_array[0][ny-1][nx-1][c]-BCU_array[0][ny-1][nx-1][c];
+    if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == ONE)   residual_array[0][ny-1][nx-1][c]    = U_array[0][ny-1][nx-1][c]-1.;
+    if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == ZERO)  residual_array[0][ny-1][nx-1][c]    = U_array[0][ny-1][nx-1][c];
+
+    if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == FIXED) residual_array[nz-1][ny-1][nx-1][c] = U_array[nz-1][ny-1][nx-1][c]-BCU_array[nz-1][ny-1][nx-1][c];
+    if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == ONE)   residual_array[nz-1][ny-1][nx-1][c] = U_array[nz-1][ny-1][nx-1][c]-1.;
+    if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == ZERO)  residual_array[nz-1][ny-1][nx-1][c] = U_array[nz-1][ny-1][nx-1][c];
+  }
+  
+  if (dim == 2) {
+    ierr = DMDAVecRestoreArrayDOF(da,residual,&residual_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,U,&U_array[0]);CHKERRQ(ierr);
+    ierr = PetscFree(residual_array);CHKERRQ(ierr);
+    ierr = PetscFree(BCU_array);CHKERRQ(ierr);
+    ierr = PetscFree(U_array);CHKERRQ(ierr);
+  } else {
+    ierr = DMDAVecRestoreArrayDOF(da,residual,&residual_array);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,U,&U_array);CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
+}
 
 
 #undef __FUNCT__
@@ -661,6 +922,170 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC)
     
   }
   ierr = MatZeroRowsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscFree(row);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "MatApplyDirichletBCRowCol"
+/*
+  MatApplyDirichletBCRowCol
+
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,BC *BC)
+{
+  PetscErrorCode ierr;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       i,j,k,c;
+  MatStencil    *row;
+  PetscReal      one=1.;
+  PetscInt       numBC=0,l=0;
+  PetscInt       dim,dof;
+
+  PetscFunctionBegin;
+  
+  /*
+    This is only implemented in petsc-dev (as of petsc-3.1 days)
+  */
+  /*
+    ierr = PetscObjectQuery((PetscObject) K,"DM",(PetscObject *) &da); CHKERRQ(ierr);
+    if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
+  */
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                    &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+
+  /*
+    Compute the number of boundary nodes on each processor. 
+    Edges and corners are counted multiple times (2 and 3 resp)
+  */
+  for (c = 0; c < dof; c++){
+    if (xs == 0       && BC[c].face[X0] != NONE)             numBC += ym * zm;
+    if (xs + xm == nx && BC[c].face[X1] != NONE)             numBC += ym * zm;
+    if (ys == 0       && BC[c].face[Y0] != NONE)             numBC += xm * zm;
+    if (ys + ym == ny && BC[c].face[Y1] != NONE)             numBC += xm * zm;
+    if (zs == 0       && BC[c].face[Z0] != NONE && dim == 3) numBC += xm * ym;
+    if (zs + zm == nz && BC[c].face[Z1] != NONE && dim == 3) numBC += xm * ym;
+    if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] != NONE) numBC++;
+    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] != NONE) numBC++;
+    if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] != NONE) numBC++;
+    if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] != NONE) numBC++;
+    if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] != NONE && dim == 3) numBC++;
+    if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] != NONE && dim == 3) numBC++;
+    if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] != NONE && dim == 3) numBC++;
+    if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] != NONE && dim == 3) numBC++;
+  }
+  ierr = PetscMalloc(numBC * sizeof(MatStencil),&row);CHKERRQ(ierr);
+  /*
+    Create an array of rows to be zeroed out
+  */
+  /*
+    i == 0
+  */
+  for (c = 0; c < dof; c++) {
+    if (xs == 0 && BC[c].face[X0] != NONE) {
+      for (k = zs; k < zs + zm; k++) {
+        for (j = ys; j < ys + ym; j++) {
+          row[l].i = 0; row[l].j = j; row[l].k = k; row[l].c = c; 
+          l++;
+        }
+      }
+    }
+    /* 
+      i == nx-1
+    */
+    if (xs + xm == nx && BC[c].face[X1] != NONE) {
+      for (k = zs; k < zs + zm; k++) {
+        for (j = ys; j < ys + ym; j++) {
+          row[l].i = nx-1; row[l].j = j; row[l].k = k; row[l].c = c; 
+          l++;
+        }
+      }
+    }
+    /*
+      y == 0
+    */
+    if (ys == 0 && BC[c].face[Y0] != NONE) {
+      for (k = zs; k < zs + zm; k++) {
+        for (i = xs; i < xs + xm; i++) {
+          row[l].i = i; row[l].j = 0; row[l].k = k; row[l].c = c; 
+          l++;
+        }
+      }
+    }
+    /*
+      y == ny-1
+    */
+    if (ys + ym == ny && BC[c].face[Y1] != NONE) {
+      for (k = zs; k < zs + zm; k++) {
+        for (i = xs; i < xs + xm; i++) {
+          row[l].i = i; row[l].j = ny-1; row[l].k = k; row[l].c = c; 
+          l++;
+        }
+      }
+    }
+    if (dim==3){
+      /*
+        z == 0
+      */
+      if (zs == 0 && BC[c].face[Z0] != NONE) {
+        for (j = ys; j < ys + ym; j++) {
+          for (i = xs; i < xs + xm; i++) {
+            row[l].i = i; row[l].j = j; row[l].k = 0; row[l].c = c; 
+            l++;
+          }
+        }
+      }
+      /*
+        z == nz-1
+      */
+      if (zs + zm == nz && BC[c].face[Z1] != NONE) {
+        for (j = ys; j < ys + ym; j++) {
+          for (i = xs; i < xs + xm; i++) {
+            row[l].i = i; row[l].j = j; row[l].k = nz-1; row[l].c = c; 
+            l++;
+          }
+        }
+      }
+    }
+    if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] != NONE) { 
+      row[l].i = 0; row[l].j = 0; row[l].k = 0; row[l].c = c; 
+      l++;
+    }
+    if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] != NONE && dim ==3) { 
+      row[l].i = 0; row[l].j = 0; row[l].k = nz-1; row[l].c = c; 
+      l++;
+    }
+    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] != NONE) { 
+      row[l].i = 0; row[l].j = ny-1; row[l].k = 0; row[l].c = c; 
+      l++;
+    }
+    if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] != NONE && dim ==3) { 
+      row[l].i = 0; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
+      l++;
+    }
+    if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] != NONE) { 
+      row[l].i = nx-1; row[l].j = 0; row[l].k = 0; row[l].c = c; 
+      l++;
+    }
+    if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] != NONE && dim ==3) { 
+      row[l].i = nx-1; row[l].j = 0; row[l].k = nz-1; row[l].c = c; 
+      l++;
+    }
+    if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] != NONE) { 
+      row[l].i = nx-1; row[l].j = ny-1; row[l].k = 0; row[l].c = c; 
+      l++;
+    }
+    if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] != NONE && dim ==3) { 
+      row[l].i = nx=1; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
+      l++;
+    }
+    
+  }
+  ierr = MatZeroRowsColumnsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscFree(row);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

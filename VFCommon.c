@@ -863,7 +863,8 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   PetscErrorCode  ierr;
   KSP             kspU,kspV;
   PC              pcU,pcV;
-  
+  PetscReal       atol,rtol,stol;
+  PetscInt        maxit,maxf;
   PetscFunctionBegin;
 	/* 
 	  U solver initialization
@@ -905,6 +906,8 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->ubV);CHKERRQ(ierr);
 	ierr = VecSet(ctx->ubV,1.0);CHKERRQ(ierr);
   ierr = SNESVISetVariableBounds(ctx->snesV,ctx->lbV,ctx->ubV);CHKERRQ(ierr);
+  ierr = SNESGetTolerances(ctx->snesV,&atol,&rtol,&stol,&maxit,&maxf);CHKERRQ(ierr);
+  ierr = SNESSetTolerances(ctx->snesV,1e-8,rtol,stol,maxit,maxf);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->VResidual);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject) ctx->VResidual,"V_Residual");CHKERRQ(ierr);
 
