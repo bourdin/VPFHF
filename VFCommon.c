@@ -40,7 +40,6 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 #endif
 	
 	ierr = PetscLogBegin();CHKERRQ(ierr);
-		//ierr = VFLogInitialize(&ctx->vflog);CHKERRQ(ierr);
 	ierr = VFCtxGet(ctx);CHKERRQ(ierr);
 	ierr = VFGeometryInitialize(ctx);CHKERRQ(ierr);
 	ierr = VFPropGet(&ctx->vfprop);CHKERRQ(ierr);
@@ -87,57 +86,6 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 
 
 #undef __FUNCT__
-#define __FUNCT__ "VFLogInitialize"
-/*
- VFLogInitialize
- 
- (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
- */
-extern PetscErrorCode VFLogInitialize(VFLog *vflog)
-{
-	PetscErrorCode ierr;
-	
-	PetscFunctionBegin;
-	ierr = PetscLogStageRegister("I/O operations",&vflog->VF_IOStage);CHKERRQ(ierr);
-	
-	ierr = PetscLogStageRegister("U assembly",&vflog->VF_UAssemblyStage);CHKERRQ(ierr);
-		//ierr = PetscClassIdRegister  ("U Mat local",&vflog->VF_MatULocalClassId);CHKERRQ(ierr);
-		//ierr = PetscLogEventRegister("U Mat local",vflog->VF_MatULocalClassId,&vflog->VF_MatULocalEvent);CHKERRQ(ierr);
-		//ierr = PetscClassIdRegister  ("U VecView local",&vflog->VF_VecULocalClassId);CHKERRQ(ierr);
-		//ierr = PetscLogEventRegister("U Vec local",vflog->VF_VecULocalClassId,&vflog->VF_VecULocalEvent);CHKERRQ(ierr);
-		//ierr = PetscLogStageRegister("U solver",&vflog->VF_USolverStage);CHKERRQ(ierr);
-	
-	ierr = PetscLogStageRegister("V assembly",&vflog->VF_VAssemblyStage);CHKERRQ(ierr);
-		//ierr = PetscClassIdRegister  ("V Mat local",&vflog->VF_MatVLocalClassId);CHKERRQ(ierr);
-		//ierr = PetscLogEventRegister("V Mat local",vflog->VF_MatVLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
-		//ierr = PetscClassIdRegister  ("V Vec local",&vflog->VF_VecVLocalClassId);CHKERRQ(ierr);
-		//ierr = PetscLogEventRegister("V Vec local",vflog->VF_VecVLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
-		//ierr = PetscLogStageRegister("V solver",&vflog->VF_VSolverStage);CHKERRQ(ierr);
-	
-	ierr = PetscLogStageRegister("Energy",&vflog->VF_EnergyStage);CHKERRQ(ierr);
-		//ierr = PetscClassIdRegister  ("Energy",&vflog->VF_EnergyLocalClassId);CHKERRQ(ierr);
-		//ierr = PetscLogEventRegister("Energy",vflog->VF_EnergyLocalClassId,&vflog->VF_EnergyLocalEvent);CHKERRQ(ierr);
-	
-	ierr = PetscLogStageRegister("P assembly",&vflog->VF_PAssemblyStage);CHKERRQ(ierr);
-		//ierr = PetscClassIdRegister  ("P Mat local",&vflog->VF_MatPLocalClassId);CHKERRQ(ierr);
-		//ierr = PetscLogEventRegister("P Mat local",vflog->VF_MatPLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
-		//ierr = PetscClassIdRegister  ("P Vec local",&vflog->VF_VecPLocalClassId);CHKERRQ(ierr);
-		//ierr = PetscLogEventRegister("P Vec local",vflog->VF_VecPLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
-		//ierr = PetscLogStageRegister("P solver",&vflog->VF_PSolverStage);CHKERRQ(ierr);
-	
-	ierr = PetscLogStageRegister("T assembly",&vflog->VF_TAssemblyStage);CHKERRQ(ierr);
-		//ierr = PetscClassIdRegister  ("T Mat local",&vflog->VF_MatTLocalClassId);CHKERRQ(ierr);
-		//ierr = PetscLogEventRegister("T Mat local",vflog->VF_MatTLocalClassId,&vflog->VF_MatVLocalEvent);CHKERRQ(ierr);
-		//ierr = PetscClassIdRegister  ("T Vec local",&vflog->VF_VecTLocalClassId);CHKERRQ(ierr);
-		//ierr = PetscLogEventRegister("T Vec local",vflog->VF_VecTLocalClassId,&vflog->VF_VecVLocalEvent);CHKERRQ(ierr);
-	
-	ierr = PetscLogStageRegister("T solver",&vflog->VF_TSolverStage);CHKERRQ(ierr);
-	
-	PetscFunctionReturn(0);
-}
-
-
-#undef __FUNCT__
 #define __FUNCT__ "VFCtxGet"
 /*
  VFCtxGet
@@ -148,7 +96,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 {
 	PetscErrorCode      ierr;
 	PetscInt            nopt;
-	PetscBool          flg;
+	PetscBool           flg;
 	int                 i;
 	PetscReal          *buffer;
 	char                prefix[PETSC_MAX_PATH_LEN+1];
@@ -447,20 +395,17 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 			 Even coordinates are part of the DA and do not need to be saved separately, it looks like the coordinate vector
 			 obtained from DMDAGetCoordinates cannot be saved properly in an hdf5 file, so we save the coordinate vector anyway
 			 */
-				//ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
 			ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.bin",ctx->prefix);CHKERRQ(ierr);
 			ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
 			ierr = DMView(ctx->daScal,viewer);CHKERRQ(ierr);
 			ierr = VecView(ctx->coordinates,viewer);CHKERRQ(ierr);
 			ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-				//ierr = PetscLogStagePop();CHKERRQ(ierr);
 			break;
 #ifdef PETSC_HAVE_HDF5
 		case FILEFORMAT_HDF5:
 			/*
 			 Write headers in multistep XDMF file
 			 */
-				//ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
 			ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.xmf",ctx->prefix);CHKERRQ(ierr);
 			ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->XDMFviewer);
 			ierr = XDMFmultistepInitialize(ctx->XDMFviewer);CHKERRQ(ierr);
@@ -472,7 +417,6 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 			ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&h5viewer);CHKERRQ(ierr);
 			ierr = VecView(ctx->coordinates,h5viewer);CHKERRQ(ierr);
 			ierr = PetscViewerDestroy(&h5viewer);CHKERRQ(ierr);
-				//ierr = PetscLogStagePop();CHKERRQ(ierr);
 #endif
 	}
 	

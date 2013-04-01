@@ -1,0 +1,24 @@
+#PETSc Option Table entries:
+-altminmaxit 1000
+-altmintol 1e-4
+-epsilon .32
+-eta 1e-8
+-gc .8
+-insitumax -0.25,0,-0.3,0,0,0
+-insitumin -0.25,0,-0.3,0,0,0
+-l 8,.008,8.
+-maxtimestep 10
+-maxvol 0.05
+-minvol 0.
+-mode 3
+-n 50,2,50
+-npc 1
+-nu 0.
+-p runtest16
+-pc0_R .5
+-pc0_center 4.,.004,4.
+-pc0_phi 30.
+-pc0_theta 0.
+-pc0_thickness .32
+#End of PETSc Option Table entries
+
