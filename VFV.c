@@ -108,10 +108,10 @@ extern PetscErrorCode VF_MatVAT2Surface3D_local(PetscReal *Mat_local,MatProp *ma
           for (j2 = 0; j2 < e->nphiy; j2++) {
             for (i2 = 0; i2 < e->nphix; i2++,l++) {
               for (g = 0; g < e->ng; g++) {
-                Mat_local[l] += coef * e->weight[g] * ( e->phi[k1][j1][i1][g] *     e->phi[k2][j2][i2][g] / vfprop->epsilon +
-                                                     ( e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g] 
+                Mat_local[l] += coef * e->weight[g] * (e->phi[k1][j1][i1][g] *     e->phi[k2][j2][i2][g] / vfprop->epsilon +
+                                                      (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g] 
                                                      + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
-                                                     + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]) * vfprop->epsilon );
+                                                     + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]) * vfprop->epsilon);
               }
             }
           }
@@ -332,7 +332,6 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   PetscReal      ****coords_array;
   
   PetscFunctionBegin;
-  //ierr = PetscLogStagePush(ctx->vflog.VF_VAssemblyStage);CHKERRQ(ierr);
   /* 
     Get global number of vertices along each coordinate axis on the ENTIRE mesh
   */
@@ -416,7 +415,6 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
         for (l = 0; l < nrow * nrow; l++) {
           K_local[l] = 0.;
         }
-        //ierr = PetscLogEventBegin(ctx->vflog.VF_MatVLocalEvent,0,0,0,0);CHKERRQ(ierr);
         ierr = VF_MatVAT2Surface3D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
@@ -432,7 +430,6 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                                                     &ctx->e3D);CHKERRQ(ierr);
             break;
         }
-        //ierr = PetscLogEventEnd(ctx->vflog.VF_MatVLocalEvent,0,0,0,0);CHKERRQ(ierr); 
         /*
          Generate array of grid indices in the linear system's ordering.
          i.e. tells MatSetValuesStencil where to store values from  K_local
@@ -456,14 +453,12 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
           Accumulate Surface energy contribution to RHS
         */
         for (l = 0; l < nrow; l++) RHS_local[l] = 0.;
-        //ierr = PetscLogEventBegin(ctx->vflog.VF_VecVLocalEvent,0,0,0,0);CHKERRQ(ierr);
         ierr = VF_RHSVAT2Surface3D_local(RHS_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
         if (ctx->hasCrackPressure) {
           ierr = VF_RHSVPressure3D_local(RHS_local,U_array,pressure_array,pressureRef_array,
                                         &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
                                         &ctx->e3D);CHKERRQ(ierr);
         }
-        //ierr = PetscLogEventEnd(ctx->vflog.VF_VecVLocalEvent,0,0,0,0);CHKERRQ(ierr);
         
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -516,7 +511,6 @@ extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   ierr = DMRestoreLocalVector(ctx->daScalCell,&Gc_localVec);CHKERRQ(ierr);
   
   ierr = PetscFree3(RHS_local,K_local,row);CHKERRQ(ierr);
-  //ierr = PetscLogStagePop();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -556,7 +550,7 @@ extern PetscErrorCode VF_SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,Pe
     }
   }
   for (g = 0; g < e->ng; g++) {
-    *SurfaceEnergy_local += e->weight[g] * ( (1. - v_elem[g]) * (1. - v_elem[g]) / vfprop->epsilon 
+    *SurfaceEnergy_local += e->weight[g] * ((1. - v_elem[g]) * (1. - v_elem[g]) / vfprop->epsilon 
       + (gradv_elem[0][g] * gradv_elem[0][g] + gradv_elem[1][g] * gradv_elem[1][g] + gradv_elem[2][g] * gradv_elem[2][g]) * vfprop->epsilon) * coef;
   }
   ierr = PetscFree4(v_elem,gradv_elem[0],gradv_elem[1],gradv_elem[2]);CHKERRQ(ierr);
@@ -587,7 +581,6 @@ extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFC
 
   PetscFunctionBegin;
   
-  //ierr = PetscLogStagePush(ctx->vflog.VF_UAssemblyStage);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -624,7 +617,6 @@ extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFC
   ierr = DMRestoreLocalVector(ctx->daScal,&v_localVec);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx->daScalCell,Gc_localVec,&Gc_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScalCell,&Gc_localVec);CHKERRQ(ierr);  
-  //ierr = PetscLogStagePop();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -719,28 +711,27 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
     ierr = VecView(fields->U,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
     ierr = MatView(ctx->KV,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
-	ierr = SNESSetFunction(ctx->snesV,ctx->VResidual,VF_VResidual,ctx);CHKERRQ(ierr);
+  ierr = SNESSetFunction(ctx->snesV,ctx->VResidual,VF_VResidual,ctx);CHKERRQ(ierr);
   ierr = SNESSetJacobian(ctx->snesV,ctx->JacV,ctx->JacV,VF_VIJacobian,ctx);CHKERRQ(ierr);
-	if (ctx->verbose > 1) {
-		ierr = SNESMonitorSet(ctx->snesV,VF_VSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	}
+  if (ctx->verbose > 1) {
+    ierr = SNESMonitorSet(ctx->snesV,VF_VSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  }
   ierr = SNESSolve(ctx->snesV,PETSC_NULL,fields->V);CHKERRQ(ierr);
-  //ierr = PetscLogStagePush(ctx->vflog.VF_VSolverStage);CHKERRQ(ierr);
-	if (ctx->verbose > 1) {
-		ierr = VecView(fields->V,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-	}
-	
-	ierr = SNESGetConvergedReason(ctx->snesV,&reason);CHKERRQ(ierr);
-	if (reason < 0) {
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesV diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
-	} else {
-	  ierr = SNESGetIterationNumber(ctx->snesV,&its);CHKERRQ(ierr);
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesV converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
-	}
-	/* Get Min / Max of V */
-	ierr = VecMin(fields->V,PETSC_NULL,&Vmin);CHKERRQ(ierr);
-	ierr = VecMax(fields->V,PETSC_NULL,&Vmax);CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      V min / max:     %e %e\n",Vmin,Vmax);CHKERRQ(ierr);
+  if (ctx->verbose > 1) {
+    ierr = VecView(fields->V,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+  }
+  
+  ierr = SNESGetConvergedReason(ctx->snesV,&reason);CHKERRQ(ierr);
+  if (reason < 0) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesV diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+  } else {
+    ierr = SNESGetIterationNumber(ctx->snesV,&its);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesV converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+  }
+  /* Get Min / Max of V */
+  ierr = VecMin(fields->V,PETSC_NULL,&Vmin);CHKERRQ(ierr);
+  ierr = VecMax(fields->V,PETSC_NULL,&Vmax);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      V min / max:     %e %e\n",Vmin,Vmax);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -748,60 +739,59 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
 #define __FUNCT__ "VF_VResidual"
 extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
 {
-	PetscErrorCode ierr;
-	VFCtx			*ctx=(VFCtx*)user;
-	
-	PetscFunctionBegin;
-	ierr = VecSet(residual,0.0);CHKERRQ(ierr);
-	ierr = MatMult(ctx->KV,V,residual);CHKERRQ(ierr);	
-	ierr = VecAXPY(residual,-1.0,ctx->RHSV);CHKERRQ(ierr);
-	ierr = ResidualApplyDirichletBC(residual,V,V,ctx->bcV);CHKERRQ(ierr);
-	/*
-	  UGLY HACK:
-  	We can pass V for the BC, because we know that the only BC used in the V problem are 0 and 1, so 
-	  the 3rd argument is never used
-	*/
-	PetscFunctionReturn(0);
+  PetscErrorCode ierr;
+  VFCtx     *ctx=(VFCtx*)user;
+  
+  PetscFunctionBegin;
+  ierr = VecSet(residual,0.0);CHKERRQ(ierr);
+  ierr = MatMult(ctx->KV,V,residual);CHKERRQ(ierr); 
+  ierr = VecAXPY(residual,-1.0,ctx->RHSV);CHKERRQ(ierr);
+  ierr = ResidualApplyDirichletBC(residual,V,V,ctx->bcV);CHKERRQ(ierr);
+  /*
+    UGLY HACK:
+    We can pass V for the BC, because we know that the only BC used in the V problem are 0 and 1, so 
+    the 3rd argument is never used
+  */
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_VIJacobian"
 extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStructure *str,void *user)
 {
-	PetscErrorCode ierr;
-	VFCtx				*ctx=(VFCtx*)user;
-	
-	PetscFunctionBegin;
-	*str = SAME_NONZERO_PATTERN;
-	//ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
-	ierr = MatCopy(ctx->KV,*Jac,*str);
-	ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	if (*Jac != *Jac1) {
-		ierr = MatAssemblyBegin(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-		ierr = MatAssemblyEnd(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	}
-	ierr = MatApplyDirichletBCRowCol(*Jac1,ctx->daScal,ctx->bcV);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
+  PetscErrorCode ierr;
+  VFCtx       *ctx=(VFCtx*)user;
+  
+  PetscFunctionBegin;
+  *str = SAME_NONZERO_PATTERN;
+  ierr = MatCopy(ctx->KV,*Jac,*str);
+  ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  if (*Jac != *Jac1) {
+    ierr = MatAssemblyBegin(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  }
+  ierr = MatApplyDirichletBCRowCol(*Jac1,ctx->daScal,ctx->bcV);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__  
 #define __FUNCT__ "VF_VSNESMonitor"
 extern PetscErrorCode VF_VSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr)
 {
-	PetscErrorCode ierr;
-	PetscReal      norm,vmax,vmin;
-	MPI_Comm       comm;
-	Vec				V;
-	
-	PetscFunctionBegin;
-	ierr = SNESGetSolution(snes,&V);CHKERRQ(ierr);	
-	ierr = VecNorm(V,NORM_1,&norm);CHKERRQ(ierr);
-	ierr = VecMax(V,PETSC_NULL,&vmax);CHKERRQ(ierr);
-	ierr = VecMin(V,PETSC_NULL,&vmin);CHKERRQ(ierr);
-	ierr = PetscObjectGetComm((PetscObject)snes,&comm);CHKERRQ(ierr);
-	ierr = PetscPrintf(comm,"V_snes_iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",its,norm,vmax,vmin);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
+  PetscErrorCode ierr;
+  PetscReal      norm,vmax,vmin;
+  MPI_Comm       comm;
+  Vec       V;
+  
+  PetscFunctionBegin;
+  ierr = SNESGetSolution(snes,&V);CHKERRQ(ierr);  
+  ierr = VecNorm(V,NORM_1,&norm);CHKERRQ(ierr);
+  ierr = VecMax(V,PETSC_NULL,&vmax);CHKERRQ(ierr);
+  ierr = VecMin(V,PETSC_NULL,&vmin);CHKERRQ(ierr);
+  ierr = PetscObjectGetComm((PetscObject)snes,&comm);CHKERRQ(ierr);
+  ierr = PetscPrintf(comm,"V_snes_iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",its,norm,vmax,vmin);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
 }
 
 

@@ -1,61 +1,7 @@
 /*
  test16.c: Solves for the displacement and v-field in a volume loaded line crack in 2d (Sneddon 2D)
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
-
-
- mpiexec -n 1 ./test16 -n 10,2,10 -l 4,.02,4 -epsilon .08 -mode 6 eta 1e-10 -Gc 1. -nu 0 -maxtimestep 2 -minvol .001  -maxvol .01 -nc 1 -c0_r .2 -c0_center 2,.01,2 -insitumin 0,0,0,0,0 -insitumax 0,0,0e-2,0,0,0 -U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg
- 
- mpiexec -n 1 ./test16 -n 101,2,101 -l 4,.01,4 -epsilon .08 -mode 3 eta 1e-8 -Gc 1. -nu 0 -maxtimestep 2 -minvol .0  -maxvol .01 -nc 1 -c0_r .2 -c0_center 2,.005,2 -insitumin 0,0,0,0,0 -insitumax 0,0,0e-2,0,0,0 -c0_thickness 0.03 -U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg
- 
- mpiexec -n 2 ../test16 -n 26,2,50 -l .5,.02,1 -epsilon .04 -mode 1 eta 1e-8 \
-        -Gc 1e-1 -nu 0 -maxtimestep 2 -maxvol .001 -mechsolver ELASTICITY   \
-        -nc 1 -c0_r .1 -c0_center .25,.01,.5 
-
-mpiexec -n 4 ./test16 -n 100,2,100 -l 4,.02,4 -epsilon .08 -mode 6 eta 1e-8 \
-        -Gc 1. -nu 0 -maxtimestep 5 -minvol .001  -maxvol .015 -nc 1 -c0_r .2 \
-        -c0_center 2,.01,2 -insitumin 0,0,0,0,0 -insitumax 0,0,-.1,0,0,0
-Try:  
-mpiexec -n 2 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length 2. \
-      -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 \
-      -Gc 1.e-1  -insitumin 0.,-1.e-4,0.,0.,0.,0. -insitumax 0.,-1.e-4,0.,0.,0.,0.
-
-mpiexec -n 2 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length .1 \
-      -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 
-      -Gc 1.e+1  -insitumin 0.,-1.e-4,0.,0.,0.,0. -insitumax 0,-1e-4,0.,0.,0.,0.
-
-mpiexec -n 2 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length .1 \
-      -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 10 -maxvol .03 \
-      -Gc 1.e+1  -insitumin 0.,-2.e+0,0.,0.,0.,0. -insitumax 0,-2e+0,0.,0.,0.,0. 
-      
-An example that doesn't work:
-mpiexec -n 4 ./test16  -n 26,51,2 -l 0.5,1,0.02 -epsilon 0.02 -length .1 \
-      -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
-      -Gc 1.e+1  -insitumin 0.,-4.e+0,0.,0.,0.,0. -insitumax 0,-4e+0,0.,0.,0.,0. \
-      -U_ksp_atol 1e-7 -U_ksp_rtol 1e-7 -U_ksp_type cg 
-      
-Unsurprisingly, setting eta to 1e-10 helps a lot
-Using a finer mesh solves the issue:
-mpiexec -n 4 ./test16  -n 52,101,2 -l 0.5,1,0.02 -epsilon 0.01 -length .1 \
-        -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
-        -Gc 1.e+1  -insitumin 0.,-4.e+0,0.,0.,0.,0. -insitumax 0,-4e+0,0.,0.,0.,0. \
-        -U_ksp_atol 1e-7 -U_ksp_rtol 1e-7 -U_ksp_type cg -eta 1e-10
-
-Same using gamg:
-mpiexec -n 4 ../test16  -n 52,101,2 -l 0.5,1,0.02 -epsilon 0.01 -length .1 \
-        -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
-        -Gc 1.e+1  -insitumin 0.,-4.e+0,0.,0.,0.,0. -insitumax 0,-4e+0,0.,0.,0.,0. \
-        -U_ksp_atol 1e-7 -U_ksp_rtol 1e-7 -U_ksp_type cg -eta 1e-10 \
-        -U_ksp_monitor_true_residual  -U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 \
-        -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 \
-        -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg        
-
-An even thiner mesh is required for higher in-situ stresses
-mpiexec -n 6 ../test16  -n 101,201,2 -l 0.5,1,0.02 -epsilon 0.005 -length .1 \
-        -center 0,0.5,0 -mode 2 -nu 0. -eta 1e-8 -maxtimestep 21 -maxvol .03 \
-        -Gc 1.e+1  -insitumin 0.,-8.e+0,0.,0.,0.,0. -insitumax 0,-8e+0,0.,0.,0.,0. \
-        -U_ksp_atol 1e-7 -U_ksp_rtol 1e-7 -eta 1e-10
- 
-Going back to default KSP is OK
+ test16 -options_file test16.opts is a small but relevant example
  */
 
 #include "petsc.h"
@@ -65,6 +11,7 @@ Going back to default KSP is OK
 #include "VFU.h"
 #include "VFPermfield.h"
 #include "VFCracks.h"
+#include "VFWell.h"
 VFCtx               ctx;
 VFFields            fields;
 

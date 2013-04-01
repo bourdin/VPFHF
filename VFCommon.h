@@ -284,46 +284,6 @@ typedef struct {
 } ResProp; 
 
 typedef struct {
-	PetscLogStage VF_IOStage;
-	
-	PetscLogStage VF_UAssemblyStage;
-		//PetscClassId  VF_MatULocalClassId;
-		//PetscLogEvent VF_MatULocalEvent;
-		//PetscClassId  VF_VecULocalClassId;
-		//PetscLogEvent VF_VecULocalEvent;
-	
-	PetscLogStage VF_USolverStage;
-	
-	PetscLogStage VF_VAssemblyStage;
-		//PetscClassId  VF_MatVLocalClassId;
-		//PetscLogEvent VF_MatVLocalEvent;
-		//PetscClassId  VF_VecVLocalClassId;
-		//PetscLogEvent VF_VecVLocalEvent;
-	
-	PetscLogStage VF_VSolverStage;
-	
-	PetscLogStage VF_EnergyStage;
-		//PetscClassId  VF_EnergyLocalClassId;
-		//PetscLogEvent VF_EnergyLocalEvent;
-	
-	PetscLogStage VF_PAssemblyStage;
-		//PetscClassId  VF_MatPLocalClassId;
-		//PetscLogEvent VF_MatPLocalEvent;
-		//PetscClassId  VF_VecPLocalClassId;
-		//PetscLogEvent VF_VecPLocalEvent;
-	
-	PetscLogStage VF_PSolverStage;
-	
-	PetscLogStage VF_TAssemblyStage;
-		//PetscClassId  VF_MatTLocalClassId;
-		//PetscLogEvent VF_MatTLocalEvent;
-		//PetscClassId  VF_VecTLocalClassId;
-		//PetscLogEvent VF_VecTLocalEvent;
-	
-	PetscLogStage VF_TSolverStage;
-} VFLog;
-
-typedef struct {
   PetscBool           printhelp;
   PetscInt            nlayer;
   PetscReal          *layersep;
@@ -425,7 +385,6 @@ typedef struct {
 	MatProp            *matprop;
 	ResProp             resprop;
 	VFProp              vfprop;
-	VFLog               vflog;
 	PetscReal           insitumin[6];
 	PetscReal           insitumax[6];
 	PetscBool           hasInsitu;
@@ -486,7 +445,6 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop);
 
 extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode VFLogInitialize(VFLog *vflog);
 
 extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx);
 extern PetscErrorCode VFMatPropFieldsInitialize(VFCtx *ctx, MatProp *matprop);

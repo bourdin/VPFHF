@@ -407,7 +407,7 @@ extern PetscErrorCode VF_MatU3D_local(PetscReal *Mat_local,PetscReal ***v_array,
                   Mat_local[l] = 0; 
                   for (g = 0; g < e->ng; g++) {
                     if (c1 == c2) {
-                      Mat_local[l] += e->weight[g] * ( mu * ( e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g] 
+                      Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g] 
                                                             + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
                                                             + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g])
                                                      + (lambda + mu) * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g])
@@ -478,7 +478,7 @@ extern PetscErrorCode VF_MatUShearOnly3D_local(PetscReal *Mat_local,PetscReal **
                   Mat_local[l] = 0; 
                   for (g = 0; g < e->ng; g++) {
                     if (c1 == c2) {
-                      Mat_local[l] += e->weight[g] * ( mu * ( e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g] 
+                      Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g] 
                                                             + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
                                                             + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]
                                                             + e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.)
@@ -487,7 +487,7 @@ extern PetscErrorCode VF_MatUShearOnly3D_local(PetscReal *Mat_local,PetscReal **
                       
                       ierr = PetscLogFlops(17);CHKERRQ(ierr);
                     } else {
-                      Mat_local[l] += e->weight[g] * ( mu * ( e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g] 
+                      Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g] 
                                                             - 2. * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.)
                                                           * (v_elem[g] * v_elem[g] + vfprop->eta)
                                                       + kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g]);
@@ -887,7 +887,6 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   PetscReal      BBmin[3],BBmax[3];
   
   PetscFunctionBegin;
-  //ierr = PetscLogStagePush(ctx->vflog.VF_UAssemblyStage);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -965,7 +964,6 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
           Compute and accumulate the contribution of the local stiffness matrix to the global stiffness matrix
         */
         for (l = 0; l < nrow * nrow; l++) K_local[l] = 0.;
-        //ierr = PetscLogEventBegin(ctx->vflog.VF_MatULocalEvent,0,0,0,0);CHKERRQ(ierr);
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
             ierr = VF_MatU3D_local(K_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
@@ -976,7 +974,6 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                                             ek,ej,ei,&ctx->e3D);
             break;
         }
-        //ierr = PetscLogEventEnd(ctx->vflog.VF_MatULocalEvent,0,0,0,0);CHKERRQ(ierr);
       
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -992,7 +989,6 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
           Compute and accumulate the local contribution of the effective strain contribution to the global RHS
         */
         for (l = 0; l < nrow; l++) RHS_local[l] = 0.;
-        //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
             ierr = VF_RHSUCoupling3D_local(RHS_local,v_array,theta_array,thetaRef_array,
@@ -1012,10 +1008,9 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                                            &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                            ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
         }
-        //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
         for (l=0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
-            for (i = 0; i < ctx->e3D.nphix; i++){
+            for (i = 0; i < ctx->e3D.nphix; i++) {
               for (c = 0; c < dim; c++,l++) {
                 RHS_array[ek+k][ej+j][ei+i][c] += RHS_local[l];
                 RHS_local[l]=0;
@@ -1027,7 +1022,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
           Compute and accumulate the local contribution of the insitu stresses to the global RHS
         */
         if (ctx->hasInsitu) {
-          if (ek == 0 ) {
+          if (ek == 0) {
             /* 
               Face Z0
               sigma.(0,0,-1) = (s_13,s_23,-s_33) = (S4,S3,-S2)
@@ -1038,7 +1033,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
             stresscomp[2] = 2; stressdir[2] = -1.;
             for (c = 0; c < 3; c++) {
               if (ctx->bcU[c].face[face] == NONE) {
-                for (k = 0; k < ctx->e3D.nphiz; k++){
+                for (k = 0; k < ctx->e3D.nphiz; k++) {
                   z = coords_array[ek+k][ej][ei][2];
                   stressmag = stressdir[c] * 
                            (ctx->insitumin[stresscomp[c]] + (z - BBmin[2]) / (BBmax[2] - BBmin[2])
@@ -1051,10 +1046,8 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                 }
               }
             }
-            //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_RHSUInSituStresses3D_local(RHS_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
-            //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-            for (l=0,k = 0; k < ctx->e3D.nphiz; k++){
+            for (l=0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
@@ -1074,7 +1067,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
             stresscomp[0] = 4; stressdir[0] = 1.;
             stresscomp[1] = 3; stressdir[1] = 1.;
             stresscomp[2] = 2; stressdir[2] = 1.;
-            for (k = 0; k < ctx->e3D.nphiz; k++){
+            for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                     z = coords_array[ek+k][ej+j][ei+i][2]; 
@@ -1089,10 +1082,8 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                 }
               }
             }
-            //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_RHSUInSituStresses3D_local(RHS_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
-            //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-            for (l=0,k = 0; k < ctx->e3D.nphiz; k++){
+            for (l=0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
@@ -1114,7 +1105,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
             stresscomp[0] = 5; stressdir[0] = 1.;
             stresscomp[1] = 1; stressdir[1] = -1.;
             stresscomp[2] = 3; stressdir[2] = -1.;
-            for (k = 0; k < ctx->e3D.nphiz; k++){
+            for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                     z = coords_array[ek+k][ej+j][ei+i][2];
@@ -1129,10 +1120,8 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                 }
               }
             }
-            //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_RHSUInSituStresses3D_local(RHS_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
-            //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-            for (l=0,k = 0; k < ctx->e3D.nphiz; k++){
+            for (l=0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
@@ -1153,7 +1142,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
             stresscomp[0] = 5; stressdir[0] = 1.;
             stresscomp[1] = 1; stressdir[1] = 1.;
             stresscomp[2] = 3; stressdir[2] = -1.;
-            for (k = 0; k < ctx->e3D.nphiz; k++){
+            for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                     z = coords_array[ek+k][ej+j][ei+i][2];
@@ -1168,10 +1157,8 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                 }
               }
             }
-            //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_RHSUInSituStresses3D_local(RHS_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
-            //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-            for (l=0,k = 0; k < ctx->e3D.nphiz; k++){
+            for (l=0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
@@ -1193,7 +1180,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
             stresscomp[0] = 0; stressdir[0] = -1.;
             stresscomp[1] = 5; stressdir[1] = 1.;
             stresscomp[2] = 4; stressdir[2] = -1.;
-            for (k = 0; k < ctx->e3D.nphiz; k++){
+            for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                     z = coords_array[ek+k][ej+j][ei+i][2];
@@ -1208,10 +1195,8 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                 }
               }
             }
-            //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_RHSUInSituStresses3D_local(RHS_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
-            //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-            for (l=0,k = 0; k < ctx->e3D.nphiz; k++){
+            for (l=0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
@@ -1232,7 +1217,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
             stresscomp[0] = 0; stressdir[0] = 1.;
             stresscomp[1] = 5; stressdir[1] = 1.;
             stresscomp[2] = 4; stressdir[2] = -1.;
-            for (k = 0; k < ctx->e3D.nphiz; k++){
+            for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   z = coords_array[ek+k][ej+j][ei+i][2];
@@ -1247,10 +1232,8 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
                 }
               }
             }
-            //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_RHSUInSituStresses3D_local(RHS_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
-            //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
-            for (l=0,k = 0; k < ctx->e3D.nphiz; k++){
+            for (l=0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
@@ -1303,7 +1286,6 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
     ierr = DMRestoreLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
   }
   ierr = PetscFree3(RHS_local,K_local,row);CHKERRQ(ierr);
-  //ierr = PetscLogStagePop();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -1365,15 +1347,15 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,
       for (i = 0; i < e->nphix; i++) {
         for (g = 0; g < e->ng; g++) {
           epsilon11_elem[g] +=  e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] 
-                              - e->phi[k][j][i][g] * ( 
+                              - e->phi[k][j][i][g] * (
                                   coefbeta * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i])
                                 + alpha * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]));
           epsilon22_elem[g] +=  e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] 
-                              - e->phi[k][j][i][g] * ( 
+                              - e->phi[k][j][i][g] * (
                                   coefbeta * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i])
                                 + alpha * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]));
           epsilon33_elem[g] +=  e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2] 
-                              - e->phi[k][j][i][g] * ( 
+                              - e->phi[k][j][i][g] * (
                                   coefbeta * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i])
                                 + alpha * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]));
 
@@ -1396,12 +1378,12 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,
     sigma12_elem[g] = 2. * mu * epsilon12_elem[g];
     sigma23_elem[g] = 2. * mu * epsilon23_elem[g];
     sigma13_elem[g] = 2. * mu * epsilon13_elem[g];
-    *ElasticEnergy_local += ((    sigma11_elem[g] * epsilon11_elem[g] 
-                                + sigma22_elem[g] * epsilon22_elem[g] 
-                                + sigma33_elem[g] * epsilon33_elem[g]) * .5
-                              + sigma12_elem[g] * epsilon12_elem[g]
-                              + sigma23_elem[g] * epsilon23_elem[g]
-                              + sigma13_elem[g] * epsilon13_elem[g] ) * (v_elem[g] * v_elem[g] + vfprop->eta) * e->weight[g];
+    *ElasticEnergy_local += ((sigma11_elem[g] * epsilon11_elem[g] 
+                            + sigma22_elem[g] * epsilon22_elem[g] 
+                            + sigma33_elem[g] * epsilon33_elem[g]) * .5
+                            + sigma12_elem[g] * epsilon12_elem[g]
+                            + sigma23_elem[g] * epsilon23_elem[g]
+                            + sigma13_elem[g] * epsilon13_elem[g]) * (v_elem[g] * v_elem[g] + vfprop->eta) * e->weight[g];
   }
   
   /*
@@ -1517,7 +1499,7 @@ extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscRea
     case X0:
       for (k = 0; k < e->nphiz; k++) {
         for (j = 0; j < e->nphiy; j++) {
-          for (i = 0; i < e->nphix; i++){
+          for (i = 0; i < e->nphix; i++) {
             for (c = 0; c < dim; c++) {
               for (g = 0; g < e->ng; g++) {
                 u_elem[c][g] += e->phi[k][j][i][g] * u_array[ek+k][ej+j][ei][c] / e->lx;
@@ -1531,7 +1513,7 @@ extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscRea
     case X1:
       for (k = 0; k < e->nphiz; k++) {
         for (j = 0; j < e->nphiy; j++) {
-          for (i = 0; i < e->nphix; i++){
+          for (i = 0; i < e->nphix; i++) {
             for (c = 0; c < dim; c++) {
               for (g = 0; g < e->ng; g++) {
                 u_elem[c][g] += e->phi[k][j][i][g] * u_array[ek+k][ej+j][ei+e->nphix-1][c] / e->lx;
@@ -1545,7 +1527,7 @@ extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscRea
     case Y0:
       for (k = 0; k < e->nphiz; k++) {
         for (j = 0; j < e->nphiy; j++) {
-          for (i = 0; i < e->nphix; i++){
+          for (i = 0; i < e->nphix; i++) {
             for (c = 0; c < dim; c++) {
               for (g = 0; g < e->ng; g++) {
                 u_elem[c][g] += e->phi[k][j][i][g] * u_array[ek+k][ej][ei+i][c] / e->ly;
@@ -1559,7 +1541,7 @@ extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscRea
     case Y1:
       for (k = 0; k < e->nphiz; k++) {
         for (j = 0; j < e->nphiy; j++) {
-          for (i = 0; i < e->nphix; i++){
+          for (i = 0; i < e->nphix; i++) {
             for (c = 0; c < dim; c++) {
               for (g = 0; g < e->ng; g++) {
                 u_elem[c][g] += e->phi[k][j][i][g] * u_array[ek+k][ej+e->nphiy-1][ei+i][c] / e->ly;
@@ -1573,7 +1555,7 @@ extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscRea
     case Z0:
       for (k = 0; k < e->nphiz; k++) {
         for (j = 0; j < e->nphiy; j++) {
-          for (i = 0; i < e->nphix; i++){
+          for (i = 0; i < e->nphix; i++) {
             for (c = 0; c < dim; c++) {
               for (g = 0; g < e->ng; g++) {
                 u_elem[c][g] += e->phi[k][j][i][g] * u_array[ek][ej+j][ei+i][c] / e->lz;
@@ -1587,7 +1569,7 @@ extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscRea
     case Z1:
       for (k = 0; k < e->nphiz; k++) {
         for (j = 0; j < e->nphiy; j++) {
-          for (i = 0; i < e->nphix; i++){
+          for (i = 0; i < e->nphix; i++) {
             for (c = 0; c < dim; c++) {
               for (g = 0; g < e->ng; g++) {
                 u_elem[c][g] += e->phi[k][j][i][g] * u_array[ek+e->nphiz-1][ej+j][ei+i][c] / e->lz;
@@ -1650,7 +1632,6 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   PetscReal       BBmin[3],BBmax[3];
 
   PetscFunctionBegin;
-  //ierr = PetscLogStagePush(ctx->vflog.VF_EnergyStage);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -1723,7 +1704,6 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
         /*
           Elastic Energy is trivial
         */
-        //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
         ierr = VF_ElasticEnergy3D_local(&myElasticEnergyLocal,u_array,v_array,
                                         theta_array,thetaRef_array,
                                         pressure_array,pressureRef_array,
@@ -1735,7 +1715,6 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                                            &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                            ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
         }
-        //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
         
         if (ctx->hasInsitu) {
           /*
@@ -1753,7 +1732,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
             stresscomp[2] = 2; stressdir[2] = 1.;
             for (c = 0; c < 3; c++) {
               if (ctx->bcU[c].face[face] == NONE) {
-                for (k = 0; k < ctx->e3D.nphiz; k++){
+                for (k = 0; k < ctx->e3D.nphiz; k++) {
                   z = coords_array[ek+k][ej][ei][2];
                   stressmag = stressdir[c] * 
                            (ctx->insitumin[stresscomp[c]] + (z - BBmin[2]) / (BBmax[2] - BBmin[2])
@@ -1766,9 +1745,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                 }
               }
             }
-            //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
-            //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
           }
         
           if (ek == nz-2) {
@@ -1782,7 +1759,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
             stresscomp[2] = 2; stressdir[2] = -1.;
             for (c = 0; c < 3; c++) {
               if (ctx->bcU[c].face[face] == NONE) {
-                for (k = 0; k < ctx->e3D.nphiz; k++){
+                for (k = 0; k < ctx->e3D.nphiz; k++) {
                   z = coords_array[ek+k][ej][ei][2];
                   stressmag = stressdir[c] * 
                              (ctx->insitumin[stresscomp[c]] + (z - BBmin[2]) / (BBmax[2] - BBmin[2])
@@ -1795,9 +1772,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                 }
               }
             }
-            //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
-            //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
           }
         
           if (ej == 0) {
@@ -1809,7 +1784,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
             stresscomp[0] = 5; stressdir[0] = 1.;
             stresscomp[1] = 1; stressdir[1] = 1.;
             stresscomp[2] = 3; stressdir[2] = 1.;
-            for (k = 0; k < ctx->e3D.nphiz; k++){
+            for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                    z = coords_array[ek+k][ej+j][ei+i][2];
@@ -1824,9 +1799,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                 }
               }
             }
-            //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
-            //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
           }
           
           if (ej == ny-2) {
@@ -1838,7 +1811,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
             stresscomp[0] = 5; stressdir[0] =  1.;
             stresscomp[1] = 1; stressdir[1] = -1.;
             stresscomp[2] = 3; stressdir[2] =  1.;
-            for (k = 0; k < ctx->e3D.nphiz; k++){
+            for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                    z = coords_array[ek+k][ej+j][ei+i][2];
@@ -1853,9 +1826,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                 }
               }
             }
-            //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
-            //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
           }
   
           if (ei == 0) {
@@ -1867,7 +1838,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
             stresscomp[0] = 0; stressdir[0] = 1.;
             stresscomp[1] = 5; stressdir[1] = 1.;
             stresscomp[2] = 4; stressdir[2] = 1.;
-            for (k = 0; k < ctx->e3D.nphiz; k++){
+            for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                    z = coords_array[ek+k][ej+j][ei+i][2];
@@ -1882,9 +1853,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                 }
               }
             }
-            //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
-            //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
           }
   
           if (ei == nx-2) {
@@ -1896,7 +1865,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
             stresscomp[0] = 0; stressdir[0] = -1.;
             stresscomp[1] = 5; stressdir[1] =  1.;
             stresscomp[2] = 4; stressdir[2] =  1.;
-            for (k = 0; k < ctx->e3D.nphiz; k++){
+            for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                    z = coords_array[ek+k][ej+j][ei+i][2];
@@ -1911,9 +1880,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                 }
               }
             }
-            //ierr = PetscLogEventBegin(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
             ierr = VF_InSituStressWork3D_local(&myInsituWork,u_array,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr); 
-            //ierr = PetscLogEventEnd(ctx->vflog.VF_VecULocalEvent,0,0,0,0);CHKERRQ(ierr);
           }
         }
       }
@@ -1942,8 +1909,6 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
     ierr = DMDAVecRestoreArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr);
     ierr = DMRestoreLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
   }
-
-  //ierr = PetscLogStagePop();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -1957,8 +1922,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
 extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode     ierr;
-//  KSPConvergedReason reason;
-	SNESConvergedReason reason;
+  SNESConvergedReason reason;
   PetscInt           its;
   PetscReal          Umin,Umax;
   
@@ -1973,21 +1937,12 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
     ierr = VecView(ctx->RHSU,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
   
-  //ierr = PetscLogStagePush(ctx->vflog.VF_USolverStage);CHKERRQ(ierr);
-  /* 
-    REMOVE THIS
-  */
-  //PetscBool flg = PETSC_FALSE;
-  //ierr = MatNullSpaceTest(ctx->nullspaceU,ctx->KU,&flg);CHKERRQ(ierr);
-  //ierr = MatNullSpaceRemove(ctx->nullspaceU,ctx->RHSU,PETSC_NULL);CHKERRQ(ierr);
-  //ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n\n Null space test returned %i %i\n\n\n",flg,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = SNESSetFunction(ctx->snesU,ctx->UResidual,VF_UResidual,ctx);CHKERRQ(ierr);
+  ierr = SNESSetFunction(ctx->snesU,ctx->UResidual,VF_UResidual,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesU,ctx->JacU,ctx->JacU,VF_UIJacobian,ctx);CHKERRQ(ierr);
-	if (ctx->verbose > 1) {
-		ierr = SNESMonitorSet(ctx->snesVelP,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	}
+  if (ctx->verbose > 1) {
+    ierr = SNESMonitorSet(ctx->snesVelP,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  }
     ierr = SNESSolve(ctx->snesU,PETSC_NULL,fields->U);CHKERRQ(ierr);
-//ierr = PetscLogStagePop();CHKERRQ(ierr);
   if (ctx->verbose > 1) {
     ierr = VecView(fields->U,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
@@ -2033,14 +1988,12 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
     ierr = VecView(ctx->RHSU,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
   
-  //ierr = PetscLogStagePush(ctx->vflog.VF_USolverStage);CHKERRQ(ierr);
-	ierr = SNESSetFunction(ctx->snesU,ctx->UResidual,VF_UResidual,ctx);CHKERRQ(ierr);
+  ierr = SNESSetFunction(ctx->snesU,ctx->UResidual,VF_UResidual,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesU,ctx->JacU,ctx->JacU,VF_UIJacobian,ctx);CHKERRQ(ierr);
-	if (ctx->verbose > 0) {
-		ierr = SNESMonitorSet(ctx->snesU,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	}
+  if (ctx->verbose > 0) {
+    ierr = SNESMonitorSet(ctx->snesU,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  }
     ierr = SNESSolve(ctx->snesU,PETSC_NULL,fields->BCU);CHKERRQ(ierr);
-  //ierr = PetscLogStagePop();CHKERRQ(ierr);
 
   if (ctx->verbose > 1) {
     ierr = VecView(fields->BCU,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
@@ -2087,53 +2040,53 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
 #define __FUNCT__ "VF_UResidual"
 extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec Func,void *user)
 {
-	PetscErrorCode ierr;
-	VFCtx			*ctx=(VFCtx*)user;
-	
-	PetscFunctionBegin;
-	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
-	ierr = MatMult(ctx->KU,U,Func);CHKERRQ(ierr);	
-	ierr = VecAXPY(Func,-1.0,ctx->RHSU);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
+  PetscErrorCode ierr;
+  VFCtx     *ctx=(VFCtx*)user;
+  
+  PetscFunctionBegin;
+  ierr = VecSet(Func,0.0);CHKERRQ(ierr);
+  ierr = MatMult(ctx->KU,U,Func);CHKERRQ(ierr); 
+  ierr = VecAXPY(Func,-1.0,ctx->RHSU);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_UIJacobian"
 extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *Jac,Mat *Jac1,MatStructure *str,void *user)
 {
-	PetscErrorCode ierr;
-	VFCtx				*ctx=(VFCtx*)user;
-	
-	PetscFunctionBegin;
-	*str = DIFFERENT_NONZERO_PATTERN;
-	ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
-	ierr = MatCopy(ctx->KU,*Jac,*str);
-	ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	if (*Jac != *Jac1) {
-		ierr = MatAssemblyBegin(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-		ierr = MatAssemblyEnd(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	}
-	PetscFunctionReturn(0);
+  PetscErrorCode ierr;
+  VFCtx       *ctx=(VFCtx*)user;
+  
+  PetscFunctionBegin;
+  *str = DIFFERENT_NONZERO_PATTERN;
+  ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
+  ierr = MatCopy(ctx->KU,*Jac,*str);
+  ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  if (*Jac != *Jac1) {
+    ierr = MatAssemblyBegin(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__  
 #define __FUNCT__ "VF_USNESMonitor"
 extern PetscErrorCode VF_USNESMonitor(SNES snes,PetscInt U_its,PetscReal fnorm,void* ptr)
 {
-	PetscErrorCode ierr;
-	PetscReal      norm,vmax,vmin;
-	MPI_Comm       comm;
-	Vec				U;
-	
-	PetscFunctionBegin;
-	ierr = SNESGetSolution(snes,&U);CHKERRQ(ierr);	
-	ierr = VecNorm(U,NORM_1,&norm);CHKERRQ(ierr);
-	ierr = VecMax(U,PETSC_NULL,&vmax);CHKERRQ(ierr);
-	ierr = VecMin(U,PETSC_NULL,&vmin);CHKERRQ(ierr);
-	ierr = PetscObjectGetComm((PetscObject)snes,&comm);CHKERRQ(ierr);
-	ierr = PetscPrintf(comm,"U_snes_iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",U_its,norm,vmax,vmin);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
+  PetscErrorCode ierr;
+  PetscReal      norm,vmax,vmin;
+  MPI_Comm       comm;
+  Vec       U;
+  
+  PetscFunctionBegin;
+  ierr = SNESGetSolution(snes,&U);CHKERRQ(ierr);  
+  ierr = VecNorm(U,NORM_1,&norm);CHKERRQ(ierr);
+  ierr = VecMax(U,PETSC_NULL,&vmax);CHKERRQ(ierr);
+  ierr = VecMin(U,PETSC_NULL,&vmin);CHKERRQ(ierr);
+  ierr = PetscObjectGetComm((PetscObject)snes,&comm);CHKERRQ(ierr);
+  ierr = PetscPrintf(comm,"U_snes_iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",U_its,norm,vmax,vmin);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
 }
 
 
