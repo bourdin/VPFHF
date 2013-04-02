@@ -310,8 +310,6 @@ typedef struct {
 	Mat                 JacV;
   Vec                 RHSU;
   MatNullSpace        nullspaceU;
-  Mat                 KV;
-  Vec                 RHSV;
 /*  
   Global variables for regular FEM Flow
 */
@@ -425,6 +423,7 @@ typedef struct {
 	Vec                 Cond;
 	BC                  bcQT[1];
 	Vec					        TBCArray;
+	VFFields           *fields;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
