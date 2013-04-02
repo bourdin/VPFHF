@@ -77,9 +77,6 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->energyviewer);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(ctx->energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Pressure Work,Total Energy\n");CHKERRQ(ierr);
   ierr = PetscViewerFlush(ctx->energyviewer);CHKERRQ(ierr);
-
-
-
   PetscFunctionReturn(0);
 }
 
@@ -110,12 +107,14 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr            = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
     ctx->mechsolver = FRACTURE;
     ierr            = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,PETSC_NULL);CHKERRQ(ierr);
-    //    ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
+    /*    
+      ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
+    */
     ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
 
     ctx->hasInsitu = PETSC_FALSE;
     nopt           = 6;
-    ierr           = PetscMalloc(nopt * sizeof(PetscReal),&buffer); CHKERRQ(ierr);
+    ierr           = PetscMalloc(nopt * sizeof(PetscReal),&buffer);CHKERRQ(ierr);
     for (i = 0; i < nopt; i++)
       buffer[i]=0.;
     ierr = PetscOptionsRealArray("-insitumin","\n\tIn-situ stresses in the lower z-section.\n\tUse Voigt notations (s11, s22, s33, s23, s13, s12)","",buffer,&nopt,&flg);CHKERRQ(ierr);
@@ -127,10 +126,11 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 
     nopt = 6;
     ierr = PetscOptionsRealArray("-insitumax","\n\tIn-situ stresses in the upper z-section, will re-use insitumin if omitted","",buffer,&nopt,&flg);CHKERRQ(ierr);
-    if (nopt == 0)
-      for (i = 0; i < 6; i++)
+    if (nopt == 0) {
+      for (i = 0; i < 6; i++) {
         ctx->insitumax[i]=ctx->insitumin[i];
-    else {
+      }
+    } else {
       if (nopt > 6 && !ctx->printhelp)
         SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the insitu stresses, got %i in %s\n",nopt,__FUNCT__);
       for (i = 0; i < 6; i++)
@@ -320,8 +320,11 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   olx[x_nprocs-1]--;
   oly[y_nprocs-1]--;
   olz[z_nprocs-1]--;
+  /*
+    Finite elements should never use ghost cells, so the stencil for the cell DA is 0
+  */
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
-                      DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,1,
+                      DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,0,
                       olx,oly,olz,&ctx->daScalCell);CHKERRQ(ierr);
 
 
@@ -384,7 +387,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
     ierr = VecView(ctx->coordinates,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
     break;
-#ifdef PETSC_HAVE_HDF5
+#if defined(PETSC_HAVE_HDF5)
   case FILEFORMAT_HDF5:
     /*
      Write headers in multistep XDMF file
@@ -716,7 +719,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
     ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
   }
   ierr = VecCopy(fields->VIrrev,fields->V);CHKERRQ(ierr);
-
+  ctx->fields = fields;
   PetscFunctionReturn(0);
 
 }
@@ -816,11 +819,17 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = PCSetFromOptions(pcU);CHKERRQ(ierr);
   /*
    V solver initialization
-   */
+  */
   ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesV);CHKERRQ(ierr);
   ierr = SNESSetDM(ctx->snesV,ctx->daScal);CHKERRQ(ierr);
   ierr = SNESSetOptionsPrefix(ctx->snesV,"V_");CHKERRQ(ierr);
+  ierr = SNESSetFunction(ctx->snesV,ctx->VResidual,VF_VResidual,ctx);CHKERRQ(ierr);
+  ierr = SNESSetJacobian(ctx->snesV,ctx->JacV,ctx->JacV,VF_VIJacobian,ctx);CHKERRQ(ierr);
+  if (ctx->verbose > 1) {
+    ierr = SNESMonitorSet(ctx->snesV,VF_VSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  }
   ierr = SNESSetFromOptions(ctx->snesV);CHKERRQ(ierr);
+  
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->lbV);CHKERRQ(ierr);
   ierr = VecSet(ctx->lbV,0.0);CHKERRQ(ierr);
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->ubV);CHKERRQ(ierr);
@@ -834,12 +843,13 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   /*
    KV and RHSV will go when we update the residual evaluation
    */
+  /*
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSV);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->RHSV,"RHSV");CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daScal,PETSC_NULL,&ctx->KV);CHKERRQ(ierr);
+  */
   ierr = DMCreateMatrix(ctx->daScal,PETSC_NULL,&ctx->JacV);CHKERRQ(ierr);
-  ierr = MatSetOption(ctx->KV,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-
+  ierr = MatSetOption(ctx->JacV,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = SNESGetKSP(ctx->snesV,&kspV);CHKERRQ(ierr);
   ierr = KSPSetTolerances(kspV,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSetType(kspV,KSPBCGSL);CHKERRQ(ierr);
@@ -1033,9 +1043,10 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = SNESDestroy(&ctx->snesU);CHKERRQ(ierr);
   ierr = MatDestroy(&ctx->JacU);CHKERRQ(ierr);
 
+  /*
   ierr = MatDestroy(&ctx->KV);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->RHSV);CHKERRQ(ierr);
-
+  */
   ierr = VecDestroy(&ctx->VResidual);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->lbV);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->ubV);CHKERRQ(ierr);
@@ -1073,7 +1084,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   /*
    Close the xdmf multi-step file
    */
-#ifdef PETSC_HAVE_HDF5
+#if defined(PETSC_HAVE_HDF5)
   if (ctx->fileformat == FILEFORMAT_HDF5) {
     ierr = XDMFuniformgridFinalize(ctx->XDMFviewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&ctx->XDMFviewer);CHKERRQ(ierr);
@@ -1113,7 +1124,7 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   /*
    Write the hdf5 files
    */
-#ifdef PETSC_HAVE_HDF5
+#if defined(PETSC_HAVE_HDF5)
   ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
@@ -1214,12 +1225,15 @@ extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx)
     for (j = ys; j < ys + ym; j++)
       for (i = xs; i < xs + xm; i++) {
         v = v_array[k][j][i];
-        if (v <= 0)
+        if (v <= 0) {
           pmult = vfprop->permmax;
-        else if (v <= 1.)
-          pmult = vfprop->permmax - (vfprop->permmax - 1.0) * v;
-        else
-          pmult = 1.;
+        } else {
+          if (v <= 1.) {
+            pmult = vfprop->permmax - (vfprop->permmax - 1.0) * v;
+          } else {
+            pmult = 1.;
+          }
+        }
         pmult_array[k][j][i] = pmult;
       }
   }

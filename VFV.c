@@ -259,211 +259,6 @@ extern PetscErrorCode VF_RHSVAT2Surface3D_local(PetscReal *RHS_local,MatProp *ma
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "VF_VAssembly3D"
-/*
-  VF_VAssembly3D
-
-  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
-*/
-extern PetscErrorCode VF_VAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
-{
-  PetscErrorCode ierr;
-  PetscInt       xs,xm,nx;
-  PetscInt       ys,ym,ny;
-  PetscInt       zs,zm,nz;
-  PetscInt       ei,ej,ek,i,j,k,l;
-  PetscInt       nrow = ctx->e3D.nphix * ctx->e3D.nphiy * ctx->e3D.nphiz;
-  Vec            RHS_localVec,U_localVec;
-  Vec            theta_localVec,thetaRef_localVec;
-  Vec            pressure_localVec,pressureRef_localVec;
-  Vec            Gc_localVec;
-  PetscReal      ***RHS_array,****U_array;
-  PetscReal      ***theta_array,***thetaRef_array;
-  PetscReal      ***pressure_array,***pressureRef_array;
-  PetscReal      ***Gc_array;
-  PetscReal      *RHS_local;
-  PetscReal      *K_local;
-  MatStencil     *row;
-  PetscReal      hx,hy,hz;
-  PetscReal      ****coords_array;
-
-  PetscFunctionBegin;
-  /*
-    Get global number of vertices along each coordinate axis on the ENTIRE mesh
-  */
-  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  /*
-    Get informations on LOCAL slice (i.e. subdomain)
-    xs, ys, ym = 1st index in x,y,z direction
-    xm, ym, zm = number of vertices in the x, y, z directions
-  */
-  ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-
-  ierr = MatZeroEntries(K);CHKERRQ(ierr);
-  ierr = VecSet(RHS,0.);CHKERRQ(ierr);
-  /*
-    Get coordinates
-  */
-  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-
-  /*
-    get U_array
-  */
-  ierr = DMGetLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
-  ierr = DMDAVecGetArrayDOF(ctx->daVect,U_localVec,&U_array);CHKERRQ(ierr);
-  /*
-    get theta_array, thetaRef_array
-  */
-  ierr = DMGetLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
-  ierr = DMDAVecGetArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
-
-  ierr = DMGetLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DMDAVecGetArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
-  /*
-    get pressure_array, pressureRef_array
-  */
-  ierr = DMGetLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
-  ierr = DMDAVecGetArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
-
-  ierr = DMGetLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
-  ierr = DMDAVecGetArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);
-  /*
-    get Gc_array
-  */
-  ierr = DMGetLocalVector(ctx->daScalCell,&Gc_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daScalCell,ctx->matprop->VecGc,INSERT_VALUES,Gc_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daScalCell,ctx->matprop->VecGc,INSERT_VALUES,Gc_localVec);CHKERRQ(ierr);
-  ierr = DMDAVecGetArray(ctx->daScalCell,Gc_localVec,&Gc_array);CHKERRQ(ierr);
-  /*
-    get local mat and RHS
-  */
-  ierr = PetscMalloc3(nrow,PetscReal,&RHS_local,
-                      nrow * nrow,PetscReal,&K_local,
-                      nrow,MatStencil,&row);CHKERRQ(ierr);
-  ierr = DMGetLocalVector(ctx->daScal,&RHS_localVec);CHKERRQ(ierr);
-  ierr = VecSet(RHS_localVec,0.);CHKERRQ(ierr);
-  ierr = DMDAVecGetArray(ctx->daScal,RHS_localVec,&RHS_array);CHKERRQ(ierr);
-
-  /*
-    loop through all elements (ei,ej)
-  */
-  for (ek = zs; ek < zs+zm; ek++) {
-    for (ej = ys; ej < ys+ym; ej++)
-      for (ei = xs; ei < xs+xm; ei++) {
-        hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
-        hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
-        hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-        /*
-          Accumulate stiffness matrix
-        */
-        for (l = 0; l < nrow * nrow; l++)
-          K_local[l] = 0.;
-        ierr = VF_MatVAT2Surface3D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
-        switch (ctx->unilateral) {
-        case UNILATERAL_NONE:
-          ierr = VF_MatVCoupling3D_local(K_local,U_array,theta_array,thetaRef_array,
-                                         pressure_array,pressureRef_array,
-                                         &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
-                                         &ctx->e3D);CHKERRQ(ierr);
-          break;
-        case UNILATERAL_SHEARONLY:
-          ierr = VF_MatVCouplingShearOnly3D_local(K_local,U_array,theta_array,thetaRef_array,
-                                                  pressure_array,pressureRef_array,
-                                                  &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
-                                                  &ctx->e3D);CHKERRQ(ierr);
-          break;
-        }
-        /*
-         Generate array of grid indices in the linear system's ordering.
-         i.e. tells MatSetValuesStencil where to store values from  K_local
-         if the element is indexed by (ek, ej, ei), the associated degrees of freedom
-         have indices (ek ... ek + nphiz), (ej .. ej + nphiy), (ei ... ei + nphix)
-        */
-
-        for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
-          for (j = 0; j < ctx->e3D.nphiy; j++)
-            for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-              row[l].i = ei + i; row[l].j = ej + j; row[l].k = ek + k; row[l].c = 0;
-            }
-        }
-
-        /*
-          Add local stiffness matrix to global stiffness natrix
-        */
-        ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K_local,ADD_VALUES);CHKERRQ(ierr);
-        /*
-          Accumulate Surface energy contribution to RHS
-        */
-        for (l = 0; l < nrow; l++) RHS_local[l] = 0.;
-        ierr = VF_RHSVAT2Surface3D_local(RHS_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
-        if (ctx->hasCrackPressure) {
-          ierr = VF_RHSVPressure3D_local(RHS_local,U_array,pressure_array,pressureRef_array,
-                                         &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
-                                         &ctx->e3D);CHKERRQ(ierr);
-        }
-
-        for (l = 0,k = 0; k < ctx->e3D.nphiz; k++)
-          for (j = 0; j < ctx->e3D.nphiy; j++)
-            for (i = 0; i < ctx->e3D.nphix; i++,l++)
-              RHS_array[ek+k][ej+j][ei+i] += RHS_local[l];
-        /*
-          Jump to next element
-        */
-      }
-  }
-  /*
-    Global Assembly and Boundary Conditions
-  */
-  /*
-  ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatApplyDirichletBC(K,ctx->daScal,&ctx->bcV[0]);CHKERRQ(ierr);
-  */
-  ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-
-  ierr = DMDAVecRestoreArray(ctx->daScal,RHS_localVec,&RHS_array);CHKERRQ(ierr);
-  ierr = DMLocalToGlobalBegin(ctx->daScal,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
-  ierr = DMLocalToGlobalEnd(ctx->daScal,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daScal,&RHS_localVec);CHKERRQ(ierr);
-  /*
-  ierr = VecApplyDirichletBC(RHS,fields->V,&ctx->bcV[0]);CHKERRQ(ierr);
-  */
-  /*
-    Cleanup
-  */
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,U_localVec,&U_array);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
-
-  ierr = DMDAVecRestoreArray(ctx->daScalCell,Gc_localVec,&Gc_array);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daScalCell,&Gc_localVec);CHKERRQ(ierr);
-
-  ierr = PetscFree3(RHS_local,K_local,row);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_SurfaceEnergy3D_local"
@@ -628,55 +423,98 @@ extern PetscErrorCode VF_IrrevApplyEQ(Mat K,Vec RHS,Vec V,Vec VIrrev,VFProp *vfp
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "VF_StepV"
 /*
-  VF_StepV
+  VF_IrrevApplyEQVec: Apply irreversibility conditions using truncation and equality constraints
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
+extern PetscErrorCode VF_IrrevApplyEQVec(Vec RHS,Vec VIrrev,VFProp *vfprop,VFCtx *ctx)
 {
-  PetscErrorCode      ierr;
-  SNESConvergedReason reason;
-  PetscInt            its;
-  PetscReal           Vmin,Vmax;
-
+  PetscErrorCode ierr;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       i,j,k;
+  PetscReal      ***VIrrev_array,***RHS_array;
   PetscFunctionBegin;
-  ierr = VF_VAssembly3D(ctx->KV,ctx->RHSV,fields,ctx);CHKERRQ(ierr);
+
+  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+
+  ierr = DMDAVecGetArray(ctx->daScal,VIrrev,&VIrrev_array);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,RHS,&RHS_array);CHKERRQ(ierr);
+
   /*
-    Take care of irreversibility
+    first pass: RHS, V, and count
   */
-  ierr = VF_IrrevApplyEQ(ctx->KV,ctx->RHSV,fields->V,fields->VIrrev,&ctx->vfprop,ctx);CHKERRQ(ierr);
+  for (k = zs; k < zs + zm; k++)
+    for (j = ys; j < ys + ym; j++) {
+      for (i = xs; i < xs + xm; i++)
+        if (VIrrev_array[k][j][i] <= vfprop->irrevtol) {
+          RHS_array[k][j][i] = 0.;
+        }
+    }
 
-  if (ctx->verbose > 1) {
-    ierr = VecView(ctx->RHSV,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-    ierr = VecView(fields->U,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-    ierr = MatView(ctx->KV,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-  }
-  ierr = SNESSetFunction(ctx->snesV,ctx->VResidual,VF_VResidual,ctx);CHKERRQ(ierr);
-  ierr = SNESSetJacobian(ctx->snesV,ctx->JacV,ctx->JacV,VF_VIJacobian,ctx);CHKERRQ(ierr);
-  if (ctx->verbose > 1) {
-    ierr = SNESMonitorSet(ctx->snesV,VF_VSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  }
-  ierr = SNESSolve(ctx->snesV,PETSC_NULL,fields->V);CHKERRQ(ierr);
-  if (ctx->verbose > 1) {
-    ierr = VecView(fields->V,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-  }
-
-  ierr = SNESGetConvergedReason(ctx->snesV,&reason);CHKERRQ(ierr);
-  if (reason < 0) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesV diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
-  } else {
-    ierr = SNESGetIterationNumber(ctx->snesV,&its);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesV converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
-  }
-  /* Get Min / Max of V */
-  ierr = VecMin(fields->V,PETSC_NULL,&Vmin);CHKERRQ(ierr);
-  ierr = VecMax(fields->V,PETSC_NULL,&Vmax);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"      V min / max:     %e %e\n",Vmin,Vmax);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,VIrrev,&VIrrev_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,RHS,&RHS_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_IrrevApplyEQMat"
+/*
+  VF_IrrevApplyEQMat: Apply irreversibility conditions using truncation and equality constraints
+
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VF_IrrevApplyEQMat(Mat K,Vec VIrrev,VFProp *vfprop,VFCtx *ctx)
+{
+  PetscErrorCode ierr;
+  PetscInt       myirrevnum = 0;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       i,j,k,l = 0;
+  PetscReal      ***VIrrev_array;
+  MatStencil     *row;
+  PetscFunctionBegin;
+
+  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+
+  ierr = DMDAVecGetArray(ctx->daScal,VIrrev,&VIrrev_array);CHKERRQ(ierr);
+
+  /*
+    first pass: count number of BC
+  */
+  for (k = zs; k < zs + zm; k++)
+    for (j = ys; j < ys + ym; j++) {
+      for (i = xs; i < xs + xm; i++)
+        if (VIrrev_array[k][j][i] <= vfprop->irrevtol) {
+          myirrevnum++;
+        }
+    }
+  ierr = PetscMalloc(myirrevnum * sizeof(MatStencil),&row);CHKERRQ(ierr);
+  /*
+    second pass: Apply BC
+  */
+  for (k = zs; k < zs + zm; k++)
+    for (j = ys; j < ys + ym; j++) {
+      for (i = xs; i < xs + xm; i++)
+        if (VIrrev_array[k][j][i] <= vfprop->irrevtol) {
+          row[l].i = i; row[l].j = j; row[l].k = k; row[l].c = 0;
+          l++;
+        }
+    }
+  ierr = MatZeroRowsColumnsStencil(K,myirrevnum,row,1.,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscFree(row);CHKERRQ(ierr);
+
+  ierr = DMDAVecRestoreArray(ctx->daScal,VIrrev,&VIrrev_array);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_VResidual"
@@ -684,17 +522,190 @@ extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
 {
   PetscErrorCode ierr;
   VFCtx          *ctx=(VFCtx*)user;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       ei,ej,ek,i,j,k,l,m;
+  PetscInt       nrow = ctx->e3D.nphix * ctx->e3D.nphiy * ctx->e3D.nphiz;
+  Vec            residual_localVec,U_localVec,V_localVec;
+  Vec            theta_localVec,thetaRef_localVec;
+  Vec            pressure_localVec,pressureRef_localVec;
+  PetscReal      ***residual_array,****U_array,***V_array;
+  PetscReal      ***theta_array,***thetaRef_array;
+  PetscReal      ***pressure_array,***pressureRef_array;
+  PetscReal      ***Gc_array;
+  PetscReal      *residual_local;
+  PetscReal      *K_local;
+  PetscReal      hx,hy,hz;
+  PetscReal      ****coords_array;
 
   PetscFunctionBegin;
   ierr = VecSet(residual,0.0);CHKERRQ(ierr);
-  ierr = MatMult(ctx->KV,V,residual);CHKERRQ(ierr);
-  ierr = VecAXPY(residual,-1.0,ctx->RHSV);CHKERRQ(ierr);
-  ierr = ResidualApplyDirichletBC(residual,V,V,ctx->bcV);CHKERRQ(ierr);
+  /*
+    Get global number of vertices along each coordinate axis on the ENTIRE mesh
+  */
+  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  /*
+    Get informations on LOCAL slice (i.e. subdomain)
+    xs, ys, ym = 1st index in x,y,z direction
+    xm, ym, zm = number of vertices in the x, y, z directions
+  */
+  ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = VecSet(residual,0.);CHKERRQ(ierr);
+  /*
+    Get coordinates
+  */
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+
+  /*
+    get U_array
+  */
+  ierr = DMGetLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daVect,ctx->fields->U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daVect,ctx->fields->U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,U_localVec,&U_array);CHKERRQ(ierr);
+  /*
+    get V_array
+  */
+  ierr = DMGetLocalVector(ctx->daScal,&V_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,V,INSERT_VALUES,V_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,V,INSERT_VALUES,V_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,V_localVec,&V_array);CHKERRQ(ierr);
+  /*
+    get theta_array, thetaRef_array
+  */
+  ierr = DMGetLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
+
+  ierr = DMGetLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
+  /*
+    get pressure_array, pressureRef_array
+  */
+  ierr = DMGetLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
+
+  ierr = DMGetLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);
+  /*
+    get Gc_array
+  */
+  ierr = DMDAVecGetArray(ctx->daScalCell,ctx->matprop->VecGc,&Gc_array);CHKERRQ(ierr);
+  /*
+    get local mat and residual
+  */
+  ierr = PetscMalloc2(nrow,PetscReal,&residual_local,
+                      nrow * nrow,PetscReal,&K_local);CHKERRQ(ierr);
+  ierr = DMGetLocalVector(ctx->daScal,&residual_localVec);CHKERRQ(ierr);
+  ierr = VecSet(residual_localVec,0.);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,residual_localVec,&residual_array);CHKERRQ(ierr);
+
+  /*
+    loop through all elements (ei,ej)
+  */
+  for (ek = zs; ek < zs+zm; ek++) {
+    for (ej = ys; ej < ys+ym; ej++)
+      for (ei = xs; ei < xs+xm; ei++) {
+        hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+        hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+        hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        /*
+          Accumulate stiffness matrix
+        */
+        for (l = 0; l < nrow * nrow; l++)
+          K_local[l] = 0.;
+        ierr = VF_MatVAT2Surface3D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+        switch (ctx->unilateral) {
+        case UNILATERAL_NONE:
+          ierr = VF_MatVCoupling3D_local(K_local,U_array,theta_array,thetaRef_array,
+                                         pressure_array,pressureRef_array,
+                                         &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
+                                         &ctx->e3D);CHKERRQ(ierr);
+          break;
+        case UNILATERAL_SHEARONLY:
+          ierr = VF_MatVCouplingShearOnly3D_local(K_local,U_array,theta_array,thetaRef_array,
+                                                  pressure_array,pressureRef_array,
+                                                  &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
+                                                  &ctx->e3D);CHKERRQ(ierr);
+          break;
+        }
+
+        /*
+          Accumulate local contributions to residual
+        */
+        for (m = 0; m < nrow; m++) {
+          residual_local[m] = 0.;
+          for (l=0,k = 0; k < ctx->e3D.nphiz; k++) {
+            for (j = 0; j < ctx->e3D.nphiy; j++) {
+              for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+                residual_local[m] -= K_local[m*nrow+l] * V_array[ek+k][ej+j][ei+i];
+              }
+            }
+          }
+        }
+        ierr = VF_RHSVAT2Surface3D_local(residual_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+        if (ctx->hasCrackPressure) {
+          ierr = VF_RHSVPressure3D_local(residual_local,U_array,pressure_array,pressureRef_array,
+                                         &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
+                                         &ctx->e3D);CHKERRQ(ierr);
+        }
+
+        for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
+          for (j = 0; j < ctx->e3D.nphiy; j++) {
+            for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+              residual_array[ek+k][ej+j][ei+i] -= residual_local[l];
+            }
+          }
+        }
+        /*
+          Jump to next element
+        */
+      }
+  }
+  ierr = DMDAVecRestoreArray(ctx->daScal,residual_localVec,&residual_array);CHKERRQ(ierr);
+  ierr = DMLocalToGlobalBegin(ctx->daScal,residual_localVec,ADD_VALUES,residual);CHKERRQ(ierr);
+  ierr = DMLocalToGlobalEnd(ctx->daScal,residual_localVec,ADD_VALUES,residual);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&residual_localVec);CHKERRQ(ierr);
+  /*
+    Cleanup
+  */
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,U_localVec,&U_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,V_localVec,&V_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&V_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
+
+  ierr = DMDAVecRestoreArray(ctx->daScalCell,ctx->matprop->VecGc,&Gc_array);CHKERRQ(ierr);
+
+  ierr = PetscFree2(residual_local,K_local);CHKERRQ(ierr);
+
+  
+  ierr = VF_IrrevApplyEQVec(residual,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
   /*
     UGLY HACK:
     We can pass V for the BC, because we know that the only BC used in the V problem are 0 and 1, so
     the 3rd argument is never used
   */
+  ierr = ResidualApplyDirichletBC(residual,V,V,ctx->bcV);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -704,17 +715,168 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
 {
   PetscErrorCode ierr;
   VFCtx          *ctx=(VFCtx*)user;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       ei,ej,ek,i,j,k,l;
+  PetscInt       nrow = ctx->e3D.nphix * ctx->e3D.nphiy * ctx->e3D.nphiz;
+  Vec            U_localVec;
+  Vec            theta_localVec,thetaRef_localVec;
+  Vec            pressure_localVec,pressureRef_localVec;
+  PetscReal      ****U_array;
+  PetscReal      ***theta_array,***thetaRef_array;
+  PetscReal      ***pressure_array,***pressureRef_array;
+  PetscReal      ***Gc_array;
+  PetscReal      *Jac_local;
+  MatStencil     *row;
+  PetscReal      hx,hy,hz;
+  PetscReal      ****coords_array;
 
   PetscFunctionBegin;
-  *str = SAME_NONZERO_PATTERN;
-  ierr = MatCopy(ctx->KV,*Jac,*str);
+  /*
+    ierr = MatCopy(ctx->KV,*Jac,*str);
+  */
+  /*
+    Get global number of vertices along each coordinate axis on the ENTIRE mesh
+  */
+  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  /*
+    Get informations on LOCAL slice (i.e. subdomain)
+    xs, ys, ym = 1st index in x,y,z direction
+    xm, ym, zm = number of vertices in the x, y, z directions
+  */
+  ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+
+  ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
+  /*
+    Get coordinates
+  */
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+
+  /*
+    get U_array
+  */
+  ierr = DMGetLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daVect,ctx->fields->U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daVect,ctx->fields->U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,U_localVec,&U_array);CHKERRQ(ierr);
+  /*
+    get theta_array, thetaRef_array
+  */
+  ierr = DMGetLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
+
+  ierr = DMGetLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
+  /*
+    get pressure_array, pressureRef_array
+  */
+  ierr = DMGetLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
+
+  ierr = DMGetLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->fields->pressureRef,INSERT_VALUES,pressureRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);
+  /*
+    get Gc_array
+  */
+  ierr = DMDAVecGetArray(ctx->daScalCell,ctx->matprop->VecGc,&Gc_array);CHKERRQ(ierr);
+  /*
+    get local mat and RHS
+  */
+  ierr = PetscMalloc2(nrow * nrow,PetscReal,&Jac_local,
+                      nrow,MatStencil,&row);CHKERRQ(ierr);
+
+  /*
+    loop through all elements (ei,ej)
+  */
+  for (ek = zs; ek < zs+zm; ek++) {
+    for (ej = ys; ej < ys+ym; ej++) {
+      for (ei = xs; ei < xs+xm; ei++) {
+        hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+        hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+        hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        /*
+          Accumulate stiffness matrix
+        */
+        for (l = 0; l < nrow * nrow; l++)
+          Jac_local[l] = 0.;
+        ierr = VF_MatVAT2Surface3D_local(Jac_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+        switch (ctx->unilateral) {
+        case UNILATERAL_NONE:
+          ierr = VF_MatVCoupling3D_local(Jac_local,U_array,theta_array,thetaRef_array,
+                                         pressure_array,pressureRef_array,
+                                         &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
+                                         &ctx->e3D);CHKERRQ(ierr);
+          break;
+        case UNILATERAL_SHEARONLY:
+          ierr = VF_MatVCouplingShearOnly3D_local(Jac_local,U_array,theta_array,thetaRef_array,
+                                                  pressure_array,pressureRef_array,
+                                                  &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
+                                                  &ctx->e3D);CHKERRQ(ierr);
+          break;
+        }
+        /*
+         Generate array of grid indices in the linear system's ordering.
+         i.e. tells MatSetValuesStencil where to store values from  K_local
+         if the element is indexed by (ek, ej, ei), the associated degrees of freedom
+         have indices (ek ... ek + nphiz), (ej .. ej + nphiy), (ei ... ei + nphix)
+        */
+
+        for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
+          for (j = 0; j < ctx->e3D.nphiy; j++) {
+            for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+              row[l].i = ei + i; row[l].j = ej + j; row[l].k = ek + k; row[l].c = 0;
+            }
+          }
+        }
+
+        /*
+          Add local stiffness matrix to global stiffness natrix
+        */
+        ierr = MatSetValuesStencil(*Jac,nrow,row,nrow,row,Jac_local,ADD_VALUES);CHKERRQ(ierr);
+
+        /*
+          Jump to next element
+        */
+      }
+    }
+  }
   ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  if (*Jac != *Jac1) {
-    ierr = MatAssemblyBegin(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(*Jac1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  }
-  ierr = MatApplyDirichletBCRowCol(*Jac1,ctx->daScal,ctx->bcV);CHKERRQ(ierr);
+
+  /*
+    Cleanup
+  */
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,U_localVec,&U_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,pressureRef_localVec,&pressureRef_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&pressureRef_localVec);CHKERRQ(ierr);
+
+  ierr = DMDAVecRestoreArray(ctx->daScalCell,ctx->matprop->VecGc,&Gc_array);CHKERRQ(ierr);
+
+  ierr = PetscFree2(Jac_local,row);CHKERRQ(ierr);
+
+  ierr = MatApplyDirichletBCRowCol(*Jac,ctx->daScal,ctx->bcV);CHKERRQ(ierr);
+  ierr = VF_IrrevApplyEQMat(*Jac,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
+  *str = SAME_NONZERO_PATTERN;
   PetscFunctionReturn(0);
 }
 
@@ -737,6 +899,38 @@ extern PetscErrorCode VF_VSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,voi
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "VF_StepV"
+/*
+  VF_StepV
+
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
+{
+  PetscErrorCode      ierr;
+  SNESConvergedReason reason;
+  PetscInt            its;
+  PetscReal           Vmin,Vmax;
+
+  PetscFunctionBegin;
+  ierr = SNESSolve(ctx->snesV,PETSC_NULL,fields->V);CHKERRQ(ierr);
+  if (ctx->verbose > 1) {
+    ierr = VecView(fields->V,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+  }
+  ierr = SNESGetConvergedReason(ctx->snesV,&reason);CHKERRQ(ierr);
+  if (reason < 0) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesV diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+  } else {
+    ierr = SNESGetIterationNumber(ctx->snesV,&its);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesV converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+  }
+  /* Get Min / Max of V */
+  ierr = VecMin(fields->V,PETSC_NULL,&Vmin);CHKERRQ(ierr);
+  ierr = VecMax(fields->V,PETSC_NULL,&Vmax);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"      V min / max:     %e %e\n",Vmin,Vmax);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
 
 
 
