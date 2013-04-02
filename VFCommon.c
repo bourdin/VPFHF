@@ -788,6 +788,9 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   PC             pcU,pcV;
   PetscReal      atol,rtol,stol;
   PetscInt       maxit,maxf;
+  Vec            lbV,ubV;
+  Mat            JacV;
+  Vec            residualV;
   PetscFunctionBegin;
   /*
    U solver initialization
@@ -823,33 +826,25 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesV);CHKERRQ(ierr);
   ierr = SNESSetDM(ctx->snesV,ctx->daScal);CHKERRQ(ierr);
   ierr = SNESSetOptionsPrefix(ctx->snesV,"V_");CHKERRQ(ierr);
-  ierr = SNESSetFunction(ctx->snesV,ctx->VResidual,VF_VResidual,ctx);CHKERRQ(ierr);
-  ierr = SNESSetJacobian(ctx->snesV,ctx->JacV,ctx->JacV,VF_VIJacobian,ctx);CHKERRQ(ierr);
   if (ctx->verbose > 1) {
     ierr = SNESMonitorSet(ctx->snesV,VF_VSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   }
   ierr = SNESSetFromOptions(ctx->snesV);CHKERRQ(ierr);
   
-  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->lbV);CHKERRQ(ierr);
-  ierr = VecSet(ctx->lbV,0.0);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->ubV);CHKERRQ(ierr);
-  ierr = VecSet(ctx->ubV,1.0);CHKERRQ(ierr);
-  ierr = SNESVISetVariableBounds(ctx->snesV,ctx->lbV,ctx->ubV);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(ctx->daScal,&lbV);CHKERRQ(ierr);
+  ierr = VecSet(lbV,0.0);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(ctx->daScal,&ubV);CHKERRQ(ierr);
+  ierr = VecSet(ubV,1.0);CHKERRQ(ierr);
+  ierr = SNESVISetVariableBounds(ctx->snesV,lbV,ubV);CHKERRQ(ierr);
   ierr = SNESGetTolerances(ctx->snesV,&atol,&rtol,&stol,&maxit,&maxf);CHKERRQ(ierr);
   ierr = SNESSetTolerances(ctx->snesV,1e-8,rtol,stol,maxit,maxf);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->VResidual);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) ctx->VResidual,"V_Residual");CHKERRQ(ierr);
 
-  /*
-   KV and RHSV will go when we update the residual evaluation
-   */
-  /*
-  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSV);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) ctx->RHSV,"RHSV");CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daScal,PETSC_NULL,&ctx->KV);CHKERRQ(ierr);
-  */
-  ierr = DMCreateMatrix(ctx->daScal,PETSC_NULL,&ctx->JacV);CHKERRQ(ierr);
-  ierr = MatSetOption(ctx->JacV,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(ctx->daScal,&residualV);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,PETSC_NULL,&JacV);CHKERRQ(ierr);
+  ierr = MatSetOption(JacV,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = SNESSetFunction(ctx->snesV,residualV,VF_VResidual,ctx);CHKERRQ(ierr);
+  ierr = SNESSetJacobian(ctx->snesV,JacV,JacV,VF_VIJacobian,ctx);CHKERRQ(ierr);
+
   ierr = SNESGetKSP(ctx->snesV,&kspV);CHKERRQ(ierr);
   ierr = KSPSetTolerances(kspV,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSetType(kspV,KSPBCGSL);CHKERRQ(ierr);
@@ -1043,16 +1038,9 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = SNESDestroy(&ctx->snesU);CHKERRQ(ierr);
   ierr = MatDestroy(&ctx->JacU);CHKERRQ(ierr);
 
-  /*
-  ierr = MatDestroy(&ctx->KV);CHKERRQ(ierr);
-  ierr = VecDestroy(&ctx->RHSV);CHKERRQ(ierr);
-  */
-  ierr = VecDestroy(&ctx->VResidual);CHKERRQ(ierr);
-  ierr = VecDestroy(&ctx->lbV);CHKERRQ(ierr);
-  ierr = VecDestroy(&ctx->ubV);CHKERRQ(ierr);
 
   ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
-  ierr = MatDestroy(&ctx->JacV);CHKERRQ(ierr);
+
   ierr = VecDestroy(&fields->VelnPress);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->vfperm);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->VolCrackOpening);CHKERRQ(ierr);

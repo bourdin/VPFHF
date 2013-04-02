@@ -292,7 +292,6 @@ typedef struct {
   BC                  bcV[1];
   BC                  bcP[1];
   BC                  bcT[1];
-  Vec                 lbV,ubV;
   DM                  daVect;
   DM                  daScal;
   CartFE_Element3D    e3D;
@@ -301,15 +300,12 @@ typedef struct {
   Vec                 coordinates;
   PetscInt            verbose;
   VFPreset            preset;
-  Mat                 KU;
-	SNES                snesU;
 	SNES                snesV;
+	SNES                snesU;
 	Vec                 UResidual;
-	Vec                 VResidual;
 	Mat                 JacU;
-	Mat                 JacV;
+  Mat                 KU;
   Vec                 RHSU;
-  MatNullSpace        nullspaceU;
 /*  
   Global variables for regular FEM Flow
 */
