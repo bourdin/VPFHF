@@ -136,7 +136,7 @@ extern PetscErrorCode MixedFracFlowSNESSolve(VFCtx *ctx,VFFields *fields)
 	if (reason < 0) {
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] Fracture snesVelP diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
 	} else {
-		ierr = SNESGetIterationNumber(ctx->snesVelP,&its);CHKERRQ(ierr);
+		ierr = SNESGetIterationNumber(ctx->snesFracVelP,&its);CHKERRQ(ierr);
 		ierr = PetscPrintf(PETSC_COMM_WORLD," Fracture snesVelP converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
 	}
 	ierr = VecMin(fields->fracVelnPress,PETSC_NULL,&VelPmin);CHKERRQ(ierr);
