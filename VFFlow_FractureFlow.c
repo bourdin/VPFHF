@@ -39,9 +39,9 @@ extern PetscErrorCode MixedFractureFlowSolverInitialize(VFCtx *ctx, VFFields *fi
   ierr = PetscOptionsEnd();CHKERRQ(ierr); 
   
   ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daFlow,PETSC_NULL,&ctx->KFracVelP);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daFlow,PETSC_NULL,&ctx->KFracVelPlhs);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daFlow,PETSC_NULL,&ctx->JacFracVelP);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KFracVelP);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KFracVelPlhs);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->JacFracVelP);CHKERRQ(ierr);
   ierr = MatZeroEntries(ctx->JacFracVelP);CHKERRQ(ierr);
   ierr = MatZeroEntries(ctx->KFracVelPlhs);CHKERRQ(ierr);
   ierr = MatZeroEntries(ctx->KFracVelP);CHKERRQ(ierr);
