@@ -151,6 +151,16 @@ int main(int argc,char **argv)
       ctx.bcU[2].face[Z0] = ZERO; ctx.bcV[0].face[Z0] = ONE;
                                   ctx.bcV[0].face[Z1] = ONE;
       break;
+    case 8:
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D computation with symmetry on x,y,z \n");CHKERRQ(ierr);      
+      ctx.bcU[0].face[X0] = ZERO; ctx.bcU[1].face[Y0] = ZERO; ctx.bcU[2].face[Z0] = ZERO;
+      //ctx.bcV[0].face[X0] = ONE;
+      ctx.bcV[0].face[X1] = ONE;
+      //ctx.bcV[0].face[Y0] = ONE;
+      ctx.bcV[0].face[Y1] = ONE;
+      //ctx.bcV[0].face[Z0] = ONE;
+      ctx.bcV[0].face[Z1] = ONE;
+      break;	  
     default:
       SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: mode should be one of {0,1,2,3,4,5,6,7},got %i\n",mode);
       break;
@@ -210,7 +220,15 @@ int main(int argc,char **argv)
   ctx.timevalue = 0;
   //ctx.maxtimestep = 150;
   
-  
+      ctx.hasCrackPressure = PETSC_FALSE;
+      ctx.hasInsitu = PETSC_TRUE;
+      ierr = VecCopy(U_s,fields.U);CHKERRQ(ierr);
+      ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+      ierr = VolumetricCrackOpening(&vol_s,&ctx,&fields);CHKERRQ(ierr);   
+/*      ierr = VecCopy(fields.U,U_s);CHKERRQ(ierr);  
+	  minvol = vol_s;*/
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"  minvol %g\n",vol_s);CHKERRQ(ierr);
+	   
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
     targetVol = minvol + flowrate * ctx.timestep;
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i. Targeting injected volume of %g\n",ctx.timestep,targetVol);CHKERRQ(ierr);
