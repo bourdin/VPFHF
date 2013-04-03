@@ -301,46 +301,6 @@ typedef struct {
 } ResProp; 
 
 typedef struct {
-	PetscLogStage VF_IOStage;
-	
-	PetscLogStage VF_UAssemblyStage;
-		//PetscClassId  VF_MatULocalClassId;
-		//PetscLogEvent VF_MatULocalEvent;
-		//PetscClassId  VF_VecULocalClassId;
-		//PetscLogEvent VF_VecULocalEvent;
-	
-	PetscLogStage VF_USolverStage;
-	
-	PetscLogStage VF_VAssemblyStage;
-		//PetscClassId  VF_MatVLocalClassId;
-		//PetscLogEvent VF_MatVLocalEvent;
-		//PetscClassId  VF_VecVLocalClassId;
-		//PetscLogEvent VF_VecVLocalEvent;
-	
-	PetscLogStage VF_VSolverStage;
-	
-	PetscLogStage VF_EnergyStage;
-		//PetscClassId  VF_EnergyLocalClassId;
-		//PetscLogEvent VF_EnergyLocalEvent;
-	
-	PetscLogStage VF_PAssemblyStage;
-		//PetscClassId  VF_MatPLocalClassId;
-		//PetscLogEvent VF_MatPLocalEvent;
-		//PetscClassId  VF_VecPLocalClassId;
-		//PetscLogEvent VF_VecPLocalEvent;
-	
-	PetscLogStage VF_PSolverStage;
-	
-	PetscLogStage VF_TAssemblyStage;
-		//PetscClassId  VF_MatTLocalClassId;
-		//PetscLogEvent VF_MatTLocalEvent;
-		//PetscClassId  VF_VecTLocalClassId;
-		//PetscLogEvent VF_VecTLocalEvent;
-	
-	PetscLogStage VF_TSolverStage;
-} VFLog;
-
-typedef struct {
   PetscBool           printhelp;
   PetscInt            nlayer;
   PetscReal          *layersep;
@@ -349,7 +309,6 @@ typedef struct {
   BC                  bcV[1];
   BC                  bcP[1];
   BC                  bcT[1];
-  Vec                 lbV,ubV;
   DM                  daVect;
   DM                  daScal;
   CartFE_Element3D    e3D;
@@ -358,17 +317,12 @@ typedef struct {
   Vec                 coordinates;
   PetscInt            verbose;
   VFPreset            preset;
-  Mat                 KU;
-	SNES                snesU;
 	SNES                snesV;
+	SNES                snesU;
 	Vec                 UResidual;
-	Vec                 VResidual;
 	Mat                 JacU;
-	Mat                 JacV;
+  Mat                 KU;
   Vec                 RHSU;
-  MatNullSpace        nullspaceU;
-  Mat                 KV;
-  Vec                 RHSV;
 /*  
   Global variables for regular FEM Flow
 */
@@ -442,7 +396,6 @@ typedef struct {
 	MatProp            *matprop;
 	ResProp             resprop;
 	VFProp              vfprop;
-	VFLog               vflog;
 	PetscReal           insitumin[6];
 	PetscReal           insitumax[6];
 	PetscBool           hasInsitu;
@@ -512,7 +465,6 @@ extern PetscErrorCode VFResPropGet(ResProp *resprop);
 
 extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode VFLogInitialize(VFLog *vflog);
 
 extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx);
 extern PetscErrorCode VFMatPropFieldsInitialize(VFCtx *ctx, MatProp *matprop);
