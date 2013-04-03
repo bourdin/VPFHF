@@ -4,6 +4,10 @@ VF:
 Numerical implementation of the variational approach to fracture.
 (c) 2010-2012 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu
 
+
+
+
+
 Option table:
 #PETSc Option Table entries:
 -l 1,1,1
@@ -13,6 +17,6 @@ Option table:
 -p runtest6-0
 #End of PETSc Option Table entries
 Applying traction Dirichlet conditions on faces X0 X1
-      kspU converged in 36 iterations 2.
+      snesU converged in 1 iterations 5.
 Elastic Energy:            5.000050e-01
 Total Mechanical energy:  5.000050e-01
