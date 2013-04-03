@@ -423,6 +423,9 @@ extern PetscErrorCode VF_IrrevApplyEQ(Mat K,Vec RHS,Vec V,Vec VIrrev,VFProp *vfp
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "VF_IrrevApplyEQVec"
+
 /*
   VF_IrrevApplyEQVec: Apply irreversibility conditions using truncation and equality constraints
 

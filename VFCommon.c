@@ -60,8 +60,6 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   ctx->heatsolver = HEATSOLVER_SNESFEM;
   ierr            = FlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
   ierr            = VF_HeatSolverInitialize(ctx,fields);CHKERRQ(ierr);
-
-
   /*
    Save command line options to a file
    */

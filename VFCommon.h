@@ -445,6 +445,7 @@ typedef struct {
 	Vec                 RHSFracVelPpre;
 	Mat                 KFracVelPlhs;
 	Vec                 PreFracFlowFields;
+	VFFields			*fields;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
