@@ -819,8 +819,8 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
    */
   ierr = DMCreateGlobalVector(ctx->daVect,&ctx->RHSU);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->RHSU,"RHSU");CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daVect,PETSC_NULL,&ctx->KU);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daVect,PETSC_NULL,&ctx->JacU);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daVect,MATAIJ,&ctx->KU);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daVect,MATAIJ,&ctx->JacU);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->KU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 
   ierr = SNESGetKSP(ctx->snesU,&kspU);CHKERRQ(ierr);
@@ -850,7 +850,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = SNESSetTolerances(ctx->snesV,1e-8,rtol,stol,maxit,maxf);CHKERRQ(ierr);
 
   ierr = DMCreateGlobalVector(ctx->daScal,&residualV);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daScal,PETSC_NULL,&JacV);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&JacV);CHKERRQ(ierr);
   ierr = MatSetOption(JacV,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = SNESSetFunction(ctx->snesV,residualV,VF_VResidual,ctx);CHKERRQ(ierr);
   ierr = SNESSetJacobian(ctx->snesV,JacV,JacV,VF_VIJacobian,ctx);CHKERRQ(ierr);

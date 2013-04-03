@@ -1,5 +1,5 @@
 /*
-  test6.c:
+  test7.c:
   Validate elasticity solver by applying shear boundary condition
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
