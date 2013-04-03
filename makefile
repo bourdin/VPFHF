@@ -11,7 +11,7 @@ bin:
 	@mkdir ${VFDIR}/bin
 
 VF_Chevron: binarch VF_Chevron.o ${VFOBJ} chkopts
-	@${CLINKER} -o bin/${PETSC_ARCH}/VF_Chevron VF_Chevron.o ${VFOBJ} ${PETSC_LIB}
+	${CLINKER} -o bin/${PETSC_ARCH}/VF_Chevron VF_Chevron.o ${VFOBJ} ${PETSC_LIB}
 
 Utils: binarch
 	@echo Making all in ${VFDIR}/Utils
