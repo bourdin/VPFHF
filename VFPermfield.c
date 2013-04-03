@@ -637,7 +637,7 @@ extern PetscErrorCode PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 		}
 	}
 	
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"Sums are:\n sum0 = %g \t sum1 = %g sum2 = %g \n",sum0,sum1,sum2);CHKERRQ(ierr);
+//	ierr = PetscPrintf(PETSC_COMM_WORLD,"Sums are:\n sum0 = %g \t sum1 = %g sum2 = %g \n",sum0,sum1,sum2);CHKERRQ(ierr);
 	
 	ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);

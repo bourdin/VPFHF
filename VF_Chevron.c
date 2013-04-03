@@ -12,6 +12,7 @@
 #include "VFHeat.h"
 #include "VFFlow_KSPMixedFEM.h"
 #include "VFHeat_SNESFEM.h"
+#include "VFFlow_FractureFlow.h"
 /*
   Remove this as soon as the functions are moved in the proper location
 */

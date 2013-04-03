@@ -19,6 +19,7 @@ typedef struct {
 	PetscReal   timestepsize;   /*Time step size                */
 	PetscReal   g[3];
 	PetscReal   Cp;			  /* Specific heat capacity */
+	PetscReal   Kw;         /* Modulus of liquid               */
 } FlowProp; 
 
 typedef enum {
@@ -94,6 +95,7 @@ typedef enum {
 	FLOWSOLVER_TSMIXEDFEM,
 	FLOWSOLVER_FAKE,
 	FLOWSOLVER_READFROMFILES,
+	FLOWSOLVER_NONE,
 } VFFlowSolverType;
 static const char *VFFlowSolverName[] = {
 	"FLOWSOLVER_TS",
@@ -104,6 +106,18 @@ static const char *VFFlowSolverName[] = {
 	"FLOWSOLVER_TSMIXEDFEM",
 	"FAKE",
 	"READFROMFILES",
+	"FLOWSOLVER_NONE",
+	"",
+	0
+};
+
+typedef enum {
+	FRACTUREFLOWSOLVER_SNESMIXEDFEM,
+	FRACTUREFLOWSOLVER_NONE,
+} VFFractureFlowSolverType;
+static const char *VFFracureFlowSolverName[] = {
+	"FRACTUREFLOWSOLVER_SNESMIXEDFEM",
+	"FRACTUREFLOWSOLVER_NONE",
 	"",
 	0
 };
@@ -151,6 +165,9 @@ typedef struct {
 	Vec VolLeakOffRate;
 	Vec FlowBCArray;
 	Vec PresBCArray;
+	Vec fracpressure;
+	Vec fracvelocity;
+	Vec fracVelnPress;
 } VFFields;
 
 static const char *VFFieldNames[] = {
@@ -465,7 +482,16 @@ typedef struct {
 	Vec                 prevT;
 	Vec                 Cond;
 	BC                  bcQT[1];
-	Vec					        TBCArray;
+	Vec					        TBCArray;	
+	Mat                 KFracVelP;
+	Mat                 JacFracVelP;
+	SNES                snesFracVelP;
+	Vec                 FracResidual;
+	Vec                 RHSFracVelP;
+	VFFractureFlowSolverType    fractureflowsolver;
+	Vec                 RHSFracVelPpre;
+	Mat                 KFracVelPlhs;
+	Vec                 PreFracFlowFields;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
