@@ -40,15 +40,10 @@ extern PetscErrorCode VF_FEMSNESHeatSolverInitialize(VFCtx *ctx, VFFields *field
 	ierr = PetscOptionsEnd();CHKERRQ(ierr);	
 	
 	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
-	if (comm_size == 1) {
-		ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->KT);CHKERRQ(ierr);
-		ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->KTlhs);CHKERRQ(ierr);
-		ierr = DMCreateMatrix(ctx->daScal,MATSEQAIJ,&ctx->JacT);CHKERRQ(ierr);
-	} else {
-		ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->KT);CHKERRQ(ierr);
-		ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->KTlhs);CHKERRQ(ierr);
-		ierr = DMCreateMatrix(ctx->daScal,MATMPIAIJ,&ctx->JacT);CHKERRQ(ierr);
-	}
+  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KT);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KTlhs);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->JacT);CHKERRQ(ierr);
+
 	ierr = MatZeroEntries(ctx->KT);CHKERRQ(ierr);
 	ierr = MatZeroEntries(ctx->KTlhs);CHKERRQ(ierr);
 	ierr = MatZeroEntries(ctx->JacT);CHKERRQ(ierr);
