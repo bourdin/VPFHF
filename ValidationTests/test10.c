@@ -12,6 +12,7 @@
 #include "VFU.h"
 #include "VFFlow.h"
 #include "VFCracks.h"
+#include "VFPermField.h"
 
 
 VFCtx               ctx;
@@ -25,21 +26,14 @@ int main(int argc,char **argv)
 	VFFields            fields;
 	PetscErrorCode      ierr;
 	PetscInt            orientation=2;
-	PetscInt            nopts=3;
-	PetscInt            i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+	PetscInt            i,j,nx,ny,nz,xs,xm,ys,ym,zs,zm;
 	PetscReal			****coords_array;
 	PetscReal           BBmin[3],BBmax[3];
-	PetscReal           x,y,z;  
-	PetscReal           ElasticEnergy = 0;
 	PetscReal           InsituWork = 0;
-	PetscReal           SurfaceEnergy = 0;
-	char                filename[FILENAME_MAX];
 	PetscReal			lx,ly,lz;
 	PetscReal           p = 1e-3;
-	char				prefix[PETSC_MAX_PATH_LEN+1];
-	PetscReal			errV=1e+10,errP;
+	PetscReal			errV=1e+10;
 	Vec					Vold;
-	PetscReal			p_epsilon = 1.e-4;
 	PetscInt			altminit=1;
 
 
