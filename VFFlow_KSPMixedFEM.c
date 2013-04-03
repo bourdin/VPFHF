@@ -1546,6 +1546,7 @@ extern PetscErrorCode GetFlowProp(FlowProp *flowprop,FlowUnit flowunit,ResProp r
 	flowprop->theta    = 1.;						  /*Time paramter*/
 	flowprop->timestepsize = 1;				    	/*Time step size	*/
 	flowprop->M_inv = 0.;
+	flowprop->Kw = 1.;
 	switch (flowunit) {
 		case UnitaryUnits:
 			flowprop->mu    = 1.;                     /*viscosity in cp*/

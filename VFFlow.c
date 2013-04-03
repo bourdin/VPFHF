@@ -36,7 +36,7 @@ extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 		case FLOWSOLVER_TSMIXEDFEM:       
 			ierr = MixedFEMTSFlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
 			break;
-		case FLOWSOLVER_SNESMIXEDFEM:       
+		case FLOWSOLVER_SNESMIXEDFEM:
 			ierr = MixedFEMSNESFlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
 			break;
 		case FLOWSOLVER_FEM:
@@ -50,6 +50,15 @@ extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 		case FLOWSOLVER_FAKE:
 			break; 
 		case FLOWSOLVER_READFROMFILES:
+			break;
+		case FLOWSOLVER_NONE:
+			break;
+	}
+	switch (ctx->fractureflowsolver) {
+		case FRACTUREFLOWSOLVER_SNESMIXEDFEM:
+			ierr = MixedFractureFlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
+			break;
+		case FRACTUREFLOWSOLVER_NONE:
 			break;
 	}
 	PetscFunctionReturn(0);
@@ -69,7 +78,7 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 		case FLOWSOLVER_TSMIXEDFEM:       
 			ierr = MixedFEMTSFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
 			break;
-		case FLOWSOLVER_SNESMIXEDFEM:       
+		case FLOWSOLVER_SNESMIXEDFEM:
 			ierr = MixedFEMSNESFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
 			break;
 		case FLOWSOLVER_FEM:
@@ -83,6 +92,11 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 		case FLOWSOLVER_FAKE:
 			break; 
 		case FLOWSOLVER_READFROMFILES:
+			break;
+	}
+	switch (ctx->fractureflowsolver) {
+		case FRACTUREFLOWSOLVER_SNESMIXEDFEM:
+			ierr = MixedFractureFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
 			break;
 	}
 	PetscFunctionReturn(0);
@@ -231,6 +245,11 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
 	// eventually replace FLOWSOLVER_FEM with this after confirming it provides the same results
 
   }
+	switch (ctx->fractureflowsolver) {
+		case FRACTUREFLOWSOLVER_SNESMIXEDFEM:
+			ierr = MixedFracFlowSNESSolve(ctx,fields);CHKERRQ(ierr);
+			break;
+	}
   PetscFunctionReturn(0);
 }
 

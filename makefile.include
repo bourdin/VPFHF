@@ -7,6 +7,7 @@ VFOBJ = ${VFDIR}/VFCommon.o                \
         ${VFDIR}/VFHeat.o                  \
         ${VFDIR}/VFFlow_Fake.o             \
         ${VFDIR}/VFFlow_SNESFEM.o     	   \
+        ${VFDIR}/VFFlow_FractureFlow.o     \
         ${VFDIR}/VFFlow_TSFEM.o     	   \
         ${VFDIR}/VFFlow_KSPMixedFEM.o      \
         ${VFDIR}/VFFlow_SNESMixedFEM.o     \

@@ -165,6 +165,10 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 		ierr = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,PETSC_NULL);CHKERRQ(ierr);
 			//    ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
 		ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
+
+		//    ctx->fractureflowsolver = FRACTUREFLOWSOLVER_SNESMIXEDFEM;
+		ierr = PetscOptionsEnum("-fractureflowsolver","\n\tFracture Flow solver","",VFFracureFlowSolverName,(PetscEnum)ctx->fractureflowsolver,(PetscEnum*)&ctx->fractureflowsolver,PETSC_NULL);CHKERRQ(ierr);
+
 		
 		ctx->hasInsitu = PETSC_FALSE;
 		nopt = 6;
@@ -775,6 +779,30 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 	ierr = PetscObjectSetName((PetscObject) ctx->TBCArray,"Temperature Boundary Term");CHKERRQ(ierr);
 	ierr = VecSet(ctx->TBCArray,0.0);CHKERRQ(ierr);
 	
+	
+	
+	
+	
+	
+	
+	ierr = DMCreateGlobalVector(ctx->daFlow,&fields->fracVelnPress);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) fields->fracVelnPress,"Fracture Velocity and Pressure");CHKERRQ(ierr);
+	ierr = VecSet(fields->fracVelnPress,0.0);CHKERRQ(ierr);
+
+	ierr = DMCreateGlobalVector(ctx->daVect,&fields->fracvelocity);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) fields->fracvelocity,"Fracture Fluid Velocity");CHKERRQ(ierr);
+	ierr = VecSet(fields->fracvelocity,0.0);CHKERRQ(ierr);
+
+	ierr = DMCreateGlobalVector(ctx->daScal,&fields->fracpressure);CHKERRQ(ierr);
+	ierr = PetscObjectSetName((PetscObject) fields->fracpressure,"Fracture Pressure");CHKERRQ(ierr);
+	ierr = VecSet(fields->fracpressure,0.);CHKERRQ(ierr);
+
+	
+	
+	
+	
+	
+	
 	/*
 	 Create optional penny-shaped and rectangular cracks
 	 */
@@ -905,7 +933,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 	ierr = VecSet(ctx->lbV,0.0);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->ubV);CHKERRQ(ierr);
 	ierr = VecSet(ctx->ubV,1.0);CHKERRQ(ierr);
-	ierr = SNESVISetVariableBounds(ctx->snesV,ctx->lbV,ctx->ubV);CHKERRQ(ierr);
+//	ierr = SNESVISetVariableBounds(ctx->snesV,ctx->lbV,ctx->ubV);CHKERRQ(ierr);
 	ierr = SNESGetTolerances(ctx->snesV,&atol,&rtol,&stol,&maxit,&maxf);CHKERRQ(ierr);
 	ierr = SNESSetTolerances(ctx->snesV,1e-8,rtol,stol,maxit,maxf);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->VResidual);CHKERRQ(ierr);
@@ -1155,6 +1183,12 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = PetscViewerDestroy(&ctx->energyviewer);CHKERRQ(ierr);
 	ierr = VF_HeatSolverFinalize(ctx,fields);CHKERRQ(ierr);
 	ierr = FlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
+
+	ierr = VecDestroy(&fields->fracpressure);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->fracvelocity);CHKERRQ(ierr);
+	ierr = VecDestroy(&fields->fracVelnPress);CHKERRQ(ierr);
+
+	
 	/*
 	 Close the xdmf multi-step file
 	 */
@@ -1205,11 +1239,13 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
 	ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,H5filename,FILE_MODE_WRITE,&H5Viewer);
 	ierr = VecView(fields->U,H5Viewer);CHKERRQ(ierr);
 	ierr = VecView(fields->velocity,H5Viewer);CHKERRQ(ierr);
+	ierr = VecView(fields->fracvelocity,H5Viewer);CHKERRQ(ierr);
 	ierr = VecView(fields->vfperm,H5Viewer);CHKERRQ(ierr);
 	ierr = VecView(fields->V,H5Viewer);CHKERRQ(ierr);
 	ierr = VecView(fields->pmult,H5Viewer);CHKERRQ(ierr);
 	ierr = VecView(fields->theta,H5Viewer);CHKERRQ(ierr);
 	ierr = VecView(fields->pressure,H5Viewer);CHKERRQ(ierr);
+	ierr = VecView(fields->fracpressure,H5Viewer);CHKERRQ(ierr);
 	ierr = VecView(fields->VolCrackOpening,H5Viewer);CHKERRQ(ierr);
 	ierr = VecView(fields->VolLeakOffRate,H5Viewer);CHKERRQ(ierr);
 	ierr = PetscViewerDestroy(&H5Viewer);CHKERRQ(ierr);
@@ -1225,11 +1261,13 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
 	ierr = XDMFtopologyAdd (XDMFViewer,nx,ny,nz,H5coordfilename,"Coordinates");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Displacement");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Fluid Velocity");CHKERRQ(ierr);
+	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Fracture Fluid Velocity");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,6,"Tensor6","Cell",H5filename,"Permeability_V-field");CHKERRQ(ierr); /*Cell*/
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Fracture");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Pressure");CHKERRQ(ierr);
+	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Fracture Pressure");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Volumetric Crack Opening");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Volumetric Leakoff Rate");CHKERRQ(ierr);
 	ierr = XDMFuniformgridFinalize(XDMFViewer);CHKERRQ(ierr);

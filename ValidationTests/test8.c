@@ -1,8 +1,21 @@
 /*
- test9.c: Solves for the displacement and v-field in a pressurized penny crack in 2d (Sneddon 2D) using VFPennyCracks and VFRectangularcracks
+ test8.c: Solves for the displacement and v-field in a pressurized penny crack in 2d (Sneddon 2D) using VFPennyCracks and VFRectangularcracks
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
- ./test8 -n 201,2,201 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.05 -epsilon 0.04 -pc0_theta 0 -pc0_phi 150 -orientation 1
+ ./test8 -n 201,2,201 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.05 -epsilon 0.04 -pc0_theta 0 -pc0_phi 150 -orientation 1 -nw 1
+ ./test8 -n 101,2,101 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.08 -epsilon 0.08 -pc0_theta 0 -pc0_phi 150 -orientation 1 -nw 1
+ ./test8 -n 51,2,51 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.16 -epsilon 0.16 -pc0_theta 0 -pc0_phi 150 -orientation 1 -nw 1
+ 
+ 
+ ./test8 -n 21,2,21 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.4 -epsilon 0.4 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1
+ 
+./test8 -n 51,2,51 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.16 -epsilon 0.16 -pc0_theta 0 -pc0_phi 150 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -fracsnes_snes_type qn -fracsnes_snes_max_linear_solve_fail
+ 
+ 
+ 
+ ./test8 -n 101,2,101 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.1 -epsilon 0.1 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -fracsnes_snes_type qn -fracsnes_snes_max_linear_solve_fail 
+ 
+ 
  */
 
 #include "petsc.h"
@@ -49,7 +62,10 @@ int main(int argc,char **argv)
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	
-	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
+//	ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
+	ctx.fractureflowsolver = FRACTUREFLOWSOLVER_SNESMIXEDFEM;
+//	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
+	ctx.flowsolver = FLOWSOLVER_NONE;
 
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
@@ -70,7 +86,7 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
 
-	ctx.numWells = 1;
+//	ctx.numWells = 1;
 	ctx.well[0].Qw = 0.01;
 	ctx.well[0].coords[0] = lx/2.;
 	ctx.well[0].coords[1] = ly/2.;
@@ -122,7 +138,7 @@ int main(int argc,char **argv)
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
 	
-	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
+//	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 
 	
 	
@@ -150,23 +166,18 @@ int main(int argc,char **argv)
 	switch (orientation) {
 		case 1:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack\n");CHKERRQ(ierr);		  
-			/*	face X0	*/
 			ctx.bcU[0].face[X0]= ZERO;
 			ctx.bcU[1].face[X0]= ZERO;
 			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
 			ctx.bcU[0].face[X1]= ZERO;
 			ctx.bcU[1].face[X1]= ZERO;
 			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Z0	*/
 			ctx.bcU[0].face[Z0]= ZERO;
 			ctx.bcU[1].face[Z0]= ZERO;
 			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
 			ctx.bcU[0].face[Z1]= ZERO;		  
 			ctx.bcU[1].face[Z1]= ZERO;		  
 			ctx.bcU[2].face[Z1]= ZERO;		  
-			/*	face Y0	*/
 			ctx.bcU[1].face[Y0]= ZERO;
 			/*	face Y1	*/
 			ctx.bcU[1].face[Y1]= ZERO; 
@@ -228,25 +239,20 @@ int main(int argc,char **argv)
 			break;
 		case 4:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack\n");CHKERRQ(ierr);		  
-			/*	face X0	*/
 			ctx.bcU[0].face[X0]= ZERO;
 			ctx.bcU[1].face[X0]= ZERO;
-			/*	face X1	*/
 			ctx.bcU[0].face[X1]= ZERO;
 			ctx.bcU[1].face[X1]= ZERO;
-			/*	face Z0	*/
 			ctx.bcU[0].face[Z0]= ZERO;
 			ctx.bcU[1].face[Z0]= ZERO;
 			ctx.bcU[2].face[Z0]= ZERO;
-			/*	face Z1	*/
 			ctx.bcU[0].face[Z1]= ZERO;		  
 			ctx.bcU[1].face[Z1]= ZERO;		  
 			ctx.bcU[2].face[Z1]= ZERO;		  
-			/*	face Y0	*/
 			ctx.bcU[1].face[Y0]= ZERO;
-			/*	face Y1	*/
+
 			ctx.bcU[1].face[Y1]= ZERO;  
-			/* BCV*/
+
 			ctx.bcV[0].face[X0] = ONE;
 			ctx.bcV[0].face[X1] = ONE;
 			ctx.bcV[0].face[Z0] = ONE;
@@ -254,21 +260,12 @@ int main(int argc,char **argv)
 			break;
 		case 5:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack\n");CHKERRQ(ierr);		  
-			/*	face X0	*/
 			ctx.bcU[0].face[X0]= ZERO;
 			ctx.bcU[1].face[X0]= ZERO;
-			/*	face X1	*/
 			ctx.bcU[0].face[X1]= ZERO;
 			ctx.bcU[1].face[X1]= ZERO;
-			/*	face Z0	*/
-			/*.....FREE.......*/
-			/*	face Z1	*/
-			/*.....FREE.......*/
-			/*	face Y0	*/
 			ctx.bcU[1].face[Y0]= ZERO;
-			/*	face Y1	*/
 			ctx.bcU[1].face[Y1]= ZERO;
-			/* BCV*/
 			ctx.bcV[0].face[X0] = ONE;
 			ctx.bcV[0].face[X1] = ONE;
 			ctx.bcV[0].face[Z0] = ONE;
@@ -276,23 +273,14 @@ int main(int argc,char **argv)
 			break;
 		case 6:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a line crack\n");CHKERRQ(ierr);		  
-			/*	face X0	*/
 			ctx.bcU[0].face[X0]= ZERO;
 			ctx.bcU[1].face[X0]= ZERO;
 			ctx.bcU[2].face[X0]= ZERO;
-			/*	face X1	*/
 			ctx.bcU[0].face[X1]= ZERO;
 			ctx.bcU[1].face[X1]= ZERO;
 			ctx.bcU[2].face[X1]= ZERO;
-			/*	face Z0	*/
-			/*.....FREE.......*/
-			/*	face Z1	*/
-			/*.....FREE.......*/
-			/*	face Y0	*/
 			ctx.bcU[1].face[Y0]= ZERO;
-			/*	face Y1	*/
 			ctx.bcU[1].face[Y1]= ZERO;  
-			/* BCV*/
 			ctx.bcV[0].face[X0] = ONE;
 			ctx.bcV[0].face[X1] = ONE;
 			ctx.bcV[0].face[Z0] = ONE;
@@ -308,33 +296,34 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ctx.matprop[0].beta = 0.;
 	ctx.hasCrackPressure = PETSC_TRUE;
 	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
 	altminit = 0.;
-	do {
+//	do {
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"  alt min step %i with errorV %g\n",altminit,errV);CHKERRQ(ierr);
 
 		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
 		ierr = VF_StepU(&fields,&ctx);
 		ierr = VF_StepV(&fields,&ctx);
 		
-		
-		
-		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 		ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
 		ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
 
 		
 		
+		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);		
+		
 		ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
 		ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
 		
 		ierr = FieldsH5Write(&ctx,&fields);
 
-		altminit++;
-	} while (errV >= ctx.altmintol && altminit <= ctx.altminmaxit);
+//		altminit++;
+//	} while (errV >= ctx.altmintol && altminit <= ctx.altminmaxit);
 	
 	ctx.ElasticEnergy=0;
 	ctx.InsituWork=0;
@@ -349,11 +338,11 @@ int main(int argc,char **argv)
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
 	}
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
-	ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n Final Crack volume\t = %g, Pressure\t= %g\n\n", ctx.CrackVolume, p);CHKERRQ(ierr);	
+//	ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n Final Crack volume\t = %g, Pressure\t= %g\n\n", ctx.CrackVolume, p);CHKERRQ(ierr);
 
 	
-	ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
+//	ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
 
 	ierr = FieldsH5Write(&ctx,&fields);
 	ierr = VecDestroy(&Vold);CHKERRQ(ierr);
