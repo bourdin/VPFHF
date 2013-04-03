@@ -90,7 +90,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 {
 	PetscErrorCode      ierr;
 	PetscInt            nopt;
-	PetscBool          flg;
+	PetscBool           flg;
 	int                 i;
 	PetscReal          *buffer;
 	char                prefix[PETSC_MAX_PATH_LEN+1];
@@ -105,9 +105,9 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 		ierr = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
 		ctx->mechsolver = FRACTURE;
 		ierr = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,PETSC_NULL);CHKERRQ(ierr);
-			//    ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
+		ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
 		ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
-		//    ctx->fractureflowsolver = FRACTUREFLOWSOLVER_SNESMIXEDFEM;
+		ctx->fractureflowsolver = FRACTUREFLOWSOLVER_SNESMIXEDFEM;
 		ierr = PetscOptionsEnum("-fractureflowsolver","\n\tFracture Flow solver","",VFFracureFlowSolverName,(PetscEnum)ctx->fractureflowsolver,(PetscEnum*)&ctx->fractureflowsolver,PETSC_NULL);CHKERRQ(ierr);
     ctx->hasInsitu = PETSC_FALSE;
     nopt           = 6;
@@ -845,7 +845,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = VecSet(lbV,0.0);CHKERRQ(ierr);
   ierr = DMCreateGlobalVector(ctx->daScal,&ubV);CHKERRQ(ierr);
   ierr = VecSet(ubV,1.0);CHKERRQ(ierr);
-//  ierr = SNESVISetVariableBounds(ctx->snesV,lbV,ubV);CHKERRQ(ierr);
+  ierr = SNESVISetVariableBounds(ctx->snesV,lbV,ubV);CHKERRQ(ierr);
   ierr = SNESGetTolerances(ctx->snesV,&atol,&rtol,&stol,&maxit,&maxf);CHKERRQ(ierr);
   ierr = SNESSetTolerances(ctx->snesV,1e-8,rtol,stol,maxit,maxf);CHKERRQ(ierr);
 
