@@ -25,6 +25,7 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx);
 extern PetscErrorCode BCQInit(BC *BCQ,VFCtx *ctx);
+extern PetscErrorCode BCFracQInit(BC *BCFracQ,VFCtx *ctx);
 extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,BC *BC);
 extern PetscErrorCode FEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr);
 
