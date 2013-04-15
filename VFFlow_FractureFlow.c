@@ -168,7 +168,7 @@ extern PetscErrorCode MixedFracFlowSNESSolve(VFCtx *ctx,VFFields *fields)
   
   
   
-  
+  /*
    ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSvec.txt",&viewer);CHKERRQ(ierr);
    ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
    ierr = VecView(ctx->RHSFracVelP,viewer);CHKERRQ(ierr);
@@ -177,7 +177,7 @@ extern PetscErrorCode MixedFracFlowSNESSolve(VFCtx *ctx,VFFields *fields)
    ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
    ierr = MatView(ctx->JacFracVelP,viewer);CHKERRQ(ierr);
    
-  
+  */
   
   
   
@@ -540,19 +540,19 @@ extern PetscErrorCode FracFLow_MatB(PetscReal *KB_ele,CartFE_Element3D *e,PetscI
 							KB_ele[l] = 0.;
 							for (eg = 0; eg < e->ng; eg++) {
 								if (c == 0){
-									KB_ele[l] += e->phi[kk][jj][ii][eg]*(e->dphi[k][j][i][0][eg]*(1.-pow(dx_vfield_loc[eg],2))
-																		 -e->dphi[k][j][i][1][eg]*dx_vfield_loc[eg]*dy_vfield_loc[eg]
-																		 -e->dphi[k][j][i][2][eg]*dx_vfield_loc[eg]*dz_vfield_loc[eg])*cod_loc[eg]*e->weight[eg];
+									KB_ele[l] += (e->phi[kk][jj][ii][eg]*(-e->dphi[k][j][i][0][eg]*(1.-pow(dx_vfield_loc[eg],2))
+																		 +e->dphi[k][j][i][1][eg]*dx_vfield_loc[eg]*dy_vfield_loc[eg]
+																		 +e->dphi[k][j][i][2][eg]*dx_vfield_loc[eg]*dz_vfield_loc[eg])*cod_loc[eg])*e->weight[eg];
 								}
 								if (c == 1){
-									KB_ele[l] += e->phi[kk][jj][ii][eg]*(-e->dphi[k][j][i][0][eg]*dx_vfield_loc[eg]*dy_vfield_loc[eg]
-																		 +e->dphi[k][j][i][1][eg]*(1.-pow(dy_vfield_loc[eg],2))
-																		 -e->dphi[k][j][i][2][eg]*dy_vfield_loc[eg]*dz_vfield_loc[eg])*cod_loc[eg]*e->weight[eg];
+									KB_ele[l] += (e->phi[kk][jj][ii][eg]*(+e->dphi[k][j][i][0][eg]*dx_vfield_loc[eg]*dy_vfield_loc[eg]
+																		 -e->dphi[k][j][i][1][eg]*(1.-pow(dy_vfield_loc[eg],2))
+																		 +e->dphi[k][j][i][2][eg]*dy_vfield_loc[eg]*dz_vfield_loc[eg])*cod_loc[eg])*e->weight[eg];
 								}
 								if (c == 2){
-									KB_ele[l] += e->phi[kk][jj][ii][eg]*(-e->dphi[k][j][i][0][eg]*dx_vfield_loc[eg]*dz_vfield_loc[eg]
-																		 -e->dphi[k][j][i][1][eg]*dy_vfield_loc[eg]*dz_vfield_loc[eg]
-																		 +e->dphi[k][j][i][2][eg]*(1.-pow(dz_vfield_loc[eg],2)))*cod_loc[eg]*e->weight[eg];
+									KB_ele[l] += (e->phi[kk][jj][ii][eg]*(+e->dphi[k][j][i][0][eg]*dx_vfield_loc[eg]*dz_vfield_loc[eg]
+																		 +e->dphi[k][j][i][1][eg]*dy_vfield_loc[eg]*dz_vfield_loc[eg]
+																		 -e->dphi[k][j][i][2][eg]*(1.-pow(dz_vfield_loc[eg],2)))*cod_loc[eg])*e->weight[eg];
 								}
 							}
 						}
@@ -621,19 +621,19 @@ extern PetscErrorCode FracFLow_MatBTranspose(PetscReal *KB_ele,CartFE_Element3D 
 							KB_ele[l] = 0.;
 							for (eg = 0; eg < e->ng; eg++) {
 								if (c == 0){
-									KB_ele[l] += (-1.*(1.-pow(dx_vfield_loc[eg],2))*e->dphi[kk][jj][ii][0][eg]
-												  +e->dphi[kk][jj][ii][1][eg]*dx_vfield_loc[eg]*dy_vfield_loc[eg]
-												  +e->dphi[k][j][i][2][eg]*dx_vfield_loc[eg]*dz_vfield_loc[eg])*e->phi[k][j][i][eg]*pow(cod_loc[eg],2)/(12*mu)*e->weight[eg];
+									KB_ele[l] += ((1.-pow(dx_vfield_loc[eg],2))*e->dphi[kk][jj][ii][0][eg]
+												  -e->dphi[kk][jj][ii][1][eg]*dx_vfield_loc[eg]*dy_vfield_loc[eg]
+												  -e->dphi[k][j][i][2][eg]*dx_vfield_loc[eg]*dz_vfield_loc[eg])*e->phi[k][j][i][eg]*pow(cod_loc[eg],2)/(12*mu)*e->weight[eg];
 								}
 								if (c == 1){
-									KB_ele[l] += (+e->dphi[kk][jj][ii][0][eg]*dx_vfield_loc[eg]*dy_vfield_loc[eg]
-												  -1.*(1.-pow(dy_vfield_loc[eg],2))*e->dphi[kk][jj][ii][1][eg]
-												  +e->dphi[k][j][i][2][eg]*dy_vfield_loc[eg]*dz_vfield_loc[eg])*e->phi[k][j][i][eg]*pow(cod_loc[eg],2)/(12*mu)*e->weight[eg];
+									KB_ele[l] += (-e->dphi[kk][jj][ii][0][eg]*dx_vfield_loc[eg]*dy_vfield_loc[eg]
+												  +(1.-pow(dy_vfield_loc[eg],2))*e->dphi[kk][jj][ii][1][eg]
+												  -e->dphi[k][j][i][2][eg]*dy_vfield_loc[eg]*dz_vfield_loc[eg])*e->phi[k][j][i][eg]*pow(cod_loc[eg],2)/(12*mu)*e->weight[eg];
 								}
 								if (c == 2){
-									KB_ele[l] += (+e->dphi[kk][jj][ii][0][eg]*dx_vfield_loc[eg]*dz_vfield_loc[eg]
-												  +e->dphi[k][j][i][1][eg]*dy_vfield_loc[eg]*dz_vfield_loc[eg]
-												  -1.*(1.-pow(dz_vfield_loc[eg],2))*e->dphi[kk][jj][ii][2][eg])*e->phi[k][j][i][eg]*pow(cod_loc[eg],2)/(12*mu)*e->weight[eg];
+									KB_ele[l] += (-e->dphi[kk][jj][ii][0][eg]*dx_vfield_loc[eg]*dz_vfield_loc[eg]
+												  -e->dphi[k][j][i][1][eg]*dy_vfield_loc[eg]*dz_vfield_loc[eg]
+												  +(1.-pow(dz_vfield_loc[eg],2))*e->dphi[kk][jj][ii][2][eg])*e->phi[k][j][i][eg]*pow(cod_loc[eg],2)/(12*mu)*e->weight[eg];
 								}
 							}
 						}
@@ -789,7 +789,7 @@ extern PetscErrorCode FracFLow_Vecg(PetscReal *Kg_local,CartFE_Element3D *e,Pets
 			for (i = 0; i < e->nphix; i++,l++) {
 				Kg_local[l] = 0.;
 				for (eg = 0; eg < e->ng; eg++) {
-					Kg_local[l] += cod_loc[eg]*e->phi[k][j][i][eg]*e->weight[eg];
+					Kg_local[l] += -cod_loc[eg]*e->phi[k][j][i][eg]*e->weight[eg];
 				}
 			}
 		}
