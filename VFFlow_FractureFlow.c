@@ -72,6 +72,9 @@ extern PetscErrorCode MixedFractureFlowSolverInitialize(VFCtx *ctx, VFFields *fi
 	ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesFracVelP);CHKERRQ(ierr);
 	ierr = SNESAppendOptionsPrefix(ctx->snesFracVelP,"FracSnes_");CHKERRQ(ierr);
 	ierr = SNESSetFromOptions(ctx->snesFracVelP);CHKERRQ(ierr);
+  
+  ierr = BCFracQInit(&ctx->bcFracQ[0],ctx);
+  
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
@@ -160,6 +163,25 @@ extern PetscErrorCode MixedFracFlowSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = DMDAVecRestoreArray(ctx->daScal,fields->fracpressure,&Press_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,fields->fracvelocity,&vel_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,fields->fracVelnPress,&VelnPress_array);CHKERRQ(ierr);
+  
+  
+  
+  
+  
+  
+   ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSvec.txt",&viewer);CHKERRQ(ierr);
+   ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+   ierr = VecView(ctx->RHSFracVelP,viewer);CHKERRQ(ierr);
+   
+   ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrix.txt",&viewer);CHKERRQ(ierr);
+   ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+   ierr = MatView(ctx->JacFracVelP,viewer);CHKERRQ(ierr);
+   
+  
+  
+  
+  
+  
 	PetscFunctionReturn(0);
 }
 
@@ -205,6 +227,7 @@ extern PetscErrorCode FormFracSNESIFunction(SNES snes,Vec VelnPress,Vec Residual
 	ierr = VecCopy(ctx->RHSFracVelP,VecRHS);CHKERRQ(ierr);
 	ierr = VecAXPBY(VecRHS,dt_dot_one_minus_theta,dt_dot_theta,ctx->RHSFracVelPpre);CHKERRQ(ierr);
 	ierr = MatMultAdd(ctx->KFracVelPlhs,ctx->PreFracFlowFields,VecRHS,VecRHS);CHKERRQ(ierr);
+  ierr = VecApplySNESVelocityBC(VecRHS,ctx->FracVelBCArray,&ctx->bcFracQ[0],ctx);CHKERRQ(ierr);
 	ierr = MatMult(ctx->KFracVelP,VelnPress,Residual);CHKERRQ(ierr);
 	ierr = VecAXPY(Residual,-1.0,VecRHS);CHKERRQ(ierr);
 	ierr = VecDestroy(&VecRHS);CHKERRQ(ierr);
@@ -436,6 +459,11 @@ extern PetscErrorCode FormFracMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  
+  ierr = MatApplyDirichletBC(K,ctx->daVect,&ctx->bcFracQ[0]);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  
 	ierr = DMDAVecRestoreArray(ctx->daScal,crackopening_local,&crackopening_array);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daScal,&crackopening_local);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
