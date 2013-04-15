@@ -1,5 +1,5 @@
 /*
- test8.c: Solves for the displacement and v-field in a pressurized penny crack in 2d (Sneddon 2D) using VFPennyCracks and VFRectangularcracks
+ test8.c: Coupled fracture propagation and fracture fluid flow. 
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
  ./test8 -n 201,2,201 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.05 -epsilon 0.04 -pc0_theta 0 -pc0_phi 150 -orientation 1 -nw 1
@@ -13,8 +13,17 @@
  
  
  
- ./test8 -n 101,2,101 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.1 -epsilon 0.1 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -fracsnes_snes_type qn -fracsnes_snes_max_linear_solve_fail 
+ ./test8 -n 101,2,101 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.1 -epsilon 0.1 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -fracsnes_snes_type tr -fracsnes_snes_max_linear_solve_fail -fracsnes_pc_type lu -fracsnes_ksp_type preonly 
  
+ 
+ ./test8 -n 51,2,51 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.25 -epsilon 0.16 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -Fracsnes_snes_type tr -Fracsnes_snes_view  -Fracsnes_snes_monitor -Fracsnes_snes_max_it 100 
+ 
+ ./test8 -n 101,2,101 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.1 -epsilon 0.1 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -fracsnes_snes_type tr 
+ 
+ 
+ ./test8 -n 101,2,101 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.1 -epsilon 0.1 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -Fracsnes_snes_type tr -Fracsnes_snes_view  -Fracsnes_snes_monitor -Fracsnes_snes_max_it 100 
+ 
+ ./test8 -n 201,2,201 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.08 -epsilon 0.05 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_type qn
  
  */
 
@@ -39,24 +48,25 @@ int main(int argc,char **argv)
 	PetscErrorCode      ierr;
 	PetscInt            orientation=2;
 	PetscInt            nopts=3;
-	PetscInt			i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm,xs1,xm1,ys1,ym1,zs1,zm1;
-	PetscReal			****coords_array;
+	PetscInt            i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm,xs1,xm1,ys1,ym1,zs1,zm1;
+	PetscReal           ****coords_array;
 	PetscReal           BBmin[3],BBmax[3];
 	PetscReal           x,y,z;  
 	PetscReal           ElasticEnergy = 0;
 	PetscReal           InsituWork = 0;
 	PetscReal           SurfaceEnergy = 0;
 	char                filename[FILENAME_MAX];
-	PetscReal			lx,ly,lz;
+	PetscReal           lx,ly,lz;
 	PetscReal           p = 1e-3;
-	char				prefix[PETSC_MAX_PATH_LEN+1];
-	PetscReal			errV=1e+10,errP;
-	Vec					Vold;
-	PetscReal			p_epsilon = 1.e-4;
-	PetscInt			altminit=1;
+	char                prefix[PETSC_MAX_PATH_LEN+1];
+	PetscReal           errV=1e+10,errP;
+	Vec                 Vold;
+	PetscReal           p_epsilon = 1.e-4;
+	PetscInt            altminit=1;
 
-	PetscReal		***presbc_array;
-	PetscReal		****velbc_array;
+	PetscReal           ***presbc_array;
+	PetscReal           ****velbc_array;
+	PetscReal           ****fracvelbc_array;
 
 
 	
@@ -84,6 +94,7 @@ int main(int argc,char **argv)
 	ctx.hasFlowWells = PETSC_TRUE;
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.FracVelBCArray,&fracvelbc_array);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
 
 //	ctx.numWells = 1;
@@ -93,10 +104,39 @@ int main(int argc,char **argv)
 	ctx.well[0].coords[2] = lz/2.;
 	ctx.well[0].condition = RATE;
 	ctx.well[0].type = INJECTOR;
-	/*	Mechanical model settings	*/
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-Qw",&ctx.well[0].Qw,PETSC_NULL);CHKERRQ(ierr);
 
 	
+  /*	Flow model settings	*/
+  
+  
+   for (i = 0; i < 6; i++) {
+     for (c = 0; c < 3; c++) {
+       ctx.bcFracQ[c].face[i] = NONE;
+     }
+   }
+   for (i = 0; i < 12; i++) {
+     for (c = 0; c < 3; c++) {
+       ctx.bcFracQ[c].edge[i] = NONE;
+     }
+   }
+   for (i = 0; i < 8; i++) {
+     for (c = 0; c < 3; c++) {
+       ctx.bcFracQ[c].vertex[i] = NONE;
+     }
+   }
+   ctx.bcFracQ[1].face[Y0] = VALUE;
+   ctx.bcFracQ[1].face[Y1] = VALUE;
+   for (k = zs; k < zs+zm; k++) {
+     for (j = ys; j < ys+ym; j++) {
+       for (i = xs; i < xs+xm; i++) {
+         fracvelbc_array[k][j][i][1] = 0.;
+       }
+     }
+   }
+   
+
+  
 	for (i = 0; i < 6; i++) {
 		ctx.bcP[0].face[i] = NONE;
 		for (c = 0; c < 3; c++) {
@@ -134,12 +174,14 @@ int main(int argc,char **argv)
 	
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.FracVelBCArray,&fracvelbc_array);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
 	
 //	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 
+	/*	Mechanical model settings	*/
 	
 	
 	
