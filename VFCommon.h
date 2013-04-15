@@ -11,7 +11,7 @@ typedef struct {
 	PetscReal   rho;            /* Fluid density                */
 	PetscReal   por;
 	PetscReal   cf;             /* Fluid compressibility        */
-	PetscReal   M_inv;          
+	PetscReal   M_inv;
 	PetscReal   beta;           /* Conversion constant          */
 	PetscReal   gamma;          /*Conversion parameter          */
 	PetscReal   alpha;          /*Conversion parameter          */
@@ -20,13 +20,13 @@ typedef struct {
 	PetscReal   g[3];
 	PetscReal   Cp;			  /* Specific heat capacity */
 	PetscReal   Kw;         /* Modulus of liquid               */
-} FlowProp; 
+} FlowProp;
 
 typedef enum {
 	UnitaryUnits,     /* All variables are unitary, for testing purposes    */
 	FieldUnits,       /* Flow computation in field units            */
 	MetricUnits       /* Flow computation in metric units           */
-} FlowUnit; 
+} FlowUnit;
 
 static const char *FlowUnitName[] = {
 	"UnitaryUnit",
@@ -37,7 +37,7 @@ static const char *FlowUnitName[] = {
 	0
 };
 
-typedef enum { 
+typedef enum {
 	ALLNORMALFLOWBC,
 	ALLPRESSUREBC
 } FlowCases;
@@ -50,7 +50,7 @@ static const char *FlowBC_Case[] = {
 	0
 };
 
-typedef enum { 
+typedef enum {
 	SYMXY,
 	SYMX,
 	SYMY,
@@ -77,7 +77,7 @@ static const char *VFMechSolverName[] = {
 typedef enum {
 	UNILATERAL_NONE,
 	UNILATERAL_SHEARONLY
-} VFUnilateralType;  
+} VFUnilateralType;
 static const char *VFUnilateralName[] = {
 	"NONE",
 	"SHEARONLY",
@@ -144,7 +144,7 @@ static const char *VFFileFormatName[] = {
 	0
 };
 
-/* 
+/*
  all fields involved in the computations
  */
 typedef struct {
@@ -210,9 +210,9 @@ typedef struct {
 } VFProp;
 
 typedef enum {
-	PRESSURE,		
-	RATE				
-} WellConstraint; 
+	PRESSURE,
+	RATE
+} WellConstraint;
 
 static const char *WellConstraint_Name[] = {
 	"PRESSURE",
@@ -223,9 +223,9 @@ static const char *WellConstraint_Name[] = {
 };
 
 typedef enum {
-	INJECTOR,		
-	PRODUCER				
-} WellType; 
+	INJECTOR,
+	PRODUCER
+} WellType;
 
 static const char *WellType_Name[] = {
 	"INJECTOR",
@@ -277,14 +277,14 @@ typedef struct {
      |                     |
      +---------------------+
 	 [0,1,2]               [3,4,5]
-	 */   
+	 */
 } VFRectangularCrack;
 
 typedef struct {
 	PetscReal         perm;     /* Permeability in m^2 muliply by 1e12 */
 	PetscReal         por;      /* Porosity */
 	PetscReal         Pinit;    /* Initial Pressure in MPa*/
-	PetscReal         Tinit;    /* Initial Temperature in C*/ 
+	PetscReal         Tinit;    /* Initial Temperature in C*/
 	PetscReal         relk;     /* Relative Permeability */
 	PetscReal         visc;     /* Viscosity in cp */
 	PetscReal         fdens;    /* Fluid Density in specific density*/
@@ -298,83 +298,83 @@ typedef struct {
 	 Instead, I would suggest keeping the structure this way and add a pointer to a resprop in the main context
 	 We can read them in a file later, the difficulty is to initialize the files to something reasonable
 	 */
-} ResProp; 
+} ResProp;
 
 typedef struct {
-  PetscBool           printhelp;
-  PetscInt            nlayer;
-  PetscReal          *layersep;
-  PetscInt           *layer;         /* dim=nz+1. gives the layer number of a cell  */
-  BC                  bcU[3];
-  BC                  bcV[1];
-  BC                  bcP[1];
-  BC                  bcT[1];
-  DM                  daVect;
-  DM                  daScal;
-  CartFE_Element3D    e3D;
-  CartFE_Element2D    e2D;
-  char                prefix[PETSC_MAX_PATH_LEN];
-  Vec                 coordinates;
-  PetscInt            verbose;
-  VFPreset            preset;
+	PetscBool           printhelp;
+	PetscInt            nlayer;
+	PetscReal          *layersep;
+	PetscInt           *layer;         /* dim=nz+1. gives the layer number of a cell  */
+	BC                  bcU[3];
+	BC                  bcV[1];
+	BC                  bcP[1];
+	BC                  bcT[1];
+	DM                  daVect;
+	DM                  daScal;
+	CartFE_Element3D    e3D;
+	CartFE_Element2D    e2D;
+	char                prefix[PETSC_MAX_PATH_LEN];
+	Vec                 coordinates;
+	PetscInt            verbose;
+	VFPreset            preset;
 	SNES                snesV;
 	SNES                snesU;
 	Vec                 UResidual;
 	Mat                 JacU;
-  Mat                 KU;
-  Vec                 RHSU;
-/*  
-  Global variables for regular FEM Flow
-*/
-  Mat                 KP; //stifness
-  Mat                 KPlhs; // mass matrix
-  Mat                 JacP;
-  TS                  tsP;
-  PC                  pcP;
-  KSP                 kspP;
-  SNES                snesP;
-  Vec                 RHSP;
-  Vec                 RHSPpre;
-  Vec                 PrePressure;
-  Vec                 PFunct;
-  Vec                 PresBC;
-  PetscReal           CrackVolume;
-  PetscReal           LeakOffRate;
-  /* 
-   Global variables for Mixed Darcy Flow
-   */
-  Mat                 KVelP;
-  PC                  pcVelP;
-  KSP                 kspVelP;
-  DM                  daFlow;
-  DM                  daVFperm;
-  FlowProp            flowprop;
-  Vec                 RHSVelP;
-  Vec                 RHSVelPpre;
-  FlowUnit            units;
-  FlowCases           flowcase;
-  Vec                 Source;
-  DM                  daScalCell;
-  Mat                 KVelPlhs;
-  Mat                 JacVelP;
-  TS                  tsVelP;
-  SNES                snesVelP;
-  Vec                 FlowFunct;
-  Vec                 PreFlowFields;
-  Vec                 Perm;
-  Vec                 FlowBC;
-  BC                  bcQ[3];
-  PetscBool           hasFlowWells;
-  PetscBool           hasFluidSources;
-  Vec                 VelBCArray;
-  Vec				          PresBCArray;
-
-  /*
-   Global Variables for Heat Transfer
-   */ 
-  Mat                 KT;
-  Mat                 KTlhs;
-
+	Mat                 KU;
+	Vec                 RHSU;
+	/*
+	 Global variables for regular FEM Flow
+	 */
+	Mat                 KP; //stifness
+	Mat                 KPlhs; // mass matrix
+	Mat                 JacP;
+	TS                  tsP;
+	PC                  pcP;
+	KSP                 kspP;
+	SNES                snesP;
+	Vec                 RHSP;
+	Vec                 RHSPpre;
+	Vec                 PrePressure;
+	Vec                 PFunct;
+	Vec                 PresBC;
+	PetscReal           CrackVolume;
+	PetscReal           LeakOffRate;
+	/*
+	 Global variables for Mixed Darcy Flow
+	 */
+	Mat                 KVelP;
+	PC                  pcVelP;
+	KSP                 kspVelP;
+	DM                  daFlow;
+	DM                  daVFperm;
+	FlowProp            flowprop;
+	Vec                 RHSVelP;
+	Vec                 RHSVelPpre;
+	FlowUnit            units;
+	FlowCases           flowcase;
+	Vec                 Source;
+	DM                  daScalCell;
+	Mat                 KVelPlhs;
+	Mat                 JacVelP;
+	TS                  tsVelP;
+	SNES                snesVelP;
+	Vec                 FlowFunct;
+	Vec                 PreFlowFields;
+	Vec                 Perm;
+	Vec                 FlowBC;
+	BC                  bcQ[3];
+	PetscBool           hasFlowWells;
+	PetscBool           hasFluidSources;
+	Vec                 VelBCArray;
+	Vec				          PresBCArray;
+	
+	/*
+	 Global Variables for Heat Transfer
+	 */
+	Mat                 KT;
+	Mat                 KTlhs;
+	
 	PC                  pcT;
 	KSP                 kspT;
 	Mat                 JacT;
@@ -382,11 +382,11 @@ typedef struct {
 	Vec                 RHST;
 	Vec                 HeatFunct;
 	Vec                 RHSTpre;
-	BC                  bcq[3];
+//	BC                  bcq[3];
 	SNES                snesT;
 	Vec                 HeatBC;
 	FlowUnit            Hunits;
-	/* 
+	/*
 	 SNES solver for Pressure (or flow - T&P)
 	 */
 	SNES                snesF;
@@ -434,8 +434,8 @@ typedef struct {
 	PetscBool           hasHeatSources;
 	Vec                 prevT;
 	Vec                 Cond;
-	BC                  bcQT[1];
-	Vec					        TBCArray;	
+	BC                  bcQT[1];        /*heat flux in heat equation*/
+	Vec					        TBCArray;
 	Mat                 KFracVelP;
 	Mat                 JacFracVelP;
 	SNES                snesFracVelP;
@@ -445,7 +445,9 @@ typedef struct {
 	Vec                 RHSFracVelPpre;
 	Mat                 KFracVelPlhs;
 	Vec                 PreFracFlowFields;
-	VFFields			*fields;
+	VFFields            *fields;
+  Vec                 FracVelBCArray;
+  BC                  bcFracQ[3];
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

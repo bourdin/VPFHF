@@ -114,6 +114,17 @@ extern PetscErrorCode BCQInit(BC *BCQ,VFCtx *ctx)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "BCFracQInit"
+extern PetscErrorCode BCFracQInit(BC *BCFracQ,VFCtx *ctx)
+{
+	PetscErrorCode ierr;
+	
+	PetscFunctionBegin;
+	ierr = BCInit(BCFracQ,3);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "BCPInit"
 extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx)
 {
