@@ -105,7 +105,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 		ierr = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
 		ctx->mechsolver = FRACTURE;
 		ierr = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,PETSC_NULL);CHKERRQ(ierr);
-		ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
+//		ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
 		ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
 			//    ctx->fractureflowsolver = FRACTUREFLOWSOLVER_SNESMIXEDFEM;
 			//		ierr = PetscOptionsEnum("-fractureflowsolver","\n\tFracture Flow solver","",VFFracureFlowSolverName,(PetscEnum)ctx->fractureflowsolver,(PetscEnum*)&ctx->fractureflowsolver,PETSC_NULL);CHKERRQ(ierr);
@@ -636,7 +636,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 	ierr = PetscObjectSetName((PetscObject) fields->pressureRef,"Reference Pressure");CHKERRQ(ierr);
 	ierr = VecSet(fields->pressureRef,ctx->resprop.Pinit);CHKERRQ(ierr);
 	
-	ierr = DMCreateGlobalVector(ctx->daScal,&fields->pmult);CHKERRQ(ierr);
+	ierr = DMCreateGlobalVector(ctx->daScalCell,&fields->pmult);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject) fields->pmult,"PermeabilityMultiplier");CHKERRQ(ierr);
 	ierr = VecSet(fields->pmult,0.0);CHKERRQ(ierr);
 	
@@ -1165,7 +1165,7 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Fracture Fluid Velocity");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,6,"Tensor6","Cell",H5filename,"Permeability_V-field");CHKERRQ(ierr); /*Cell*/
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Fracture");CHKERRQ(ierr);
-	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
+	ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,1,"Scalar","Cell",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Pressure");CHKERRQ(ierr);
 	ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Fracture Pressure");CHKERRQ(ierr);

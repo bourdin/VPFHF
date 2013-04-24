@@ -25,6 +25,10 @@
  
  ./test8 -n 201,2,201 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.08 -epsilon 0.05 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_type qn
  
+ ./test8 -n 101,2,101 -l 4,0.04,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.1 -epsilon 0.1 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -fracsnes_snes_type tr
+ 
+ ./test8 -n 151,2,151 -l 4,0.01,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.005,2 -pc0_thickness 0.1 -epsilon 0.1 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -fracsnes_snes_type tr
+ 
  */
 
 #include "petsc.h"
