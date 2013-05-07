@@ -27,20 +27,20 @@ int main(int argc,char **argv)
 	PetscInt            orientation=2;
 	PetscInt            nopts=3;
 	PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-	PetscReal			****coords_array;
-	PetscReal			***v_array;  
+	PetscReal           ****coords_array;
+	PetscReal           ***v_array;  
 	PetscReal           BBmin[3],BBmax[3];
 	PetscReal           x,y,z;  
 	PetscReal           ElasticEnergy = 0;
 	PetscReal           InsituWork = 0;
 	PetscReal           SurfaceEnergy = 0;
 	char                filename[FILENAME_MAX];
-	PetscReal			lx,ly,lz;
+	PetscReal            lx,ly,lz;
 	PetscReal           p = 1e-3;
-	PetscReal			errV=1e+10,errP;
-	Vec					Vold;
-	PetscReal			p_epsilon = 1.e-4;
-	PetscInt			altminit=1;
+	PetscReal           errV=1e+10,errP;
+	Vec                 Vold;
+	PetscReal           p_epsilon = 1.e-4;
+	PetscInt            altminit=1;
 
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -114,7 +114,7 @@ int main(int argc,char **argv)
 			for (k = zs; k < zs+zm; k++) {
 				for (j = ys; j < ys+ym; j++) {
 					for (i = xs; i < xs+xm; i++) { 
-						if ( ((j == ny/2) || (j == ny/2-1)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
+						if ( ((j == ny/2) || (j == ny/2-1) || (j == ny/2+1) || (j == ny/2-2) || (j == ny/2+2) || (j == ny/2-3) || (j == ny/2+3) || (j == ny/2-4) || (j == ny/2+4) || (j == ny/2-5)) && (coords_array[k][j][i][0] > lx/2.-length) && (coords_array[k][j][i][0] < lx/2.+length ) ) {
 							v_array[k][j][i] = 0.;
 						}
 					}
@@ -321,10 +321,6 @@ int main(int argc,char **argv)
 		ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
 		altminit++;
 	} while (errV >= ctx.altmintol && altminit <= ctx.altminmaxit);
-	
-
-	
-	
 	ctx.ElasticEnergy=0;
 	ctx.InsituWork=0;
 	ctx.PressureWork = 0.;
@@ -340,7 +336,11 @@ int main(int argc,char **argv)
 	}
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 	ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n Final Crack volume\t = %g, Pressure\t= %g\n\n", ctx.CrackVolume, p);CHKERRQ(ierr);	
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n Final Crack volume\t = %g, Pressure\t= %g\n\n", ctx.CrackVolume, p);CHKERRQ(ierr);
+  PetscReal   functionvalue;
+	ierr = TrialFunctionCompute(&functionvalue,&ctx,&fields);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n\n\n FunctionValue\t = %g\n", functionvalue);CHKERRQ(ierr);
+
 	/*
 	 Save fields and write statistics about current run
 	 */    

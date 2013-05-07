@@ -270,8 +270,10 @@ int main(int argc,char **argv)
 	ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n Final Crack volume\t = %g, Pressure\t= %g\n\n", ctx.CrackVolume, p);CHKERRQ(ierr);	
 
-	
-	ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
+	PetscReal   functionvalue;
+	ierr = TrialFunctionCompute(&functionvalue,&ctx,&fields);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n\n\n FunctionValue\t = %g\n", functionvalue);CHKERRQ(ierr);
+
 
 	ierr = FieldsH5Write(&ctx,&fields);
 	ierr = VecDestroy(&Vold);CHKERRQ(ierr);

@@ -3,6 +3,19 @@
  Validate crack opening computation: Solves for displacement field for sliding and pulling experiment in the presence of crack that divided material into two equal halves.
 
  (c) 2010-2012 chukwudi Chukwudozie cchukw1@tigers.lsu.edu
+ 
+ ./test11 -n 101,101,2 -l 1,1,0.01 -epsilon 0.04
+
+ 
+ ./test11 -n 101,101,2 -l 1,1,0.01 -npc 1 -pc0_r 0.6 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.04 -epsilon 0.02 -pc0_theta 0 -pc0_phi 90 -orientation 0
+ 
+ thickness determines result more than epsilon. A thickness of atleast 3*resolution
+ 
+ 
+ ./test11 -n 101,101,2 -l 1,1,0.01 -npc 1 -pc0_r 0.8 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.04 -epsilon 0.02 -pc0_theta 45 -pc0_phi 90 -orientation 0
+ ./test11 -n 201,201,2 -l 1,1,0.01 -npc 1 -pc0_r 0.8 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.02 -epsilon 0.01 -pc0_theta 45 -pc0_phi 90 -orientation 3
+ ./test11 -n 101,101,2 -l 1,1,0.01 -npc 1 -pc0_r 0.8 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.04 -epsilon 0.02 -pc0_theta 0 -pc0_phi 90 -orientation 0
+ 
  */
 
 #include "petsc.h"
@@ -19,29 +32,29 @@ VFFields fields;
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
 {
-  VFCtx          ctx;
-  VFFields       fields;
+  VFCtx                 ctx;
+  VFFields              fields;
   PetscErrorCode ierr;
 
-  PetscReal length      = .2;
-  PetscInt  orientation = 0;
-  PetscInt  nopts       = 3;
-  PetscInt  i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-  PetscReal ****coords_array;
-  PetscReal ****bcu_array;
-  PetscReal BBmin[3],BBmax[3];
-  PetscReal ElasticEnergy = 0;
-  PetscReal InsituWork    = 0;
-  PetscReal SurfaceEnergy = 0;
-  char      filename[FILENAME_MAX];
-  PetscReal bc = .2;
-  PetscReal ***v_array;
-  PetscReal lx,ly,lz;
-  PetscReal ***pmult_array;
-  PetscReal ****vfperm_array;
-	PetscInt			altminit=1;
-	Vec					Vold;
-	PetscReal			errV=1e+10;
+  PetscReal             length      = .2;
+  PetscInt              orientation = 0;
+  PetscInt              nopts       = 3;
+  PetscInt              i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+  PetscReal             ****coords_array;
+  PetscReal             ****bcu_array;
+  PetscReal             BBmin[3],BBmax[3];
+  PetscReal             ElasticEnergy = 0;
+  PetscReal             InsituWork    = 0;
+  PetscReal             SurfaceEnergy = 0;
+  char                  filename[FILENAME_MAX];
+  PetscReal             bc = .2;
+  PetscReal             ***v_array;
+  PetscReal             lx,ly,lz;
+  PetscReal             ***pmult_array;
+  PetscReal             ****vfperm_array;
+	PetscInt              altminit=1;
+	Vec                   Vold;
+	PetscReal             errV=1e+10;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -66,15 +79,14 @@ int main(int argc,char **argv)
   ctx.timevalue = 1.;
 
   ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
+//  ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
   ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 
-  ierr = DMDAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx.daScal,fields.V,&v_array);CHKERRQ(ierr);
 
   ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
@@ -107,12 +119,14 @@ int main(int argc,char **argv)
     ctx.bcU[1].face[X0] = ZERO;ctx.bcU[1].face[X1] = ZERO;
     ctx.bcU[2].face[X0] = ZERO;ctx.bcU[2].face[X1] = ZERO;
 
+    ctx.bcU[2].face[Z0] = ZERO;ctx.bcU[2].face[Z1] = ZERO;
+    ctx.bcU[1].face[Z0] = ZERO;ctx.bcU[1].face[Z1] = ZERO;
+      
+    ctx.bcV[0].face[X0] = ONE;
+		ctx.bcV[0].face[X1] = ONE;
     for (k = zs; k < zs+zm; k++) {
       for (j = ys; j < ys+ym; j++) {
         for (i = xs; i < xs+xm; i++) {
-          if (((i == nx/2)) || (i == nx/2-1)) {
-            v_array[k][j][i] = 0.;
-          }
           if (i == 0) {
             bcu_array[k][j][i][0] = -bc;
           }
@@ -173,12 +187,11 @@ int main(int argc,char **argv)
 		  ctx.bcU[1].face[X0] = FIXED;ctx.bcU[1].face[X1] = FIXED;
 		  ctx.bcU[2].face[X0] = ZERO;ctx.bcU[2].face[X1] = ZERO;
 		  
+		  ctx.bcU[2].face[Z0] = ZERO;ctx.bcU[2].face[Z1] = ZERO;
+
 		  for (k = zs; k < zs+zm; k++) {
 			  for (j = ys; j < ys+ym; j++) {
 				  for (i = xs; i < xs+xm; i++) {
-					  if (((i == nx/2)) || (i == nx/2-1)) {
-						  v_array[k][j][i] = 0.;
-					  }
 					  if (i == 0) {
 						  bcu_array[k][j][i][0] = -bc;
 						  bcu_array[k][j][i][1] = -bc;
@@ -195,12 +208,12 @@ int main(int argc,char **argv)
     SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be between 0 and 2, got %i\n",orientation);
     break;
   }
-  ierr = DMDAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx.daScal,fields.V,&v_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ctx.hasCrackPressure = PETSC_FALSE;
 
-  ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
+  ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 	do {
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"alt min step %i\n",altminit);CHKERRQ(ierr);
@@ -231,22 +244,18 @@ int main(int argc,char **argv)
   }
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Total Mechanical energy:  %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 
-	ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
+	ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);
+  PetscReal   functionvalue;
+	ierr = TrialFunctionCompute(&functionvalue,&ctx,&fields);CHKERRQ(ierr);
 
-  switch (ctx.fileformat) {
-  case FILEFORMAT_HDF5:
     ierr = FieldsH5Write(&ctx,&fields);
     ierr = FieldsH5Write(&ctx,&fields);
-    break;
 
-  case FILEFORMAT_BIN:
-    ierr = FieldsBinaryWrite(&ctx,&fields);
-    break;
-  }	
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"###################################################################\n\n\n");CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"#        Actual crack volume change = %f\t      \n\n\n\n", (lz*ly*bc*2));CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"#        VF crack volume change = %e\t      \n", ctx.CrackVolume);CHKERRQ(ierr);
-	
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"#        VF crack volume change = %e\t      \n\n", ctx.CrackVolume);CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"#        FunctionValue = %e\t      \n", functionvalue);CHKERRQ(ierr);
+
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscFinalize();
   return(0);
