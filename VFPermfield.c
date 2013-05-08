@@ -904,31 +904,14 @@ extern PetscErrorCode VolumetricFunction_local(PetscReal *Function_local, PetscR
       n_elem[1][eg] = dv_elem[1][eg]/n_mag_elem[eg];
       n_elem[2][eg] = dv_elem[2][eg]/n_mag_elem[eg];
     }
-    if((ierr = PetscIsInfOrNanScalar(n_elem[0][eg])))
+    if((ierr = PetscIsInfOrNanScalar(n_elem[0][eg])) || (ierr = PetscIsInfOrNanScalar(n_elem[1][eg])) || (ierr = PetscIsInfOrNanScalar(n_elem[2][eg])) )
     {
-      n_elem[0][eg] = 0;
-    }
-    if((ierr = PetscIsInfOrNanScalar(n_elem[1][eg])))
-    {
-      n_elem[1][eg] = 0;
-    }
-    if((ierr = PetscIsInfOrNanScalar(n_elem[2][eg])))
-    {
-      n_elem[2][eg] = 0;
+      n_elem[0][eg] = n_elem[1][eg] = n_elem[2][eg] = n_mag_elem[eg] = 0;
     }
   }
   *Function_local = 0.;
 	for(eg = 0; eg < e->ng; eg++){
-    for(c = 0; c < 3; c++){
-      *Function_local += 4*(pow((u_elem[c][eg]*n_elem[c][eg]),3))*(sqrt((pow(dv_elem[0][eg],2)) + (pow(dv_elem[1][eg],2)) +(pow(dv_elem[2][eg],2))))*e->weight[eg];
-    }
-    *Function_local += 4*3*(pow((u_elem[0][eg]*n_elem[0][eg]),2))*(pow((u_elem[1][eg]*n_elem[1][eg]),1))*(sqrt((pow(dv_elem[0][eg],2)) + (pow(dv_elem[1][eg],2))+ (pow(dv_elem[2][eg],2))))*e->weight[eg];
-    *Function_local += 4*3*(pow((u_elem[0][eg]*n_elem[0][eg]),1))*(pow((u_elem[1][eg]*n_elem[1][eg]),2))*(sqrt((pow(dv_elem[0][eg],2)) + (pow(dv_elem[1][eg],2))+ (pow(dv_elem[2][eg],2))))*e->weight[eg]; 
-    *Function_local += 4*3*(pow((u_elem[0][eg]*n_elem[0][eg]),2))*(pow((u_elem[2][eg]*n_elem[2][eg]),1))*(sqrt((pow(dv_elem[0][eg],2)) + (pow(dv_elem[1][eg],2))+ (pow(dv_elem[2][eg],2))))*e->weight[eg];
-    *Function_local += 4*3*(pow((u_elem[0][eg]*n_elem[0][eg]),1))*(pow((u_elem[2][eg]*n_elem[2][eg]),2))*(sqrt((pow(dv_elem[0][eg],2)) + (pow(dv_elem[1][eg],2))+ (pow(dv_elem[2][eg],2))))*e->weight[eg];
-    *Function_local += 4*3*(pow((u_elem[1][eg]*n_elem[1][eg]),2))*(pow((u_elem[2][eg]*n_elem[2][eg]),1))*(sqrt( (pow(dv_elem[0][eg],2)) + (pow(dv_elem[1][eg],2))+ (pow(dv_elem[2][eg],2))))*e->weight[eg];
-    *Function_local += 4*3*(pow((u_elem[1][eg]*n_elem[1][eg]),1))*(pow((u_elem[2][eg]*n_elem[2][eg]),2))*(sqrt((pow(dv_elem[0][eg],2)) + (pow(dv_elem[1][eg],2))+ (pow(dv_elem[2][eg],2))))*e->weight[eg];
-    *Function_local += 4*3*2*(pow((u_elem[0][eg]*n_elem[0][eg]),1))*(pow((u_elem[1][eg]*n_elem[1][eg]),1))*(pow((u_elem[2][eg]*n_elem[2][eg]),1))*(sqrt((pow(dv_elem[0][eg],2)) + (pow(dv_elem[1][eg],2)) +(pow(dv_elem[2][eg],2))))*e->weight[eg];    
+      *Function_local += 4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*n_mag_elem[eg]*e->weight[eg];  
   }
   ierr = PetscFree6(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2]);CHKERRQ(ierr);
   ierr = PetscFree4(n_elem[0],n_elem[1],n_elem[2],n_mag_elem);CHKERRQ(ierr);
