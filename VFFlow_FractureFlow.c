@@ -14,8 +14,7 @@
 #include "VFFlow_SNESMixedFEM.h"
 #include "VFFlow_KSPMixedFEM.h"
 #include "VFWell.h"
-#include "VFU.h"
-#include "VFV.h"
+#include "VFMech.h"
 #include "VFFlow_FractureFlow.h"
 
 /*
@@ -31,13 +30,16 @@ extern PetscErrorCode MixedFractureFlowSolverInitialize(VFCtx *ctx, VFFields *fi
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
+  /*
+  Moving this into VFCtxGet since it is an attribute of VFCtx
+  If we split VFCtx into VFFlowCtx, VFMechCtx , and VFHeatCtx, it will have to go into VFFlow.c
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
   {
     ctx->units    = UnitaryUnits;
-    ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",FlowUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
+    ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",VFUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
-  
+  */
   ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KFracVelP);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KFracVelPlhs);CHKERRQ(ierr);
@@ -94,14 +96,13 @@ extern PetscErrorCode MixedFracFlowSNESSolve(VFCtx *ctx,VFFields *fields)
 {
   PetscErrorCode     ierr;
   SNESConvergedReason reason;
-  PetscReal          ****VelnPress_array;
-  PetscReal          ***Press_array;
-  PetscReal          ****vel_array;
-  PetscInt           i,j,k,c,veldof = 3;
-  PetscInt           xs,xm,ys,ym,zs,zm;
-  PetscInt           its;
+  PetscReal       ****VelnPress_array;
+  PetscReal        ***Press_array;
+  PetscReal       ****vel_array;
+  PetscInt            i,j,k,c,veldof = 3;
+  PetscInt            xs,xm,ys,ym,zs,zm;
+  PetscInt            its;
   PetscReal           VelPmin,VelPmax;
-  PetscViewer        viewer;
   
   
   PetscFunctionBegin;
@@ -397,7 +398,7 @@ extern PetscErrorCode FormFracMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
               hwy = (ctx->well[ii].coords[1]-coords_array[ek][ej][ei][1])/(coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1]);
               hwz = (ctx->well[ii].coords[2]-coords_array[ek][ej][ei][2])/(coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2]);
               if(ctx->well[ii].condition == RATE){
-                ierr = VecApplyWEllFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
+                ierr = VecApplyWellFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
                 for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
                   for (j = 0; j < ctx->e3D.nphiy; j++) {
                     for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -467,7 +468,6 @@ extern PetscErrorCode FracFLow_MatB(PetscReal *KB_ele,CartFE_Element3D *e,PetscI
   PetscInt       ii,jj,kk;
   PetscReal      *dv_elem[3],*u_elem[3];
   PetscInt       eg;
-  PetscReal      mu;
   PetscReal      *gradV_mod_elem;
   
   
@@ -557,7 +557,7 @@ extern PetscErrorCode FracFLow_MatB(PetscReal *KB_ele,CartFE_Element3D *e,PetscI
 
 #undef __FUNCT__
 #define __FUNCT__ "FracFLow_MatD"
-extern PetscErrorCode FracFLow_MatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,FlowProp flowpropty,PetscReal ****u_array,PetscReal ***v_array)
+extern PetscErrorCode FracFLow_MatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****u_array,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
   PetscInt                i,j,k,l,c;
@@ -643,7 +643,7 @@ extern PetscErrorCode FracFLow_MatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscI
 
 #undef __FUNCT__
 #define __FUNCT__ "FracFLow_MatBTranspose"
-extern PetscErrorCode FracFLow_MatBTranspose(PetscReal *KB_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,FlowProp flowpropty,PetscReal ****u_array,PetscReal ***v_array)
+extern PetscErrorCode FracFLow_MatBTranspose(PetscReal *KB_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,VFFlowProp flowpropty,PetscReal ****u_array,PetscReal ***v_array)
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,l,c;

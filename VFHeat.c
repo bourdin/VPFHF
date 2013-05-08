@@ -43,8 +43,6 @@ extern PetscErrorCode BCQTInit(BC *BCQT,VFCtx *ctx)
 #define __FUNCT__ "VF_HeatTimeStep"
 extern PetscErrorCode VF_HeatTimeStep(VFCtx *ctx,VFFields *fields)
 {
-	char           filename[FILENAME_MAX];
-	PetscViewer    viewer;
 	PetscErrorCode     ierr;
 	
 	PetscFunctionBegin;
@@ -52,6 +50,8 @@ extern PetscErrorCode VF_HeatTimeStep(VFCtx *ctx,VFFields *fields)
 		case HEATSOLVER_SNESFEM:
 			ierr = VF_HeatFEMSNESSolve(ctx,fields);CHKERRQ(ierr);
 			break;
+		default:
+		  break;
 	}
 	PetscFunctionReturn(0);
 }
@@ -68,6 +68,8 @@ extern PetscErrorCode VF_HeatSolverFinalize(VFCtx *ctx,VFFields *fields)
 		case HEATSOLVER_SNESFEM:       
 			ierr = VF_FEMSNESHeatSolverFinalize(ctx,fields);CHKERRQ(ierr);
 			break;
+		default:
+		  break;
 	}
 	PetscFunctionReturn(0);
 }
@@ -83,6 +85,8 @@ extern PetscErrorCode VF_HeatSolverInitialize(VFCtx *ctx,VFFields *fields)
 		case HEATSOLVER_SNESFEM:       
 			ierr = VF_FEMSNESHeatSolverInitialize(ctx,fields);CHKERRQ(ierr);
 			break;
+		default:
+		  break;
 	}
 	PetscFunctionReturn(0);
 }

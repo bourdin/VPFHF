@@ -6,8 +6,7 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
-#include "VFV.h"
-#include "VFU.h"
+#include "VFMech.h"
 
 VFCtx    ctx;
 VFFields fields;

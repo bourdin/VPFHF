@@ -2,7 +2,7 @@
 #define VFCOMMON_H
 /*
  VFCommon.h
- (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2013 Blaise Bourdin bourdin@lsu.edu
  */
 static const char banner[] = "\n\nVF:\nNumerical implementation of the variational approach to fracture.\n(c) 2010-2012 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu\n\n";
 
@@ -20,129 +20,7 @@ typedef struct {
 	PetscReal   g[3];
 	PetscReal   Cp;			  /* Specific heat capacity */
 	PetscReal   Kw;         /* Modulus of liquid               */
-} FlowProp;
-
-typedef enum {
-	UnitaryUnits,     /* All variables are unitary, for testing purposes    */
-	FieldUnits,       /* Flow computation in field units            */
-	MetricUnits       /* Flow computation in metric units           */
-} FlowUnit;
-
-static const char *FlowUnitName[] = {
-	"UnitaryUnit",
-	"FieldUnit",
-	"MetricUnit",
-	"FlowUnitName",
-	"",
-	0
-};
-
-typedef enum {
-	ALLNORMALFLOWBC,
-	ALLPRESSUREBC
-} FlowCases;
-
-static const char *FlowBC_Case[] = {
-	"ALLNORMALFLOWBC",
-	"ALLPRESSUREBC",
-	"FlowBC_Case",
-	"",
-	0
-};
-
-typedef enum {
-	SYMXY,
-	SYMX,
-	SYMY,
-	NOSYM,
-	TEST_MANUAL
-} VFPreset;
-static const char *VFPresetName[] = {"SYMXY","SYMX","SYMY","NOSYM",
-	"TEST_MANUAL",
-	"VFPresetName","",0};
-typedef enum {
-	FRACTURE,
-	ELASTICITY,
-	NOMECH
-} VFMechSolverType;
-static const char *VFMechSolverName[] = {
-	"FRACTURE",
-	"ELASTICITY",
-	"NOMECH",
-	"VFMechSolverName",
-	"",
-	0
-};
-
-typedef enum {
-	UNILATERAL_NONE,
-	UNILATERAL_SHEARONLY
-} VFUnilateralType;
-static const char *VFUnilateralName[] = {
-	"NONE",
-	"SHEARONLY",
-	"VFUnilateralName",
-	"",
-	0
-};
-
-typedef enum {
-	FLOWSOLVER_TS,
-	FLOWSOLVER_SNES,
-	FLOWSOLVER_FEM,
-	FLOWSOLVER_KSPMIXEDFEM,
-	FLOWSOLVER_SNESMIXEDFEM,
-	FLOWSOLVER_TSMIXEDFEM,
-	FLOWSOLVER_FAKE,
-	FLOWSOLVER_READFROMFILES,
-	FLOWSOLVER_NONE,
-} VFFlowSolverType;
-static const char *VFFlowSolverName[] = {
-	"FLOWSOLVER_TS",
-	"FLOWSOLVER_SNES",
-	"FLOWSOLVER_FEM",
-	"FLOWSOLVER_KSPMIXEDFEM",
-	"FLOWSOLVER_SNESMIXEDFEM",
-	"FLOWSOLVER_TSMIXEDFEM",
-	"FAKE",
-	"READFROMFILES",
-	"FLOWSOLVER_NONE",
-	"",
-	0
-};
-
-typedef enum {
-	FRACTUREFLOWSOLVER_SNESMIXEDFEM,
-	FRACTUREFLOWSOLVER_NONE,
-} VFFractureFlowSolverType;
-static const char *VFFracureFlowSolverName[] = {
-	"FRACTUREFLOWSOLVER_SNESMIXEDFEM",
-	"FRACTUREFLOWSOLVER_NONE",
-	"",
-	0
-};
-
-typedef enum {
-	HEATSOLVER_SNESFEM,
-} VFHeatSolverType;
-static const char *VFHeatSolverName[] = {
-	"HEATSOLVER_SNESFEM",
-	"READFROMFILES",
-	"",
-	0
-};
-
-typedef enum {
-	FILEFORMAT_BIN,
-	FILEFORMAT_HDF5
-} VFFileFormatType;
-static const char *VFFileFormatName[] = {
-	"bin",
-	"hdf5",
-	"VFFileFormatName",
-	"",
-	0
-};
+} VFFlowProp;
 
 /*
  all fields involved in the computations
@@ -170,6 +48,9 @@ typedef struct {
 	Vec fracVelnPress;
 } VFFields;
 
+/*
+All static const are moved into the files where they are used in order to avoid annoying warnings
+
 static const char *VFFieldNames[] = {
 	"V",
 	"VIrrev",
@@ -183,7 +64,7 @@ static const char *VFFieldNames[] = {
 	"",
 	0
 };
-
+*/
 typedef struct {
 	PetscReal       E,nu;       /* Young modulus and poisson ratio */
 	PetscReal       lambda,mu;  /* Lame coefficients               */
@@ -196,7 +77,7 @@ typedef struct {
 	Vec             Kw;         /* Modulus of liquid               */
 	Vec             VecGc;
 	PetscReal       Cp;		  /* Specific heat capacity */
-} MatProp; //change them to Vec later
+} VFMatProp; //change them to Vec later
 
 typedef struct {
 	PetscReal        epsilon;
@@ -209,33 +90,78 @@ typedef struct {
 	 */
 } VFProp;
 
+
+/*
+  enums. The matching field names used in PetscOptions are in VFCommon_private.h
+*/
+/* 
+  This needs to be moved to VFWell.h once the headers are reorganized
+*/
 typedef enum {
 	PRESSURE,
 	RATE
 } WellConstraint;
-
-static const char *WellConstraint_Name[] = {
-	"PRESSURE",
-	"RATE",
-	"WellConstraint_Name",
-	"",
-	0
-};
 
 typedef enum {
 	INJECTOR,
 	PRODUCER
 } WellType;
 
-static const char *WellType_Name[] = {
-	"INJECTOR",
-	"PRODUCER",
-	"WellType_Name",
-	"",
-	0
-};
+typedef enum {
+	UnitaryUnits,     /* All variables are unitary, for testing purposes    */
+	FieldUnits,       /* Flow computation in field units            */
+	MetricUnits       /* Flow computation in metric units           */
+} VFUnit;
 
+typedef enum {
+	ALLNORMALFLOWBC,
+	ALLPRESSUREBC
+} VFFlowCases;
 
+typedef enum {
+	SYMXY,
+	SYMX,
+	SYMY,
+	NOSYM,
+	TEST_MANUAL
+} VFPreset;
+
+typedef enum {
+	FRACTURE,
+	ELASTICITY,
+	NOMECH
+} VFMechSolverType;
+
+typedef enum {
+	UNILATERAL_NONE,
+	UNILATERAL_SHEARONLY
+} VFUnilateralType;
+
+typedef enum {
+	FLOWSOLVER_TS,
+	FLOWSOLVER_SNES,
+	FLOWSOLVER_FEM,
+	FLOWSOLVER_KSPMIXEDFEM,
+	FLOWSOLVER_SNESMIXEDFEM,
+	FLOWSOLVER_TSMIXEDFEM,
+	FLOWSOLVER_FAKE,
+	FLOWSOLVER_READFROMFILES,
+	FLOWSOLVER_NONE,
+} VFFlowSolverType;
+
+typedef enum {
+	FRACTUREFLOWSOLVER_SNESMIXEDFEM,
+	FRACTUREFLOWSOLVER_NONE,
+} VFFractureFlowSolverType;
+
+typedef enum {
+	HEATSOLVER_SNESFEM,
+} VFHeatSolverType;
+
+typedef enum {
+	FILEFORMAT_BIN,
+	FILEFORMAT_HDF5
+} VFFileFormatType;
 
 typedef struct {
 	char         name[256];
@@ -298,7 +224,7 @@ typedef struct {
 	 Instead, I would suggest keeping the structure this way and add a pointer to a resprop in the main context
 	 We can read them in a file later, the difficulty is to initialize the files to something reasonable
 	 */
-} ResProp;
+} VFResProp;
 
 typedef struct {
 	PetscBool           printhelp;
@@ -348,11 +274,11 @@ typedef struct {
 	KSP                 kspVelP;
 	DM                  daFlow;
 	DM                  daVFperm;
-	FlowProp            flowprop;
+	VFFlowProp          flowprop;
 	Vec                 RHSVelP;
 	Vec                 RHSVelPpre;
-	FlowUnit            units;
-	FlowCases           flowcase;
+	VFUnit              units;
+	VFFlowCases         flowcase;
 	Vec                 Source;
 	DM                  daScalCell;
 	Mat                 KVelPlhs;
@@ -385,7 +311,7 @@ typedef struct {
 //	BC                  bcq[3];
 	SNES                snesT;
 	Vec                 HeatBC;
-	FlowUnit            Hunits;
+	VFUnit              Hunits;
 	/*
 	 SNES solver for Pressure (or flow - T&P)
 	 */
@@ -393,8 +319,8 @@ typedef struct {
 	
 	PetscReal           altmintol;
 	PetscInt            altminmaxit;
-	MatProp            *matprop;
-	ResProp             resprop;
+	VFMatProp          *matprop;
+	VFResProp           resprop;
 	VFProp              vfprop;
 	PetscReal           insitumin[6];
 	PetscReal           insitumax[6];
@@ -462,14 +388,14 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields);
 
 extern PetscErrorCode VFPropGet(VFProp *vfprop);
-extern PetscErrorCode VFMatPropGet(MatProp *matprop,PetscInt n);
+extern PetscErrorCode VFMatPropGet(VFMatProp *matprop,PetscInt n);
 extern PetscErrorCode VFLayerInit(VFCtx *ctx);
-extern PetscErrorCode VFResPropGet(ResProp *resprop);
+extern PetscErrorCode VFResPropGet(VFResProp *resprop);
 
 extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields);
 
 extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx);
-extern PetscErrorCode VFMatPropFieldsInitialize(VFCtx *ctx, MatProp *matprop);
+extern PetscErrorCode VFMatPropFieldsInitialize(VFCtx *ctx, VFMatProp *matprop);
 
 #endif /* VFCOMMON_H */

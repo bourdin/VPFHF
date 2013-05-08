@@ -15,11 +15,11 @@ extern PetscErrorCode FormFracSNESIJacobian(SNES snes,Vec VelnPress,Mat *Jac,Mat
 extern PetscErrorCode FormFracSNESIFunction(SNES snes,Vec VelnPress,Vec Func,void *user);
 extern PetscErrorCode FormFracMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode FracFLow_MatB(PetscReal *KB_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt c,PetscReal ****u_array,PetscReal ***v_array);
-extern PetscErrorCode FracFLow_MatBTranspose(PetscReal *KB_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt c,FlowProp flowpropty,PetscReal ****u_array,PetscReal ***v_array);
+extern PetscErrorCode FracFLow_MatBTranspose(PetscReal *KB_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt c,VFFlowProp flowpropty,PetscReal ****u_array,PetscReal ***v_array);
 extern PetscErrorCode FracFLow_MatA(PetscReal *A_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array);
 extern PetscErrorCode FracFLow_Vecg(PetscReal *Kg_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array);
 extern PetscErrorCode FracFLow_MatS(PetscReal *S_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array);
-extern PetscErrorCode FracFLow_MatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,FlowProp flowpropty,PetscReal ****u_array,PetscReal ***v_array);
+extern PetscErrorCode FracFLow_MatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****u_array,PetscReal ***v_array);
 
 
 #endif /* VFFLOW_MIXEDFEM_H */

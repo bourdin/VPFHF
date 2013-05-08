@@ -24,18 +24,6 @@ extern PetscErrorCode MixedFEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *field
 	PetscMPIInt    comm_size;
 	PetscErrorCode ierr;
 	
-	PetscFunctionBegin;
-	ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
-	{
-		ctx->units    = UnitaryUnits;
-		ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",FlowUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
-		ctx->flowcase = ALLNORMALFLOWBC;
-		ierr          = PetscOptionsEnum("-flow boundary conditions","\n\tFlow solver","",FlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
-	}
-	ierr = PetscOptionsEnd();CHKERRQ(ierr);
-	
-	
-	
 	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KVelP);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KVelPlhs);CHKERRQ(ierr);
@@ -58,9 +46,9 @@ extern PetscErrorCode MixedFEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *field
 	ierr = BCPInit(&ctx->bcP[0],ctx);
 	ierr = BCQInit(&ctx->bcQ[0],ctx);
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-//	ierr = ReSETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
-	ierr = ReSETSourceTerms(ctx->Source,ctx->flowprop);
-	ierr = ReSETBoundaryTerms(ctx,fields);CHKERRQ(ierr);
+//	ierr = ResetFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
+	ierr = ResetSourceTerms(ctx->Source,ctx->flowprop);
+	ierr = ResetBoundaryTerms(ctx,fields);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
@@ -84,14 +72,12 @@ extern PetscErrorCode MixedFEMTSFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 extern PetscErrorCode MixedFlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 {
 	PetscErrorCode     ierr;
-	PetscViewer        viewer;
 	TSConvergedReason reason;	
 	PetscReal          ****VelnPress_array;
 	PetscReal          ***Press_array;
 	PetscReal          ****vel_array;
 	PetscInt           i,j,k,c,veldof = 3;
 	PetscInt           xs,xm,ys,ym,zs,zm;
-	PetscInt           its;
 	PetscReal           VelPmin,VelPmax;
 
 	PetscFunctionBegin;	
@@ -153,15 +139,8 @@ extern PetscErrorCode MixedFEMTSMonitor(TS ts,PetscInt timestep,PetscReal timeva
 	PetscErrorCode ierr;
 	PetscReal      norm,vmax,vmin;
 	MPI_Comm       comm;
-	PetscViewer        viewer;
-	PetscBool drawcontours;
 
 	PetscFunctionBegin;
-/*	
-	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Solution.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(VelnPress,viewer);CHKERRQ(ierr);
-*/
 	ierr = VecNorm(VelnPress,NORM_1,&norm);CHKERRQ(ierr);
 	ierr = VecMax(VelnPress,PETSC_NULL,&vmax);CHKERRQ(ierr);
 	ierr = VecMin(VelnPress,PETSC_NULL,&vmin);CHKERRQ(ierr);
@@ -176,7 +155,6 @@ extern PetscErrorCode FormIFunction(TS ts,PetscReal t,Vec VelnPress,Vec VelnPres
 {
 	PetscErrorCode ierr;
 	VFCtx			*ctx=(VFCtx*)user;
-	PetscViewer     viewer;
 	
 	PetscFunctionBegin;
 	ierr = FormTSMatricesnVector(ctx->KVelP,ctx->KVelPlhs,ctx->RHSVelP,ctx);CHKERRQ(ierr);
@@ -192,7 +170,6 @@ extern PetscErrorCode FormFunction(TS ts,PetscReal t,Vec vec1,Vec Func,void *use
 {
 	PetscErrorCode ierr;
 	VFCtx			*ctx=(VFCtx*)user;
-	PetscViewer     viewer;
 	
 	PetscFunctionBegin;
 	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
@@ -207,7 +184,6 @@ extern PetscErrorCode FormIJacobian(TS ts,PetscReal t,Vec VelnPress,Vec VelnPres
 {
 	PetscErrorCode ierr;
 	VFCtx				*ctx=(VFCtx*)user;
-	PetscViewer        viewer;
 
 	PetscFunctionBegin;
 	*str = DIFFERENT_NONZERO_PATTERN;
@@ -454,13 +430,13 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				/*	This computes the local contribution of the global A matrix	*/
-				ierr = FLow_MatA(KA_local,&ctx->e3D,ek,ej,ei);CHKERRQ(ierr);
+				ierr = Flow_MatA(KA_local,&ctx->e3D,ek,ej,ei);CHKERRQ(ierr);
 				for (l = 0; l < nrow*nrow; l++) {
 					Klhs_local[l] = -2*M_inv*KA_local[l]/alpha_c;
 				}
 				for (c = 0; c < veldof; c++) {
-					ierr = FLow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c);CHKERRQ(ierr);
-					ierr = FLow_MatBTranspose(KBTrans_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array);CHKERRQ(ierr);
+					ierr = Flow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c);CHKERRQ(ierr);
+					ierr = Flow_MatBTranspose(KBTrans_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array);CHKERRQ(ierr);
 					for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 						for (j = 0; j < ctx->e3D.nphiy; j++) {
 							for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -473,7 +449,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					ierr = MatSetValuesStencil(K,nrow,row1,nrow,row,KB_local,ADD_VALUES);CHKERRQ(ierr);
 					ierr = MatSetValuesStencil(K,nrow,row,nrow,row1,KBTrans_local,ADD_VALUES);CHKERRQ(ierr);
 				}
-				ierr = FLow_MatD(KD_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
+				ierr = Flow_MatD(KD_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -485,7 +461,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,Klhs_local,ADD_VALUES);CHKERRQ(ierr);
 				/*Assembling the righthand side vector f*/
 				for (c = 0; c < veldof; c++) {
-					ierr = FLow_Vecf(RHS_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array);CHKERRQ(ierr);
+					ierr = Flow_Vecf(RHS_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array);CHKERRQ(ierr);
 					for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 						for (j = 0; j < ctx->e3D.nphiy; j++) {
 							for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -495,7 +471,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					}
 				}
 				/*Assembling the right hand side vector g*/
-				ierr = FLow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
+				ierr = Flow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -621,7 +597,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 							hwy = (ctx->well[ii].coords[1]-coords_array[ek][ej][ei][1])/(coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1]); 
 							hwz = (ctx->well[ii].coords[2]-coords_array[ek][ej][ei][2])/(coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2]); 
 							if(ctx->well[ii].condition == RATE){
-								ierr = VecApplyWEllFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
+								ierr = VecApplyWellFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
 								for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 									for (j = 0; j < ctx->e3D.nphiy; j++) {
 										for (i = 0; i < ctx->e3D.nphix; i++,l++) {
