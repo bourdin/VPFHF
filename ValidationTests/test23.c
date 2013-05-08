@@ -6,7 +6,7 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
-#include "VFV.h"
+#include "VFMech.h"
 #include "VFCracks.h"
 
 VFCtx    ctx;

@@ -30,15 +30,6 @@ extern PetscErrorCode VF_FEMSNESHeatSolverInitialize(VFCtx *ctx, VFFields *field
 	PetscMPIInt    comm_size;
 	PetscErrorCode ierr;
 	
-	PetscFunctionBegin;
-	ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
-	{
-		ctx->heatsolver = HEATSOLVER_SNESFEM;
-		ctx->Hunits    = UnitaryUnits;
-		ierr          = PetscOptionsEnum("-heatunits","\n\tHEAT solver","",FlowUnitName,(PetscEnum)ctx->Hunits,(PetscEnum*)&ctx->Hunits,PETSC_NULL);CHKERRQ(ierr);
-	}
-	ierr = PetscOptionsEnd();CHKERRQ(ierr);	
-	
 	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KT);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KTlhs);CHKERRQ(ierr);
@@ -122,9 +113,8 @@ extern PetscErrorCode VF_HeatFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 #define __FUNCT__ "FormSNESHeatIJacobian"
 extern PetscErrorCode FormSNESHeatIJacobian(SNES snes,Vec T,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user)
 {
-	PetscErrorCode ierr;
-	PetscViewer     viewer;
-	VFCtx				*ctx=(VFCtx*)user;
+	PetscErrorCode  ierr;
+	VFCtx				   *ctx=(VFCtx*)user;
 	
 	PetscFunctionBegin;
 	*str = DIFFERENT_NONZERO_PATTERN;
@@ -146,7 +136,6 @@ extern PetscErrorCode FormSNESHeatIFunction(SNES snes,Vec T,Vec Func,void *user)
 	
 	PetscErrorCode ierr;
 	VFCtx			*ctx=(VFCtx*)user;
-	PetscViewer     viewer;
 	PetscReal		theta,timestepsize;
 	PetscReal		dt_dot_theta,dt_dot_one_minus_theta;
 	Vec             VecRHS;
@@ -178,7 +167,7 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	PetscInt       ys,ym,ny;
 	PetscInt       zs,zm,nz;
 	PetscInt       ek,ej,ei;
-	PetscInt       i,j,k,l,ii,c;
+	PetscInt       i,j,k,l;
 	PetscReal      ****coords_array;
 	PetscReal      ***RHS_array;
 	PetscReal      *RHS_local;
@@ -190,7 +179,6 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	MatStencil     *row;
 	FACE			face;
 	MatStructure	flg;
-	PetscReal		hwx, hwy, hwz;	
 	PetscReal      *KM_local,*KC_local,*KD_local,*K1_local,*K2_local,*KN_local,*KS_local;
 	Vec            diffsvty_local;
 	PetscReal      ****diffsvty_array;
@@ -287,7 +275,7 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				/*	Assembling the sub-Matrices	*/
 				rhoCp_eff_array=rho_liq_array*Cp_liq_array+rho_sol_array*Cp_sol_array;				
-				ierr = FLow_MatA(KM_local,&ctx->e3D,ek,ej,ei);CHKERRQ(ierr);
+				ierr = Flow_MatA(KM_local,&ctx->e3D,ek,ej,ei);CHKERRQ(ierr);
 				for (l = 0; l < nrow*nrow; l++) {
 					KM_local[l] = 2.0*KM_local[l];
 				}
@@ -300,7 +288,7 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 				}
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KM_local,ADD_VALUES);CHKERRQ(ierr);			
 				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,KM_local,ADD_VALUES);CHKERRQ(ierr);			
-				ierr = FLow_HMatD(KD_local,&ctx->e3D,ek,ej,ei,diffsvty_array);CHKERRQ(ierr);
+				ierr = Flow_HMatD(KD_local,&ctx->e3D,ek,ej,ei,diffsvty_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -488,10 +476,9 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "FLow_HMatD"
-extern PetscErrorCode FLow_HMatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****diffsvty_array)
+#define __FUNCT__ "Flow_HMatD"
+extern PetscErrorCode Flow_HMatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****diffsvty_array)
 {
-	PetscErrorCode ierr;
 	PetscInt  i,j,k,l;
 	PetscInt  ii,jj,kk;
 	PetscInt  eg;

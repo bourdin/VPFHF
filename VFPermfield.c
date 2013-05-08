@@ -685,10 +685,6 @@ extern PetscErrorCode TrialFunctionCompute1(PetscReal *FunctionValue, VFCtx *ctx
 	Vec             v_local;
 	PetscReal       ***pmult_array;
 	Vec             pmult_local;
-  PetscReal       myFunctionLocal = 0.,myFunction = 0.;
-  Vec             w_sqr;
-  Vec             w_sqr_local;
-  PetscReal       ***w_sqr_array;
   PetscReal       sum = 0;
   Vec             COD;
 	PetscReal       ***cod_array;

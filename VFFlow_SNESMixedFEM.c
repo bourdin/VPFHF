@@ -31,16 +31,6 @@ extern PetscErrorCode MixedFEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fie
 	PetscMPIInt    comm_size;
 	PetscErrorCode ierr;
 	
-	PetscFunctionBegin;
-	ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
-	{
-		ctx->units    = UnitaryUnits;
-		ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",FlowUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
-		ctx->flowcase = ALLNORMALFLOWBC;
-		ierr          = PetscOptionsEnum("-flow boundary conditions","\n\tFlow solver","",FlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
-	}
-	ierr = PetscOptionsEnd();CHKERRQ(ierr);	
-	
 	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KVelP);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KVelPlhs);CHKERRQ(ierr);
@@ -61,9 +51,9 @@ extern PetscErrorCode MixedFEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fie
 	ierr = BCPInit(&ctx->bcP[0],ctx);
 	ierr = BCQInit(&ctx->bcQ[0],ctx);	
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-//	ierr = ReSETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
-	ierr = ReSETSourceTerms(ctx->Source,ctx->flowprop);
-	ierr = ReSETBoundaryTerms(ctx,fields);CHKERRQ(ierr);
+//	ierr = ResetFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
+	ierr = ResetSourceTerms(ctx->Source,ctx->flowprop);
+	ierr = ResetBoundaryTerms(ctx,fields);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
@@ -253,13 +243,13 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 					//This computes the local contribution of the global A matrix
-				ierr = FLow_MatA(KA_local,&ctx->e3D,ek,ej,ei);CHKERRQ(ierr);
+				ierr = Flow_MatA(KA_local,&ctx->e3D,ek,ej,ei);CHKERRQ(ierr);
 				for (l = 0; l < nrow*nrow; l++) {
 					KS_local[l] = -2*M_inv*KA_local[l]/alpha_c;
 				}
 				for (c = 0; c < veldof; c++) {
-					ierr = FLow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c);CHKERRQ(ierr);
-					ierr = FLow_MatBTranspose(KBTrans_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array);CHKERRQ(ierr);
+					ierr = Flow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c);CHKERRQ(ierr);
+					ierr = Flow_MatBTranspose(KBTrans_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array);CHKERRQ(ierr);
 					for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 						for (j = 0; j < ctx->e3D.nphiy; j++) {
 							for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -272,7 +262,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					ierr = MatSetValuesStencil(K1,nrow,row1,nrow,row,KB_local,ADD_VALUES);CHKERRQ(ierr);		
 					ierr = MatSetValuesStencil(K1,nrow,row,nrow,row1,KBTrans_local,ADD_VALUES);CHKERRQ(ierr);
 				}
-				ierr = FLow_MatD(KD_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
+				ierr = Flow_MatD(KD_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -284,7 +274,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				ierr = MatSetValuesStencil(K2,nrow,row,nrow,row,KS_local,ADD_VALUES);CHKERRQ(ierr);
 				/*Assembling the righthand side vector f*/
 				for (c = 0; c < veldof; c++) {
-					ierr = FLow_Vecf(RHS_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array);CHKERRQ(ierr);
+					ierr = Flow_Vecf(RHS_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array);CHKERRQ(ierr);
 					for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 						for (j = 0; j < ctx->e3D.nphiy; j++) {
 							for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -294,7 +284,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					}
 				}
 				/*Assembling the righthand side vector g*/
-				ierr = FLow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
+				ierr = Flow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -420,7 +410,7 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 								hwy = (ctx->well[ii].coords[1]-coords_array[ek][ej][ei][1])/(coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1]); 
 								hwz = (ctx->well[ii].coords[2]-coords_array[ek][ej][ei][2])/(coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2]); 
 								if(ctx->well[ii].condition == RATE){
-									ierr = VecApplyWEllFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
+									ierr = VecApplyWellFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
 									for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 										for (j = 0; j < ctx->e3D.nphiy; j++) {
 											for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -484,9 +474,8 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 extern PetscErrorCode FormSNESIFunction(SNES snes,Vec VelnPress,Vec Func,void *user)
 {
 	PetscErrorCode ierr;
-	VFCtx			*ctx=(VFCtx*)user;
-	PetscViewer     viewer;
-	Vec             VecRHS;
+	VFCtx			 *ctx=(VFCtx*)user;
+	Vec         VecRHS;
 	PetscReal		theta,timestepsize;
 	PetscReal		dt_dot_theta,dt_dot_one_minus_theta;
 	
@@ -743,17 +732,16 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 #define __FUNCT__ "MatApplySNESVelocityBC"
 extern PetscErrorCode MatApplySNESVelocityBC(Mat K,Mat Klhs,BC *bcQ)
 {
-	PetscErrorCode ierr;
-	PetscInt       xs,xm,nx;
-	PetscInt       ys,ym,ny;
-	PetscInt       zs,zm,nz;
-	PetscInt       i,j,k,c;
-	MatStencil    *row;
-	PetscReal      one=1.;
-	PetscInt       numBC=0,l=0;
-	PetscInt       dim,dof=3;
-	DM				da;
-	PetscReal      zero=0.0;
+	PetscErrorCode  ierr;
+	PetscInt        xs,xm,nx;
+	PetscInt        ys,ym,ny;
+	PetscInt        zs,zm,nz;
+	PetscInt        i,j,k,c;
+	MatStencil     *row;
+	PetscReal       one=1.;
+	PetscInt        numBC=0,l=0;
+	PetscInt        dim,dof=3;
+	DM				      da;
 	
 	PetscFunctionBegin;
 	ierr = PetscObjectQuery((PetscObject) K,"DM",(PetscObject *) &da); CHKERRQ(ierr);

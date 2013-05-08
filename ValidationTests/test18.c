@@ -10,8 +10,7 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
-#include "VFV.h"
-#include "VFU.h"
+#include "VFMech.h"
 #include "VFFlow.h"
 #include "VFCracks.h"
 

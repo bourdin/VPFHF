@@ -20,14 +20,21 @@ typedef struct {
 	PetscReal		g;
 } FluidProp; //change them to Vec later
 
-extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx);
+extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode BCQInit(BC *BCQ,VFCtx *ctx);
 extern PetscErrorCode BCFracQInit(BC *BCFracQ,VFCtx *ctx);
+extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx);
+extern PetscErrorCode SETBoundaryTerms_P(VFCtx *ctx, VFFields *fields);
+extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,BC *BC);
+extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,BC *bcP);
+extern PetscErrorCode VFFlow_FEM_MatKPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscReal ****perm_array, PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e);
+extern PetscErrorCode VFFlow_FEM_MatMPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e);
 extern PetscErrorCode FEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr);
-
+extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFUnit flowunit,VFResProp resprop);
+extern PetscErrorCode ResetFlowBC(BC *bcP,BC *bcQ, VFFlowCases flowcase);
+extern PetscErrorCode ResetBoundaryTerms(VFCtx *ctx, VFFields *fields);
+extern PetscErrorCode ResetSourceTerms(Vec Src,VFFlowProp flowpropty);
 #endif /* VFFLOW_H */
 

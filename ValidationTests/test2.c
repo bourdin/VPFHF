@@ -8,8 +8,7 @@ test2.c:  Solve for the displacement in a pressurized rectangular crack in 3d
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
-#include "VFV.h"
-#include "VFU.h"
+#include "VFMech.h"
 #include "VFFlow.h"
 
 VFCtx    ctx;

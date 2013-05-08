@@ -18,12 +18,6 @@ extern PetscErrorCode FEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	PetscErrorCode ierr;
 	
 	PetscFunctionBegin;
-	ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
-	{
-		ctx->units    = UnitaryUnits;
-		ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",FlowUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
-	}
-	ierr = PetscOptionsEnd();CHKERRQ(ierr);	
 	
 	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KP);CHKERRQ(ierr);
@@ -50,7 +44,7 @@ extern PetscErrorCode FEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
 //	ierr = SETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	// Currently BCpres is a PetscOption received from command line. Also done in test35
-	ierr = ReSETSourceTerms(ctx->Source,ctx->flowprop);
+	ierr = ResetSourceTerms(ctx->Source,ctx->flowprop);
 //	ierr = SETBoundaryTerms_P(ctx,fields);CHKERRQ(ierr); // Set fields.pressure according to BC & IC
 	PetscFunctionReturn(0);
 }
@@ -78,23 +72,18 @@ extern PetscErrorCode FEMSNESFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 extern PetscErrorCode FlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 {
 	PetscErrorCode     ierr;
-	KSPConvergedReason reason;	
-	PetscReal          ***Press_array;
-	PetscInt           i,j,k,c;
-	PetscInt           xs,xm,ys,ym,zs,zm;
-	PetscInt           its;
 
 	PetscFunctionBegin;	
 	ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
 	ierr = VecSet(ctx->Perm,0.0);CHKERRQ(ierr);
 	ierr = VecCopy(fields->vfperm,ctx->Perm);CHKERRQ(ierr);
-    ierr = VecCopy(fields->pressure,ctx->PrePressure);CHKERRQ(ierr);
+  ierr = VecCopy(fields->pressure,ctx->PrePressure);CHKERRQ(ierr);
 	
 	ierr = SNESSetFunction(ctx->snesP,ctx->PFunct,FormSNESIFunction_P,ctx);CHKERRQ(ierr);
-    ierr = SNESSetJacobian(ctx->snesP,ctx->JacP,ctx->JacP,FormSNESIJacobian_P,ctx);CHKERRQ(ierr);
+  ierr = SNESSetJacobian(ctx->snesP,ctx->JacP,ctx->JacP,FormSNESIJacobian_P,ctx);CHKERRQ(ierr);
 	ierr = SNESMonitorSet(ctx->snesP,FEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-    ierr = SNESSolve(ctx->snesP,PETSC_NULL,fields->pressure);CHKERRQ(ierr);
-    ierr = VecCopy(ctx->RHSP,ctx->RHSPpre);CHKERRQ(ierr);	
+  ierr = SNESSolve(ctx->snesP,PETSC_NULL,fields->pressure);CHKERRQ(ierr);
+  ierr = VecCopy(ctx->RHSP,ctx->RHSPpre);CHKERRQ(ierr);	
 		
 	ierr = VecDestroy(&ctx->Perm);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
@@ -144,9 +133,8 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 	PetscReal      ***source_array;
 	Vec            source_local;
 	Mat            M,K;
-	PetscReal	   theta,timestepsize;	
+	PetscReal	     theta,timestepsize;	
 	PetscReal      time_theta,time_one_minus_theta;	
-	FACE           face;
 	PetscReal      hwx,hwy,hwz;
 	MatStructure   flg;
 	
@@ -199,7 +187,7 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K_local,ADD_VALUES);CHKERRQ(ierr);
 				ierr = MatSetValuesStencil(M,nrow,row,nrow,row,M_local,ADD_VALUES);CHKERRQ(ierr);				
 				/*Assembling the right hand side vector g*/
-				ierr = FLow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
+				ierr = Flow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -235,7 +223,7 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 							hwy = (ctx->well[ii].coords[1]-coords_array[ek][ej][ei][1])/(coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1]); 
 							hwz = (ctx->well[ii].coords[2]-coords_array[ek][ej][ei][2])/(coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2]); 
 							if(ctx->well[ii].condition == RATE){
-								ierr = VecApplyWEllFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
+								ierr = VecApplyWellFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
 								for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 									for (j = 0; j < ctx->e3D.nphiy; j++) {
 										for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -304,12 +292,11 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 #define __FUNCT__ "FormSNESIFunction_P"
 extern PetscErrorCode FormSNESIFunction_P(SNES snes,Vec pressure,Vec Func,void *user)
 {
-	PetscErrorCode ierr;
-	VFCtx			*ctx=(VFCtx*)user;
-	PetscViewer     viewer;
+	PetscErrorCode  ierr;
+	VFCtx			     *ctx=(VFCtx*)user;
 	Vec             VecRHS;
-	PetscReal		theta,timestepsize;
-	PetscReal		dt_dot_theta,dt_dot_one_minus_theta;
+	PetscReal	      theta,timestepsize;
+	PetscReal		    dt_dot_theta,dt_dot_one_minus_theta;
 	
 	PetscFunctionBegin;
 	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
