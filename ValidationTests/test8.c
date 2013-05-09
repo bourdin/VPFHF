@@ -34,8 +34,7 @@
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
-#include "VFV.h"
-#include "VFU.h"
+#include "VFMech.h"
 #include "VFFlow.h"
 #include "VFCracks.h"
 
@@ -355,7 +354,7 @@ int main(int argc,char **argv)
 		ierr = VF_StepU(&fields,&ctx);
 		ierr = VF_StepV(&fields,&ctx);
 		
-//		ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
+		ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
 		ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
 

@@ -1,7 +1,6 @@
 VFOBJ = ${VFDIR}/VFCommon.o                \
         ${VFDIR}/VFCracks.o                \
-        ${VFDIR}/VFU.o                     \
-        ${VFDIR}/VFV.o                     \
+        ${VFDIR}/VFMech.o                  \
         ${VFDIR}/VFWell.o                  \
         ${VFDIR}/VFFlow.o                  \
         ${VFDIR}/VFHeat.o                  \

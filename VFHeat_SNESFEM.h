@@ -19,5 +19,4 @@ extern PetscErrorCode VecApplyHeatSourceTerms(PetscReal *K1_local,PetscReal *K2_
 extern PetscErrorCode HeatMatC(PetscReal *KC_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei, PetscReal ****vel_array,PetscReal ***v_array);
 
 
-
 #endif /* VFHEAT_SNESFEM_H */

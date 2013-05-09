@@ -10,10 +10,13 @@
 #include "VFCommon.h"
 #include "VFFlow.h"
 #include "VFFlow_FEM.h"
+#include "VFFlow_SNESFEM.h"
+#include "VFFlow_TSFEM.h"
 #include "VFFlow_Fake.h"
 #include "VFFlow_KSPMixedFEM.h"
 #include "VFFlow_SNESMixedFEM.h"
 #include "VFFlow_TSMixedFEM.h"
+#include "VFFlow_FractureFlow.h"
 #include "VFHeat_SNESFEM.h"
 
 
@@ -93,11 +96,15 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 			break; 
 		case FLOWSOLVER_READFROMFILES:
 			break;
+		default:
+		  break;
 	}
 	switch (ctx->fractureflowsolver) {
 		case FRACTUREFLOWSOLVER_SNESMIXEDFEM:
 			ierr = MixedFractureFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
 			break;
+		default:
+		  break;
 	}
 	PetscFunctionReturn(0);
 }
@@ -155,7 +162,6 @@ extern PetscErrorCode SETBoundaryTerms_P(VFCtx *ctx, VFFields *fields)
 	PetscInt		xs,xm,nx;
 	PetscInt		ys,ym,ny;
 	PetscInt		zs,zm,nz;
-	PetscInt		dim, dof;
 	PetscInt		i,j,k;
 	
 	PetscFunctionBegin;
@@ -252,12 +258,15 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
           break;
       }
 	// eventually replace FLOWSOLVER_FEM with this after confirming it provides the same results
-
+    default:
+      break;
   }
 	switch (ctx->fractureflowsolver) {
 		case FRACTUREFLOWSOLVER_SNESMIXEDFEM:
 			ierr = MixedFracFlowSNESSolve(ctx,fields);CHKERRQ(ierr);
 			break;
+		default:
+		  break;
 	}
   PetscFunctionReturn(0);
 }
@@ -506,13 +515,12 @@ extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,BC *bcP)
    VFFlow_FEM_MatPAssembly3D_local
 */
 
-extern PetscErrorCode VFFlow_FEM_MatKPAssembly3D_local(PetscReal *Mat_local,FlowProp *flowprop,PetscReal ****perm_array, PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VFFlow_FEM_MatKPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscReal ****perm_array, PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
-  PetscReal      rho,relk,mu;
+  PetscReal      rho,mu;
   PetscReal      kxx,kyy,kzz,kxy,kxz,kyz;
   PetscReal      DCoef_P;
-  PetscErrorCode ierr;
 
   PetscFunctionBegin;
 /*
@@ -562,11 +570,10 @@ extern PetscErrorCode VFFlow_FEM_MatKPAssembly3D_local(PetscReal *Mat_local,Flow
    VFFlow_FEM_MassMatPAssembly3D_local
 */
 
-extern PetscErrorCode VFFlow_FEM_MatMPAssembly3D_local(PetscReal *Mat_local,FlowProp *flowprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VFFlow_FEM_MatMPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
   PetscReal      ACoef_P;
-  PetscErrorCode ierr;
 
   PetscFunctionBegin;
 /*
@@ -613,3 +620,186 @@ extern PetscErrorCode FEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void
 		
 	PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "GetFlowProp"
+extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFUnit flowunit,VFResProp resprop)
+{
+	PetscFunctionBegin;
+	flowprop->theta    = 1.;						  /*Time paramter*/
+	flowprop->timestepsize = 1;				    	/*Time step size	*/
+	flowprop->M_inv = 0.;
+	flowprop->Kw = 1.;
+	switch (flowunit) {
+		case UnitaryUnits:
+			flowprop->mu    = 1.;                     /*viscosity in cp*/
+			flowprop->rho   = 1.;                     /*density in lb/ft^3*/
+			flowprop->cf    = 1.;                     /*compressibility in psi^{-1}*/
+			flowprop->beta  = 1;                      /*flow rate conversion constant*/
+			flowprop->gamma = 1;                      /*pressure conversion constant*/
+			flowprop->alpha = 1;                      /*volume conversion constatnt*/
+			flowprop->g[0]  = 0.;                     /*x-component of gravity. unit is ft/s^2*/
+			flowprop->g[1]  = 0.;                     /*y-component of gravity. unit is ft/s^2*/
+			flowprop->g[2]  = 0.;                     /* 32.17;									/ *z-component of gravity. unit is ft/s^2* / */
+			flowprop->Cp = 1.;                      /*Liquid specific heat capacity*/
+			break;
+		case FieldUnits: 
+			flowprop->mu = resprop.visc;				  /* viscosity in cp */ 
+			flowprop->rho = 62.428*resprop.fdens;	/* density in lb/ft^3 */ 
+			flowprop->cf = resprop.rock_comp;						/* compressibility in psi^{-1} */ 
+			flowprop->beta = 1.127;								/* flow rate conversion constant */ 
+			flowprop->gamma = 2.158e-4;						/* pressue conversion constant */ 
+			flowprop->alpha = 5.615;							/* volume conversion constatnt*/ 
+			flowprop->g[0] = 0.;									/* x-componenet of gravity. unit is ft/s^2 */ 
+			flowprop->g[1] = 0.;									/* y-component of gravity. unit is ft/s^2 */ 
+			flowprop->g[2] = 0.;//32.17;					/* z-component of gravity. unit is ft/s^2 */ 
+			flowprop->Cp = 1.;                      /*Liquid specific heat capacity*/
+			break; 
+		case MetricUnits:
+			flowprop->mu    = 0.001*resprop.visc;     /*viscosity in Pa.s*/
+			flowprop->rho   = 1000*resprop.fdens;     /*density in kg/m^3*/
+			flowprop->cf    = 1.450e-4*resprop.wat_comp;    /*compressibility in Pa^{-1}*/
+			flowprop->beta  = 86.4e-6;                /*flow rate conversion constant*/
+			flowprop->gamma = 1e-3;                   /*pressue conversion constant*/
+			flowprop->alpha = 1;                      /*volume conversion constatnt*/
+			flowprop->g[0]  = 0.;                     /*x-component of gravity. unit is m/s^2*/
+			flowprop->g[1]  = 0.;                     /*y-component of gravity. unit is m/s^2*/
+			flowprop->g[2]  = 9.81;                   /*z-component of gravity. unit is m/s^2*/
+			flowprop->Cp = 1.;                      /*Liquid specific heat capacity*/
+			break;
+		default:
+			SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: [%s] unknown FLOWCASE %i .\n",__FUNCT__,flowunit);
+			break;
+	}
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "ResetFlowBC"
+extern PetscErrorCode ResetFlowBC(BC *bcP,BC *bcQ, VFFlowCases flowcase)
+{
+	PetscInt i,c;
+	
+	PetscFunctionBegin;
+	for (i = 0; i < 6; i++) {
+		bcP[0].face[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			bcQ[c].face[i] = NONE;
+		}
+	}
+	for (i = 0; i < 12; i++) {
+		bcP[0].face[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			bcQ[c].edge[i] = NONE;
+		}
+	}
+	for (i = 0; i < 8; i++) {
+		bcP[0].face[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			bcQ[c].vertex[i] = NONE;
+		}
+	}
+	switch (flowcase) {
+		case ALLPRESSUREBC:
+			for (i = 0; i < 6; i++) {
+				bcP[0].face[i] = VALUE;
+			}
+			break;
+		case ALLNORMALFLOWBC:			
+			bcQ[0].face[X0] = VALUE;
+			bcQ[0].face[X1] = VALUE;
+			bcQ[1].face[Y0] = VALUE;
+			bcQ[1].face[Y1] = VALUE;
+			bcQ[2].face[Z0] = VALUE;
+			bcQ[2].face[Z1] = VALUE;
+			break;
+		default:
+			SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: [%s] unknown FLOWCASE %i .\n",__FUNCT__,flowcase);
+			break;
+	}
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "ResetBoundaryTerms"
+extern PetscErrorCode ResetBoundaryTerms(VFCtx *ctx, VFFields *fields)
+{
+	PetscErrorCode ierr;
+	PetscReal		****perm_array;
+	PetscReal		****vel_array;
+	PetscReal		***press_array;
+	PetscInt		xs,xm,nx;
+	PetscInt		ys,ym,ny;
+	PetscInt		zs,zm,nz;
+	PetscInt		ei,ej,ek,c;
+	
+	PetscFunctionBegin;
+	ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,fields->vfperm,&perm_array);CHKERRQ(ierr); 
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->VelBCArray,&vel_array);CHKERRQ(ierr); 
+	ierr = DMDAVecGetArray(ctx->daScal,ctx->PresBCArray,&press_array);CHKERRQ(ierr); 
+	for (ek = zs; ek < zs+zm; ek++) {
+		for (ej = ys; ej < ys+ym; ej++) {
+			for (ei = xs; ei < xs+xm; ei++) {
+				for(c = 3; c < 6; c++){
+					perm_array[ek][ej][ei][c] = 0.;
+				}
+			}
+		}
+	}
+	ierr = DMDAGetInfo(ctx->daFlow,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	for (ek = zs; ek < zs + zm; ek++) {
+		for (ej = ys; ej < ys+ym; ej++) {
+			for (ei = xs; ei < xs+xm; ei++) {
+				vel_array[ek][ej][ei][0] = 0.;
+				vel_array[ek][ej][ei][1] = 0.;
+				vel_array[ek][ej][ei][2] = 0.;
+				press_array[ek][ej][ei] = 0.;
+			}
+		}
+	}
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,fields->vfperm,&perm_array);CHKERRQ(ierr);	
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->VelBCArray,&vel_array);CHKERRQ(ierr);	
+	ierr = DMDAVecRestoreArray(ctx->daScal,ctx->PresBCArray,&press_array);CHKERRQ(ierr);	
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "ResetSourceTerms"
+extern PetscErrorCode ResetSourceTerms(Vec Src,VFFlowProp flowpropty)
+{
+	PetscErrorCode ierr;
+	PetscReal      ***source_array;
+	PetscInt       xs,xm,nx;
+	PetscInt       ys,ym,ny;
+	PetscInt       zs,zm,nz;
+	PetscInt       dim,dof;
+	PetscInt       ei,ej,ek;
+	DM             da;
+	PetscReal      mu,beta_c;
+	
+	PetscFunctionBegin;
+	beta_c = flowpropty.beta;
+	mu     = flowpropty.mu;
+	ierr   = PetscObjectQuery((PetscObject)Src,"DM",(PetscObject*)&da);CHKERRQ(ierr);
+	if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DA");
+	
+	ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+					   &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(da,Src,&source_array);CHKERRQ(ierr);
+	for (ek = zs; ek < zs+zm; ek++) {
+		for (ej = ys; ej < ys+ym; ej++) {
+			for (ei = xs; ei < xs+xm; ei++) {
+				source_array[ek][ej][ei] = 0.; 
+			}
+		}
+	}
+	ierr = DMDAVecRestoreArray(da,Src,&source_array);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+

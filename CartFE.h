@@ -1,6 +1,6 @@
 #ifndef CARTFE_H
 #define CARTFE_H
-/* 
+/*
   Implement a simple P1 Lagrange element on a rectangle aligned with axis directions.
   (c) 2010-2012 B. Bourdin, bourdin@lsu.edu
   
@@ -82,22 +82,6 @@ typedef enum {
   VALUE
 } BCTYPE;
 
-static const char *BCTYPE_NAME[] = {
-  "NONE",
-  "ZERO",
-  "ONE",
-  "FIXED",
-  "VALUE",
-  "BCTYPE_NAME","",0
-};
-/*
-  Type of boundary condition: 
-    NONE  = Natural boundary condition
-    ZERO  = homogeneous Dirichlet
-    ONE   = inhomogenous Dirichlet fixed to one
-    FIXED = insert from external field (inhomogeneous Dirichlet BC)
-*/
-
 typedef enum {
   X0,
   X1,
@@ -106,13 +90,6 @@ typedef enum {
   Z0,
   Z1
 } FACE;
-
-static const char *FACE_NAME[] = {
-	"X0","X1",
-	"Y0","Y1",
-	"Z0","Z1",
-	"FACE_NAME","",0
-};
 
 typedef enum {
   X0Z0,
@@ -129,13 +106,6 @@ typedef enum {
   X1Y1
 } EDGE;
 
-static const char *EDGE_NAME[] = {
-	"X0Z0","X1Z0","Y0Z0","Y1Z0",
-	"X0Z1","X1Z1","Y0Z1","Y1Z1",
-	"X0Y0","X0Y1","X1Y0","X1Y1",
-	"EDGE_NAME","",0
-};
-
 typedef enum {
   X0Y0Z0,
   X1Y0Z0,
@@ -146,11 +116,6 @@ typedef enum {
   X0Y1Z1,
   X1Y1Z1
 } VERTEX;
-
-static const char *VERTEX_NAME[] = {
-	"X0Y0Z0","X1Y0Z0","X0Y1Z0","X1Y1Z0",
-	"X0Y0Z1","X1Y0Z1","X0Y1Z1","X1Y1Z1",
-	"VERTEX_NAME","",0};
 
 typedef struct {
   BCTYPE     face[6];

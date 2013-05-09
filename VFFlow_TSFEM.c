@@ -17,14 +17,6 @@ extern PetscErrorCode FEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	PetscMPIInt    comm_size;
 	PetscErrorCode ierr;
 	
-	PetscFunctionBegin;
-	ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
-	{
-		ctx->units    = UnitaryUnits;
-		ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",FlowUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
-	}
-	ierr = PetscOptionsEnd();CHKERRQ(ierr);	
-	
 	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KP);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KPlhs);CHKERRQ(ierr);		
@@ -47,7 +39,7 @@ extern PetscErrorCode FEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
 //	ierr = SETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	// Currently BCpres is a PetscOption received from command line. Also done in test35
-	ierr = ReSETSourceTerms(ctx->Source,ctx->flowprop);
+	ierr = ResetSourceTerms(ctx->Source,ctx->flowprop);
 //	ierr = SETBoundaryTerms_P(ctx,fields);CHKERRQ(ierr); // Set fields.pressure according to BC & IC
 	PetscFunctionReturn(0);
 }
@@ -73,11 +65,6 @@ extern PetscErrorCode FEMTSFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 extern PetscErrorCode FlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 {
 	PetscErrorCode     ierr;
-	KSPConvergedReason reason;	
-	PetscReal          ***Press_array;
-	PetscInt           i,j,k,c;
-	PetscInt           xs,xm,ys,ym,zs,zm;
-	PetscInt           its;
 
 	PetscFunctionBegin;	
 	ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
@@ -85,18 +72,18 @@ extern PetscErrorCode FlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 	ierr = VecCopy(fields->vfperm,ctx->Perm);CHKERRQ(ierr);
 	
 	ierr = TSSetIFunction(ctx->tsP,PETSC_NULL,FormIFunction_P,ctx);CHKERRQ(ierr);
-    ierr = TSSetIJacobian(ctx->tsP,ctx->JacP,ctx->JacP,FormIJacobian_P,ctx);CHKERRQ(ierr);
+  ierr = TSSetIJacobian(ctx->tsP,ctx->JacP,ctx->JacP,FormIJacobian_P,ctx);CHKERRQ(ierr);
 	ierr = TSSetRHSFunction(ctx->tsP,PETSC_NULL,FormFunction_P,ctx);CHKERRQ(ierr);
   
 	ierr = TSSetSolution(ctx->tsP,fields->pressure);CHKERRQ(ierr);
 	ierr = TSSetInitialTimeStep(ctx->tsP,0.0,ctx->timevalue);CHKERRQ(ierr);
-    ierr = TSSetDuration(ctx->tsP,ctx->maxtimestep,ctx->maxtimevalue);CHKERRQ(ierr);
+  ierr = TSSetDuration(ctx->tsP,ctx->maxtimestep,ctx->maxtimevalue);CHKERRQ(ierr);
    
 	ierr = TSMonitorSet(ctx->tsP,FEMTSMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = TSSetFromOptions(ctx->tsP);CHKERRQ(ierr);	
 
-    ierr = TSSolve(ctx->tsP,fields->pressure,PETSC_NULL);CHKERRQ(ierr);
-    ierr = TSGetTimeStepNumber(ctx->tsP,&ctx->timestep);CHKERRQ(ierr);
+  ierr = TSSolve(ctx->tsP,fields->pressure,PETSC_NULL);CHKERRQ(ierr);
+  ierr = TSGetTimeStepNumber(ctx->tsP,&ctx->timestep);CHKERRQ(ierr);
 	
 	ierr = VecDestroy(&ctx->Perm);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
@@ -109,39 +96,14 @@ extern PetscErrorCode FEMTSMonitor(TS ts,PetscInt timestep,PetscReal timevalue,V
 	PetscErrorCode ierr;
 	PetscReal      norm,vmax,vmin;
 	MPI_Comm       comm;
-	PetscViewer    viewer;
-	PetscBool      drawcontours;
-
 
 	PetscFunctionBegin;
-/*	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Solution.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(pressure,viewer);CHKERRQ(ierr); */
 	ierr = VecNorm(pressure,NORM_1,&norm);CHKERRQ(ierr);
 	ierr = VecMax(pressure,PETSC_NULL,&vmax);CHKERRQ(ierr);
 	ierr = VecMin(pressure,PETSC_NULL,&vmin);CHKERRQ(ierr);
 	ierr = PetscObjectGetComm((PetscObject)ts,&comm);CHKERRQ(ierr);
 	ierr = PetscPrintf(comm,"timestep %D: time %G, solution norm %G, max %G, min %G\n",timestep,timevalue,norm,vmax,vmin);CHKERRQ(ierr);
 		
-	PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "FormIFunction_P"
-extern PetscErrorCode FormIFunction_P(TS ts,PetscReal t,Vec pressure,Vec pressuredot,Vec Func,void *user)
-{
-	PetscErrorCode  ierr;
-	VFCtx			*ctx=(VFCtx*)user;
-	PetscViewer     viewer;
-	
-	PetscFunctionBegin;
-	ierr = FormTSMatricesnVector_P(ctx->KP,ctx->KPlhs,ctx->RHSP,ctx);CHKERRQ(ierr);
-/*	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSVector.txt",&viewer);CHKERRQ(ierr);
-	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-	ierr = VecView(ctx->RHSP,viewer);CHKERRQ(ierr);	*/
-	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
-	ierr = MatMult(ctx->KP,pressure,Func);CHKERRQ(ierr);	
-	ierr = MatMultAdd(ctx->KPlhs,pressuredot,Func,Func);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
@@ -165,7 +127,6 @@ extern PetscErrorCode FormIJacobian_P(TS ts,PetscReal t,Vec pressure,Vec pressur
 {
 	PetscErrorCode ierr;
 	VFCtx          *ctx=(VFCtx*)user;
-	PetscViewer    viewer;
 
 	PetscFunctionBegin;
 	*str = DIFFERENT_NONZERO_PATTERN;
@@ -208,7 +169,6 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	MatStencil     *row;
 	PetscReal      ***source_array;
 	Vec            source_local;
-	FACE           face;
 	PetscReal      hwx,hwy,hwz;
 	
 	PetscFunctionBegin;
@@ -253,7 +213,7 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K_local,ADD_VALUES);CHKERRQ(ierr);
 				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,Klhs_local,ADD_VALUES);CHKERRQ(ierr);
 				/*Assembling the right hand side vector g*/
-				ierr = FLow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
+				ierr = Flow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -289,7 +249,7 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 							hwy = (ctx->well[ii].coords[1]-coords_array[ek][ej][ei][1])/(coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1]); 
 							hwz = (ctx->well[ii].coords[2]-coords_array[ek][ej][ei][2])/(coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2]); 
 							if(ctx->well[ii].condition == RATE){
-								ierr = VecApplyWEllFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
+								ierr = VecApplyWellFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
 								for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 									for (j = 0; j < ctx->e3D.nphiy; j++) {
 										for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -335,7 +295,7 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMLocalToGlobalEnd(ctx->daScal,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daScal,&RHS_localVec);CHKERRQ(ierr);
 
-    ierr = VecApplyPressureBC_FEM(RHS,ctx->PresBCArray,&ctx->bcP[0]);CHKERRQ(ierr);
+  ierr = VecApplyPressureBC_FEM(RHS,ctx->PresBCArray,&ctx->bcP[0]);CHKERRQ(ierr);
 	
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 
@@ -343,3 +303,22 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = PetscFree2(RHS_local,row);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "FormIFunction_P"
+extern PetscErrorCode FormIFunction_P(TS ts,PetscReal t,Vec pressure,Vec pressuredot,Vec Func,void *user)
+{
+	PetscErrorCode  ierr;
+	VFCtx			*ctx=(VFCtx*)user;
+	
+	PetscFunctionBegin;
+	ierr = FormTSMatricesnVector_P(ctx->KP,ctx->KPlhs,ctx->RHSP,ctx);CHKERRQ(ierr);
+/*	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSVector.txt",&viewer);CHKERRQ(ierr);
+	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+	ierr = VecView(ctx->RHSP,viewer);CHKERRQ(ierr);	*/
+	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
+	ierr = MatMult(ctx->KP,pressure,Func);CHKERRQ(ierr);	
+	ierr = MatMultAdd(ctx->KPlhs,pressuredot,Func,Func);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+

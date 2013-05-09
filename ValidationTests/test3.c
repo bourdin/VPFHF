@@ -8,8 +8,7 @@ test3.c:  Computes the elastic energy associated with boundary displacement
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
-#include "VFV.h"
-#include "VFU.h"
+#include "VFMech.h"
 #include "VFFlow.h"
 
 VFCtx    ctx;
