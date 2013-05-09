@@ -2,6 +2,42 @@
 #include "petsc.h"
 #include "CartFE.h"
 
+
+static const char *BCTYPE_NAME[] = {
+  "NONE",
+  "ZERO",
+  "ONE",
+  "FIXED",
+  "VALUE",
+  "BCTYPE_NAME","",0
+};
+/*
+ Type of boundary condition:
+ NONE  = Natural boundary condition
+ ZERO  = homogeneous Dirichlet
+ ONE   = inhomogenous Dirichlet fixed to one
+ FIXED = insert from external field (inhomogeneous Dirichlet BC)
+*/
+
+static const char *FACE_NAME[] = {
+	"X0","X1",
+	"Y0","Y1",
+	"Z0","Z1",
+	"FACE_NAME","",0
+};
+
+static const char *EDGE_NAME[] = {
+	"X0Z0","X1Z0","Y0Z0","Y1Z0",
+	"X0Z1","X1Z1","Y0Z1","Y1Z1",
+	"X0Y0","X0Y1","X1Y0","X1Y1",
+	"EDGE_NAME","",0
+};
+
+static const char *VERTEX_NAME[] = {
+	"X0Y0Z0","X1Y0Z0","X0Y1Z0","X1Y1Z0",
+	"X0Y0Z1","X1Y0Z1","X0Y1Z1","X1Y1Z1",
+	"VERTEX_NAME","",0};
+
 //PetscLogEvent CartFE_ElementInitEvent;
 PetscLogStage CartFE_ElementInitStage;
 //PetscClassId  CartFE_Element;

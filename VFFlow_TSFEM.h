@@ -14,5 +14,5 @@ extern PetscErrorCode FormIJacobian_P(TS ts,PetscReal t,Vec VelnPress,Vec VelnPr
 extern PetscErrorCode FormFunction_P(TS ts,PetscReal t,Vec vec1,Vec Func,void *user);
 extern PetscErrorCode FEMTSMonitor(TS ts,PetscInt timestep,PetscReal timevalue,Vec pressure,void*);
 extern PetscErrorCode MatApplyTSPressureBC(Mat K,Mat Klhs,BC *bcP);
-
+extern PetscErrorCode FlowFEMTSSolve(VFCtx *ctx,VFFields *fields);
 #endif /* VFFLOW_TSFEM_H */

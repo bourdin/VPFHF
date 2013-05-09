@@ -1,6 +1,22 @@
 #include "petsc.h"
 #include "VFWell.h"
 
+static const char *WellConstraint_Name[] = {
+	"PRESSURE",
+	"RATE",
+	"WellConstraint_Name",
+	"",
+	0
+};
+
+static const char *WellType_Name[] = {
+	"INJECTOR",
+	"PRODUCER",
+	"WellType_Name",
+	"",
+	0
+};
+
 #undef __FUNCT__
 #define __FUNCT__ "VFWellGet"
 /*

@@ -31,16 +31,6 @@ extern PetscErrorCode MixedFEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fie
 	PetscMPIInt    comm_size;
 	PetscErrorCode ierr;
 	
-	PetscFunctionBegin;
-	ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
-	{
-		ctx->units    = UnitaryUnits;
-		ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",FlowUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
-		ctx->flowcase = ALLNORMALFLOWBC;
-		ierr          = PetscOptionsEnum("-flow boundary conditions","\n\tFlow solver","",FlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
-	}
-	ierr = PetscOptionsEnd();CHKERRQ(ierr);	
-	
 	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KVelP);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KVelPlhs);CHKERRQ(ierr);
@@ -61,9 +51,9 @@ extern PetscErrorCode MixedFEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fie
 	ierr = BCPInit(&ctx->bcP[0],ctx);
 	ierr = BCQInit(&ctx->bcQ[0],ctx);	
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-//	ierr = ReSETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
-	ierr = ReSETSourceTerms(ctx->Source,ctx->flowprop);
-	ierr = ReSETBoundaryTerms(ctx,fields);CHKERRQ(ierr);
+//	ierr = ResetFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
+	ierr = ResetSourceTerms(ctx->Source,ctx->flowprop);
+	ierr = ResetBoundaryTerms(ctx,fields);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
@@ -504,9 +494,8 @@ extern PetscErrorCode FormSNESMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 extern PetscErrorCode FormSNESIFunction(SNES snes,Vec VelnPress,Vec Func,void *user)
 {
 	PetscErrorCode ierr;
-	VFCtx			*ctx=(VFCtx*)user;
-	PetscViewer     viewer;
-	Vec             VecRHS;
+	VFCtx			 *ctx=(VFCtx*)user;
+	Vec         VecRHS;
 	PetscReal		theta,timestepsize;
 	PetscReal		dt_dot_theta,dt_dot_one_minus_theta;
 	
@@ -763,17 +752,16 @@ extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx
 #define __FUNCT__ "MatApplySNESVelocityBC"
 extern PetscErrorCode MatApplySNESVelocityBC(Mat K,Mat Klhs,BC *bcQ)
 {
-	PetscErrorCode ierr;
-	PetscInt       xs,xm,nx;
-	PetscInt       ys,ym,ny;
-	PetscInt       zs,zm,nz;
-	PetscInt       i,j,k,c;
-	MatStencil    *row;
-	PetscReal      one=1.;
-	PetscInt       numBC=0,l=0;
-	PetscInt       dim,dof=3;
-	DM				da;
-	PetscReal      zero=0.0;
+	PetscErrorCode  ierr;
+	PetscInt        xs,xm,nx;
+	PetscInt        ys,ym,ny;
+	PetscInt        zs,zm,nz;
+	PetscInt        i,j,k,c;
+	MatStencil     *row;
+	PetscReal       one=1.;
+	PetscInt        numBC=0,l=0;
+	PetscInt        dim,dof=3;
+	DM				      da;
 	
 	PetscFunctionBegin;
 	ierr = PetscObjectQuery((PetscObject) K,"DM",(PetscObject *) &da); CHKERRQ(ierr);

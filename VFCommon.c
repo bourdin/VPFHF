@@ -1,8 +1,8 @@
 #include "petsc.h"
 #include "CartFE.h"
+#include "VFCommon_private.h"
 #include "VFCommon.h"
-#include "VFV.h"
-#include "VFU.h"
+#include "VFMech.h"
 #include "VFFlow.h"
 #include "VFHeat.h"
 #include "VFWell.h"
@@ -44,7 +44,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 	ierr = VFGeometryInitialize(ctx);CHKERRQ(ierr);
 	ierr = VFPropGet(&ctx->vfprop);CHKERRQ(ierr);
 	
-	ierr = PetscMalloc(ctx->nlayer * sizeof(MatProp),&ctx->matprop);CHKERRQ(ierr);
+	ierr = PetscMalloc(ctx->nlayer * sizeof(VFMatProp),&ctx->matprop);CHKERRQ(ierr);
 	ierr = VFMatPropGet(ctx->matprop,ctx->nlayer);CHKERRQ(ierr);
 	ierr = VFResPropGet(&ctx->resprop);CHKERRQ(ierr);
 	ierr = VFMatPropFieldsInitialize(ctx, ctx->matprop);
@@ -103,12 +103,23 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 	{
 		ctx->verbose = 0;
 		ierr = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
-		ctx->mechsolver = FRACTURE;
-		ierr = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,PETSC_NULL);CHKERRQ(ierr);
 //		ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
 		ierr = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
-			//    ctx->fractureflowsolver = FRACTUREFLOWSOLVER_SNESMIXEDFEM;
-			//		ierr = PetscOptionsEnum("-fractureflowsolver","\n\tFracture Flow solver","",VFFracureFlowSolverName,(PetscEnum)ctx->fractureflowsolver,(PetscEnum*)&ctx->fractureflowsolver,PETSC_NULL);CHKERRQ(ierr);
+    ctx->units    = UnitaryUnits;
+    ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",VFUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
+		ctx->flowcase = ALLNORMALFLOWBC;
+		ierr          = PetscOptionsEnum("-flowBC","\n\tFlow boundary conditions","",VFFlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
+
+    ctx->fractureflowsolver = FRACTUREFLOWSOLVER_SNESMIXEDFEM;
+		ierr = PetscOptionsEnum("-fractureflowsolver","\n\tFracture Flow solver","",VFFractureFlowSolverName,(PetscEnum)ctx->fractureflowsolver,(PetscEnum*)&ctx->fractureflowsolver,PETSC_NULL);CHKERRQ(ierr);
+
+		ctx->heatsolver = HEATSOLVER_SNESFEM;
+		ierr = PetscOptionsEnum("-heatsolver","\n\tHeat solver","",VFHeatSolverName,(PetscEnum)ctx->heatsolver,(PetscEnum*)&ctx->heatsolver,PETSC_NULL);CHKERRQ(ierr);
+		ctx->Hunits     = UnitaryUnits;
+		ierr            = PetscOptionsEnum("-heatunits","\n\tHeat solver units","",VFUnitName,(PetscEnum)ctx->Hunits,(PetscEnum*)&ctx->Hunits,PETSC_NULL);CHKERRQ(ierr);
+
+		ctx->mechsolver = FRACTURE;
+		ierr = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,PETSC_NULL);CHKERRQ(ierr);
 		ctx->hasInsitu = PETSC_FALSE;
 		nopt           = 6;
 		ierr           = PetscMalloc(nopt * sizeof(PetscReal),&buffer);CHKERRQ(ierr);
@@ -461,7 +472,7 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
  VFMatPropGet: get all material properties.
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VFMatPropGet(MatProp *matprop,PetscInt n)
+extern PetscErrorCode VFMatPropGet(VFMatProp *matprop,PetscInt n)
 {
 	PetscErrorCode ierr;
 	PetscReal      *prop;
@@ -544,7 +555,7 @@ extern PetscErrorCode VFMatPropGet(MatProp *matprop,PetscInt n)
 /*
  VFMatPropFieldsInitialize: Creates material property fields
  */
-extern PetscErrorCode VFMatPropFieldsInitialize(VFCtx *ctx, MatProp *matprop)
+extern PetscErrorCode VFMatPropFieldsInitialize(VFCtx *ctx, VFMatProp *matprop)
 {
 	PetscErrorCode ierr;
 	
@@ -564,7 +575,7 @@ extern PetscErrorCode VFMatPropFieldsInitialize(VFCtx *ctx, MatProp *matprop)
  
  Change it to read properties from input file later
  */
-extern PetscErrorCode VFResPropGet(ResProp *resprop)
+extern PetscErrorCode VFResPropGet(VFResProp *resprop)
 {
 	PetscErrorCode ierr;
 	

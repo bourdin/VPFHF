@@ -15,7 +15,7 @@
    VFFlow_FEM_MatPAssembly3D_local
 */
 
-extern PetscErrorCode VFFlow_FEM_MatPAssembly3D_local(PetscReal *Mat_local,ResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VFFlow_FEM_MatPAssembly3D_local(PetscReal *Mat_local,VFResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
   PetscReal      fdens,relk,visc;
@@ -72,7 +72,7 @@ extern PetscErrorCode VFFlow_FEM_MatPAssembly3D_local(PetscReal *Mat_local,ResPr
    VFFlow_FEM_MassMatPAssembly3D_local
 */
 
-extern PetscErrorCode VFFlow_FEM_MassMatPAssembly3D_local(PetscReal *Mat_local,ResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VFFlow_FEM_MassMatPAssembly3D_local(PetscReal *Mat_local,VFResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
   PetscReal      fdens,por,wat_comp,rock_comp;
@@ -243,7 +243,7 @@ extern PetscErrorCode VFFlow_FEM_MatPAssembly3D(Mat K,Vec RHS,VFFields *fields,V
 
   Keita Yoshioak yoshk@chevron.com
 */
-extern PetscErrorCode VFFlow_FEM_MatTAssembly3D_local(PetscReal *Mat_local,ResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VFFlow_FEM_MatTAssembly3D_local(PetscReal *Mat_local,VFResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
   PetscReal      TCond_X,TCond_Y,TCond_Z;
@@ -1038,7 +1038,7 @@ extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
    VFFlow_FEM_IJacobPAssembly3D_local
 */
 
-extern PetscErrorCode VFFlow_FEM_IJacobPAssembly3D_local(PetscReal a, PetscReal *Mat_local,ResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VFFlow_FEM_IJacobPAssembly3D_local(PetscReal a, PetscReal *Mat_local,VFResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
   PetscReal      fdens,por,wat_comp,rock_comp,relk,visc;
