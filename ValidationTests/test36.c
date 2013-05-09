@@ -3,7 +3,7 @@
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
 ./test36 -n 51,11,2 -l 1,1,0.01 -m_inv 10 -ts_type beuler -ts_dt 1 -ts_max_steps 20
- 
+./test36 -n 101,101,2 -l 1,1,0.01 -m_inv 10 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -npc 1 -pc0_r 0.15 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.04 -epsilon 0.02 -pc0_theta 0 -pc0_phi 90 
  */
 
 #include "petsc.h"
@@ -38,6 +38,7 @@ int main(int argc,char **argv)
 
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ctx.flowsolver = FLOWSOLVER_TSMIXEDFEM;
+  ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = FlowSolverInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,

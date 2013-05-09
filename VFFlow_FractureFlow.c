@@ -393,11 +393,15 @@ extern PetscErrorCode FormFracMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
                ((coords_array[ek+1][ej][ei][2] >= ctx->well[ii].coords[2]) && (coords_array[ek][ej][ei][2] <= ctx->well[ii].coords[2] ))
                )
             {
-              hwx = (ctx->well[ii].coords[0]-coords_array[ek][ej][ei][0])/(coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0]);
-              hwy = (ctx->well[ii].coords[1]-coords_array[ek][ej][ei][1])/(coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1]);
-              hwz = (ctx->well[ii].coords[2]-coords_array[ek][ej][ei][2])/(coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2]);
+              hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+              hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+              hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+              ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+              hwx = (ctx->well[ii].coords[0]-coords_array[ek][ej][ei][0])/hx;
+              hwy = (ctx->well[ii].coords[1]-coords_array[ek][ej][ei][1])/hy;
+              hwz = (ctx->well[ii].coords[2]-coords_array[ek][ej][ei][2])/hz;
               if(ctx->well[ii].condition == RATE){
-                ierr = VecApplyWEllFlowRate(RHS_local,ctx->well[ii].Qw,hwx,hwy,hwz);CHKERRQ(ierr);
+                ierr = VecApplyWEllFlowRate(RHS_local,&ctx->e3D,ctx->well[ii].Qw,hwx,hwy,hwz,ek,ej,ei,V_array);CHKERRQ(ierr);
                 for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
                   for (j = 0; j < ctx->e3D.nphiy; j++) {
                     for (i = 0; i < ctx->e3D.nphix; i++,l++) {

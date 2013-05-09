@@ -129,9 +129,11 @@ int main(int argc,char **argv)
         for (i = xs; i < xs+xm; i++) {
           if (i == 0) {
             bcu_array[k][j][i][0] = -bc;
+            bcu_array[k][j][i][0] = 1.;
           }
           if (i == nx-1) {
             bcu_array[k][j][i][0] = bc;
+            bcu_array[k][j][i][0] = 2;
           }
         }
       }
@@ -195,10 +197,12 @@ int main(int argc,char **argv)
 					  if (i == 0) {
 						  bcu_array[k][j][i][0] = -bc;
 						  bcu_array[k][j][i][1] = -bc;
+						  bcu_array[k][j][i][1] = -1;
 					  }
 					  if (i == nx-1) {
 						  bcu_array[k][j][i][0] = bc;
 						  bcu_array[k][j][i][1] = bc;
+						  bcu_array[k][j][i][1] = 1.;
 					  }
 				  }
 			  }

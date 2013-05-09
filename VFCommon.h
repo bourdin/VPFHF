@@ -448,6 +448,7 @@ typedef struct {
 	VFFields            *fields;
   Vec                 FracVelBCArray;
   BC                  bcFracQ[3];
+  Vec                 V;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
