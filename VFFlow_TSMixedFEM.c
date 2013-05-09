@@ -442,13 +442,13 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				/*	This computes the local contribution of the global A matrix	*/
-				ierr = FLow_MatA(KA_local,&ctx->e3D,ek,ej,ei,v_array);CHKERRQ(ierr);
+				ierr = Flow_MatA(KA_local,&ctx->e3D,ek,ej,ei,v_array);CHKERRQ(ierr);
 				for (l = 0; l < nrow*nrow; l++) {
 					Klhs_local[l] = -2*M_inv*KA_local[l]/alpha_c;
 				}
 				for (c = 0; c < veldof; c++) {
-					ierr = FLow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c,v_array);CHKERRQ(ierr);
-					ierr = FLow_MatBTranspose(KBTrans_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
+					ierr = Flow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c,v_array);CHKERRQ(ierr);
+					ierr = Flow_MatBTranspose(KBTrans_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
 					for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 						for (j = 0; j < ctx->e3D.nphiy; j++) {
 							for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -461,7 +461,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					ierr = MatSetValuesStencil(K,nrow,row1,nrow,row,KB_local,ADD_VALUES);CHKERRQ(ierr);
 					ierr = MatSetValuesStencil(K,nrow,row,nrow,row1,KBTrans_local,ADD_VALUES);CHKERRQ(ierr);
 				}
-				ierr = FLow_MatD(KD_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
+				ierr = Flow_MatD(KD_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -473,7 +473,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,Klhs_local,ADD_VALUES);CHKERRQ(ierr);
 				/*Assembling the righthand side vector f*/
 				for (c = 0; c < veldof; c++) {
-					ierr = FLow_Vecf(RHS_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
+					ierr = Flow_Vecf(RHS_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
 					for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 						for (j = 0; j < ctx->e3D.nphiy; j++) {
 							for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -483,7 +483,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					}
 				}
 				/*Assembling the right hand side vector g*/
-				ierr = FLow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
+				ierr = Flow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -613,7 +613,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 							hwy = (ctx->well[ii].coords[1]-coords_array[ek][ej][ei][1])/hy;
 							hwz = (ctx->well[ii].coords[2]-coords_array[ek][ej][ei][2])/hz;
 							if(ctx->well[ii].condition == RATE){
-								ierr = VecApplyWEllFlowRate(RHS_local,&ctx->e3D,ctx->well[ii].Qw,hwx,hwy,hwz,ek,ej,ei,v_array);CHKERRQ(ierr);
+								ierr = VecApplyWellFlowRate(RHS_local,&ctx->e3D,ctx->well[ii].Qw,hwx,hwy,hwz,ek,ej,ei,v_array);CHKERRQ(ierr);
 								for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 									for (j = 0; j < ctx->e3D.nphiy; j++) {
 										for (i = 0; i < ctx->e3D.nphix; i++,l++) {
