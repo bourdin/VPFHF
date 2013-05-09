@@ -4,3 +4,12 @@ syntax: glob
 *.o
 *.mod
 *~
+*pyc
+*h5
+*bin
+*xmf
+*ener
+*pres
+tags
+*log
+VF_Standalone.xcodeproj/

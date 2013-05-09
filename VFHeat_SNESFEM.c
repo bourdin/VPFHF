@@ -280,7 +280,7 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				/*	Assembling the sub-Matrices	*/
 				rhoCp_eff_array=rho_liq_array*Cp_liq_array+rho_sol_array*Cp_sol_array;				
-				ierr = FLow_MatA(KM_local,&ctx->e3D,ek,ej,ei,v_array);CHKERRQ(ierr);
+				ierr = Flow_MatA(KM_local,&ctx->e3D,ek,ej,ei,v_array);CHKERRQ(ierr);
 				for (l = 0; l < nrow*nrow; l++) {
 					KM_local[l] = 2.0*KM_local[l];
 				}
@@ -293,7 +293,7 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 				}
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KM_local,ADD_VALUES);CHKERRQ(ierr);			
 				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,KM_local,ADD_VALUES);CHKERRQ(ierr);			
-				ierr = FLow_HMatD(KD_local,&ctx->e3D,ek,ej,ei,diffsvty_array,v_array);CHKERRQ(ierr);
+				ierr = Flow_HMatD(KD_local,&ctx->e3D,ek,ej,ei,diffsvty_array,v_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -483,14 +483,15 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "FLow_HMatD"
-extern PetscErrorCode FLow_HMatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****diffsvty_array,PetscReal ***v_array)
+#define __FUNCT__ "Flow_HMatD"
+extern PetscErrorCode Flow_HMatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****diffsvty_array,PetscReal ***v_array)
 {
-	PetscInt  i,j,k,l;
-	PetscInt  ii,jj,kk;
-	PetscInt  eg;
-	PetscReal kx,ky,kz,kxy,kxz,kyz;	
-  PetscReal		*v_elem;
+  PetscErrorCode  ierr;
+	PetscInt        i,j,k,l;
+	PetscInt        ii,jj,kk;
+	PetscInt        eg;
+	PetscReal       kx,ky,kz,kxy,kxz,kyz;	
+  PetscReal		   *v_elem;
 
 	PetscFunctionBegin;
   ierr = PetscMalloc(e->ng*sizeof(PetscReal),&v_elem);CHKERRQ(ierr);
