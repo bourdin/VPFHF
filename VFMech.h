@@ -1,12 +1,8 @@
-//
-//  VFMech.h
-//  VF_Standalone
-//
-//  Created by Blaise Bourdin on 5/7/13.
-//  Copyright (c) 2013 Blaise Bourdin. All rights reserved.
-//
-
-#ifndef VF_Standalone_VFMech_h
+/*
+   VFMech.h
+   (c) 2013 B. Bourdin, LSU
+*/
+#if !defined(VF_Standalone_VFMech_h)
 #define VF_Standalone_VFMech_h
 
 extern PetscErrorCode BCUInit(BC *BC,VFPreset preset);

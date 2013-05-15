@@ -1,4 +1,4 @@
-#ifndef XDMF_H
+#if !defined(XDMF_H)
 #define XDMF_H
 
 extern PetscErrorCode XDMFuniformgridInitialize(PetscViewer viewer,PetscReal time,const char gridname[]);

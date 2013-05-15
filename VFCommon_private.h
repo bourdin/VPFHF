@@ -5,7 +5,7 @@
 
  (c) 2010-2013 Blaise Bourdin bourdin@lsu.edu
 */
-#ifndef VF_Standalone_VFCommon_private_h
+#if !defined( VF_Standalone_VFCommon_private_h)
 #define VF_Standalone_VFCommon_private_h
 
 static const char *VFUnitName[] = {
