@@ -18,7 +18,7 @@ VFFields fields;
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
 {
-  PetscErrorCode ierr;
+  PetscErrorCode ierr,ierrStepV;
   PetscViewer    viewer;
   PetscViewer    logviewer;
   PetscInt       mode=1;
@@ -34,12 +34,15 @@ int main(int argc,char **argv)
   PetscReal      errV=1e+10,errP;
   PetscReal      flowrate,maxvol = .03,minvol = 0.;
   PetscReal      targetVol;
+  PetscBool      debug,StepVFailed=PETSC_FALSE;
+  PetscInt       currentstep,savestep;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscOptionsGetInt(PETSC_NULL,"-mode",&mode,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-maxvol",&maxvol,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-minvol",&minvol,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(PETSC_NULL,"-debug",&debug,PETSC_NULL);CHKERRQ(ierr);
   /*
     Overwrite ctx.maxtimestep with something more reasonable
   */
@@ -233,13 +236,10 @@ int main(int argc,char **argv)
 
   ctx.hasCrackPressure = PETSC_FALSE;
   ctx.hasInsitu        = PETSC_TRUE;
-  ierr                 = VecCopy(U_s,fields.U);CHKERRQ(ierr);
-  ierr                 = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-  ierr                 = VolumetricCrackOpening(&vol_s,&ctx,&fields);CHKERRQ(ierr);
-  /*
-    ierr = VecCopy(fields.U,U_s);CHKERRQ(ierr);
-          minvol = vol_s;
-        */
+
+  ierr = VecCopy(U_s,fields.U);CHKERRQ(ierr);
+  ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+  ierr = VolumetricCrackOpening(&vol_s,&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"  minvol %g\n",vol_s);CHKERRQ(ierr);
 
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++) {
@@ -247,6 +247,7 @@ int main(int argc,char **argv)
     ierr      = PetscPrintf(PETSC_COMM_WORLD,"Time step %i. Targeting injected volume of %g\n",ctx.timestep,targetVol);CHKERRQ(ierr);
     ierr      = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
     altminit  = 0.;
+    if (StepVFailed) break;
     do {
       p_old = p;
       ierr  = PetscPrintf(PETSC_COMM_WORLD,"  Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit,p);CHKERRQ(ierr);
@@ -294,39 +295,78 @@ int main(int argc,char **argv)
       ierr = PetscPrintf(PETSC_COMM_WORLD,"     Solving for V  ");CHKERRQ(ierr);
       ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
       ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
-      ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
+      ierrStepV = VF_StepV(&fields,&ctx);
 
-      ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
-      ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"      Max. change on V: %e\n",errV);CHKERRQ(ierr);
+      if (ierrStepV == 0) {
+        ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
+        ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD,"      Max. change on V: %e\n",errV);CHKERRQ(ierr);
+      } else {
+        StepVFailed = PETSC_TRUE;
+        break;
+      }
       altminit++;
+
+      if (debug) {
+        currentstep = ctx.timestep;
+        savestep++;
+        ctx.timestep = savestep;
+        switch (ctx.fileformat) {
+        case FILEFORMAT_HDF5:
+          ierr = FieldsH5Write(&ctx,&fields);CHKERRQ(ierr);
+          break;
+        case FILEFORMAT_BIN:
+          ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
+          break;
+        }
+        ctx.ElasticEnergy = 0;
+        ctx.InsituWork    = 0;
+        ctx.PressureWork  = 0.;
+        ctx.SurfaceEnergy = 0.;
+
+        ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
+        ierr = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
+
+        ctx.TotalEnergy   = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork + ctx.SurfaceEnergy;
+
+        ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy: %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
+        ierr = PetscViewerASCIIPrintf(viewer,"%d \t\t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,ctx.CrackVolume,p,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
+        ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ctx.ElasticEnergy,
+                                      ctx.InsituWork,ctx.SurfaceEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
+
+        ctx.timestep = currentstep;
+      }
     } while ((errP >= p_epsilon || errV >= ctx.altmintol) && altminit <= ctx.altminmaxit);
-    ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
-    switch (ctx.fileformat) {
-    case FILEFORMAT_HDF5:
-      ierr = FieldsH5Write(&ctx,&fields);CHKERRQ(ierr);
-      break;
-    case FILEFORMAT_BIN:
-      ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
-      break;
+    if (!StepVFailed) {
+      switch (ctx.fileformat) {
+      case FILEFORMAT_HDF5:
+        ierr = FieldsH5Write(&ctx,&fields);CHKERRQ(ierr);
+        break;
+      case FILEFORMAT_BIN:
+        ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
+        break;
+      }
+      ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
+      ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
+      ierr = PetscLogView(logviewer);CHKERRQ(ierr);
+      ierr = PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
+
+
+      ctx.ElasticEnergy = 0;
+      ctx.InsituWork    = 0;
+      ctx.PressureWork  = 0.;
+      ctx.SurfaceEnergy = 0.;
+      ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
+      ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
+      ierr = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
+
+      ctx.TotalEnergy   = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork + ctx.SurfaceEnergy;
+
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy: %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
+      ierr = PetscViewerASCIIPrintf(viewer,"%d \t\t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,ctx.CrackVolume,p,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
+      ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ctx.ElasticEnergy,
+                                    ctx.InsituWork,ctx.SurfaceEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
     }
-    ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
-    ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
-    ierr = PetscLogView(logviewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
-
-
-    ctx.ElasticEnergy =0;
-    ctx.InsituWork    =0;
-    ctx.PressureWork  = 0.;
-    ctx.SurfaceEnergy = 0.;
-    ierr              = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
-    ierr              = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
-    ctx.TotalEnergy   = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork + ctx.SurfaceEnergy;
-    ierr              = PetscPrintf(PETSC_COMM_WORLD,"Surface energy: %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
-    ierr              = PetscViewerASCIIPrintf(viewer,"%d \t\t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,ctx.CrackVolume,p,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
-    ierr              = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ctx.ElasticEnergy,
-                                               ctx.InsituWork,ctx.SurfaceEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
   }
   ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);

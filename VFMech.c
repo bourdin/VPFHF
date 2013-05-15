@@ -1872,7 +1872,7 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode      ierr;
   SNESConvergedReason reason;
-  PetscInt            its;
+  PetscInt            its,flg=0;
   PetscReal           Umin,Umax;
   
   PetscFunctionBegin;
@@ -1904,11 +1904,12 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   ierr = SNESGetConvergedReason(ctx->snesU,&reason);CHKERRQ(ierr);
   if (reason < 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+    flg = reason;
   } else {
     ierr = SNESGetIterationNumber(ctx->snesU,&its);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(flg);
 }
 
 #undef __FUNCT__
@@ -2946,7 +2947,7 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode      ierr;
   SNESConvergedReason reason;
-  PetscInt            its;
+  PetscInt            its,flg=0;
   PetscReal           Vmin,Vmax;
   
   PetscFunctionBegin;
@@ -2957,6 +2958,7 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
   ierr = SNESGetConvergedReason(ctx->snesV,&reason);CHKERRQ(ierr);
   if (reason < 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesV diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+    flg = reason;
   } else {
     ierr = SNESGetIterationNumber(ctx->snesV,&its);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesV converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
@@ -2965,7 +2967,7 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx)
   ierr = VecMin(fields->V,PETSC_NULL,&Vmin);CHKERRQ(ierr);
   ierr = VecMax(fields->V,PETSC_NULL,&Vmax);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"      V min / max:     %e %e\n",Vmin,Vmax);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(flg);
 }
 
 
