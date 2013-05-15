@@ -5,7 +5,7 @@
 */
 #include "VFCommon.h"
 
-#ifndef VFCRACKS_H
+#if !defined(VFCRACKS_H)
 #define VFCRACKS_H
 
 extern PetscErrorCode VFPennyCrackGet(const char prefix[],VFPennyCrack *PennyCrack);
