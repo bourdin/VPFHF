@@ -1120,7 +1120,7 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   PetscFunctionBegin;
   /*
    Write the hdf5 files
-   */
+  */
 #if defined(PETSC_HAVE_HDF5)
   ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
