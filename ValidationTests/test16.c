@@ -27,21 +27,22 @@ int main(int argc,char **argv)
   char           filename[FILENAME_MAX];
   PetscReal      p;
   PetscReal      p_old;
-  PetscReal      p_epsilon = 1.e-2;
+  PetscReal      prestol = 1.e-2;
   PetscInt       altminit  =1;
   Vec            Vold,U_s,U_1;
   PetscReal      vol_s,vol_1;
   PetscReal      errV=1e+10,errP;
   PetscReal      flowrate,maxvol = .03,minvol = 0.;
   PetscReal      targetVol;
-  PetscBool      debug,StepVFailed=PETSC_FALSE;
-  PetscInt       currentstep,savestep;
+  PetscBool      debug=PETSC_FALSE,StepVFailed=PETSC_FALSE;
+  PetscInt       currentstep,savestep=0;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscOptionsGetInt(PETSC_NULL,"-mode",&mode,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-maxvol",&maxvol,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-minvol",&minvol,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(PETSC_NULL,"-prestol",&prestol,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetBool(PETSC_NULL,"-debug",&debug,PETSC_NULL);CHKERRQ(ierr);
   /*
     Overwrite ctx.maxtimestep with something more reasonable
@@ -297,15 +298,9 @@ int main(int argc,char **argv)
       ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
       ierrStepV = VF_StepV(&fields,&ctx);
 
-      if (ierrStepV == 0) {
-        ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
-        ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
-        ierr = PetscPrintf(PETSC_COMM_WORLD,"      Max. change on V: %e\n",errV);CHKERRQ(ierr);
-      } else {
-        StepVFailed = PETSC_TRUE;
-        break;
-      }
-      altminit++;
+      ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
+      ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"      Max. change on V: %e\n",errV);CHKERRQ(ierr);
 
       if (debug) {
         currentstep = ctx.timestep;
@@ -336,7 +331,12 @@ int main(int argc,char **argv)
 
         ctx.timestep = currentstep;
       }
-    } while ((errP >= p_epsilon || errV >= ctx.altmintol) && altminit <= ctx.altminmaxit);
+      if (ierrStepV  < 0) {
+        StepVFailed = PETSC_TRUE;
+        break;
+      }
+      altminit++;
+    } while ((errP >= prestol || errV >= ctx.altmintol) && altminit <= ctx.altminmaxit);
     if (!StepVFailed) {
       switch (ctx.fileformat) {
       case FILEFORMAT_HDF5:
