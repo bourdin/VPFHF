@@ -166,13 +166,12 @@ def main():
                 SetView3D(View3DAtts)
                 DrawPlots()
                 pngname = SavePNG(os.path.join(tmpdir,Param['JOBID'])+"-",[1024,768])
-                
             ### use ffmpeg to generate animation
             pattern = os.path.join(tmpdir,Param['JOBID'])+"-%04d.png"
             cmd = "ffmpeg -y -i %s -vcodec mjpeg -qscale 1 %s-3D.avi"%(pattern,Param['JOBID'])
             print "Now running %s"%cmd
             os.system(cmd)
-            shutil.rmtree(tmpdir)
+            #shutil.rmtree(tmpdir)
 
 
 import sys  
