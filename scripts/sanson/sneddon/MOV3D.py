@@ -56,14 +56,14 @@ def main():
             ##  
             ## Open the database
             ##
-            MyDatabase = str(Param['JOBID'])+'.xmf'
+            #MyDatabase = str(Param['JOBID'])+'.xmf'
+            #status = OpenDatabase(MyDatabase,0)
+            #if not status:
+            MyDatabase = str(Param['JOBID'])+'.*.xmf database'
             status = OpenDatabase(MyDatabase,0)
             if not status:
-                MyDatabase = str(Param['JOBID'])+'.*.xmf database'
-                status = OpenDatabase(MyDatabase,0)
-                if not status:
-                    print "Cannot open database, exiting"
-                    return 0
+                print "Cannot open database, exiting"
+                return 0
     
             laststep = TimeSliderGetNStates()
             ##
@@ -169,7 +169,7 @@ def main():
                 
             ### use ffmpeg to generate animation
             pattern = os.path.join(tmpdir,Param['JOBID'])+"-%04d.png"
-            cmd = "ffmpeg -y -i %s -vcodec mjpeg -qscale 0 %s-3D.avi"%(pattern,Param['JOBID'])
+            cmd = "ffmpeg -y -i %s -vcodec mjpeg -qscale 1 %s-3D.avi"%(pattern,Param['JOBID'])
             print "Now running %s"%cmd
             os.system(cmd)
             shutil.rmtree(tmpdir)
