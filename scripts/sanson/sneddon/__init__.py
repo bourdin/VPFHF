@@ -34,5 +34,7 @@ class SNEDDONAction(Action):
                              help='generates a 3D movie [req. VisIt]')
     self.parser.add_argument('--all', default=False,action='store_true',
                              help='Do all of the above except plotenergy, movtransient, and mov3d')
+    self.parser.add_argument('--dist',default=False,action='store_true',
+                             help='Do parallel post-processing')
 
 __all__ = [scan, check_mtime, SNEDDONAction]

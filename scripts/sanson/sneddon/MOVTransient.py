@@ -54,14 +54,11 @@ def main():
         ##  
         ## Open the database
         ##
-        MyDatabase = str(Param['JOBID'])+'.xmf'
+        MyDatabase = str(Param['JOBID'])+'.*.xmf database'
         status = OpenDatabase(MyDatabase,0)
         if not status:
-            MyDatabase = str(Param['JOBID'])+'.*.xmf database'
-            status = OpenDatabase(MyDatabase,0)
-            if not status:
-                print "Cannot open database, exiting"
-                return 0
+            print "Cannot open database, exiting"
+            return 0
 
         laststep = TimeSliderGetNStates()
         ##

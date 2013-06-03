@@ -86,7 +86,4 @@ class all(SNEDDONAction):
                     cmd = 'cd %s; %s'%(job['path'],mov3Dscript)
                     print cmd
                     os.system(cmd)
-                    cmd = "ffmpeg -i %s%s -vcodec mjpeg -qscale 0 %s-3D.avi"%(os.path.join(job['path'],"Frames",prefix),"-3D-\%04d.png",os.path.join(job['path'],prefix))
-                    print cmd
-                    os.system(cmd)
 
