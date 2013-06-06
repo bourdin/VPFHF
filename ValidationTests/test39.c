@@ -43,14 +43,14 @@ int main(int argc,char **argv)
 	PetscReal       p_old;
 	PetscReal       p_epsilon = 1.e-5;
 	PetscInt			  altminit=1;
-	Vec					    Vold;
-	PetscReal			  errV=1e+10;
+	Vec	            Uold,Vold;
+	PetscReal       errU,errV=1e+10;
 	PetscReal			  lx,ly,lz;
 
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
-  ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
+    ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -58,6 +58,8 @@ int main(int argc,char **argv)
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	ierr = VecSet(ctx.PresBCArray,0.);CHKERRQ(ierr);
 	ierr = VecSet(ctx.VelBCArray,0.);CHKERRQ(ierr);
+    ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
+    ierr = VecDuplicate(fields.U,&Uold);CHKERRQ(ierr);		
 	ctx.hasFluidSources = PETSC_FALSE;
 	ctx.hasFlowWells = PETSC_TRUE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
@@ -109,7 +111,7 @@ int main(int argc,char **argv)
 	
 	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
 	ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-	ctx.hasCrackPressure = PETSC_TRUE;
+//	ctx.hasCrackPressure = PETSC_TRUE;
 	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
@@ -185,26 +187,34 @@ int main(int argc,char **argv)
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
-  Vec Vf;
-  ierr = DMCreateGlobalVector(ctx.daScal,&Vf);CHKERRQ(ierr);
-  ierr = VecCopy(fields.V,Vf);
-//  ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
+    Vec Vf;
+    ierr = DMCreateGlobalVector(ctx.daScal,&Vf);CHKERRQ(ierr);
+    ierr = VecCopy(fields.V,Vf);
+    ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
-    ierr = VecSet(fields.V,1.0);
-		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-    ierr = VecCopy(Vf,fields.V);
+		
+/*	    ierr = VecCopy(fields.U,Uold);CHKERRQ(ierr);	
 		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
-    ierr = VecCopy(fields.V,Vf);
-//		ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
-
-//		ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
-
-//		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-
+        ierr = VecAXPY(Uold,-1.,fields.U);CHKERRQ(ierr);
+        ierr = VecNorm(Uold,NORM_INFINITY,&errU);CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max change on U: %e \n",errU);CHKERRQ(ierr);		*/
+        
+	//	do {
+		ierr = VecSet(fields.V,1.0);
+        ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+        ierr = VecCopy(Vf,fields.V);
+		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
+	//	ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
+        ierr = VecCopy(fields.V,Vf);
+          ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
+          ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
+          ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max change on V: %e\n",errV);CHKERRQ(ierr);
+		 	  altminit++;
+	//	} while ((errV >= ctx.altmintol) && altminit <= ctx.altminmaxit);
+		
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr); 
-		ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
+		ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
 		ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);   
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\nInjectedVol = %e,\tCrackVolume =%e\tLeak-off = %e\n",0.01*ctx.flowprop.timestepsize,ctx.CrackVolume,ctx.LeakOffRate);CHKERRQ(ierr);
 		ierr = FieldsH5Write(&ctx,&fields);	
