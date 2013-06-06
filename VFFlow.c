@@ -561,6 +561,115 @@ extern PetscErrorCode VFFlow_FEM_MatMPAssembly3D_local(PetscReal *Mat_local,VFFl
     }
   PetscFunctionReturn(0);
 }
+#undef __FUNCT__
+#define __FUNCT__ "Flow_Vecg_FEM"
+extern PetscErrorCode Flow_Vecg_FEM(PetscReal *Kg_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****perm_array)
+{
+        PetscInt  i,j,k,l;
+        PetscInt  eg;
+        PetscReal beta_c,mu,rho,gamma_c,gx,gy,gz;
+        PetscReal kx,ky,kz,kxy,kxz,kyz;
+        
+        PetscFunctionBegin;
+        beta_c  = flowpropty.beta;
+        gamma_c = flowpropty.gamma;
+        rho     = flowpropty.rho;
+        mu      = flowpropty.mu;
+        gx      = flowpropty.g[0];
+        gy      = flowpropty.g[1];
+        gz      = flowpropty.g[2];
+        
+        kx  = perm_array[ek][ej][ei][0];
+        ky  = perm_array[ek][ej][ei][1];
+        kz  = perm_array[ek][ej][ei][2];
+        kxy = perm_array[ek][ej][ei][3];
+        kxz = perm_array[ek][ej][ei][4];
+        kyz = perm_array[ek][ej][ei][5];
+        
+        for (l = 0,k = 0; k < e->nphiz; k++) {
+                for (j = 0; j < e->nphiy; j++) {
+                        for (i = 0; i < e->nphix; i++,l++) {
+                                Kg_local[l] = 0.;
+                                for (eg = 0; eg < e->ng; eg++) {
+                                        /* Need to multiply by the permability when it is available*/
+                                        Kg_local[l] += -0.5*rho*gamma_c*beta_c/mu*((kx*gx+kxy*gy+kxz*gz)*e->dphi[k][j][i][0][eg]
+                                                                                                                           +(kxy*gx+ky*gy+kyz*gz)*e->dphi[k][j][i][1][eg]
+                                                                                                                           +(kxz*gx+kyz*gy+kz*gz)*e->dphi[k][j][i][2][eg])*e->weight[eg];
+                                }
+                        }
+                }
+        }
+        PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VecApplySourceTerms_FEM"
+extern PetscErrorCode VecApplySourceTerms_FEM(PetscReal *Ks_local,PetscReal ***source_array,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFCtx *ctx)
+{
+        PetscErrorCode ierr;
+        PetscInt       i,j,k,l;
+        PetscReal      alpha_c;
+        PetscReal      mu;
+        PetscReal      *loc_source;
+        PetscInt       eg;
+        
+        PetscFunctionBegin;
+        alpha_c = ctx->flowprop.alpha;
+        mu     = ctx->flowprop.mu;
+        ierr   = PetscMalloc(e->ng*sizeof(PetscReal),&loc_source);CHKERRQ(ierr);
+        
+        for (eg = 0; eg < e->ng; eg++) loc_source[eg] = 0.;
+        for (k = 0; k < e->nphiz; k++) {
+                for (j = 0; j < e->nphiy; j++) {
+                        for (i = 0; i < e->nphix; i++) {
+                                for (eg = 0; eg < e->ng; eg++) {
+                                        loc_source[eg] += source_array[ek+k][ej+j][ei+i]*e->phi[k][j][i][eg];
+                                }
+                        }
+                }
+        }
+
+        for (l = 0,k = 0; k < e->nphiz; k++) {
+                for (j = 0; j < e->nphiy; j++) {
+                        for (i = 0; i < e->nphix; i++,l++) {
+                                Ks_local[l] = 0.;
+                                for (eg = 0; eg < e->ng; eg++) {
+                                        Ks_local[l] += -loc_source[eg]*e->phi[k][j][i][eg]*e->weight[eg]/alpha_c;
+                                }
+                        }
+                }
+        }
+        PetscFree(loc_source);
+        PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VecApplyWellFlowRate_FEM"
+extern PetscErrorCode VecApplyWellFlowRate_FEM(PetscReal *RHS_local,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz)
+{
+	PetscReal	phi[2][2][2];
+	PetscInt	i,j,k,l;
+
+	PetscFunctionBegin;
+	phi[0][0][0] = (1.-hwz)*(1.-hwy)*(1.-hwx);
+	phi[0][0][1] = (1.-hwz)*(1.-hwy)*hwx;
+	phi[0][1][0] = (1.-hwz)*hwy*(1.-hwx);
+	phi[0][1][1] = (1.-hwz)*hwy*hwx;
+	phi[1][0][0] = hwz*(1.-hwy)*(1.-hwx);
+	phi[1][0][1] = hwz*(1.-hwy)*hwx;
+	phi[1][1][0] = hwz*hwy*(1.-hwx);
+	phi[1][1][1] = hwz*hwy*hwx;
+
+	for(l = 0, k = 0; k < 2; k++){
+		for(j = 0; j < 2; j++){
+			for(i = 0; i < 2; i++, l++){
+				RHS_local[l] = 0;
+				RHS_local[l] = Q*phi[k][j][i];
+			}
+		}
+	}
+	PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "FEMSNESMonitor"
