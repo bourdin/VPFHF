@@ -7,6 +7,8 @@
  ./test39 -n 101,101,2 -epsilon 0.01 -Gc 0.6667  -l 1,1,0.01 -m_inv 5. -maxtimestep 5 -nrc 2 -rc0_corners 0.25,0.2,0,0.7,0.5,0.0,0.25,0.2,0.01 -rc0_thickness 0.008 -rc1_corners 0.5,0.6,0,0.7,0.3,0.,0.5,0.6,0.01 -rc1_thickness 0.008 -w0_coords 0.5,0.6,0.005 -w0_Qw 0.1 -maxtimestep 20 -nw 1
  
  ./test39 -n 101,101,2 -epsilon 0.01 -Gc 0.6667  -l 1,1,0.01 -m_inv 5. -maxtimestep 5 -nrc 2 -rc0_corners 0.25,0.2,0,0.7,0.5,0.0,0.25,0.2,0.01 -rc0_thickness 0.008 -rc1_corners 0.5,0.6,0,0.7,0.3,0.,0.5,0.6,0.01 -rc1_thickness 0.008 -w0_coords 0.5,0.6,0.005 -w0_Qw 0.1 -maxtimestep 20 -nw 1
+ 
+ ./test39 -n 101,101,2 -epsilon 0.02 -Gc 0.6667  -l 1,1,0.01 -m_inv 5. -maxtimestep 10 -npc 1 -pc0_r 0.2 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.05 -epsilon 0.04 -pc0_theta 0 -pc0_phi 90 -nw 1 -npc 1
  */
 
 #include "petsc.h"
@@ -48,6 +50,7 @@ int main(int argc,char **argv)
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
+  ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -182,11 +185,19 @@ int main(int argc,char **argv)
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
+  Vec Vf;
+  ierr = DMCreateGlobalVector(ctx.daScal,&Vf);CHKERRQ(ierr);
+  ierr = VecCopy(fields.V,Vf);
+//  ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
+    ierr = VecSet(fields.V,1.0);
 		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VecCopy(Vf,fields.V);
 		ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
 		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
+    ierr = VecCopy(fields.V,Vf);
+//		ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
 
 //		ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
 

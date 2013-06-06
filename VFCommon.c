@@ -111,7 +111,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->flowcase = ALLNORMALFLOWBC;
     ierr          = PetscOptionsEnum("-flowBC","\n\tFlow boundary conditions","",VFFlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
 
-    ctx->fractureflowsolver = FRACTUREFLOWSOLVER_SNESMIXEDFEM;
+//    ctx->fractureflowsolver = FRACTUREFLOWSOLVER_SNESMIXEDFEM;
     ierr                    = PetscOptionsEnum("-fractureflowsolver","\n\tFracture Flow solver","",VFFractureFlowSolverName,(PetscEnum)ctx->fractureflowsolver,(PetscEnum*)&ctx->fractureflowsolver,PETSC_NULL);CHKERRQ(ierr);
 
     ctx->heatsolver = HEATSOLVER_SNESFEM;
