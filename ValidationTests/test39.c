@@ -9,6 +9,9 @@
  ./test39 -n 101,101,2 -epsilon 0.01 -Gc 0.6667  -l 1,1,0.01 -m_inv 5. -maxtimestep 5 -nrc 2 -rc0_corners 0.25,0.2,0,0.7,0.5,0.0,0.25,0.2,0.01 -rc0_thickness 0.008 -rc1_corners 0.5,0.6,0,0.7,0.3,0.,0.5,0.6,0.01 -rc1_thickness 0.008 -w0_coords 0.5,0.6,0.005 -w0_Qw 0.1 -maxtimestep 20 -nw 1
  
  ./test39 -n 101,101,2 -epsilon 0.02 -Gc 0.6667  -l 1,1,0.01 -m_inv 5. -maxtimestep 10 -npc 1 -pc0_r 0.2 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.05 -epsilon 0.04 -pc0_theta 0 -pc0_phi 90 -nw 1 -npc 1
+ 
+ mpirun -np 2 $VFDIR/ValidationTests/test39 -n 21,21,2 -epsilon 0.05 -Gc 0.6667 -l 1,1,0.05 -m_inv 5. -maxtimestep 3 -npc 1 -pc0_r 0.2 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.15 -epsilon 0.04 -pc0_theta 0 -pc0_phi 90 -nw 1 -npc 1 -flowsolver FLOWSOLVER_SNES -pressurize TRUE -permmax 100
+
  */
 
 #include "petsc.h"
