@@ -1,192 +1,183 @@
 /*
-  test1.c: solves for the displacement in a pressurized penny crack in 3d
-  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
-*/
+ test40.c: 2D SNES. Single well problem. Source term implemented as dirac function and analytical solution is 3D Green's function. All pressure boundary condition.
+ (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
+ 
+ ./test40  -n 201,201,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nc 2 -w0_coords 0.50001,0.50001,0.00 -w0_Qw 0.5 -w0_constraint Rate -w0_rw 0.1 -w0_type INJECTOR -w1_coords 0.50001,0.50001,1 -w1_Qw 0.5 -w1_constraint Rate -w1_rw 0.1 -w1_type INJECTOR -m_inv 0 
+ 
+ ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nc 2 -w0_coords 0.50001,0.50001,0.00 -w0_Qw 0.5 -w0_constraint Rate -w0_rw 0.1 -w0_type INJECTOR -w1_coords 0.50001,0.50001,1 -w1_Qw 0.5 -w1_constraint Rate -w1_rw 0.1 -w1_type INJECTOR -m_inv 0 
+ 
+ 
+ ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nc 1 -w0_coords 0.50001,0.50001,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type INJECTOR -m_inv 0 
+ 
+ ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 10 -theta 1 -nc 1 -w0_coords 0.5,0.5,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type producer -m_inv 0
+ 
+ */
 
 #include "petsc.h"
 #include "CartFE.h"
 #include "VFCommon.h"
 #include "VFMech.h"
+#include "VFFlow.h"
+#include "VFWell.h"
+#include "VFCracks.h"
 
-VFCtx    ctx;
-VFFields fields;
+
+VFCtx               ctx;
+VFFields            fields;
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
-{
-  VFCtx          ctx;
-  VFFields       fields;
-  PetscErrorCode ierr;
-
-  PetscReal radius      = .2;
-  PetscReal center[3]   = {0.,0.,.5};
-  PetscInt  orientation = 2;
-  PetscInt  nopts       = 3;
-  PetscInt  i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-  PetscReal ****coords_array;
-  PetscReal ***v_array;
-  PetscReal BBmin[3],BBmax[3];
-  PetscReal x,y,z;
-  PetscReal InsituWork    = 0;
-  PetscReal p = 1e-3;
-
-  ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-  ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-radius",&radius,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
-
-  ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = DMDAGetBoundingBox(ctx.daScal,BBmin,BBmax);CHKERRQ(ierr);
-
-  ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-  ierr = DMDAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
-
-  /*
-    Reset all BC for U and V
-  */
-  for (i = 0; i < 6; i++) {
-    ctx.bcV[0].face[i] = NONE;
-    for (j = 0; j < 3; j++) {
-      ctx.bcU[j].face[i] = NONE;
-    }
-  }
-  for (i = 0; i < 12; i++) {
-    ctx.bcV[0].edge[i] = NONE;
-    for (j = 0; j < 3; j++) {
-      ctx.bcU[j].edge[i] = NONE;
-    }
-  }
-  for (i = 0; i < 8; i++) {
-    ctx.bcV[0].vertex[i] = NONE;
-    for (j = 0; j < 3; j++) {
-      ctx.bcU[j].vertex[i] = NONE;
-    }
-  }
-  switch (orientation) {
-  case 1:
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of radius %g at (%g,%g,%g) with normal vector <1,0,0>\n",
-                       radius,center[0],center[1],center[2]);CHKERRQ(ierr);
-    ctx.bcU[1].face[Y0] = ZERO;
-    ctx.bcU[2].face[Z0] = ZERO;
-    ctx.bcU[0].face[Y1] = ZERO;
-    ctx.bcU[0].face[Z1] = ZERO;
-    for (k = zs; k < zs+zm; k++) {
-      for (j = ys; j < ys+ym; j++) {
-        for (i = xs; i < xs+xm; i++) {
-          z = coords_array[k][j][i][2];
-          y = coords_array[k][j][i][1];
-          if (((i == nx/2) || (i == nx/2-1)) && (z*z+y*y < radius*radius)) {
-            v_array[k][j][i] = 0.;
-          }
-        }
-      }
-    }
-    break;
-
-  case 2:
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of radius %g at (%g,%g,%g) with normal vector <0,1,0>\n",
-                       radius,center[0],center[1],center[2]);CHKERRQ(ierr);
-    ctx.bcU[0].face[X0] = ZERO;
-    ctx.bcU[2].face[Z0] = ZERO;
-    ctx.bcU[1].face[X1] = ZERO;
-    ctx.bcU[1].face[Z1] = ZERO;
-    for (k = zs; k < zs+zm; k++) {
-      for (j = ys; j < ys+ym; j++) {
-        for (i = xs; i < xs+xm; i++) {
-          z = coords_array[k][j][i][2];
-          x = coords_array[k][j][i][0];
-          if (((j == ny/2) || (j == ny/2-1)) && (x*x+z*z < radius*radius)) {
-            v_array[k][j][i] = 0.;
-          }
-        }
-      }
-    }
-    break;
-
-  case 3:
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Building a penny-shaped crack of radius %g at (%g,%g,%g) with normal vector <0,0,1>\n",
-                       radius,center[0],center[1],center[2]);CHKERRQ(ierr);
-    ctx.bcU[0].face[X0] = ZERO;
-    ctx.bcU[1].face[Y0] = ZERO;
-    ctx.bcU[2].face[X1] = ZERO;
-    ctx.bcU[2].face[Y1] = ZERO;
-    for (k = zs; k < zs+zm; k++) {
-      for (j = ys; j < ys+ym; j++) {
-        for (i = xs; i < xs+xm; i++) {
-          y = coords_array[k][j][i][1];
-          x = coords_array[k][j][i][0];
-          if (((k == nz/2) || (k == nz/2-1)) && (x*x+y*y < radius*radius)) {
-            v_array[k][j][i] = 0.;
-          }
-        }
-      }
-    }
-    break;
-
-  default:
-    SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be one of {1,2,3}, got %i\n",orientation);
-    break;
-  }
-
-
-  ierr = DMDAVecRestoreArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-
-  ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
-  ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-  ierr = VF_StepV(&fields,&ctx);
-
-  ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
-
-  /* ierr = BCUUpdate(&ctx.bcU[0],ctx.preset);CHKERRQ(ierr); */
-  ctx.hasCrackPressure = PETSC_TRUE;
-  ierr                 = VF_StepU(&fields,&ctx);
-  ctx.ElasticEnergy    = 0;
-  ctx.InsituWork       = 0;
-  ctx.PressureWork     = 0.;
-  ierr                 = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
-  ctx.TotalEnergy      = ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork;
-
-
-
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
-  if (ctx.hasCrackPressure) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:   %e\n",ctx.PressureWork);CHKERRQ(ierr);
-  }
-  if (ctx.hasInsitu) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
-  }
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"Total energy:              %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
-
-
-
-  /*
-    Save fields and write statistics about current run
-  */
-  switch (ctx.fileformat) {
-  case FILEFORMAT_HDF5:
-    ierr = FieldsH5Write(&ctx,&fields);
-    ctx.timestep++;
-    ctx.timevalue += 1.;
-    ierr           = FieldsH5Write(&ctx,&fields);
-    break;
-
-  case FILEFORMAT_BIN:
-    ierr = FieldsBinaryWrite(&ctx,&fields);
-    break;
-  }
-
-  ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
-  ierr = PetscFinalize();
-  return(0);
+{	
+	PetscErrorCode  ierr;
+	PetscViewer		viewer;
+	PetscViewer     logviewer;
+	char			filename[FILENAME_MAX];
+	PetscInt		i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm,xs1,xm1,ys1,ym1,zs1,zm1;
+	PetscReal		BBmin[3],BBmax[3];
+	PetscReal		***presbc_array;
+	PetscReal		****velbc_array;
+	PetscReal		****coords_array;
+	PetscReal		gx,gy,gz;
+	PetscReal		gamma, beta, rho, mu;
+	PetscReal		****perm_array;
+	PetscReal		****velnpre_array;
+	PetscReal		***pre_array;
+	char			prefix[PETSC_MAX_PATH_LEN+1];
+	PetscReal		pi,dist;
+	
+	
+	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
+	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
+	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
+	ierr = VecSet(ctx.PresBCArray,0.);CHKERRQ(ierr);
+	ierr = VecSet(ctx.VelBCArray,0.);CHKERRQ(ierr);
+	ierr = VecSet(fields.VelnPress,0.);CHKERRQ(ierr);
+	ctx.hasFlowWells = PETSC_TRUE;
+	ctx.hasFluidSources = PETSC_FALSE;
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
+	ierr = DMDAVecGetArrayDOF(ctx.daFlow,fields.VelnPress,&velnpre_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr); 
+	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
+	ctx.numWells = 0;	
+	ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&ctx.numWells,PETSC_NULL);CHKERRQ(ierr);	
+	ierr = PetscMalloc(ctx.numWells*sizeof(VFWell),&ctx.well);CHKERRQ(ierr);
+	if(ctx.hasFlowWells == PETSC_TRUE){
+		for (i = 0; i < ctx.numWells; i++) {
+			ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"w%d_",i);CHKERRQ(ierr);
+			ierr = VFWellCreate(&ctx.well[i]);CHKERRQ(ierr);
+			ierr = VFWellGet(prefix,&ctx.well[i]);CHKERRQ(ierr);
+			ierr = VFWellView(&ctx.well[i],PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+		}	
+		for (k = zs1; k < zs1+zm1; k++) {
+			for (j = ys1; j < ys1+ym1; j++) {
+				for (i = xs1; i < xs1+xm1; i++) {
+					perm_array[k][j][i][2] = 0.;
+				}
+			}
+		}
+	}
+	pi = 6.*asin(0.5);
+	rho = ctx.flowprop.rho;									 
+	mu = ctx.flowprop.mu;     
+	beta = ctx.flowprop.beta;		
+	gamma = ctx.flowprop.gamma;									
+    gx = ctx.flowprop.g[0];
+    gy = ctx.flowprop.g[1];
+    gz = ctx.flowprop.g[2];
+	/*
+	 Reset all Flow BC for velocity and P
+	 */
+	for (i = 0; i < 6; i++) {
+		ctx.bcP[0].face[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			ctx.bcQ[c].face[i] = NONE;
+		}
+	}
+	for (i = 0; i < 12; i++) {
+		ctx.bcP[0].edge[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			ctx.bcQ[c].edge[i] = NONE;
+		}
+	}
+	for (i = 0; i < 8; i++) {
+		ctx.bcP[0].vertex[i] = NONE;
+		for (c = 0; c < 3; c++) {
+			ctx.bcQ[c].vertex[i] = NONE;
+		}
+	}
+	ctx.bcP[0].face[X0] = VALUE;
+	ctx.bcP[0].face[X1] = VALUE;
+	ctx.bcP[0].face[Y0] = VALUE;
+	ctx.bcP[0].face[Y1] = VALUE;
+	ctx.bcQ[2].face[Z0] = VALUE;
+	ctx.bcQ[2].face[Z1] = VALUE;
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) {
+				velbc_array[k][j][i][0] = 0.;
+				velbc_array[k][j][i][1] = 0.;
+				velbc_array[k][j][i][2] = 0.;
+			}
+		}
+	}	
+	for(k = zs; k < zs+zm; k++){
+		for(j = ys; j < ys+ym; j++){
+			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][0][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][0][1]),2));
+			presbc_array[k][j][0] = 1./(2.*pi)*log(dist);
+			
+			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][nx-1][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][nx-1][1]),2));
+			presbc_array[k][j][nx-1] = 1./(2.*pi)*log(dist);
+			
+		}
+	}
+	
+	for(k = zs; k < zs+zm; k++){
+		for(i = xs; i < xs+xm; i++){
+			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][0][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][0][i][1]),2));
+			presbc_array[k][0][i] = 1./(2.*pi)*log(dist);
+			
+			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][ny-1][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][ny-1][i][1]),2));
+			presbc_array[k][ny-1][i] = 1./(2.*pi)*log(dist);
+			
+		}
+	}
+	ierr = DMDAVecRestoreArrayDOF(ctx.daFlow,fields.VelnPress,&velnpre_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);	
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
+	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
+		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+		ierr = FieldsH5Write(&ctx,&fields);
+	}
+	ierr = VecSet(fields.VelnPress,0.);CHKERRQ(ierr);
+	ierr = VecSet(fields.velocity,0.);CHKERRQ(ierr);
+	ierr = VecSet(fields.pressure,0.);CHKERRQ(ierr);
+	ierr = VecSet(fields.U,0.);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx.daScal,fields.pressure,&pre_array);CHKERRQ(ierr);
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) {
+				dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][i][1]),2));
+				pre_array[k][j][i] = 1./(2.*pi)*log(dist);
+			}
+		}
+	}
+	ierr = DMDAVecRestoreArray(ctx.daScal,fields.pressure,&pre_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+	++ctx.timestep;
+	ierr = FieldsH5Write(&ctx,&fields);
+	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
+	ierr = PetscFinalize();
+	return(0);
 }
 
