@@ -43,7 +43,7 @@ def SetAnnotations3D():
     SetAnnotationAttributes(AnnotationAtts)
 
     
-def main():
+def plot():
     import os.path
     import shutil
     import math
@@ -176,5 +176,12 @@ def main():
 
 import sys  
 if __name__ == "__main__":
-    #main()
-    sys.exit(main())
+    import sys  
+    import os.path
+    if os.path.isdir(sys.argv[-1]):           
+        rootdir = sys.argv[-1]
+    else:
+        rootdir = None
+    if os.getenv("MEF90_DIR"):
+        sys.path.append(os.path.join(os.getenv("MEF90_DIR"),"python"))
+    sys.exit(plot(rootdir))
