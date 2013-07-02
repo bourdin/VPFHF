@@ -16,6 +16,9 @@ extern PetscErrorCode FEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 {
 	PetscMPIInt    comm_size;
 	PetscErrorCode ierr;
+    KSP            kspP;
+    PC             pcP;
+	SNESLineSearch linesearchP;
 	
 	PetscFunctionBegin;
 	
@@ -33,13 +36,23 @@ extern PetscErrorCode FEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->PFunct);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->PrePressure);CHKERRQ(ierr);
 	ierr = VecSet(ctx->RHSPpre,0.);CHKERRQ(ierr);	
-	ierr = VecSet(ctx->PrePressure,0.);CHKERRQ(ierr);
+	ierr = VecCopy(fields->pressure,ctx->PrePressure);CHKERRQ(ierr);
     ierr = PetscObjectSetName((PetscObject) ctx->RHSP,"RHS of FEM Pressure");CHKERRQ(ierr);	
 	ierr = PetscObjectSetName((PetscObject)ctx->RHSPpre,"RHS of FEM previous pressure");CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject)ctx->PFunct,"RHS of FEM SNES flow solver");CHKERRQ(ierr);
 	
 	ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesP);CHKERRQ(ierr);
-		
+//    ierr = SNESSetDM(ctx->snesP,ctx->daScal);CHKERRQ(ierr);
+/*    ierr = SNESSetOptionsPrefix(ctx->snesP,"P_");CHKERRQ(ierr);
+    ierr = SNESSetFromOptions(ctx->snesP);CHKERRQ(ierr);  
+    ierr = SNESGetKSP(ctx->snesP,&kspP);CHKERRQ(ierr);
+    ierr = KSPSetTolerances(kspP,1.e-8,1.e-10,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+    ierr = KSPSetType(kspP,KSPCG);CHKERRQ(ierr);
+    ierr = KSPSetFromOptions(kspP);CHKERRQ(ierr);
+    ierr = KSPGetPC(kspP,&pcP);CHKERRQ(ierr);
+    ierr = PCSetType(pcP,PCBJACOBI);CHKERRQ(ierr);
+    ierr = PCSetFromOptions(pcP);CHKERRQ(ierr); */
+
 	ierr = BCPInit(&ctx->bcP[0],ctx);
 
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
@@ -71,7 +84,10 @@ extern PetscErrorCode FEMSNESFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 #define __FUNCT__ "FlowFEMSNESSolve"
 extern PetscErrorCode FlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 {
-	PetscErrorCode     ierr;
+	PetscErrorCode      ierr;
+	SNESConvergedReason reason;
+	PetscReal           Pmin,Pmax;
+	PetscInt            its;
 
 	PetscFunctionBegin;	
 	ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
@@ -86,7 +102,19 @@ extern PetscErrorCode FlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	}
     ierr = SNESSolve(ctx->snesP,PETSC_NULL,fields->pressure);CHKERRQ(ierr);
     ierr = VecCopy(ctx->RHSP,ctx->RHSPpre);CHKERRQ(ierr);	
-		
+
+	ierr = SNESGetConvergedReason(ctx->snesP,&reason);CHKERRQ(ierr);
+	if (reason < 0) {
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesP diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+	} else {
+		ierr = SNESGetIterationNumber(ctx->snesP,&its);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesP converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+	}
+	
+	ierr = VecMin(fields->pressure,PETSC_NULL,&Pmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->pressure,PETSC_NULL,&Pmax);CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      P min / max:     %e %e\n",Pmin,Pmax);CHKERRQ(ierr);	
+	
 	ierr = VecDestroy(&ctx->Perm);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
@@ -198,13 +226,15 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 					}
 				}
 				/* Adding source term */
-				ierr = VecApplySourceTerms_FEM(RHS_local,source_array,&ctx->e3D,ek,ej,ei,ctx);
-				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
+				if(ctx->hasFluidSources){
+				  ierr = VecApplySourceTerms_FEM(RHS_local,source_array,&ctx->e3D,ek,ej,ei,ctx);
+				  for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
 							RHS_array[ek+k][ej+j][ei+i] += RHS_local[l];
 						}
 					}
+				  }
 				}
 			}
 		}
@@ -295,10 +325,10 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 extern PetscErrorCode FormSNESIFunction_P(SNES snes,Vec pressure,Vec Func,void *user)
 {
 	PetscErrorCode  ierr;
-	VFCtx			     *ctx=(VFCtx*)user;
+	VFCtx          *ctx=(VFCtx*)user;
 	Vec             VecRHS;
-	PetscReal	      theta,timestepsize;
-	PetscReal		    dt_dot_theta,dt_dot_one_minus_theta;
+	PetscReal       theta,timestepsize;
+	PetscReal       dt_dot_theta,dt_dot_one_minus_theta;
 	
 	PetscFunctionBegin;
 	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
@@ -310,9 +340,9 @@ extern PetscErrorCode FormSNESIFunction_P(SNES snes,Vec pressure,Vec Func,void *
 	ierr = FormSNESMatricesnVector_P(ctx->KP,ctx->KPlhs,ctx->RHSP,ctx);CHKERRQ(ierr);
 	ierr = VecCopy(ctx->RHSP,VecRHS);CHKERRQ(ierr);
 	ierr = VecAXPBY(VecRHS,dt_dot_one_minus_theta,dt_dot_theta,ctx->RHSPpre);CHKERRQ(ierr);	
-	// VecCopy RHSP RHSPpre?
-	ierr = MatMultAdd(ctx->KPlhs,pressure,VecRHS,VecRHS);CHKERRQ(ierr);	
-	ierr = VecApplyPressureBC_FEM(VecRHS,ctx->PresBCArray,&ctx->bcP[0]);CHKERRQ(ierr);
+	ierr = VecCopy(ctx->RHSP,ctx->RHSPpre);CHKERRQ(ierr);
+	ierr = MatMultAdd(ctx->KPlhs,ctx->PrePressure,VecRHS,VecRHS);CHKERRQ(ierr);	
+//	ierr = VecApplyPressureBC_FEM(VecRHS,ctx->PresBCArray,&ctx->bcP[0]);CHKERRQ(ierr);
 
 /*	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS.txt",&viewer);CHKERRQ(ierr);
 	ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
@@ -323,6 +353,8 @@ extern PetscErrorCode FormSNESIFunction_P(SNES snes,Vec pressure,Vec Func,void *
 	
 	ierr = MatMult(ctx->KP,pressure,Func);CHKERRQ(ierr);	
 	ierr = VecAXPY(Func,-1.0,VecRHS);CHKERRQ(ierr);
+	ierr = VecApplyPressureBC_SNES(Func,pressure,ctx->PresBCArray,&ctx->bcP[0]);CHKERRQ(ierr);	
+
 	ierr = VecDestroy(&VecRHS);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }	
