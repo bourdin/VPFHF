@@ -143,6 +143,12 @@ test43: test43.o ${VFOBJ} chkopts
 	
 test44: test44.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
+test45: test45.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+	
+temp: temp.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 	
 runtest1: test1
 	@echo "Running " $@
