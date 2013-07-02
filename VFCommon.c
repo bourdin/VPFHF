@@ -837,7 +837,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = VecSet(lbV,0.0);CHKERRQ(ierr);
   ierr = DMCreateGlobalVector(ctx->daScal,&ubV);CHKERRQ(ierr);
   ierr = VecSet(ubV,1.0);CHKERRQ(ierr);
-  ierr = SNESVISetVariableBounds(ctx->snesV,lbV,ubV);CHKERRQ(ierr);
+//  ierr = SNESVISetVariableBounds(ctx->snesV,lbV,ubV);CHKERRQ(ierr);
   
   ierr = SNESGetSNESLineSearch(ctx->snesV,&linesearchV);CHKERRQ(ierr);
   ierr = SNESLineSearchSetType(linesearchV,SNESLINESEARCHBASIC);CHKERRQ(ierr);
@@ -1152,7 +1152,7 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Displacement");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Fluid Velocity");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Fracture Fluid Velocity");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,6,"Tensor6","Cell",H5filename,"Permeability_V-field");CHKERRQ(ierr);       /*Cell*/
+  ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,6,"Tensor6","Cell",H5filename,"Permeability");CHKERRQ(ierr);       /*Cell*/
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Fracture");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,1,"Scalar","Cell",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);

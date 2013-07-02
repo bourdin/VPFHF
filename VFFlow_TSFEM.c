@@ -18,29 +18,22 @@ extern PetscErrorCode FEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	PetscErrorCode ierr;
 	
 	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KP);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KPlhs);CHKERRQ(ierr);		
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->JacP);CHKERRQ(ierr);
-  ierr = MatZeroEntries(ctx->JacP);CHKERRQ(ierr);
-  ierr = MatSetOption(ctx->KP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-  ierr = MatSetOption(ctx->KPlhs,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+    ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KP);CHKERRQ(ierr);
+    ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KPlhs);CHKERRQ(ierr);		
+    ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->JacP);CHKERRQ(ierr);
+    ierr = MatZeroEntries(ctx->JacP);CHKERRQ(ierr);
+    ierr = MatSetOption(ctx->KP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+    ierr = MatSetOption(ctx->KPlhs,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 	ierr = MatSetOption(ctx->JacP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSP);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) ctx->RHSP,"RHS of FEM Pressure");CHKERRQ(ierr);	
+    ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSP);CHKERRQ(ierr);
+    ierr = PetscObjectSetName((PetscObject) ctx->RHSP,"RHS of FEM Pressure");CHKERRQ(ierr);	
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->PFunct);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject)ctx->PFunct,"RHS of FEM TS flow solver");CHKERRQ(ierr);
 
-	ierr = TSCreate(PETSC_COMM_WORLD,&ctx->tsP);CHKERRQ(ierr);
-	ierr = TSSetDM(ctx->tsP,ctx->daScal);CHKERRQ(ierr);
-	ierr = TSSetProblemType(ctx->tsP,TS_LINEAR);CHKERRQ(ierr);
-	ierr = TSSetType(ctx->tsP,TSBEULER);CHKERRQ(ierr);
-		
 	ierr = BCPInit(&ctx->bcP[0],ctx);
-
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-//	ierr = SETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	// Currently BCpres is a PetscOption received from command line. Also done in test35
 	ierr = ResetSourceTerms(ctx->Source,ctx->flowprop);
-//	ierr = SETBoundaryTerms_P(ctx,fields);CHKERRQ(ierr); // Set fields.pressure according to BC & IC
+
 	PetscFunctionReturn(0);
 }
 
@@ -56,7 +49,7 @@ extern PetscErrorCode FEMTSFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = MatDestroy(&ctx->JacP);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSP);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->PFunct);CHKERRQ(ierr);
-	ierr = TSDestroy(&ctx->tsP);CHKERRQ(ierr);
+
 	PetscFunctionReturn(0);
 }
 
@@ -65,27 +58,35 @@ extern PetscErrorCode FEMTSFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 extern PetscErrorCode FlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 {
 	PetscErrorCode     ierr;
+	PetscInt           temp_step=0;
 
 	PetscFunctionBegin;	
 	ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
 	ierr = VecSet(ctx->Perm,0.0);CHKERRQ(ierr);
 	ierr = VecCopy(fields->vfperm,ctx->Perm);CHKERRQ(ierr);
 	
+	ierr = TSCreate(PETSC_COMM_WORLD,&ctx->tsP);CHKERRQ(ierr);
+	ierr = TSSetDM(ctx->tsP,ctx->daScal);CHKERRQ(ierr);
+	ierr = TSSetProblemType(ctx->tsP,TS_LINEAR);CHKERRQ(ierr);
+	ierr = TSSetType(ctx->tsP,TSBEULER);CHKERRQ(ierr);	
+	
 	ierr = TSSetIFunction(ctx->tsP,PETSC_NULL,FormIFunction_P,ctx);CHKERRQ(ierr);
-  ierr = TSSetIJacobian(ctx->tsP,ctx->JacP,ctx->JacP,FormIJacobian_P,ctx);CHKERRQ(ierr);
+    ierr = TSSetIJacobian(ctx->tsP,ctx->JacP,ctx->JacP,FormIJacobian_P,ctx);CHKERRQ(ierr);
 	ierr = TSSetRHSFunction(ctx->tsP,PETSC_NULL,FormFunction_P,ctx);CHKERRQ(ierr);
   
 	ierr = TSSetSolution(ctx->tsP,fields->pressure);CHKERRQ(ierr);
-	ierr = TSSetInitialTimeStep(ctx->tsP,0.0,ctx->timevalue);CHKERRQ(ierr);
-  ierr = TSSetDuration(ctx->tsP,ctx->maxtimestep,ctx->maxtimevalue);CHKERRQ(ierr);
+	ierr = TSSetInitialTimeStep(ctx->tsP,ctx->current_time,ctx->flowprop.timestepsize);CHKERRQ(ierr);
+    ierr = TSSetDuration(ctx->tsP,ctx->maxtimestep,ctx->timevalue);CHKERRQ(ierr);
    
 	ierr = TSMonitorSet(ctx->tsP,FEMTSMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = TSSetFromOptions(ctx->tsP);CHKERRQ(ierr);	
 
-  ierr = TSSolve(ctx->tsP,fields->pressure,PETSC_NULL);CHKERRQ(ierr);
-  ierr = TSGetTimeStepNumber(ctx->tsP,&ctx->timestep);CHKERRQ(ierr);
+    ierr = TSSolve(ctx->tsP,fields->pressure,PETSC_NULL);CHKERRQ(ierr);
+    ierr = TSGetTimeStepNumber(ctx->tsP,&temp_step);CHKERRQ(ierr);
 	
 	ierr = VecDestroy(&ctx->Perm);CHKERRQ(ierr);
+	ierr = TSDestroy(&ctx->tsP);CHKERRQ(ierr);
+	
 	PetscFunctionReturn(0);
 }
 
@@ -295,7 +296,7 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMLocalToGlobalEnd(ctx->daScal,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daScal,&RHS_localVec);CHKERRQ(ierr);
 
-  ierr = VecApplyPressureBC_FEM(RHS,ctx->PresBCArray,&ctx->bcP[0]);CHKERRQ(ierr);
+    ierr = VecApplyPressureBC_FEM(RHS,ctx->PresBCArray,&ctx->bcP[0]);CHKERRQ(ierr);
 	
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 

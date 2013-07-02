@@ -272,6 +272,98 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "VecApplyPressureBC_SNES"
+extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,BC *BC)
+{
+  PetscErrorCode ierr;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       i,j,k,c;
+  DM             da;
+  PetscReal      ****func_array;
+  PetscReal      ****BCF_array;
+  PetscReal      ****pressure_array;
+  PetscInt       dim,dof;
+
+  PetscFunctionBegin;
+  ierr = PetscObjectQuery((PetscObject) Func,"DM",(PetscObject*) &da);CHKERRQ(ierr);
+  if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
+
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+
+  ierr = DMDAVecGetArrayDOF(da,Func,&func_array);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(da,BCF,&BCF_array);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(da,pressure,&pressure_array);CHKERRQ(ierr);
+
+  /*
+    Faces
+  */
+  if (xs == 0) {
+    /*
+      x == 0
+    */
+    i = 0;
+    if (BC[0].face[X0] == VALUE)
+      for (k = zs; k < zs + zm; k++)
+        for (j = ys; j < ys + ym; j++) func_array[k][j][i][0] = pressure_array[k][j][i][0] - BCF_array[k][j][i][0];
+  }
+  if (xs + xm == nx) {
+    /*
+      x == nx-1
+    */
+    i = nx-1;
+    if (BC[0].face[X1] == VALUE)
+      for (k = zs; k < zs + zm; k++)
+        for (j = ys; j < ys + ym; j++) func_array[k][j][i][0] =  pressure_array[k][j][i][0] - BCF_array[k][j][i][0];
+  }
+  if (ys == 0) {
+    /*
+      y == 0
+    */
+    j = 0;
+    if (BC[0].face[Y0] == VALUE)
+      for (k = zs; k < zs + zm; k++)
+        for (i = xs; i < xs + xm; i++) func_array[k][j][i][0] =  pressure_array[k][j][i][0] - BCF_array[k][j][i][0];
+  }
+  if (ys + ym == ny) {
+    /*
+      y == ny-1
+    */
+    j = ny-1;
+    if (BC[0].face[Y1] == VALUE)
+      for (k = zs; k < zs + zm; k++)
+        for (i = xs; i < xs + xm; i++) func_array[k][j][i][0] =  pressure_array[k][j][i][0] - BCF_array[k][j][i][0];
+  }
+  
+  if (zs == 0) {
+    /*
+      z == 0
+    */
+    k = 0;
+    if (BC[0].face[Z0] == VALUE)
+      for (j = ys; j < ys + ym; j++)
+        for (i = xs; i < xs + xm; i++) func_array[k][j][i][0] =  pressure_array[k][j][i][0] - BCF_array[k][j][i][0];
+  }
+  if (zs + zm == nz) {
+    /*
+      z == nz-1
+    */
+    k = nz-1;
+    if (BC[0].face[Z1] == VALUE)
+      for (j = ys; j < ys + ym; j++)
+        for (i = xs; i < xs + xm; i++) func_array[k][j][i][0] =  pressure_array[k][j][i][0] - BCF_array[k][j][i][0];
+  }
+    
+
+  ierr = DMDAVecRestoreArrayDOF(da,Func,&func_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(da,BCF,&BCF_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(da,pressure,&pressure_array);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyPressureBC_FEM"
@@ -548,17 +640,20 @@ extern PetscErrorCode VFFlow_FEM_MatMPAssembly3D_local(PetscReal *Mat_local,VFFl
 */
   ACoef_P = flowprop->M_inv;
 
-  for (l = 0,k1 = 0; k1 < e->nphiz; k1++)
+  for (l = 0,k1 = 0; k1 < e->nphiz; k1++){
     for (j1 = 0; j1 < e->nphiy; j1++) {
-      for (i1 = 0; i1 < e->nphix; i1++)
+      for (i1 = 0; i1 < e->nphix; i1++){
         for (k2 = 0; k2 < e->nphiz; k2++) {
-          for (j2 = 0; j2 < e->nphiy; j2++)
+          for (j2 = 0; j2 < e->nphiy; j2++){
             for (i2 = 0; i2 < e->nphix; i2++,l++) {
               Mat_local[l] = 0.;
               for (g = 0; g < e->ng; g++) Mat_local[l] += e->weight[g]*ACoef_P*e->phi[k1][j1][i1][g]*e->phi[k2][j2][i2][g];
             }
-        }
-    }
+          }
+		}
+      }
+	}
+  }
   PetscFunctionReturn(0);
 }
 #undef __FUNCT__
@@ -663,7 +758,6 @@ extern PetscErrorCode VecApplyWellFlowRate_FEM(PetscReal *RHS_local,PetscReal Q,
 	for(l = 0, k = 0; k < 2; k++){
 		for(j = 0; j < 2; j++){
 			for(i = 0; i < 2; i++, l++){
-				RHS_local[l] = 0;
 				RHS_local[l] = Q*phi[k][j][i];
 			}
 		}
