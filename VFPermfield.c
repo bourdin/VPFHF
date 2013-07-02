@@ -1024,7 +1024,7 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 	PetscReal       Ele_v_ave = 0.;
 	
 	PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+    ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
@@ -1068,8 +1068,8 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 		}
 	}
 	PetscReal	vmult = 0;
-	PetscReal  maxperm = ctx->vfprop.permmax;
-	PetscReal  minperm = 1.;
+	PetscReal  maxperm = 10;
+	PetscReal  minperm = 1.e-1;
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -1084,14 +1084,12 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 				Ele_v_ave = Ele_v_ave/8.;
         
 				if(Ele_v_ave > 0.2){
-					vmult = 1.;
-					vmult = Ele_v_ave;
                     for(c = 0; c < 2; c++)
                       perm_array[ek][ej][ei][c] = minperm;
 				}
 				else{
-          for(c = 0; c < 2; c++)
-            perm_array[ek][ej][ei][c] = maxperm;
+                  for(c = 0; c < 2; c++)
+                    perm_array[ek][ej][ei][c] = maxperm;
 				}
 			}
 		}
@@ -1115,3 +1113,4 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 	ierr = VecDestroy(&COD);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
+

@@ -18,7 +18,6 @@ VFFields            fields;
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
 {
-	VFCtx               ctx;
 	VFFields            fields;
 	PetscErrorCode      ierr;
 	PetscReal           length = .425;
