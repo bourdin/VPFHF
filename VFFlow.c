@@ -757,7 +757,7 @@ extern PetscErrorCode VecApplyWellFlowRate_FEM(PetscReal *RHS_local,PetscReal Q,
 
 	for(l = 0, k = 0; k < 2; k++){
 		for(j = 0; j < 2; j++){
-			for(i = 0; i < 2; i++, l++){
+			for(i = 0; i < 2; i++, l++){		
 				RHS_local[l] = Q*phi[k][j][i];
 			}
 		}
