@@ -11,6 +11,8 @@
  
  ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 10 -theta 1 -nc 1 -w0_coords 0.5,0.5,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type producer -m_inv 0
  
+ ./test1  -n 101,101,2 -l 1000,1000,10 -maxtimestep 3 -timestepsize 8640 -theta 1 -nc 1 -w0_coords 500,500,5 -w0_Qw 10 -w0_constraint Rate -w0_rw 0.1 -w0_type injector -m_inv 1
+ 
  */
 
 #include "petsc.h"
@@ -49,14 +51,16 @@ int main(int argc,char **argv)
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
+  ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-	ierr = VecSet(ctx.PresBCArray,0.);CHKERRQ(ierr);
+	ierr = VecSet(ctx.PresBCArray,10.);CHKERRQ(ierr);
 	ierr = VecSet(ctx.VelBCArray,0.);CHKERRQ(ierr);
-	ierr = VecSet(fields.VelnPress,0.);CHKERRQ(ierr);
+	ierr = VecSet(fields.VelnPress,10.);CHKERRQ(ierr);
+	ierr = VecSet(fields.vfperm,0.);CHKERRQ(ierr);
 	ctx.hasFlowWells = PETSC_TRUE;
 	ctx.hasFluidSources = PETSC_FALSE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
@@ -65,7 +69,7 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr); 
 	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
-	ctx.numWells = 0;	
+	ctx.numWells = 1;
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&ctx.numWells,PETSC_NULL);CHKERRQ(ierr);	
 	ierr = PetscMalloc(ctx.numWells*sizeof(VFWell),&ctx.well);CHKERRQ(ierr);
 	if(ctx.hasFlowWells == PETSC_TRUE){
@@ -78,14 +82,28 @@ int main(int argc,char **argv)
 		for (k = zs1; k < zs1+zm1; k++) {
 			for (j = ys1; j < ys1+ym1; j++) {
 				for (i = xs1; i < xs1+xm1; i++) {
-					perm_array[k][j][i][2] = 0.;
+					perm_array[k][j][i][0] = 1;
+					perm_array[k][j][i][1] = 1;
+					perm_array[k][j][i][2] = 1;
+          
+           if( (j == ny/2-1 || j == ny/2) && (i > nx/8 && i < 6*nx/8)){
+//          if( (j == ny/2-1 || j == ny/2) /*&& (i > nx/8 && i < 6*nx/8)*/){
+//            if( (i == nx/2-1 || i == nx/2) /*&& (i > nx/8 && i < 6*nx/8)*/){
+            perm_array[k][j][i][0] = 10;
+//            perm_array[k][j][i][1] = 10;
+//            perm_array[k][j][i][2] = 10;
+          }
+					perm_array[k][j][i][3] = 0;
+					perm_array[k][j][i][4] = 0;
+					perm_array[k][j][i][5] = 0;
+          
 				}
 			}
 		}
 	}
 	pi = 6.*asin(0.5);
-	rho = ctx.flowprop.rho;									 
-	mu = ctx.flowprop.mu;     
+	ctx.flowprop.rho = 1000.;
+	ctx.flowprop.mu = 1;
 	beta = ctx.flowprop.beta;		
 	gamma = ctx.flowprop.gamma;									
     gx = ctx.flowprop.g[0];
@@ -112,13 +130,24 @@ int main(int argc,char **argv)
 			ctx.bcQ[c].vertex[i] = NONE;
 		}
 	}
-	ctx.bcP[0].face[X0] = VALUE;
-	ctx.bcP[0].face[X1] = VALUE;
-	ctx.bcP[0].face[Y0] = VALUE;
-	ctx.bcP[0].face[Y1] = VALUE;
+  /*
+	ctx.bcQ[0].face[X0] = VALUE;
+	ctx.bcQ[0].face[X1] = VALUE;
+	ctx.bcQ[1].face[Y0] = VALUE;
+	ctx.bcQ[1].face[Y1] = VALUE;
 	ctx.bcQ[2].face[Z0] = VALUE;
 	ctx.bcQ[2].face[Z1] = VALUE;
-	for (k = zs; k < zs+zm; k++) {
+  */
+
+ ctx.bcP[0].face[X0] = VALUE;
+ ctx.bcP[0].face[X1] = VALUE;
+ ctx.bcP[0].face[Y0] = VALUE;
+ ctx.bcP[0].face[Y1] = VALUE;
+ ctx.bcQ[2].face[Z0] = VALUE;
+ ctx.bcQ[2].face[Z1] = VALUE;
+ 
+	
+  for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
 				velbc_array[k][j][i][0] = 0.;
@@ -129,22 +158,16 @@ int main(int argc,char **argv)
 	}	
 	for(k = zs; k < zs+zm; k++){
 		for(j = ys; j < ys+ym; j++){
-			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][0][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][0][1]),2));
-			presbc_array[k][j][0] = 1./(2.*pi)*log(dist);
-			
-			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][nx-1][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][nx-1][1]),2));
-			presbc_array[k][j][nx-1] = 1./(2.*pi)*log(dist);
+			presbc_array[k][j][0] = 10;
+      presbc_array[k][j][nx-1] = 10;
 			
 		}
 	}
 	
 	for(k = zs; k < zs+zm; k++){
 		for(i = xs; i < xs+xm; i++){
-			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][0][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][0][i][1]),2));
-			presbc_array[k][0][i] = 1./(2.*pi)*log(dist);
-			
-			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][ny-1][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][ny-1][i][1]),2));
-			presbc_array[k][ny-1][i] = 1./(2.*pi)*log(dist);
+			presbc_array[k][0][i] = 10;
+      presbc_array[k][ny-1][i] = 10;
 			
 		}
 	}
@@ -159,11 +182,12 @@ int main(int argc,char **argv)
 		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 		ierr = FieldsH5Write(&ctx,&fields);
 	}
-	ierr = VecSet(fields.VelnPress,0.);CHKERRQ(ierr);
-	ierr = VecSet(fields.velocity,0.);CHKERRQ(ierr);
-	ierr = VecSet(fields.pressure,0.);CHKERRQ(ierr);
-	ierr = VecSet(fields.U,0.);CHKERRQ(ierr);
+//	ierr = VecSet(fields.VelnPress,0.);CHKERRQ(ierr);
+//	ierr = VecSet(fields.velocity,0.);CHKERRQ(ierr);
+//	ierr = VecSet(fields.pressure,0.);CHKERRQ(ierr);
+//	ierr = VecSet(fields.U,0.);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,fields.pressure,&pre_array);CHKERRQ(ierr);
+/*
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
@@ -172,10 +196,11 @@ int main(int argc,char **argv)
 			}
 		}
 	}
+  */
 	ierr = DMDAVecRestoreArray(ctx.daScal,fields.pressure,&pre_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	++ctx.timestep;
-	ierr = FieldsH5Write(&ctx,&fields);
+//	ierr = FieldsH5Write(&ctx,&fields);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
