@@ -1068,8 +1068,8 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 		}
 	}
 	PetscReal	vmult = 0;
-	PetscReal  maxperm = 10;
-	PetscReal  minperm = 1.e-1;
+	PetscReal  maxperm = 1;
+	PetscReal  minperm = 1;
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
