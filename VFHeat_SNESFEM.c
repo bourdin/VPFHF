@@ -280,10 +280,7 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				/*	Assembling the sub-Matrices	*/
 				rhoCp_eff_array=rho_liq_array*Cp_liq_array+rho_sol_array*Cp_sol_array;				
-				ierr = Flow_MatA(KM_local,&ctx->e3D,ek,ej,ei,v_array);CHKERRQ(ierr);
-				for (l = 0; l < nrow*nrow; l++) {
-					KM_local[l] = 2.0*KM_local[l];
-				}
+				ierr = VF_MatA_local(KM_local,&ctx->e3D,ek,ej,ei,v_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -881,7 +878,6 @@ extern PetscErrorCode HeatMatC(PetscReal *KC_ele,CartFE_Element3D *e,PetscInt ek
 	ierr = PetscFree4(velx_loc,vely_loc,velz_loc,v_elem);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
-
 
 
 
