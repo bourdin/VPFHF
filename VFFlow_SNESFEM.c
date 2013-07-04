@@ -174,7 +174,6 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 	timestepsize = ctx->flowprop.timestepsize;
 	time_theta = theta * timestepsize;
 	time_one_minus_theta = -1.*(1.-theta)*timestepsize;
-	
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = MatZeroEntries(Kneu);CHKERRQ(ierr);
 	ierr = MatZeroEntries(Kalt);CHKERRQ(ierr);
@@ -193,10 +192,8 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 	ierr = DMGlobalToLocalBegin(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);	
-
 	ierr = PetscMalloc2(nrow*nrow,PetscReal,&K_local,nrow*nrow,PetscReal,&M_local);CHKERRQ(ierr);
 	ierr = PetscMalloc2(nrow,PetscReal,&RHS_local,nrow,MatStencil,&row);CHKERRQ(ierr);
-	
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {

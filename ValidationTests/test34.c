@@ -104,7 +104,7 @@ int main(int argc,char **argv)
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
-	ctx.maxtimestep = 2;
+	ctx.maxtimestep = 1;
 	ctx.maxtimevalue = 60.;
 	ctx.timevalue = 1.;
 	ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
