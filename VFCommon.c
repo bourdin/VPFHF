@@ -720,8 +720,9 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
    Create optional wells
    */
   for (c = 0; c < ctx->numWells; c++) {
-    ierr = VFWellBuildVAT2(fields->V,&(ctx->well[c]),ctx);CHKERRQ(ierr);
+/*    ierr = VFWellBuildVAT2(fields->V,&(ctx->well[c]),ctx);CHKERRQ(ierr);
     ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
+ */
   }
   ierr        = VecCopy(fields->VIrrev,fields->V);CHKERRQ(ierr);
   ctx->fields = fields;
