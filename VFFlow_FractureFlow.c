@@ -477,16 +477,14 @@ extern PetscErrorCode FormFracMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "FracFLow_MatB"
-extern PetscErrorCode FracFLow_MatB(PetscReal *KB_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ****u_array,PetscReal ***v_array)
+#define __FUNCT__ "FracFlow_MatB"
+extern PetscErrorCode FracFlow_MatB(PetscReal *KB_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ****u_array,PetscReal ***v_array)
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,l,c;
   PetscInt       ii,jj,kk;
   PetscReal      *dv_elem[3],*u_elem[3],*n_elem[3],*n_mag_elem;
-  PetscInt       eg;
-  PetscReal      mu;
-  
+  PetscInt       eg;  
   
   PetscFunctionBegin;
   ierr = PetscMalloc6(e->ng,PetscReal,&dv_elem[0],e->ng,PetscReal,&dv_elem[1],e->ng,PetscReal,&dv_elem[2],e->ng,PetscReal,&u_elem[0],e->ng,PetscReal,&u_elem[1],e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);

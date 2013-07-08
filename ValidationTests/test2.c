@@ -24,15 +24,11 @@ int main(int argc,char **argv)
 
   PetscReal length      = .2;
   PetscInt  orientation = 1;
-  PetscInt  nopts       = 3;
   PetscInt  i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
   PetscReal ****coords_array;
   PetscReal ***v_array;
   PetscReal BBmin[3],BBmax[3];
-  PetscReal ElasticEnergy = 0;
   PetscReal InsituWork    = 0;
-  PetscReal SurfaceEnergy = 0;
-  char      filename[FILENAME_MAX];
   PetscReal p = 1e-3;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
