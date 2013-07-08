@@ -313,10 +313,10 @@ extern PetscErrorCode FormFracMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
         ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
           //This computes the local contribution of the global A matrix
-        ierr = FracFLow_MatA(KA_local,&ctx->e3D,ek,ej,ei,U_array,V_array);CHKERRQ(ierr);
+        ierr = FracFlow_MatA(KA_local,&ctx->e3D,ek,ej,ei,U_array,V_array);CHKERRQ(ierr);
         for (c = 0; c < veldof; c++) {
-          ierr = FracFLow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c,U_array,V_array);CHKERRQ(ierr);
-          ierr = FracFLow_MatBTranspose(KBTrans_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,U_array,V_array);CHKERRQ(ierr);
+          ierr = FracFlow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c,U_array,V_array);CHKERRQ(ierr);
+          ierr = FracFlow_MatBTranspose(KBTrans_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,U_array,V_array);CHKERRQ(ierr);
           for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
             for (j = 0; j < ctx->e3D.nphiy; j++) {
               for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -329,8 +329,8 @@ extern PetscErrorCode FormFracMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
           ierr = MatSetValuesStencil(K1,nrow,row1,nrow,row,KB_local,ADD_VALUES);CHKERRQ(ierr);
           ierr = MatSetValuesStencil(K1,nrow,row,nrow,row1,KBTrans_local,ADD_VALUES);CHKERRQ(ierr);
         }
-        ierr = FracFLow_MatS(KS_local,&ctx->e3D,ek,ej,ei,U_array,V_array);CHKERRQ(ierr);
-        ierr = FracFLow_MatD(KD_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,U_array,V_array);CHKERRQ(ierr);
+        ierr = FracFlow_MatS(KS_local,&ctx->e3D,ek,ej,ei,U_array,V_array);CHKERRQ(ierr);
+        ierr = FracFlow_MatD(KD_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,U_array,V_array);CHKERRQ(ierr);
         for (l = 0; l < nrow*nrow; l++) {
           KS_local[l] = KS_local[l]/Kw;
         }
@@ -375,7 +375,7 @@ extern PetscErrorCode FormFracMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
         
         
         /*Assembling the righthand side vector g*/
-        ierr = FracFLow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,U_array,V_array);CHKERRQ(ierr);
+        ierr = FracFlow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,U_array,V_array);CHKERRQ(ierr);
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
             for (i = 0; i < ctx->e3D.nphix; i++,l++) {
@@ -570,8 +570,8 @@ extern PetscErrorCode FracFlow_MatB(PetscReal *KB_ele,CartFE_Element3D *e,PetscI
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "FracFLow_MatD"
-extern PetscErrorCode FracFLow_MatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****u_array,PetscReal ***v_array)
+#define __FUNCT__ "FracFlow_MatD"
+extern PetscErrorCode FracFlow_MatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****u_array,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
   PetscInt                i,j,k,l,c;
@@ -645,8 +645,8 @@ extern PetscErrorCode FracFLow_MatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscI
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "FracFLow_MatBTranspose"
-extern PetscErrorCode FracFLow_MatBTranspose(PetscReal *KB_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,VFFlowProp flowpropty,PetscReal ****u_array,PetscReal ***v_array)
+#define __FUNCT__ "FracFlow_MatBTranspose"
+extern PetscErrorCode FracFlow_MatBTranspose(PetscReal *KB_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,VFFlowProp flowpropty,PetscReal ****u_array,PetscReal ***v_array)
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,l,c;
@@ -731,8 +731,8 @@ extern PetscErrorCode FracFLow_MatBTranspose(PetscReal *KB_ele,CartFE_Element3D 
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "FracFLow_MatS"
-extern PetscErrorCode FracFLow_MatS(PetscReal *S_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array)
+#define __FUNCT__ "FracFlow_MatS"
+extern PetscErrorCode FracFlow_MatS(PetscReal *S_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array)
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,l,c;
@@ -783,8 +783,8 @@ extern PetscErrorCode FracFLow_MatS(PetscReal *S_local,CartFE_Element3D *e,Petsc
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "FracFLow_MatA"
-extern PetscErrorCode FracFLow_MatA(PetscReal *A_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array)
+#define __FUNCT__ "FracFlow_MatA"
+extern PetscErrorCode FracFlow_MatA(PetscReal *A_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
   PetscInt                i,j,k,l,c;
@@ -835,8 +835,8 @@ extern PetscErrorCode FracFLow_MatA(PetscReal *A_local,CartFE_Element3D *e,Petsc
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "FracFLow_Vecg"
-extern PetscErrorCode FracFLow_Vecg(PetscReal *Kg_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei, PetscReal ****u_array, PetscReal ***v_array)
+#define __FUNCT__ "FracFlow_Vecg"
+extern PetscErrorCode FracFlow_Vecg(PetscReal *Kg_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei, PetscReal ****u_array, PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
   PetscInt                i,j,k,l,c;
