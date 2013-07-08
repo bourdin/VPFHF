@@ -32,9 +32,6 @@ VFFields            fields;
 int main(int argc,char **argv)
 {	
 	PetscErrorCode  ierr;
-	PetscViewer		viewer;
-	PetscViewer     logviewer;
-	char			filename[FILENAME_MAX];
 	PetscInt		i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm,xs1,xm1,ys1,ym1,zs1,zm1;
 	PetscReal		BBmin[3],BBmax[3];
 	PetscReal		***presbc_array;

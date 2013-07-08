@@ -39,5 +39,6 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFUnit flowunit,VFResProp
 extern PetscErrorCode ResetFlowBC(BC *bcP,BC *bcQ, VFFlowCases flowcase);
 extern PetscErrorCode ResetBoundaryTerms(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode ResetSourceTerms(Vec Src,VFFlowProp flowpropty);
+extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,BC *BC);
 #endif /* VFFLOW_H */
 

@@ -82,6 +82,7 @@ typedef struct {
 typedef struct {
 	PetscReal        epsilon;
 	PetscReal        eta;
+  PetscInt         atnum;
 	PetscReal        atCv;
 	PetscReal        irrevtol;
 	PetscReal        permmax;

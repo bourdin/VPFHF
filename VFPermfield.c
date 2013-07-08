@@ -1020,7 +1020,6 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 	Vec             COD;
 	PetscReal       myCOD = 0.;
 	PetscInt        k, j, i,c;
-	PetscInt        num_int_cell;
 	PetscReal       Ele_v_ave = 0.;
 	
 	PetscFunctionBegin;
@@ -1067,7 +1066,6 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 			}
 		}
 	}
-	PetscReal	vmult = 0;
 	PetscReal  maxperm = 1;
 	PetscReal  minperm = 1;
 	for (ek = zs; ek < zs+zm; ek++) {
@@ -1083,11 +1081,11 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 				}
 				Ele_v_ave = Ele_v_ave/8.;
         
-				if(Ele_v_ave > 0.2){
+				if (Ele_v_ave > 0.2){
                     for(c = 0; c < 2; c++)
                       perm_array[ek][ej][ei][c] = minperm;
 				}
-				else{
+				else {
                   for(c = 0; c < 2; c++)
                     perm_array[ek][ej][ei][c] = maxperm;
 				}
