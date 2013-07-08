@@ -1,6 +1,7 @@
 import fnmatch
 import os
 
+npmax = 5
 from . import SNEDDONAction, scan, check_mtime
 class all(SNEDDONAction):
     def action(self, args):
@@ -13,8 +14,11 @@ class all(SNEDDONAction):
         lengthplotscript = os.path.join(os.getenv('VFDIR'),'bin','CrackLengthPlot.py')
         pressureplotscript = os.path.join(os.getenv('VFDIR'),'bin','PressurePlot2.py')
         pngscript = 'visit -cli -nowin -s ' + os.path.join(scriptpath,'PNGplot.py')
+        pngscriptdist = os.path.join(os.path.dirname(__file__),'PNGplot.sh')
         movtransientscript = 'visit -cli -nowin -s ' + os.path.join(scriptpath,'MOVTransient.py')
+        movtransientscriptdist = os.path.join(os.path.dirname(__file__),'MOVTransient.sh')
         mov3Dscript = 'visit -cli -nowin -s ' + os.path.join(scriptpath,'MOV3D.py')
+        mov3Dscriptdist = os.path.join(os.path.dirname(__file__),'MOV3D.sh')
         jobs = data['jobs']
         print 'Project: {0}'.format(data['project'])
 
@@ -27,6 +31,13 @@ class all(SNEDDONAction):
                 prefix = os.path.join(job['path'],job['info']['JOBID'])
             except KeyError:
                 print '00_INFO.txt file has no JOBID entry, skipping' 
+
+            nx = float(job['info']['NX'])
+            ny = float(job['info']['NY'])
+            nz = float(job['info']['NZ'])
+            ne = int(nx * ny * nz)
+            N = min(max(1,ne / 300000 / 12),npmax) # limit to 400,000 elements / cpu
+            n = N * 12
 
             if args.plotener: 
                 infile = prefix+'.pres'
@@ -74,7 +85,10 @@ class all(SNEDDONAction):
                 outfile = prefix+'-Transient.avi'
                 if not check_mtime(infile, outfile):
                     print "Generating transient movie frames"
-                    cmd = 'cd %s; %s'%(job['path'],movtransientscript)
+                    if args.dist:
+                        cmd = 'sbatch -N%i -n%i -J %s %s %s'%(N,n,job['info']['JOBID'],movtransientscriptdist,job['path'])
+                    else:
+                        cmd = 'cd %s; %s'%(job['path'],movtransientscript)
                     #print cmd
                     os.system(cmd)
 
@@ -83,7 +97,9 @@ class all(SNEDDONAction):
                 outfile = prefix+'-3D.avi'
                 if not check_mtime(infile, outfile):
                     print "Generating 3D movie frames"
-                    cmd = 'cd %s; %s'%(job['path'],mov3Dscript)
-                    print cmd
+                    if args.dist:
+                        cmd = 'sbatch -N%i -n%i -J %s %s %s'%(N,n,job['info']['JOBID'],mov3Dscriptdist,job['path'])
+                    else:
+                        cmd = 'cd %s; %s'%(job['path'],mov3Dscript)
                     os.system(cmd)
 
