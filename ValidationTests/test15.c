@@ -3,6 +3,7 @@
  (c) 2010-2012 Chukwudi CHukwudozie cchukw1@tigers.lsu.edu
  
  ./test15 -n 201,201,2 -l 4,4,0.01 -epsilon 0.05 -length 0.2 -orientation 1 -Gc 0.6667
+ ./test15 -n 101,101,2 -l 4,4,0.01 -epsilon 0.05 -length 0.2 -orientation 1 -Gc 0.6667
  */
 
 #include "petsc.h"

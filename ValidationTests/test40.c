@@ -2,16 +2,16 @@
  test40.c: 2D SNES. Single well problem. Source term implemented as dirac function and analytical solution is 3D Green's function. All pressure boundary condition.
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
- ./test40  -n 201,201,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nc 2 -w0_coords 0.50001,0.50001,0.00 -w0_Qw 0.5 -w0_constraint Rate -w0_rw 0.1 -w0_type INJECTOR -w1_coords 0.50001,0.50001,1 -w1_Qw 0.5 -w1_constraint Rate -w1_rw 0.1 -w1_type INJECTOR -m_inv 0
+ ./test40  -n 201,201,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nw 2 -w0_coords 0.50001,0.50001,0.00 -w0_Qw 0.5 -w0_constraint Rate -w0_rw 0.1 -w0_type INJECTOR -w1_coords 0.50001,0.50001,1 -w1_Qw 0.5 -w1_constraint Rate -w1_rw 0.1 -w1_type INJECTOR -m_inv 0
  
- ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nc 2 -w0_coords 0.50001,0.50001,0.00 -w0_Qw 0.5 -w0_constraint Rate -w0_rw 0.1 -w0_type INJECTOR -w1_coords 0.50001,0.50001,1 -w1_Qw 0.5 -w1_constraint Rate -w1_rw 0.1 -w1_type INJECTOR -m_inv 0
+ ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nw 2 -w0_coords 0.50001,0.50001,0.00 -w0_Qw 0.5 -w0_constraint Rate -w0_rw 0.1 -w0_type INJECTOR -w1_coords 0.50001,0.50001,1 -w1_Qw 0.5 -w1_constraint Rate -w1_rw 0.1 -w1_type INJECTOR -m_inv 0
  
  
- ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nc 1 -w0_coords 0.50001,0.50001,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type INJECTOR -m_inv 0
+ ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 0.50001,0.50001,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type INJECTOR -m_inv 0
  
- ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 10 -theta 1 -nc 1 -w0_coords 0.5,0.5,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type producer -m_inv 0 -flowsolver FLOWSOLVER_SNESMIXEDFEM -flowsnes_snes_type tr -flowsnes_snes_view
+ ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 10 -theta 1 -nw 1 -w0_coords 0.5,0.5,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type producer -m_inv 0 -flowsolver FLOWSOLVER_SNESMIXEDFEM -flowsnes_snes_type tr -flowsnes_snes_view
  
- ./test40  -n 41,41,2 -l 1,1,0.01 -maxtimestep 1 timestepsize 10 -theta 1 -nc 1 -w0_coords 0.5,0.5,0.005 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type injector -m_inv 0 -flowsolver FLOWSOLVER_kspMIXEDFEM -velp_ksp_view
+ ./test40  -n 41,41,2 -l 1,1,0.01 -maxtimestep 1 timestepsize 10 -theta 1 -nw 1 -w0_coords 0.5,0.5,0.005 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type injector -m_inv 0 -flowsolver FLOWSOLVER_kspMIXEDFEM -velp_ksp_view
  
  */
 
@@ -79,8 +79,8 @@ int main(int argc,char **argv)
     for (j = ys1; j < ys1+ym1; j++) {
       for (i = xs1; i < xs1+xm1; i++) {
         if((j == ny/2 || j == ny/2-1) && ( i > nx/8 && i < 8*nx/10)){
-          perm_array[k][j][i][0] = 100.;
-          perm_array[k][j][i][1] = 100.;
+          perm_array[k][j][i][0] = 10000.;
+          perm_array[k][j][i][1] = 10000.;
         }
       }
     }
