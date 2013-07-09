@@ -43,27 +43,39 @@ def SetAnnotations3D():
     SetAnnotationAttributes(AnnotationAtts)
 
     
-def plot():
+def plot(rootdir=None):
     import os.path
     import shutil
     import math
     import tempfile
     
-    if os.path.exists('00_INFO.txt'):
-        Param = infotxt.Dictreadtxt('00_INFO.txt')
+    if not rootdir:
+        rootdir = os.getenv("PWD")
+
+    if os.path.exists(os.path.join(rootdir,'00_INFO.txt')):
+        Param = infotxt.Dictreadtxt(os.path.join(rootdir,'00_INFO.txt'))
         if Param['NY'] > 2:
     
+            if os.getenv("SLURM_NTASKS"):
+                parallelJob = True
+                launchArguments = ("-l", "srun", "-np", os.getenv("SLURM_NTASKS"))
+                print "Starting compute engine with arguments ", launchArguments
+                OpenComputeEngine("localhost", launchArguments)
+            else:
+                parallelJob = False
             ##  
             ## Open the database
             ##
             #MyDatabase = str(Param['JOBID'])+'.xmf'
             #status = OpenDatabase(MyDatabase,0)
             #if not status:
-            MyDatabase = str(Param['JOBID'])+'.*.xmf database'
+            MyDatabase = os.path.join(rootdir,str(Param['JOBID']))+'.*.xmf database'
             status = OpenDatabase(MyDatabase,0)
             if not status:
-                print "Cannot open database, exiting"
-                return 0
+                print "Cannot open database%s"%MyDatabase
+                if parallelJob:
+                    CloseComputeEngine()
+                return -1
     
             laststep = TimeSliderGetNStates()
             ##
@@ -98,6 +110,30 @@ def plot():
             SetPlotOptions(p)    
             SetAnnotations3D()
 
+##            View3DAtts = View3DAttributes()
+##            View3DAtts.viewNormal = (0.657417, 0.711041, 0.249448)
+##            View3DAtts.focus = (4, 4, 4)
+##            View3DAtts.viewUp = (-0.166863, -0.18545, 0.968383)
+##            View3DAtts.viewAngle = 15
+##            View3DAtts.parallelScale = 6.9282
+##            View3DAtts.nearPlane = -13.8564
+##            View3DAtts.farPlane = 13.8564
+##            View3DAtts.imagePan = (0, 0)
+##            View3DAtts.imageZoom = 1
+##            View3DAtts.perspective = 1
+##            View3DAtts.eyeAngle = 2
+##            View3DAtts.centerOfRotationSet = 0
+##            View3DAtts.centerOfRotation = (4, 4, 4)
+##            View3DAtts.axis3DScaleFlag = 0
+##            View3DAtts.axis3DScales = (1, 1, 1)
+##            View3DAtts.shear = (0, 0, 1)
+##            SetView3D(View3DAtts)
+##            ViewAxisArrayAtts = ViewAxisArrayAttributes()
+##            ViewAxisArrayAtts.domainCoords = (0, 1)
+##            ViewAxisArrayAtts.rangeCoords = (0, 1)
+##            ViewAxisArrayAtts.viewportCoords = (0.15, 0.9, 0.1, 0.85)
+##            SetViewAxisArray(ViewAxisArrayAtts)
+##
             View3DAtts = View3DAttributes()
             View3DAtts.viewNormal = (0.657417, 0.711041, 0.249448)
             View3DAtts.focus = (4, 4, 4)
@@ -126,7 +162,7 @@ def plot():
             SetActivePlots(0)
             IsosurfaceAtts = IsosurfaceAttributes()
             IsosurfaceAtts.contourNLevels = 10
-            IsosurfaceAtts.contourValue = (0.1)
+            IsosurfaceAtts.contourValue = (0.05)
             IsosurfaceAtts.contourPercent = ()
             IsosurfaceAtts.contourMethod = IsosurfaceAtts.Value  # Level, Value, Percent
             IsosurfaceAtts.minFlag = 0
@@ -137,6 +173,17 @@ def plot():
             IsosurfaceAtts.variable = "Fracture"
             SetOperatorOptions(IsosurfaceAtts, 1)
 
+            AddOperator("Smooth", 1)
+            SmoothOperatorAtts = SmoothOperatorAttributes()
+            SmoothOperatorAtts.numIterations = 50
+            SmoothOperatorAtts.relaxationFactor = 0.1
+            SmoothOperatorAtts.convergence = 0
+            SmoothOperatorAtts.maintainFeatures = 0
+            SmoothOperatorAtts.featureAngle = 45
+            SmoothOperatorAtts.edgeAngle = 15
+            SmoothOperatorAtts.smoothBoundaries = 1
+            SetOperatorOptions(SmoothOperatorAtts, 0)        
+            
             InvertBackgroundColor()        
 
             tmpdir = tempfile.mkdtemp()
@@ -144,8 +191,10 @@ def plot():
 
             ### generate individual frames
             step = 5
+            phir = math.radians(15)
+            thetac = 30
             for theta in range(360/step+1):
-                v = (math.cos(math.radians(theta*step)),-math.sin(math.radians(theta*step)),0)
+                v = (math.cos(math.radians(theta*step+thetac))*math.cos(phir),-math.sin(math.radians(theta*step+thetac))*math.cos(phir),math.sin(phir))
                 View3DAtts = View3DAttributes()
                 View3DAtts.viewNormal = v
                 View3DAtts.focus = (Param['LX']/2., Param['LY']/2., Param['LZ']/2.)
@@ -166,9 +215,11 @@ def plot():
                 SetView3D(View3DAtts)
                 DrawPlots()
                 pngname = SavePNG(os.path.join(tmpdir,Param['JOBID'])+"-",[1024,768])
+            if parallelJob:
+                CloseComputeEngine()
             ### use ffmpeg to generate animation
             pattern = os.path.join(tmpdir,Param['JOBID'])+"-%04d.png"
-            cmd = "ffmpeg -y -i %s -vcodec mjpeg -qscale 1 %s-3D.avi"%(pattern,Param['JOBID'])
+            cmd = "ffmpeg -y -i %s -vcodec mjpeg -qscale 1 %s-3D.avi"%(pattern,os.path.join(rootdir,str(Param['JOBID'])))
             print "Now running %s"%cmd
             os.system(cmd)
             #shutil.rmtree(tmpdir)
@@ -182,6 +233,9 @@ if __name__ == "__main__":
         rootdir = sys.argv[-1]
     else:
         rootdir = None
+<<<<<<< local
+=======
     if os.getenv("MEF90_DIR"):
         sys.path.append(os.path.join(os.getenv("MEF90_DIR"),"python"))
+>>>>>>> other
     sys.exit(plot(rootdir))
