@@ -213,7 +213,7 @@ int main(int argc,char **argv)
  
 //        ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);	
 		ierr = VecCopy(fields.pressure,Pold);CHKERRQ(ierr);	
-      do{		
+      do{
 		do {
 		    ierr = VecCopy(Pold,fields.pressure);CHKERRQ(ierr);	
 		    ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);		
