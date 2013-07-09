@@ -43,24 +43,40 @@ def SetAnnotations3D():
     SetAnnotationAttributes(AnnotationAtts)
 
     
-def main():
+def plot(rootdir=None):
     import os.path
     import shutil
     import math
     import tempfile
     
-    if os.path.exists('00_INFO.txt'):
-        Param = infotxt.Dictreadtxt('00_INFO.txt')
+    if not rootdir:
+        rootdir = os.getenv("PWD")
+
+    if os.path.exists(os.path.join(rootdir,'00_INFO.txt')):
+        Param = infotxt.Dictreadtxt(os.path.join(rootdir,'00_INFO.txt'))
+        if os.getenv("SLURM_NTASKS"):
+            parallelJob = True
+            launchArguments = ("-l", "srun", "-np", os.getenv("SLURM_NTASKS"))
+            print "Starting compute engine with arguments ", launchArguments
+            OpenComputeEngine("localhost", launchArguments)
+        else:
+            parallelJob = False
         ##  
         ## Open the database
         ##
-        MyDatabase = str(Param['JOBID'])+'.*.xmf database'
+        #MyDatabase = str(Param['JOBID'])+'.xmf'
+        #status = OpenDatabase(MyDatabase,0)
+        #if not status:
+        MyDatabase = os.path.join(rootdir,str(Param['JOBID']))+'.*.xmf database'
         status = OpenDatabase(MyDatabase,0)
         if not status:
-            print "Cannot open database, exiting"
-            return 0
+            print "Cannot open database%s"%MyDatabase
+            if parallelJob:
+                CloseComputeEngine()
+            return -1
 
         laststep = TimeSliderGetNStates()
+
         ##
         ## Add pseudocolor plot of fracture field
         ##
@@ -126,35 +142,57 @@ def main():
             dim = 3
             SetAnnotations3D()
 
+##            View3DAtts = View3DAttributes()
+##            View3DAtts.viewNormal = (0.657417, 0.711041, 0.249448)
+##            View3DAtts.focus = (4, 4, 4)
+##            View3DAtts.viewUp = (-0.166863, -0.18545, 0.968383)
+##            View3DAtts.viewAngle = 15
+##            View3DAtts.parallelScale = 6.9282
+##            View3DAtts.nearPlane = -13.8564
+##            View3DAtts.farPlane = 13.8564
+##            View3DAtts.imagePan = (0, 0)
+##            View3DAtts.imageZoom = 1
+##            View3DAtts.perspective = 1
+##            View3DAtts.eyeAngle = 2
+##            View3DAtts.centerOfRotationSet = 0
+##            View3DAtts.centerOfRotation = (4, 4, 4)
+##            View3DAtts.axis3DScaleFlag = 0
+##            View3DAtts.axis3DScales = (1, 1, 1)
+##            View3DAtts.shear = (0, 0, 1)
+##            SetView3D(View3DAtts)
+##            ViewAxisArrayAtts = ViewAxisArrayAttributes()
+##            ViewAxisArrayAtts.domainCoords = (0, 1)
+##            ViewAxisArrayAtts.rangeCoords = (0, 1)
+##            ViewAxisArrayAtts.viewportCoords = (0.15, 0.9, 0.1, 0.85)
+##            SetViewAxisArray(ViewAxisArrayAtts)
+##
+            phir = math.radians(15)
+            thetac = 30
+            v = (math.cos(math.radians(thetac))*math.cos(phir),-math.sin(math.radians(thetac))*math.cos(phir),math.sin(phir))
             View3DAtts = View3DAttributes()
-            View3DAtts.viewNormal = (0.657417, 0.711041, 0.249448)
-            View3DAtts.focus = (4, 4, 4)
-            View3DAtts.viewUp = (-0.166863, -0.18545, 0.968383)
-            View3DAtts.viewAngle = 15
+            View3DAtts.viewNormal = v
+            View3DAtts.focus = (Param['LX']/2., Param['LY']/2., Param['LZ']/2.)
+            View3DAtts.viewUp = (0, 0, 1)
+            View3DAtts.viewAngle = 30
             View3DAtts.parallelScale = 6.9282
             View3DAtts.nearPlane = -13.8564
             View3DAtts.farPlane = 13.8564
             View3DAtts.imagePan = (0, 0)
-            View3DAtts.imageZoom = 1
+            View3DAtts.imageZoom = 1.21
             View3DAtts.perspective = 1
             View3DAtts.eyeAngle = 2
             View3DAtts.centerOfRotationSet = 0
-            View3DAtts.centerOfRotation = (4, 4, 4)
+            View3DAtts.centerOfRotation = (Param['LX']/2., Param['LY']/2., Param['LZ']/2.)
             View3DAtts.axis3DScaleFlag = 0
             View3DAtts.axis3DScales = (1, 1, 1)
             View3DAtts.shear = (0, 0, 1)
             SetView3D(View3DAtts)
-            ViewAxisArrayAtts = ViewAxisArrayAttributes()
-            ViewAxisArrayAtts.domainCoords = (0, 1)
-            ViewAxisArrayAtts.rangeCoords = (0, 1)
-            ViewAxisArrayAtts.viewportCoords = (0.15, 0.9, 0.1, 0.85)
-            SetViewAxisArray(ViewAxisArrayAtts)
 
             AddOperator("Isosurface", 1)
             SetActivePlots(0)
             IsosurfaceAtts = IsosurfaceAttributes()
             IsosurfaceAtts.contourNLevels = 10
-            IsosurfaceAtts.contourValue = (0.1)
+            IsosurfaceAtts.contourValue = (0.05)
             IsosurfaceAtts.contourPercent = ()
             IsosurfaceAtts.contourMethod = IsosurfaceAtts.Value  # Level, Value, Percent
             IsosurfaceAtts.minFlag = 0
@@ -164,6 +202,17 @@ def main():
             IsosurfaceAtts.scaling = IsosurfaceAtts.Linear  # Linear, Log
             IsosurfaceAtts.variable = "Fracture"
             SetOperatorOptions(IsosurfaceAtts, 1)
+
+            AddOperator("Smooth", 1)
+            SmoothOperatorAtts = SmoothOperatorAttributes()
+            SmoothOperatorAtts.numIterations = 50
+            SmoothOperatorAtts.relaxationFactor = 0.1
+            SmoothOperatorAtts.convergence = 0
+            SmoothOperatorAtts.maintainFeatures = 0
+            SmoothOperatorAtts.featureAngle = 45
+            SmoothOperatorAtts.edgeAngle = 15
+            SmoothOperatorAtts.smoothBoundaries = 1
+            SetOperatorOptions(SmoothOperatorAtts, 0)        
 
             geometry = [1024,768]
 
@@ -176,9 +225,11 @@ def main():
             DrawPlots()
             pngname = SavePNG(os.path.join(tmpdir,Param['JOBID'])+"-",geometry)
     
+        if parallelJob:
+            CloseComputeEngine()
         ### use ffmpeg to generate animation
         pattern = os.path.join(tmpdir,Param['JOBID'])+"-%04d.png"
-        cmd = "ffmpeg -y -i %s -vcodec mjpeg -qscale 0 %s-Transient.avi"%(pattern,Param['JOBID'])
+        cmd = "ffmpeg -y -i %s -vcodec mjpeg -qscale 1 %s-Transient.avi"%(pattern,os.path.join(rootdir,str(Param['JOBID'])))
         print "Now running %s"%cmd
         os.system(cmd)
         shutil.rmtree(tmpdir)
@@ -186,5 +237,10 @@ def main():
 
 import sys  
 if __name__ == "__main__":
-    #main()
-    sys.exit(main())
+    import sys  
+    import os.path
+    if os.path.isdir(sys.argv[-1]):           
+        rootdir = sys.argv[-1]
+    else:
+        rootdir = None
+    sys.exit(plot(rootdir))

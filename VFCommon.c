@@ -445,6 +445,19 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
     vfprop->permmax  = 5.;
     ierr             = PetscOptionsReal("-permmax","\n\tPermeability multiplier of cracks (achieved at  v=0.)","",vfprop->permmax,&vfprop->permmax,PETSC_NULL);CHKERRQ(ierr);
     vfprop->atCv     = .5;
+    vfprop->atnum    = 2;
+    ierr = PetscOptionsInt("-atnum", "\n\t Ambrosio Tortorelli variant", "", vfprop->atnum, &vfprop->atnum, PETSC_NULL);CHKERRQ(ierr);
+    switch (vfprop->atnum ) {
+      case 1:
+        vfprop->atCv = 2/3;
+        break;
+      case 2:
+        vfprop->atCv = .5;
+        break;
+      default:
+        SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: atnum should be 1 or 2, got %i %s\n",vfprop->atnum,__FUNCT__);
+        break;
+    }
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturn(0);

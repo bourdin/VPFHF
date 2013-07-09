@@ -167,7 +167,7 @@ def main():
             SetActivePlots(0)
             IsosurfaceAtts = IsosurfaceAttributes()
             IsosurfaceAtts.contourNLevels = 10
-            IsosurfaceAtts.contourValue = (0.1)
+            IsosurfaceAtts.contourValue = (0.05)
             IsosurfaceAtts.contourPercent = ()
             IsosurfaceAtts.contourMethod = IsosurfaceAtts.Value  # Level, Value, Percent
             IsosurfaceAtts.minFlag = 0
@@ -177,6 +177,17 @@ def main():
             IsosurfaceAtts.scaling = IsosurfaceAtts.Linear  # Linear, Log
             IsosurfaceAtts.variable = "Fracture"
             SetOperatorOptions(IsosurfaceAtts, 1)
+
+            AddOperator("Smooth", 1)
+            SmoothOperatorAtts = SmoothOperatorAttributes()
+            SmoothOperatorAtts.numIterations = 50
+            SmoothOperatorAtts.relaxationFactor = 0.1
+            SmoothOperatorAtts.convergence = 0
+            SmoothOperatorAtts.maintainFeatures = 0
+            SmoothOperatorAtts.featureAngle = 45
+            SmoothOperatorAtts.edgeAngle = 15
+            SmoothOperatorAtts.smoothBoundaries = 1
+            SetOperatorOptions(SmoothOperatorAtts, 0)        
 
         InvertBackgroundColor()        
         DrawPlots()

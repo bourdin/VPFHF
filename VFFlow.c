@@ -280,7 +280,7 @@ extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,BC 
   PetscInt       xs,xm,nx;
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
-  PetscInt       i,j,k,c;
+  PetscInt       i,j,k;
   DM             da;
   PetscReal      ****func_array;
   PetscReal      ****BCF_array;

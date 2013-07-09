@@ -17,6 +17,7 @@ extern PetscErrorCode VecApplyHeatFluxBC(PetscReal *RHS_local,PetscReal ***flux_
 extern PetscErrorCode HeatMatN(PetscReal *KN_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei, PetscReal ****vel_array,PetscReal ***v_array);
 extern PetscErrorCode VecApplyHeatSourceTerms(PetscReal *K1_local,PetscReal *K2_local,PetscReal ***source_array,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFCtx *ctx, PetscReal ****vel_array,PetscReal ***v_array);
 extern PetscErrorCode HeatMatC(PetscReal *KC_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei, PetscReal ****vel_array,PetscReal ***v_array);
+extern PetscErrorCode Flow_HMatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****diffsvty_array,PetscReal ***v_array);
 
 
 #endif /* VFHEAT_SNESFEM_H */

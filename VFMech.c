@@ -2150,6 +2150,32 @@ extern PetscErrorCode VF_MatVAT2Surface3D_local(PetscReal *Mat_local,VFMatProp *
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "VF_MatVAT1Surface3D_local"
+/*
+ VF_MatVAT1Surface3D_local
+ 
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ */
+extern PetscErrorCode VF_MatVAT1Surface3D_local(PetscReal *Mat_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e,PetscReal Gc)
+{
+  PetscInt  g,i1,i2,j1,j2,k1,k2,l;
+  PetscReal coef = Gc / vfprop->atCv * .5;
+  
+  PetscFunctionBegin;
+  for (l = 0,k1 = 0; k1 < e->nphiz; k1++)
+    for (j1 = 0; j1 < e->nphiy; j1++)
+      for (i1 = 0; i1 < e->nphix; i1++)
+        for (k2 = 0; k2 < e->nphiz; k2++)
+          for (j2 = 0; j2 < e->nphiy; j2++)
+            for (i2 = 0; i2 < e->nphix; i2++,l++)
+              for (g = 0; g < e->ng; g++)
+                Mat_local[l] += coef * e->weight[g] * (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
+                                                     + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
+                                                     + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]) * vfprop->epsilon;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "VF_MatVCoupling3D_local"
 /*
  VF_MatVCoupling3D_local
@@ -2295,13 +2321,35 @@ extern PetscErrorCode VF_RHSVAT2Surface3D_local(PetscReal *RHS_local,VFMatProp *
 
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_SurfaceEnergy3D_local"
+#define __FUNCT__ "VF_RHSVAT1Surface3D_local"
 /*
- VF_SurfaceEnergy3D_local:
+ VF_RHSVAT1Surface3D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e,PetscReal Gc)
+extern PetscErrorCode VF_RHSVAT1Surface3D_local(PetscReal *RHS_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e, PetscReal Gc)
+{
+  PetscInt  g,i,j,k,l;
+  PetscReal coef = Gc / vfprop->atCv / vfprop->epsilon *.25;
+  
+  PetscFunctionBegin;
+  for (l=0,k=0; k < e->nphiz; k++)
+    for (j = 0; j < e->nphiy; j++)
+      for (i = 0; i < e->nphix; i++,l++)
+        for (g = 0; g < e->ng; g++)
+          RHS_local[l] += e->weight[g] * e->phi[k][j][i][g] * coef;
+  PetscFunctionReturn(0);
+}
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_AT2SurfaceEnergy3D_local"
+/*
+ VF_AT2SurfaceEnergy3D_local:
+ 
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ */
+extern PetscErrorCode VF_AT2SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e,PetscReal Gc)
 {
   PetscInt       g,i,j,k;
   PetscReal      *v_elem,*gradv_elem[3];
@@ -2329,6 +2377,46 @@ extern PetscErrorCode VF_SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,Pe
     }
   for (g = 0; g < e->ng; g++)
     *SurfaceEnergy_local += e->weight[g] * ((1. - v_elem[g]) * (1. - v_elem[g]) / vfprop->epsilon
+                                            + (gradv_elem[0][g] * gradv_elem[0][g] + gradv_elem[1][g] * gradv_elem[1][g] + gradv_elem[2][g] * gradv_elem[2][g]) * vfprop->epsilon) * coef;
+  ierr = PetscFree4(v_elem,gradv_elem[0],gradv_elem[1],gradv_elem[2]);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_AT1SurfaceEnergy3D_local"
+/*
+ VF_AT1SurfaceEnergy3D_local:
+ 
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ */
+extern PetscErrorCode VF_AT1SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e,PetscReal Gc)
+{
+  PetscInt       g,i,j,k;
+  PetscReal      *v_elem,*gradv_elem[3];
+  PetscErrorCode ierr;
+  PetscReal      coef = Gc / vfprop->atCv * .25;
+  
+  PetscFunctionBegin;
+  ierr = PetscMalloc4(e->ng,PetscReal,&v_elem,e->ng,PetscReal,&gradv_elem[0],e->ng,PetscReal,&gradv_elem[1],e->ng,PetscReal,&gradv_elem[2]);CHKERRQ(ierr);
+  
+  for (g = 0; g < e->ng; g++) {
+    v_elem[g]        = 0.;
+    gradv_elem[0][g] = 0.;
+    gradv_elem[1][g] = 0.;
+    gradv_elem[2][g] = 0.;
+  }
+  for (k = 0; k < e->nphiz; k++)
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++)
+        for (g = 0; g < e->ng; g++) {
+          v_elem[g]        += v_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][g];
+          gradv_elem[0][g] += v_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][0][g];
+          gradv_elem[1][g] += v_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][1][g];
+          gradv_elem[2][g] += v_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][2][g];
+        }
+    }
+  for (g = 0; g < e->ng; g++)
+    *SurfaceEnergy_local += e->weight[g] * ((1. - v_elem[g]) / vfprop->epsilon
                                             + (gradv_elem[0][g] * gradv_elem[0][g] + gradv_elem[1][g] * gradv_elem[1][g] + gradv_elem[2][g] * gradv_elem[2][g]) * vfprop->epsilon) * coef;
   ierr = PetscFree4(v_elem,gradv_elem[0],gradv_elem[1],gradv_elem[2]);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -2382,7 +2470,14 @@ extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFC
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
         ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-        ierr = VF_SurfaceEnergy3D_local(&mySurfaceEnergy,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+        switch (ctx->vfprop.atnum ) {
+          case 1:
+            ierr = VF_AT1SurfaceEnergy3D_local(&mySurfaceEnergy,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            break;
+          case 2:
+            ierr = VF_AT2SurfaceEnergy3D_local(&mySurfaceEnergy,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            break;
+        }
       }
   }
   *SurfaceEnergy = 0.;
@@ -2661,7 +2756,14 @@ extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
          */
         for (l = 0; l < nrow * nrow; l++)
           K_local[l] = 0.;
-        ierr = VF_MatVAT2Surface3D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+        switch (ctx->vfprop.atnum ) {
+          case 1:
+            ierr = VF_MatVAT1Surface3D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            break;
+          case 2:
+            ierr = VF_MatVAT2Surface3D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            break;
+        }
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
             ierr = VF_MatVCoupling3D_local(K_local,U_array,theta_array,thetaRef_array,
@@ -2690,7 +2792,14 @@ extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
             }
           }
         }
-        ierr = VF_RHSVAT2Surface3D_local(residual_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+        switch (ctx->vfprop.atnum) {
+          case 1:
+            ierr = VF_RHSVAT1Surface3D_local(residual_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            break;
+          case 2:
+            ierr = VF_RHSVAT2Surface3D_local(residual_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            break;
+        }
         if (ctx->hasCrackPressure) {
           ierr = VF_RHSVPressure3D_local(residual_local,U_array,pressure_array,pressureRef_array,
                                          &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
@@ -2735,8 +2844,8 @@ extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
   
   ierr = PetscFree2(residual_local,K_local);CHKERRQ(ierr);
   
-  
-  ierr = VF_IrrevApplyEQVec(residual,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
+  if (ctx->vfprop.atnum == 2)
+    ierr = VF_IrrevApplyEQVec(residual,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
   /*
    UGLY HACK:
    We can pass V for the BC, because we know that the only BC used in the V problem are 0 and 1, so
