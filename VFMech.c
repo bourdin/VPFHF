@@ -2883,6 +2883,7 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
   MatStencil     *row;
   PetscReal      hx,hy,hz;
   PetscReal      ****coords_array;
+  Vec            Vlb;
   
   PetscFunctionBegin;
   /*
@@ -3027,7 +3028,14 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
   ierr = PetscFree2(Jac_local,row);CHKERRQ(ierr);
   
   ierr = MatApplyDirichletBCRowCol(*Jac,ctx->daScal,ctx->bcV);CHKERRQ(ierr);
-  ierr = VF_IrrevApplyEQMat(*Jac,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
+  if (ctx->vfprop.atnum == 2) {
+    ierr = VF_IrrevApplyEQMat(*Jac,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
+  } else {
+    ierr = VecDuplicate(ctx->fields->VIrrev,&Vlb);CHKERRQ(ierr);
+    ierr = VecSet(Vlb,0.0);CHKERRQ(ierr);
+    ierr = SNESVISetVariableBounds(snes,Vlb,ctx->fields->VIrrev);CHKERRQ(ierr);
+    ierr = VecDestroy(&Vlb);CHKERRQ(ierr);
+  }
   *str = SAME_NONZERO_PATTERN;
   PetscFunctionReturn(0);
 }
