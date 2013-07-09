@@ -158,7 +158,11 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr = PetscSNPrintf(ctx->prefix,FILENAME_MAX,"TEST");CHKERRQ(ierr);
     ierr = PetscOptionsString("-p","\n\tfile prefix","",ctx->prefix,ctx->prefix,PETSC_MAX_PATH_LEN-1,PETSC_NULL);CHKERRQ(ierr);
 
-    ctx->altmintol  = 1.e-2;
+    /*
+      Setting altmintol back to 1.e-4 instead of 1.e-2
+      Change it back if we still have convergence issues
+    */
+    ctx->altmintol  = 1.e-4;
     ierr            = PetscOptionsReal("-altmintol","\n\tTolerance for alternate minimizations algorithm","",ctx->altmintol,&ctx->altmintol,PETSC_NULL);CHKERRQ(ierr);
     ctx->altminmaxit= 10000;
     ierr            = PetscOptionsInt("-altminmaxit","\n\tMaximum number of alternate minimizations iterations","",ctx->altminmaxit,&ctx->altminmaxit,PETSC_NULL);CHKERRQ(ierr);
@@ -853,9 +857,21 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = VecSet(ubV,1.0);CHKERRQ(ierr);
   ierr = SNESVISetVariableBounds(ctx->snesV,lbV,ubV);CHKERRQ(ierr);
   
+  /*
+    I had switched the default line search to basic when
+    having convergence issue. It looks like the real issue was
+    the SNES default tolerances
+  */
+  /*
   ierr = SNESGetSNESLineSearch(ctx->snesV,&linesearchV);CHKERRQ(ierr);
   ierr = SNESLineSearchSetType(linesearchV,SNESLINESEARCHBASIC);CHKERRQ(ierr);
+  */
 
+  /*
+    Setting SNES default tolerance to something a bit more reasonable than the default.
+    This may allow us to relax teh KSP tol a bit. Will need to investigate in the future
+  */
+  ierr = SNESSetTolerances(ctx->snesV,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = SNESSetFromOptions(ctx->snesV);CHKERRQ(ierr);
 
   ierr = DMCreateGlobalVector(ctx->daScal,&residualV);CHKERRQ(ierr);
