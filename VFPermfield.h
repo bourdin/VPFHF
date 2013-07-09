@@ -19,4 +19,5 @@ extern PetscErrorCode PermeabilityUpDate(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode Permeabilityfield(PetscReal *COD_local, PetscReal ***volcrackopening_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element2D *e, FACE face);
 extern PetscErrorCode VolumetricLeakOffRate_local(PetscReal *LeakoffRate_local, PetscReal ***volleakoffrate_array, PetscReal ****q_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e);
 extern PetscErrorCode VolumetricLeakOffRate(PetscReal *LeakOffRate, VFCtx *ctx, VFFields *fields);
+extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields);
 #endif 

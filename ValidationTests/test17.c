@@ -57,8 +57,8 @@ int main(int argc,char **argv)
 	q = maxvol / ctx.maxtimestep;
 	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
+//	ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
+//	ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
 	lz = BBmax[2];
 	ly = BBmax[1];
 	lx = BBmax[0];	
@@ -83,7 +83,8 @@ int main(int argc,char **argv)
 			ctx.bcU[j].vertex[i] = NONE;
 		}
 	}
-	/*Initializing the v-field*/	
+	/*Initializing the v-field*/
+  /*
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-nrc",&ctx.numRectangularCracks,PETSC_NULL);CHKERRQ(ierr);	
 	ierr = PetscMalloc(ctx.numRectangularCracks*sizeof(VFRectangularCrack),&ctx.rectangularcrack);CHKERRQ(ierr);
 	for (i = 0; i < ctx.numRectangularCracks; i++) {
@@ -113,7 +114,7 @@ int main(int argc,char **argv)
 
 	}
 	ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
-
+*/
 	switch (orientation) {
 		case 1:
 			ierr = PetscPrintf(PETSC_COMM_WORLD,"Building %g number of cracks line of arbitrary orientation\n",
@@ -289,7 +290,7 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 	ctx.matprop[0].beta = 0.;
 	ctx.timevalue = 0;
-	//ctx.maxtimestep = 150;
+ctx.maxtimestep = 2;
 	for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i, injected volume %g\n",ctx.timestep,q*ctx.timestep);CHKERRQ(ierr);
 		ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr); 
