@@ -2,7 +2,6 @@
 #include "petsc.h"
 #include "CartFE.h"
 
-
 static const char *BCTYPE_NAME[] = {
   "NONE",
   "ZERO",
