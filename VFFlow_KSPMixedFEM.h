@@ -33,5 +33,7 @@ extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_a
 extern PetscErrorCode VecApplyWellFlowRate(PetscReal *RHS_local,CartFE_Element3D *e,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array);
 extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VF_MatA_local(PetscReal *A_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array);
+extern PetscErrorCode VF_RHSFlowMechUCoupling_local(PetscReal *K_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****u_diff_array,PetscReal ***v_array);
+extern PetscErrorCode VF_RHSAddMechUCoupling(Vec RHS,VFCtx *ctx);
 
 #endif /* VFFLOW_MIXEDFEM_H */

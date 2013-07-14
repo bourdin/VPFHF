@@ -715,6 +715,13 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) ctx->FracVelBCArray,"Fracture Velocity boundary Values");CHKERRQ(ierr);
   ierr = VecSet(ctx->FracVelBCArray,0.0);CHKERRQ(ierr);
 
+  ierr = DMCreateGlobalVector(ctx->daVect,&ctx->U_old);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->U_old,"Previous time step displacement");CHKERRQ(ierr);
+  ierr = VecSet(ctx->U_old,0.0);CHKERRQ(ierr);
+
+  ierr = DMCreateGlobalVector(ctx->daVect,&ctx->U);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->U,"Displacement in ctx");CHKERRQ(ierr);
+  ierr = VecSet(ctx->U,0.0);CHKERRQ(ierr);
 
   /*
    Create optional penny-shaped and rectangular cracks
@@ -1084,6 +1091,8 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&fields->pressureRef);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->pmult);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&ctx->energyviewer);CHKERRQ(ierr);
+  ierr = VecDestroy(&ctx->U_old);CHKERRQ(ierr);
+  ierr = VecDestroy(&ctx->U);CHKERRQ(ierr);
 
   ierr = VecDestroy(&fields->fracpressure);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->fracvelocity);CHKERRQ(ierr);

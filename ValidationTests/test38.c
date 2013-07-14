@@ -202,12 +202,12 @@ int main(int argc,char **argv)
 			ctx.bcQ[c].vertex[i] = NONE;
 		}
 	}
-	ctx.bcP[0].face[X0] = VALUE;
-	ctx.bcP[0].face[X1] = VALUE;
-	ctx.bcP[0].face[Y0] = VALUE;
-	ctx.bcP[0].face[Y1] = VALUE;
-	ctx.bcQ[2].face[Z0] = VALUE;
-	ctx.bcQ[2].face[Z1] = VALUE;
+	ctx.bcP[0].face[X0] = FIXED;
+	ctx.bcP[0].face[X1] = FIXED;
+	ctx.bcP[0].face[Y0] = FIXED;
+	ctx.bcP[0].face[Y1] = FIXED;
+	ctx.bcQ[2].face[Z0] = FIXED;
+	ctx.bcQ[2].face[Z1] = FIXED;
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {

@@ -20,6 +20,7 @@ typedef struct {
 	PetscReal   g[3];
 	PetscReal   Cp;			  /* Specific heat capacity */
 	PetscReal   Kw;         /* Modulus of liquid               */
+	PetscReal   alphabiot;         /* Biot's coeficient              */
 } VFFlowProp;
 
 /*
@@ -376,6 +377,9 @@ typedef struct {
   Vec                 FracVelBCArray;
   BC                  bcFracQ[3];
   Vec                 V;
+  Vec                 U_old;
+  Vec                 U;
+  PetscBool           FlowDisplCoupling;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

@@ -1,11 +1,9 @@
 /*
- test8.c: 2D SNES. Single well problem. Source term implemented as dirac function and analytical solution is 3D Green's function. All pressure boundary condition.
+ test28.c: 2D SNES/KSP. Coupling of flow and MechU solver for geomechanics application. Terghazi problem.
+ 
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
-./test8  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 10 -theta 1 -nw 1 -w0_coords 0.5,0.5,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type injector -m_inv 0 -flowsolver FLOWSOLVER_SNESMIXEDFEM
- 
- ./test8  -n 101,101,2 -l 1,1,0.01 -nw 1 -w0_coords 0.5,0.5,0.005 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type injector -m_inv 0 -flowsolver FLOWSOLVER_SNESMIXEDFEM -Gc 0.6667 -npc 1 -pc0_r 0.2 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.05 -pc0_theta 0 -pc0_phi 90 -epsilon 0.02
- 
+./test28 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM
  */
 
 #include "petsc.h"
@@ -28,7 +26,6 @@ int main(int argc,char **argv)
 	PetscInt		i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
 	PetscReal		BBmin[3],BBmax[3];
 	PetscReal		***presbc_array;
-	PetscReal		***src_array;
 	PetscReal		****coords_array;
 	PetscReal		hx,hy,hz;
 	PetscReal		gx,gy,gz;
@@ -39,6 +36,8 @@ int main(int argc,char **argv)
 	PetscReal   ****perm_array;
 	PetscInt    xs1,xm1,ys1,ym1,zs1,zm1;
   Vec         V_hold;
+  PetscReal   ****bcu_array;
+	PetscReal		****velbc_array;
 
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -56,28 +55,18 @@ int main(int argc,char **argv)
 	ctx.hasFluidSources = PETSC_FALSE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);	
-	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr); 
+	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
   for (k = zs1; k < zs1+zm1; k++) {
     for (j = ys1; j < ys1+ym1; j++) {
       for (i = xs1; i < xs1+xm1; i++) {
-        perm_array[k][j][i][0] = 1;
-        perm_array[k][j][i][1] = 1;
+        perm_array[k][j][i][0] = 2.e-13;
+        perm_array[k][j][i][1] = 2.e-13;
         perm_array[k][j][i][2] = 0.;
         perm_array[k][j][i][3] = 0.;
         perm_array[k][j][i][4] = 0.;
         perm_array[k][j][i][5] = 0.;
-      }
-    }
-  }
-  for (k = zs1; k < zs1+zm1; k++) {
-    for (j = ys1; j < ys1+ym1; j++) {
-      for (i = xs1; i < xs1+xm1; i++) {
-        if((j == ny/2 || j == ny/2-1) && ( i > nx/8 && i < 8*nx/10)){
-          perm_array[k][j][i][0] = 1.;
-          perm_array[k][j][i][1] = 1.;
-        }
       }
     }
   }
@@ -104,33 +93,28 @@ int main(int argc,char **argv)
 			ctx.bcQ[c].vertex[i] = NONE;
 		}
 	}
-	for (i = 0; i < 4; i++) {
-		ctx.bcP[0].face[i] = FIXED;	
-	}	
+  ctx.bcQ[0].face[X0] = FIXED;
+  ctx.bcQ[0].face[X1] = FIXED;
   ctx.bcQ[2].face[Z0] = FIXED;
 	ctx.bcQ[2].face[Z1] = FIXED;
     for (k = zs; k < zs+zm; k++) {
       for (j = ys; j < ys+ym; j++) {
         for (i = xs; i < xs+xm; i++) {
           if(i == 0){
-            dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][i][1]),2));
-            presbc_array[k][j][i] = 1./(2.*pi)*log(dist);
-            presbc_array[k][j][i] = 10.;
+            velbc_array[k][j][i][0] = 0.;
+            presbc_array[k][j][i] = 0.;
         }
           if(i == nx-1){
-            dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][i][1]),2));
-            presbc_array[k][j][i] = 1./(2.*pi)*log(dist);
-            presbc_array[k][j][i] = 10.;
+            velbc_array[k][j][i][0] = 0.;
+            presbc_array[k][j][i] = 0.;
           }
-          if(j == 0){
-            dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][i][1]),2));
-            presbc_array[k][j][i] = 1./(2.*pi)*log(dist);
-            presbc_array[k][j][i] = 10.;
+          if(k == 0){
+            velbc_array[k][j][i][2] = 0.;
+            presbc_array[k][j][i] = 0.;
           }
-          if(j == ny-1){
-            dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][i][1]),2));
-            presbc_array[k][j][i] = 1./(2.*pi)*log(dist);
-            presbc_array[k][j][i] = 10.;
+          if(k == nz-1){
+            velbc_array[k][j][i][2] = 0.;
+            presbc_array[k][j][i] = 0.;
           }
       }
     }  
@@ -140,10 +124,32 @@ int main(int argc,char **argv)
   
   
   
-  /*Beginning of mechanical part of code*/
   
-  PetscReal       p;
-  /*
+  ctx.flowprop.alphabiot = 	ctx.matprop[0].beta = .79;									//biot's constant
+  ctx.flowprop.theta = 1.;
+	ctx.matprop[0].E = 1.44e4;										//Young's modulus
+	ctx.flowprop.M_inv = 1./12300.0;
+	ctx.matprop[0].nu = 0.2;										//Poisson's ratio's modulus
+//	ctx.flowprop.Kf = 0.1;
+//	ctx.flowprop.Ks = 0.001;
+//	ctx.flowprop.por = 0.2;
+//	ctx.flowprop.rho = 940e-6;									 //density in lb/ft^3
+	ctx.flowprop.rho = 1788e-6;									 //density in lb/ft^3
+//	ctx.flowprop.rhor = 2000e-6;									 //rock density in lb/ft^3
+	ctx.flowprop.mu = 1.222e-07;                    //viscosity in cp
+	ctx.flowprop.cf = 1.;										  //compressibility in psi^{-1}
+	ctx.flowprop.beta = 1.;										  //flow rate conversion constant
+	ctx.flowprop.gamma = 1.;										  //pressue conversion constant
+	ctx.flowprop.alpha = 1.;										  //volume conversion constatnt
+  ctx.flowprop.g[0] = 0.;										  //x-component of gravity. unit is ft/s^2
+  ctx.flowprop.g[1] = 0.;										  //y-component of gravity. unit is ft/s^2
+  ctx.flowprop.g[2] = 0.;								  //z-component of gravity. unit is ft/s^2
+  
+  
+  
+  
+  /*Beginning of mechanical part of code*/
+    /*
 	 Reset all BC for U and V
 	 */
 	for (i = 0; i < 6; i++) {
@@ -164,33 +170,50 @@ int main(int argc,char **argv)
 			ctx.bcU[j].vertex[i] = NONE;
 		}
 	}
+  ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
+
+//We will use Z and X direction
   /*	face X0	*/
   ctx.bcU[0].face[X0]= ZERO;
   ctx.bcU[1].face[X0]= ZERO;
-  ctx.bcU[2].face[X0]= ZERO;
   /*	face X1	*/
   ctx.bcU[0].face[X1]= ZERO;
   ctx.bcU[1].face[X1]= ZERO;
-  ctx.bcU[2].face[X1]= ZERO;
   /*	face Y0	*/
-  ctx.bcU[0].face[Y0]= ZERO;
   ctx.bcU[1].face[Y0]= ZERO;
-  ctx.bcU[2].face[Y0]= ZERO;
   /*	face Y1	*/
-  ctx.bcU[0].face[Y1]= ZERO;
   ctx.bcU[1].face[Y1]= ZERO;
-  ctx.bcU[2].face[Y1]= ZERO;
   /*	face Z0	*/
+  ctx.bcU[0].face[Z0]= ZERO;
+  ctx.bcU[1].face[Z0]= ZERO;
   ctx.bcU[2].face[Z0]= ZERO;
   /*	face Z1	*/
-  ctx.bcU[2].face[Z1]= ZERO;
-	ctx.hasCrackPressure = PETSC_TRUE;  
+  ctx.bcU[0].face[Z1]= ZERO;
+  ctx.bcU[1].face[Z1]= ZERO;
+  ctx.bcU[2].face[Z1]= FIXED;
+  for (k = zs; k < zs + zm; k++){
+		for (j = ys; j < ys+ym; j++){
+			for (i = xs; i < xs+xm; i++) {
+        if(k == nz-1){
+          bcu_array[k][j][i][2] = -5.1e-4;
+        }
+			}
+		}
+	}
+
+  
+  ctx.FlowDisplCoupling = PETSC_TRUE;
+	ctx.hasCrackPressure = PETSC_TRUE;
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-	p = 1.e-5;
+
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
+	ierr = VecSet(fields.pressure,0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
+  ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
+  ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
+
  /*End of mechanical part of code*/
 
   
@@ -202,25 +225,24 @@ int main(int argc,char **argv)
 		
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
+  ctx.flowprop.timestepsize = 0.;
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
 	ctx.maxtimestep = 1;
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
     ierr = PetscPrintf(PETSC_COMM_WORLD,"   Step: %d\n",ctx.timestep);CHKERRQ(ierr);
-    ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
-    ierr = VecCopy(fields.V,V_hold);CHKERRQ(ierr);
-    ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
+    ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-    ierr = VecCopy(V_hold,fields.V);CHKERRQ(ierr);
-    ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
+    ierr = FieldsH5Write(&ctx,&fields);
+    ctx.timestep++;
     ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
     ierr = FieldsH5Write(&ctx,&fields);
+
 	}
   
-  
-  
-	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
