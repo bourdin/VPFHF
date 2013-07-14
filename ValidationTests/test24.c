@@ -42,9 +42,12 @@ int main(int argc,char **argv)
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-//  ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
+  ctx.FlowDisplCoupling = PETSC_TRUE;
+  ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
 	ierr = VecSet(ctx.VelBCArray,0.);CHKERRQ(ierr);
 	ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
+	ierr = VecSet(fields.U,0.);CHKERRQ(ierr);
+	ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
 	ctx.hasFluidSources = PETSC_TRUE;
 	ctx.hasFlowWells = PETSC_FALSE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
@@ -82,12 +85,12 @@ int main(int argc,char **argv)
 			ctx.bcQ[c].vertex[i] = NONE;
 		}
 	}
-	ctx.bcQ[0].face[X0] = VALUE;
-	ctx.bcQ[0].face[X1] = VALUE;
-	ctx.bcQ[1].face[Y0] = VALUE;
-	ctx.bcQ[1].face[Y1] = VALUE;
-	ctx.bcQ[2].face[Z0] = VALUE;
-	ctx.bcQ[2].face[Z1] = VALUE;		
+	ctx.bcQ[0].face[X0] = FIXED;
+	ctx.bcQ[0].face[X1] = FIXED;
+	ctx.bcQ[1].face[Y0] = FIXED;
+	ctx.bcQ[1].face[Y1] = FIXED;
+	ctx.bcQ[2].face[Z0] = FIXED;
+	ctx.bcQ[2].face[Z1] = FIXED;		
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {

@@ -100,12 +100,12 @@ int main(int argc,char **argv)
 			ctx.bcQ[c].vertex[i] = NONE;
 		}
 	}
-	ctx.bcP[0].face[X0] = VALUE;
-	ctx.bcP[0].face[X1] = VALUE;
-	ctx.bcP[0].face[Y0] = VALUE;
-	ctx.bcP[0].face[Y1] = VALUE;
-	ctx.bcP[0].face[Z0] = VALUE;
-	ctx.bcP[0].face[Z1] = VALUE;
+	ctx.bcP[0].face[X0] = FIXED;
+	ctx.bcP[0].face[X1] = FIXED;
+	ctx.bcP[0].face[Y0] = FIXED;
+	ctx.bcP[0].face[Y1] = FIXED;
+	ctx.bcP[0].face[Z0] = FIXED;
+	ctx.bcP[0].face[Z1] = FIXED;
 	for(k = zs; k < zs+zm; k++){
 		for(j = ys; j < ys+ym; j++){
 			dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][0][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][0][1]),2)+pow((ctx.well[0].coords[2]-coords_array[k][j][0][2]),2));

@@ -97,7 +97,7 @@ int main(int argc,char **argv)
 		}
 	}
 	for (i = 0; i < 6; i++) {
-		ctx.bcP[0].face[i] = VALUE;	
+		ctx.bcP[0].face[i] = FIXED;
 	}	
 	
 	for (k = zs; k < zs+zm; k++) {

@@ -79,8 +79,8 @@ int main(int argc,char **argv)
     for (j = ys1; j < ys1+ym1; j++) {
       for (i = xs1; i < xs1+xm1; i++) {
         if((j == ny/2 || j == ny/2-1) && ( i > nx/8 && i < 8*nx/10)){
-          perm_array[k][j][i][0] = 10000.;
-          perm_array[k][j][i][1] = 10000.;
+          perm_array[k][j][i][0] = 1.;
+          perm_array[k][j][i][1] = 1.;
         }
       }
     }
@@ -109,10 +109,10 @@ int main(int argc,char **argv)
 		}
 	}
 	for (i = 0; i < 4; i++) {
-		ctx.bcP[0].face[i] = VALUE;	
+		ctx.bcP[0].face[i] = FIXED;	
 	}	
-  ctx.bcQ[2].face[Z0] = VALUE;
-	ctx.bcQ[2].face[Z1] = VALUE;
+  ctx.bcQ[2].face[Z0] = FIXED;
+	ctx.bcQ[2].face[Z1] = FIXED;
     for (k = zs; k < zs+zm; k++) {
       for (j = ys; j < ys+ym; j++) {
         for (i = xs; i < xs+xm; i++) {
