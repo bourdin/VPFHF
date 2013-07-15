@@ -205,7 +205,7 @@ int main(int argc,char **argv)
 //	PetscInt local_timestep =0;
     ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);	
 	
-	for (ctx.timestep = 0; ctx.timestep < 20; ctx.timestep++){	
+	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){	
 //		ctx.timestep = 0;
         ctx.current_time = ctx.timestep*ctx.flowprop.timestepsize;
         ctx.timevalue = (ctx.timestep+1)*ctx.flowprop.timestepsize;

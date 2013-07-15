@@ -474,37 +474,37 @@ extern PetscErrorCode VFFormIBCondition_Flow(VFCtx *ctx,VFFields *fields)
         /*
         x == 0
       */
-        if (i == 0 && ctx->bcP[0].face[X0] == VALUE) {
+        if (i == 0 && ctx->bcP[0].face[X0] == FIXED) {
           pressure_array[k][j][i] = ctx->BCpres[X0];
         }
         /*
           x == nx-1
         */
-        else if (i == nx-1 && ctx->bcP[0].face[X1] == VALUE) {
+        else if (i == nx-1 && ctx->bcP[0].face[X1] == FIXED) {
           pressure_array[k][j][i] = ctx->BCpres[X1];
         }
         /*
           y == 0
         */
-        else if (j == 0 && ctx->bcP[0].face[Y0] == VALUE) {
+        else if (j == 0 && ctx->bcP[0].face[Y0] == FIXED) {
           pressure_array[k][j][i] = ctx->BCpres[Y0];
         }
         /*
           y == ny-1
         */
-        else if (j == ny-1 && ctx->bcP[0].face[Y1] == VALUE) {
+        else if (j == ny-1 && ctx->bcP[0].face[Y1] == FIXED) {
           pressure_array[k][j][i] = ctx->BCpres[Y1];
         }
         /*
           z == 0
         */
-        else if (k == 0 && ctx->bcP[0].face[Z0] == VALUE) {
+        else if (k == 0 && ctx->bcP[0].face[Z0] == FIXED) {
           pressure_array[k][j][i] = ctx->BCpres[Z0];
         }
         /*
           z == nz-1
         */
-        else if (k == nz-1 && ctx->bcP[0].face[Z1] == VALUE) {
+        else if (k == nz-1 && ctx->bcP[0].face[Z1] == FIXED) {
           pressure_array[k][j][i] = ctx->BCpres[Z1];
         }else  {
           pressure_array[k][j][i] = ctx->resprop.Pinit;
@@ -621,31 +621,6 @@ extern PetscErrorCode VFFormFunction_Flow(SNES snes,Vec pressure_Vec,Vec F,void 
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
         ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 
-        /* Test */
-/*    if (ei == 0 && ctx->bcP[0].face[X0] == VALUE) {
-      func_array[ek][ej][ei] = pressure_array[ek][ej][ei] - ctx->BCpres[X0];
-    }
-    else if (ei == nx-1 && ctx->bcP[0].face[X1] == VALUE) {
-      func_array[ek][ej][ei] = pressure_array[ek][ej][ei] - ctx->BCpres[X1];
-    }
-    else if (ej == 0 && ctx->bcP[0].face[Y0] == VALUE) {
-      func_array[ek][ej][ei] = pressure_array[ek][ej][ei] - ctx->BCpres[Y0];
-    }
-    else if (ej == ny-1 && ctx->bcP[0].face[Y1] == VALUE) {
-      func_array[ek][ej][ei] = pressure_array[ek][ej][ei] - ctx->BCpres[Y1];
-    }
-    else if (ek == 0 && ctx->bcP[0].face[Z0] == VALUE) {
-      func_array[ek][ej][ei] = pressure_array[ek][ej][ei] - ctx->BCpres[Z0];
-    }
-      else if (ek == nz-1 && ctx->bcP[0].face[Z1] == VALUE) {
-      func_array[ek][ej][ei] = pressure_array[ek][ej][ei] - ctx->BCpres[Z1];
-    }
-        else {
-      func_array[ek][ej][ei] = hx * (pressure_array[ek][ej][ei]-pressure_array[ek][ej][ei-1]);
-    }
-
-*/
-
 /*    func_array[ek][ej][ei] = pressure_array[ek][ej][ei]*pressure_array[ek][ej][ei]; */
 /*    pressure_array[ek][ej][ei] = 0.99; */
         for (g = 0; g < ctx->e3D.ng; g++) {
@@ -655,17 +630,17 @@ extern PetscErrorCode VFFormFunction_Flow(SNES snes,Vec pressure_Vec,Vec F,void 
                 for (k2 = 0; k2 < ctx->e3D.nphiz; k2++) {
                   for (j2 = 0; j2 < ctx->e3D.nphiy; j2++) {
                     for (i2 = 0; i2 < ctx->e3D.nphix; i2++) {
-                      if (ei+i1 == 0 && ctx->bcP[0].face[X0] == VALUE) {
+                      if (ei+i1 == 0 && ctx->bcP[0].face[X0] == FIXED) {
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[X0];
-                      }else if (ei+i1 == nx-1 && ctx->bcP[0].face[X1] == VALUE) {
+                      }else if (ei+i1 == nx-1 && ctx->bcP[0].face[X1] == FIXED) {
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[X1];
-                      }else if (ej+j1 == 0 && ctx->bcP[0].face[Y0] == VALUE) {
+                      }else if (ej+j1 == 0 && ctx->bcP[0].face[Y0] == FIXED) {
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Y0];
-                      }else if (ej+j1 == ny-1 && ctx->bcP[0].face[Y1] == VALUE) {
+                      }else if (ej+j1 == ny-1 && ctx->bcP[0].face[Y1] == FIXED) {
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Y1];
-                      }else if (ek+k1 == 0 && ctx->bcP[0].face[Z0] == VALUE) {
+                      }else if (ek+k1 == 0 && ctx->bcP[0].face[Z0] == FIXED) {
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Z0];
-                      }else if (ek+k1 == nz-1 && ctx->bcP[0].face[Z1] == VALUE) {
+                      }else if (ek+k1 == nz-1 && ctx->bcP[0].face[Z1] == FIXED) {
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Z1];
                       }         else{
                         func_array[ek+k1][ej+j1][ei+i1] += ctx->e3D.weight[g]*pressure_array[ek+k2][ej+j2][ei+i2]*DCoef_P*
@@ -983,17 +958,17 @@ extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
                 for (k2 = 0; k2 < ctx->e3D.nphiz; k2++) {
                   for (j2 = 0; j2 < ctx->e3D.nphiy; j2++) {
                     for (i2 = 0; i2 < ctx->e3D.nphix; i2++) {
-                      if (ei+i1 == 0 && ctx->bcP[0].face[X0] == VALUE) {
+                      if (ei+i1 == 0 && ctx->bcP[0].face[X0] == FIXED) {
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[X0];
-                      }else if (ei+i1 == nx-1 && ctx->bcP[0].face[X1] == VALUE) {
+                      }else if (ei+i1 == nx-1 && ctx->bcP[0].face[X1] == FIXED) {
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[X1];
-                      }else if (ej+j1 == 0 && ctx->bcP[0].face[Y0] == VALUE) {
+                      }else if (ej+j1 == 0 && ctx->bcP[0].face[Y0] == FIXED) {
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Y0];
-                      }else if (ej+j1 == ny-1 && ctx->bcP[0].face[Y1] == VALUE) {
+                      }else if (ej+j1 == ny-1 && ctx->bcP[0].face[Y1] == FIXED) {
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Y1];
-                      }else if (ek+k1 == 0 && ctx->bcP[0].face[Z0] == VALUE) {
+                      }else if (ek+k1 == 0 && ctx->bcP[0].face[Z0] == FIXED) {
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Z0];
-                      }else if (ek+k1 == nz-1 && ctx->bcP[0].face[Z1] == VALUE) {
+                      }else if (ek+k1 == nz-1 && ctx->bcP[0].face[Z1] == FIXED) {
                         func_array[ek+k1][ej+j1][ei+i1] = pressure_array[ek+k1][ej+j1][ei+i1]-ctx->BCpres[Z1];
                       }         else{
                         func_array[ek+k1][ej+j1][ei+i1] += ctx->e3D.weight[g]* ( Pdot_array[ek+k2][ej+j2][ei+i2]*ACoef_P*ctx->e3D.phi[k1][j1][i1][g]*ctx->e3D.phi[k2][j2][i2][g]
