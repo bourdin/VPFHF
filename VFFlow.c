@@ -146,22 +146,22 @@ extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx)
 */
 /*
   if (ctx->BCpres[0] > -1.e-8) {
-    BCP[0].face[X0] = VALUE;
+    BCP[0].face[X0] = FIXED;
   }
   if (ctx->BCpres[1] > -1.e-8) {
-    BCP[0].face[X1] = VALUE;
+    BCP[0].face[X1] = FIXED;
   }
   if (ctx->BCpres[2] > -1.e-8) {
-    BCP[0].face[Y0] = VALUE;
+    BCP[0].face[Y0] = FIXED;
   }
   if (ctx->BCpres[3] > -1.e-8) {
-    BCP[0].face[Y1] = VALUE;
+    BCP[0].face[Y1] = FIXED;
   }
   if (ctx->BCpres[4] > -1.e-8) {
-    BCP[0].face[Z0] = VALUE;
+    BCP[0].face[Z0] = FIXED;
   }
   if (ctx->BCpres[5] > -1.e-8) {
-    BCP[0].face[Z1] = VALUE;
+    BCP[0].face[Z1] = FIXED;
   }
  */
   PetscFunctionReturn(0);
@@ -188,17 +188,17 @@ extern PetscErrorCode SETBoundaryTerms_P(VFCtx *ctx, VFFields *fields)
     for (j = ys; j < ys+ym; j++)
       for (i = xs; i < xs+xm; i++) {
         /* x == 0 */
-        if (i == 0 && ctx->bcP[0].face[X0] == VALUE) pressure_array[k][j][i] = ctx->BCpres[X0];
+        if (i == 0 && ctx->bcP[0].face[X0] == FIXED) pressure_array[k][j][i] = ctx->BCpres[X0];
         /* x == nx-1 */
-        else if (i == nx-1 && ctx->bcP[0].face[X1] == VALUE) pressure_array[k][j][i] = ctx->BCpres[X1];
+        else if (i == nx-1 && ctx->bcP[0].face[X1] == FIXED) pressure_array[k][j][i] = ctx->BCpres[X1];
         /* y == 0 */
-        else if (j == 0 && ctx->bcP[0].face[Y0] == VALUE) pressure_array[k][j][i] = ctx->BCpres[Y0];
+        else if (j == 0 && ctx->bcP[0].face[Y0] == FIXED) pressure_array[k][j][i] = ctx->BCpres[Y0];
         /*  y == ny-1 */
-        else if (j == ny-1 && ctx->bcP[0].face[Y1] == VALUE) pressure_array[k][j][i] = ctx->BCpres[Y1];
+        else if (j == ny-1 && ctx->bcP[0].face[Y1] == FIXED) pressure_array[k][j][i] = ctx->BCpres[Y1];
         /*  z == 0 */
-        else if (k == 0 && ctx->bcP[0].face[Z0] == VALUE) pressure_array[k][j][i] = ctx->BCpres[Z0];
+        else if (k == 0 && ctx->bcP[0].face[Z0] == FIXED) pressure_array[k][j][i] = ctx->BCpres[Z0];
         /*  z == nz-1 */
-        else if (k == nz-1 && ctx->bcP[0].face[Z1] == VALUE) pressure_array[k][j][i] = ctx->BCpres[Z1];
+        else if (k == nz-1 && ctx->bcP[0].face[Z1] == FIXED) pressure_array[k][j][i] = ctx->BCpres[Z1];
         else pressure_array[k][j][i] = ctx->resprop.Pinit;
       }
   }
@@ -307,7 +307,7 @@ extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,BC 
       x == 0
     */
     i = 0;
-    if (BC[0].face[X0] == VALUE)
+    if (BC[0].face[X0] == FIXED)
       for (k = zs; k < zs + zm; k++)
         for (j = ys; j < ys + ym; j++) func_array[k][j][i][0] = pressure_array[k][j][i][0] - BCF_array[k][j][i][0];
   }
@@ -316,7 +316,7 @@ extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,BC 
       x == nx-1
     */
     i = nx-1;
-    if (BC[0].face[X1] == VALUE)
+    if (BC[0].face[X1] == FIXED)
       for (k = zs; k < zs + zm; k++)
         for (j = ys; j < ys + ym; j++) func_array[k][j][i][0] =  pressure_array[k][j][i][0] - BCF_array[k][j][i][0];
   }
@@ -325,7 +325,7 @@ extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,BC 
       y == 0
     */
     j = 0;
-    if (BC[0].face[Y0] == VALUE)
+    if (BC[0].face[Y0] == FIXED)
       for (k = zs; k < zs + zm; k++)
         for (i = xs; i < xs + xm; i++) func_array[k][j][i][0] =  pressure_array[k][j][i][0] - BCF_array[k][j][i][0];
   }
@@ -334,7 +334,7 @@ extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,BC 
       y == ny-1
     */
     j = ny-1;
-    if (BC[0].face[Y1] == VALUE)
+    if (BC[0].face[Y1] == FIXED)
       for (k = zs; k < zs + zm; k++)
         for (i = xs; i < xs + xm; i++) func_array[k][j][i][0] =  pressure_array[k][j][i][0] - BCF_array[k][j][i][0];
   }
@@ -344,7 +344,7 @@ extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,BC 
       z == 0
     */
     k = 0;
-    if (BC[0].face[Z0] == VALUE)
+    if (BC[0].face[Z0] == FIXED)
       for (j = ys; j < ys + ym; j++)
         for (i = xs; i < xs + xm; i++) func_array[k][j][i][0] =  pressure_array[k][j][i][0] - BCF_array[k][j][i][0];
   }
@@ -353,7 +353,7 @@ extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,BC 
       z == nz-1
     */
     k = nz-1;
-    if (BC[0].face[Z1] == VALUE)
+    if (BC[0].face[Z1] == FIXED)
       for (j = ys; j < ys + ym; j++)
         for (i = xs; i < xs + xm; i++) func_array[k][j][i][0] =  pressure_array[k][j][i][0] - BCF_array[k][j][i][0];
   }
@@ -406,7 +406,7 @@ extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,BC *BC)
         x == 0
       */
       i = 0;
-      if (BC[c].face[X0] == VALUE)
+      if (BC[c].face[X0] == FIXED)
         for (k = zs; k < zs + zm; k++)
           for (j = ys; j < ys + ym; j++) RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
     }
@@ -415,7 +415,7 @@ extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,BC *BC)
         x == nx-1
       */
       i = nx-1;
-      if (BC[c].face[X1] == VALUE)
+      if (BC[c].face[X1] == FIXED)
         for (k = zs; k < zs + zm; k++)
           for (j = ys; j < ys + ym; j++) RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
     }
@@ -424,7 +424,7 @@ extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,BC *BC)
         y == 0
       */
       j = 0;
-      if (BC[c].face[Y0] == VALUE)
+      if (BC[c].face[Y0] == FIXED)
         for (k = zs; k < zs + zm; k++)
           for (i = xs; i < xs + xm; i++) RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
     }
@@ -433,7 +433,7 @@ extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,BC *BC)
         y == ny-1
       */
       j = ny-1;
-      if (BC[c].face[Y1] == VALUE)
+      if (BC[c].face[Y1] == FIXED)
         for (k = zs; k < zs + zm; k++)
           for (i = xs; i < xs + xm; i++) RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
     }
@@ -443,7 +443,7 @@ extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,BC *BC)
           z == 0
         */
         k = 0;
-        if (BC[c].face[Z0] == VALUE)
+        if (BC[c].face[Z0] == FIXED)
           for (j = ys; j < ys + ym; j++)
             for (i = xs; i < xs + xm; i++) RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
       }
@@ -452,7 +452,7 @@ extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,BC *BC)
           z == nz-1
         */
         k = nz-1;
-        if (BC[c].face[Z1] == VALUE)
+        if (BC[c].face[Z1] == FIXED)
           for (j = ys; j < ys + ym; j++)
             for (i = xs; i < xs + xm; i++) RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
       }
@@ -493,12 +493,12 @@ extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,BC *bcP)
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
-  if (xs == 0       && bcP[0].face[X0] == VALUE) numBC += ym * zm;
-  if (xs + xm == nx && bcP[0].face[X1] == VALUE) numBC += ym * zm;
-  if (ys == 0       && bcP[0].face[Y0] == VALUE) numBC += xm * zm;
-  if (ys + ym == ny && bcP[0].face[Y1] == VALUE) numBC += xm * zm;
-  if (zs == 0       && bcP[0].face[Z0] == VALUE && dim == 3) numBC += xm * ym;
-  if (zs + zm == nz && bcP[0].face[Z1] == VALUE && dim == 3) numBC += xm * ym;
+  if (xs == 0       && bcP[0].face[X0] == FIXED) numBC += ym * zm;
+  if (xs + xm == nx && bcP[0].face[X1] == FIXED) numBC += ym * zm;
+  if (ys == 0       && bcP[0].face[Y0] == FIXED) numBC += xm * zm;
+  if (ys + ym == ny && bcP[0].face[Y1] == FIXED) numBC += xm * zm;
+  if (zs == 0       && bcP[0].face[Z0] == FIXED && dim == 3) numBC += xm * ym;
+  if (zs + zm == nz && bcP[0].face[Z1] == FIXED && dim == 3) numBC += xm * ym;
 
 
   ierr = PetscMalloc(numBC * sizeof(MatStencil),&row);CHKERRQ(ierr);
@@ -508,7 +508,7 @@ extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,BC *bcP)
   /*
    i == 0
    */
-  if (xs == 0 && bcP[0].face[X0] == VALUE) {
+  if (xs == 0 && bcP[0].face[X0] == FIXED) {
     for (k = zs; k < zs + zm; k++)
       for (j = ys; j < ys + ym; j++) {
         row[l].i = 0; row[l].j = j; row[l].k = k; row[l].c = 0;
@@ -518,7 +518,7 @@ extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,BC *bcP)
   /*
    i == nx-1
   */
-  if (xs + xm == nx && bcP[0].face[X1] == VALUE) {
+  if (xs + xm == nx && bcP[0].face[X1] == FIXED) {
     for (k = zs; k < zs + zm; k++)
       for (j = ys; j < ys + ym; j++) {
         row[l].i = nx-1; row[l].j = j; row[l].k = k; row[l].c = 0;
@@ -528,7 +528,7 @@ extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,BC *bcP)
   /*
    y == 0
   */
-  if (ys == 0 && bcP[0].face[Y0] == VALUE) {
+  if (ys == 0 && bcP[0].face[Y0] == FIXED) {
     for (k = zs; k < zs + zm; k++)
       for (i = xs; i < xs + xm; i++) {
         row[l].i = i; row[l].j = 0; row[l].k = k; row[l].c = 0;
@@ -538,7 +538,7 @@ extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,BC *bcP)
   /*
    y == ny-1
   */
-  if (ys + ym == ny && bcP[0].face[Y1] == VALUE) {
+  if (ys + ym == ny && bcP[0].face[Y1] == FIXED) {
     for (k = zs; k < zs + zm; k++)
       for (i = xs; i < xs + xm; i++) {
         row[l].i = i; row[l].j = ny-1; row[l].k = k; row[l].c = 0;
@@ -548,7 +548,7 @@ extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,BC *bcP)
   /*
    z == 0
   */
-  if (zs == 0 && bcP[0].face[Z0] == VALUE) {
+  if (zs == 0 && bcP[0].face[Z0] == FIXED) {
     for (j = ys; j < ys + ym; j++)
       for (i = xs; i < xs + xm; i++) {
         row[l].i = i; row[l].j = j; row[l].k = 0; row[l].c = 0;
@@ -558,7 +558,7 @@ extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,BC *bcP)
   /*
    z == nz-1
   */
-  if (zs + zm == nz && bcP[0].face[Z1] == VALUE) {
+  if (zs + zm == nz && bcP[0].face[Z1] == FIXED) {
     for (j = ys; j < ys + ym; j++)
       for (i = xs; i < xs + xm; i++) {
         row[l].i = i; row[l].j = j; row[l].k = nz-1; row[l].c = 0;
@@ -861,15 +861,15 @@ extern PetscErrorCode ResetFlowBC(BC *bcP,BC *bcQ, VFFlowCases flowcase)
   }
   switch (flowcase) {
   case ALLPRESSUREBC:
-    for (i = 0; i < 6; i++) bcP[0].face[i] = VALUE;
+    for (i = 0; i < 6; i++) bcP[0].face[i] = FIXED;
     break;
   case ALLNORMALFLOWBC:
-    bcQ[0].face[X0] = VALUE;
-    bcQ[0].face[X1] = VALUE;
-    bcQ[1].face[Y0] = VALUE;
-    bcQ[1].face[Y1] = VALUE;
-    bcQ[2].face[Z0] = VALUE;
-    bcQ[2].face[Z1] = VALUE;
+    bcQ[0].face[X0] = FIXED;
+    bcQ[0].face[X1] = FIXED;
+    bcQ[1].face[Y0] = FIXED;
+    bcQ[1].face[Y1] = FIXED;
+    bcQ[2].face[Z0] = FIXED;
+    bcQ[2].face[Z1] = FIXED;
     break;
   default:
     SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: [%s] unknown FLOWCASE %i .\n",__FUNCT__,flowcase);
