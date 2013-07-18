@@ -297,10 +297,11 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,
                       PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daScal);CHKERRQ(ierr);
+  ierr = DMDASetFieldName(ctx->daScal,0,"");CHKERRQ(ierr);
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,4,1,
                       PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daFlow);CHKERRQ(ierr);
-
+  
 
 
   ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -324,6 +325,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,0,
                       olx,oly,olz,&ctx->daScalCell);CHKERRQ(ierr);
+  ierr = DMDASetFieldName(ctx->daScalCell,0,"");CHKERRQ(ierr);
 
 
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
@@ -341,13 +343,13 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   ierr = CartFE_Element3DCreate(&ctx->e3D);CHKERRQ(ierr);
   /*
    Constructs coordinates Vec
-   */
+  */
   ierr = DMCreateGlobalVector(ctx->daVect,&ctx->coordinates);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->coordinates,"Coordinates");CHKERRQ(ierr);
 
   /*
    Construct coordinates from the arrays of cell sizes
-   */
+  */
   ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = PetscMalloc3(nx,PetscReal,&X,ny,PetscReal,&Y,nz,PetscReal,&Z);CHKERRQ(ierr);
@@ -1131,6 +1133,122 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nWARNING: \nSome options were unused. Check the command line for typos.\n");CHKERRQ(ierr);
     ierr = PetscOptionsLeft();CHKERRQ(ierr);
   }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VecViewDof"
+/*
+ VecViewDof: Call VecView on each dof of a Vec sequentially
+ (c) 2013 Blaise Bourdin bourdin@lsu.edu
+ */
+extern PetscErrorCode VecViewDof(Vec v,PetscViewer viewer,DM dm)
+{
+  PetscErrorCode  ierr;
+  Vec             vDof;
+  PetscInt        dof,numDof;
+  char            fieldname[FILENAME_MAX],fieldnameDof[FILENAME_MAX];
+  
+  PetscFunctionBegin;
+  ierr = VecGetBlockSize(v,&numDof);CHKERRQ(ierr);
+  ierr = DMGetGlobalVector(dm,&vDof);CHKERRQ(ierr);
+  ierr = PetscObjectGetName((PetscObject) v,fieldname);CHKERRQ(ierr);
+  for (dof = 0; dof < numDof; dof++) {
+    ierr = VecStrideGather(v,dof,vDof,INSERT_VALUES);CHKERRQ(ierr);
+    ierr = PetscSNPrintf(fieldnameDof,FILENAME_MAX,"%s_%i",fieldname,dof);CHKERRQ(ierr);
+    ierr = PetscObjectSetName((PetscObject)vDof,fieldnameDof);CHKERRQ(ierr);
+    ierr = VecView(vDof,viewer);CHKERRQ(ierr);
+  }
+  ierr = DMRestoreGlobalVector(dm,&vDof);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "FieldsWrite"
+/*
+ FieldsWrite: Export all fields. Set name to NULL in order to use a default file name
+ 
+ (c) 2013 Blaise Bourdin bourdin@lsu.edu
+ */
+extern PetscErrorCode FieldsWrite(VFCtx *ctx,VFFields *fields,const char name[])
+{
+  PetscErrorCode ierr;
+  char            filename[FILENAME_MAX];
+  PetscViewer     viewer;
+  
+#if defined(PETSC_HAVE_HDF5)
+  char            H5filename[FILENAME_MAX],H5coordfilename[FILENAME_MAX],XDMFfilename[FILENAME_MAX];
+  char            fieldname[FILENAME_MAX],fieldnameDof[FILENAME_MAX];
+  Vec             UDof;
+  PetscViewer     XDMFViewer;
+  PetscInt        c;
+#endif
+  
+  PetscFunctionBegin;
+  ierr = PetscLogStagePush(ctx->vflog.VF_IOStage);CHKERRQ(ierr);
+  switch (ctx->fileformat) {
+    case FILEFORMAT_HDF5:
+#if defined(PETSC_HAVE_HDF5)
+      if (name == NULL) {
+        ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.%.5i.h5",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
+        ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);
+      } else {
+        ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,name,FILE_MODE_WRITE,&viewer);
+      }
+      ierr = PetscSNPrintf(XDMFfilename,FILENAME_MAX,"%s.%.5i.xmf",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
+      ierr = PetscSNPrintf(H5coordfilename,FILENAME_MAX,"%s.h5",ctx->prefix);CHKERRQ(ierr);
+      
+      ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,XDMFfilename,&XDMFViewer);CHKERRQ(ierr);
+      ierr = XDMFuniformgridInitialize(XDMFViewer,ctx->timevalue,H5filename);CHKERRQ(ierr);
+      ierr = XDMFtopologyAdd (XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,H5coordfilename,"Coordinates");CHKERRQ(ierr);
+      ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,3,"Vector","Node",filename,"Displacement");CHKERRQ(ierr);
+      ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",filename,"Fracture");CHKERRQ(ierr);
+      ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",filename,"Permeability");CHKERRQ(ierr);
+      ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",filename,"Temperature");CHKERRQ(ierr);
+      ierr = XDMFattributeAdd(XDMFViewer,ctx->ncellx+1,ctx->ncelly+1,ctx->ncellz+1,1,"Scalar","Node",filename,"Pressure");CHKERRQ(ierr);
+      ierr = XDMFuniformgridFinalize(XDMFViewer);CHKERRQ(ierr);
+      ierr = PetscViewerDestroy(&XDMFViewer);CHKERRQ(ierr);
+#else
+      SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"No support for HDF5 in this build of PETSc\n");
+#endif
+      break;
+    case FILEFORMAT_BIN:
+      if (name == NULL) {
+        ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.%.5i.bin",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
+        ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);
+      } else {
+        ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,name,FILE_MODE_WRITE,&viewer);
+      }
+    case FILEFORMAT_VTK:
+      ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
+      ierr = PetscViewerSetType(viewer,PETSCVIEWERVTK);CHKERRQ(ierr);
+      if (name == NULL) {
+        ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.%.5i.vts",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
+        ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
+      } else {
+        ierr = PetscViewerFileSetName(viewer,name);CHKERRQ(ierr);
+      }
+      break;
+  }
+  if (ctx->fileformat == FILEFORMAT_VTK) {
+    ierr = DMGetGlobalVector(ctx->daScal,&UDof);CHKERRQ(ierr);
+    ierr = PetscObjectGetName((PetscObject) U,fieldname);CHKERRQ(ierr);
+    for (c = 0; c < 3; c++) {
+      ierr = VecStrideGather(fields->U,c,UDof,INSERT_VALUES);CHKERRQ(ierr);
+      ierr = PetscSNPrintf(fieldnameDof,FILENAME_MAX,"%s_%i",fieldname,c);CHKERRQ(ierr);
+      ierr = PetscObjectSetName((PetscObject)UDof,fieldnameDof);CHKERRQ(ierr);
+      ierr = VecView(UDof,viewer);CHKERRQ(ierr);
+    }
+    ierr = DMRestoreGlobalVector(ctx->daScal,&UDof);CHKERRQ(ierr);
+  } else {
+    ierr = VecView(fields->U,viewer);CHKERRQ(ierr);
+  }
+  ierr = VecView(fields->V,viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->pmult,viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->theta,viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->pressure,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  ierr = PetscLogStagePop();
   PetscFunctionReturn(0);
 }
 
