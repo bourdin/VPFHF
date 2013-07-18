@@ -83,14 +83,10 @@ static const char *VFHeatSolverName[] = {
 static const char *VFFileFormatName[] = {
 	"bin",
 	"hdf5",
+  "vtk",
 	"VFFileFormatName",
 	"",
 	0
 };
-
-
-
-
-
 
 #endif

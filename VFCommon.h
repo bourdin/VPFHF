@@ -161,28 +161,25 @@ typedef enum {
 
 typedef enum {
 	FILEFORMAT_BIN,
-	FILEFORMAT_HDF5
+	FILEFORMAT_HDF5,
+	FILEFORMAT_VTK
 } VFFileFormatType;
 
 typedef struct {
-	char         name[256];
-	PetscReal    top[3];
-	PetscReal    bottom[3];
-	PetscReal    coords[3];
-	PetscReal		Qw;
-	PetscReal		Pw;
-	PetscReal		rw;
-	WellConstraint  condition;
-	WellType		type;
+	char           name[256];
+	PetscReal      top[3];
+	PetscReal      bottom[3];
+	PetscReal      coords[3];
+	PetscReal		   Qw;
+	PetscReal		   Pw;
+	PetscReal		   rw;
+	WellConstraint condition;
+	WellType		   type;
 	/*
 	 PetscReal    rate;
 	 BCTYPE       BCV;
 	 */
 } VFWell;
-
-
-
-
 
 typedef struct {
 	char          name[256];
