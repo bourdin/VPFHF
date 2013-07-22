@@ -4,13 +4,8 @@
  
  ./test28 -n 51,11,2 -l 1,1,0.01 -m_inv 10 -maxtimestep 20 -flowsolver FLOWSOLVER_snesMIXEDFEM
  ./test28 -n 101,101,2 -l 1,1,0.01 -m_inv 10 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -npc 1 -pc0_r 0.15 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.04 -epsilon 0.02 -pc0_theta 0 -pc0_phi 90 
- 
- 
  ./test28 -n 101,101,2 -l 1,1,0.01 -m_inv 10 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -npc 1 -pc0_r 0.15 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.04 -epsilon 0.02 -pc0_theta 0 -pc0_phi 90
-
  ./test28 -n 51,11,2 -l 1,1,0.01 -m_inv 10 -ts_type beuler -ts_dt 1 -ts_max_steps 20 -flowsolver FLOWSOLVER_snesMIXEDFEM
-
- 
  */
 
 #include "petsc.h"
@@ -63,7 +58,6 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
-
 	pi = 6.*asin(0.5);
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
@@ -96,15 +90,12 @@ int main(int argc,char **argv)
 			ctx.bcQ[c].vertex[i] = NONE;
 		}
 	}
-  
    ctx.bcP[0].face[X0] = FIXED;
    ctx.bcP[0].face[X1] = FIXED;
    ctx.bcQ[1].face[Y0] = FIXED;
    ctx.bcQ[1].face[Y1] = FIXED;
    ctx.bcQ[2].face[Z0] = FIXED;
    ctx.bcQ[2].face[Z1] = FIXED;
-   
-  
 /*
   ctx.bcP[0].face[X0] = FIXED;
 	ctx.bcP[0].face[X1] = FIXED;
@@ -112,7 +103,6 @@ int main(int argc,char **argv)
 	ctx.bcP[0].face[Y1] = FIXED;
 	ctx.bcQ[2].face[Z0] = FIXED;
 	ctx.bcQ[2].face[Z1] = FIXED;
-  
 */
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {

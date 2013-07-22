@@ -299,10 +299,11 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,
                       PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daScal);CHKERRQ(ierr);
+  ierr = DMDASetFieldName(ctx->daScal,0,"");CHKERRQ(ierr);
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,4,1,
                       PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daFlow);CHKERRQ(ierr);
-
+  
 
 
   ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -326,6 +327,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,0,
                       olx,oly,olz,&ctx->daScalCell);CHKERRQ(ierr);
+  ierr = DMDASetFieldName(ctx->daScalCell,0,"");CHKERRQ(ierr);
 
 
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
@@ -343,13 +345,13 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   ierr = CartFE_Element3DCreate(&ctx->e3D);CHKERRQ(ierr);
   /*
    Constructs coordinates Vec
-   */
+  */
   ierr = DMCreateGlobalVector(ctx->daVect,&ctx->coordinates);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->coordinates,"Coordinates");CHKERRQ(ierr);
 
   /*
    Construct coordinates from the arrays of cell sizes
-   */
+  */
   ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = PetscMalloc3(nx,PetscReal,&X,ny,PetscReal,&Y,nz,PetscReal,&Z);CHKERRQ(ierr);
@@ -1148,6 +1150,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   }
   PetscFunctionReturn(0);
 }
+
 
 #undef __FUNCT__
 #define __FUNCT__ "FieldsH5Write"
