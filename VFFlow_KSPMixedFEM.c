@@ -45,36 +45,17 @@ extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields)
   dt_dot_one_minus_theta = timestepsize*(1.-theta);
   ierr = VecDuplicate(ctx->RHSVelP,&VecRHS);CHKERRQ(ierr);
   ierr = VecDuplicate(ctx->RHSVelP,&vec);CHKERRQ(ierr);
-  
-  
-
-  
-  
   ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = FlowMatnVecAssemble(ctx->KVelP,ctx->KVelPlhs,ctx->RHSVelP,fields,ctx);CHKERRQ(ierr);
   ierr = VecCopy(ctx->RHSVelP,VecRHS);CHKERRQ(ierr);
   ierr = VecAXPBY(VecRHS,dt_dot_one_minus_theta,dt_dot_theta,ctx->RHSVelPpre);CHKERRQ(ierr);
-  
-  
-
-  
-  ierr = VecCopy(ctx->RHSVelP,ctx->RHSVelPpre);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->V);CHKERRQ(ierr);
-
-  
-  
   if(ctx->FlowDisplCoupling){
     ierr = VecCopy(fields->V,ctx->V);CHKERRQ(ierr);
     ierr = VecCopy(fields->U,ctx->U);CHKERRQ(ierr);
     ierr = VF_RHSAddMechUCoupling(VecRHS,ctx);CHKERRQ(ierr);
   }
-  
-  
-  ierr = MatMultAdd(ctx->KVelPlhs,fields->VelnPress,VecRHS,VecRHS);CHKERRQ(ierr);
-  
-  
-
-  
+  ierr = MatMultAdd(ctx->KVelPlhs,ctx->PreFlowFields,VecRHS,VecRHS);CHKERRQ(ierr);
   ierr = DMGetLocalVector(ctx->daVect,&velbc_local);CHKERRQ(ierr);
   ierr = DMGlobalToLocalBegin(ctx->daVect,ctx->VelBCArray,INSERT_VALUES,velbc_local);CHKERRQ(ierr);
   ierr = DMGlobalToLocalEnd(ctx->daVect,ctx->VelBCArray,INSERT_VALUES,velbc_local);CHKERRQ(ierr);
@@ -86,14 +67,9 @@ extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields)
     ierr = KSPMonitorSet(ctx->kspVelP,MixedFEMKSPMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   }
   ierr = KSPSolve(ctx->kspVelP,VecRHS,fields->VelnPress);CHKERRQ(ierr);
-  
-  
-  
-  
-  
-/*
-  
-  PetscViewer viewer;
+  /*
+   
+   PetscViewer viewer;
    ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSvec.txt",&viewer);CHKERRQ(ierr);
    ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
    ierr = VecView(vec,viewer);CHKERRQ(ierr);
@@ -120,12 +96,6 @@ extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields)
    ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
    ierr = VecView(fields->VelnPress,viewer);CHKERRQ(ierr);
    */
-  
-  
-  
-  
-  
-  
   ierr = KSPGetConvergedReason(ctx->kspVelP,&reason);CHKERRQ(ierr);
   if (reason < 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] kspVelP diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
@@ -183,7 +153,6 @@ extern PetscErrorCode VF_RHSAddMechUCoupling(Vec RHS,VFCtx *ctx)
   PetscViewer viewer;
   
   PetscFunctionBegin;
-
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
@@ -207,24 +176,11 @@ extern PetscErrorCode VF_RHSAddMechUCoupling(Vec RHS,VFCtx *ctx)
 	ierr = DMGlobalToLocalBegin(ctx->daVect,U_diff,INSERT_VALUES,u_diff_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daVect,U_diff,INSERT_VALUES,u_diff_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_diff_local,&u_diff_array);CHKERRQ(ierr);
-
+  
   ierr = DMGetLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
   ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
   ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-  
-  
-  
-  
-
-
-
-
-  
-
-  
-  
-
   for (ek = zs; ek < zs+zm; ek++) {
     for (ej = ys; ej < ys+ym; ej++) {
       for (ei = xs; ei < xs+xm; ei++) {
@@ -232,7 +188,7 @@ extern PetscErrorCode VF_RHSAddMechUCoupling(Vec RHS,VFCtx *ctx)
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
         ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-
+        
         ierr = VF_RHSFlowMechUCoupling_local(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,u_diff_array,v_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -244,19 +200,6 @@ extern PetscErrorCode VF_RHSAddMechUCoupling(Vec RHS,VFCtx *ctx)
       }
     }
   }
-  
-
-  
-
-
-
-  
-  
-
-
-
-
-  
   ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
   
@@ -270,25 +213,9 @@ extern PetscErrorCode VF_RHSAddMechUCoupling(Vec RHS,VFCtx *ctx)
   ierr = DMRestoreLocalVector(ctx->daFlow,&RHS_localVec);CHKERRQ(ierr);
   ierr = DMLocalToGlobalBegin(ctx->daFlow,RHS_localVec,INSERT_VALUES,RHS);CHKERRQ(ierr);
   ierr = DMLocalToGlobalEnd(ctx->daFlow,RHS_localVec,INSERT_VALUES,RHS);CHKERRQ(ierr);
-  
-  
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #undef __FUNCT__
 #define __FUNCT__ "MixedFEMKSPMonitor"
@@ -621,7 +548,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
   PetscReal      hwx, hwy, hwz;
   PetscReal      ***v_array;
   Vec            v_local;
-
+  
   
   PetscFunctionBegin;
   flg = SAME_NONZERO_PATTERN;
@@ -667,7 +594,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
   ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
   ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-
+  
   ierr = PetscMalloc5(nrow*nrow,PetscReal,&KA_local,
                       nrow*nrow,PetscReal,&KB_local,
                       nrow*nrow,PetscReal,&KD_local,
@@ -1493,7 +1420,7 @@ extern PetscErrorCode Flow_MatBTranspose(PetscReal *KB_ele,CartFE_Element3D *e,P
         }
       }
     }
-  }   
+  }
   for (l = 0,k = 0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
@@ -1527,7 +1454,7 @@ extern PetscErrorCode Flow_MatA(PetscReal *A_local,CartFE_Element3D *e,PetscInt 
   PetscReal         beta_c,mu;
   
   PetscFunctionBegin;
-  ierr = PetscMalloc(e->ng*sizeof(PetscReal),&v_elem);CHKERRQ(ierr);  
+  ierr = PetscMalloc(e->ng*sizeof(PetscReal),&v_elem);CHKERRQ(ierr);
   beta_c = flowpropty.beta;
   mu     = flowpropty.mu;
   perm_inv     = 1./perm_array[ek][ej][ei][c];
@@ -1699,7 +1626,7 @@ extern PetscErrorCode VF_RHSFlowMechUCoupling_local(PetscReal *K_local,CartFE_El
   PetscInt          eg;
   PetscReal         *v_elem;
   PetscReal         *du_elem[3],alphabiot;
-
+  
   PetscFunctionBegin;
   alphabiot  = flowpropty.alphabiot;
   ierr = PetscMalloc4(e->ng,PetscReal,&v_elem,
@@ -1722,6 +1649,11 @@ extern PetscErrorCode VF_RHSFlowMechUCoupling_local(PetscReal *K_local,CartFE_El
           }
         }
       }
+    }
+  }
+  if((ek == 5 || ek == 10) && ej == 0 && ei == 0){
+    for(l = 0; l < 27; l++ ){
+//      ierr = PetscPrintf(PETSC_COMM_WORLD,"ek = %d, du[%d] = %g\n",ek,l,du_elem[2][l]);CHKERRQ(ierr);
     }
   }
   for (l = 0,k = 0; k < e->nphiz; k++) {

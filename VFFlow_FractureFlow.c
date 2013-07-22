@@ -61,6 +61,9 @@ extern PetscErrorCode MixedFractureFlowSolverInitialize(VFCtx *ctx, VFFields *fi
   ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->PreFracFlowFields);CHKERRQ(ierr);
   ierr = VecSet(ctx->PreFracFlowFields,0.0);CHKERRQ(ierr);
   
+  ierr = PetscPrintf(PETSC_COMM_WORLD," Step:I am initializing \n\n");CHKERRQ(ierr);
+
+  
   ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->FracResidual);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject)ctx->FracResidual,"RHS of fracture SNES flow solver");CHKERRQ(ierr);
   ierr = VecSet(ctx->FracResidual,0.0);CHKERRQ(ierr);
@@ -107,6 +110,7 @@ extern PetscErrorCode MixedFracFlowSNESSolve(VFCtx *ctx,VFFields *fields)
   
   PetscFunctionBegin;
   
+//  ierr = VecCopy(fields->fracVelnPress,ctx->RHSFracVelP);CHKERRQ(ierr);
   ierr = VecCopy(fields->fracVelnPress,ctx->PreFracFlowFields);CHKERRQ(ierr);
   ierr = FormFracMatricesnVector(ctx->KFracVelP,ctx->KFracVelPlhs,ctx->RHSFracVelP,ctx,fields);CHKERRQ(ierr);
   

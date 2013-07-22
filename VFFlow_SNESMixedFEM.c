@@ -38,9 +38,7 @@ extern PetscErrorCode MixedFEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fie
 	ierr = MatZeroEntries(ctx->JacVelP);CHKERRQ(ierr);
 	ierr = MatSetOption(ctx->KVelP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 	ierr = MatSetOption(ctx->KVelPlhs,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = MatSetOption(ctx->JacVelP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->PreFlowFields);CHKERRQ(ierr);
-	ierr = VecSet(ctx->PreFlowFields,0.0);CHKERRQ(ierr);
+	ierr = MatSetOption(ctx->JacVelP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);	
 	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->RHSVelP);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->FlowFunct);CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject)ctx->RHSVelP,"RHS vector of flow equation");CHKERRQ(ierr);
@@ -68,7 +66,6 @@ extern PetscErrorCode MixedFEMSNESFlowSolverFinalize(VFCtx *ctx,VFFields *fields
 	ierr = MatDestroy(&ctx->KVelP);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->KVelPlhs);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->JacVelP);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->PreFlowFields);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSVelP);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->FlowFunct);CHKERRQ(ierr);
 	ierr = SNESDestroy(&ctx->snesVelP);CHKERRQ(ierr);
@@ -100,12 +97,11 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
 	ierr = VecSet(ctx->Perm,0.0);CHKERRQ(ierr);
 	ierr = VecCopy(fields->vfperm,ctx->Perm);CHKERRQ(ierr);
-	ierr = VecCopy(fields->VelnPress,ctx->PreFlowFields);CHKERRQ(ierr);
 	ierr = SNESSetFunction(ctx->snesVelP,ctx->FlowFunct,FormSNESIFunction,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesVelP,ctx->JacVelP,ctx->JacVelP,FormSNESIJacobian,ctx);CHKERRQ(ierr);
 	if (ctx->verbose > 1) {
 		ierr = SNESMonitorSet(ctx->snesVelP,FEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	}	
+	}
     ierr = SNESSolve(ctx->snesVelP,PETSC_NULL,fields->VelnPress);CHKERRQ(ierr);
 	ierr = SNESGetConvergedReason(ctx->snesVelP,&reason);CHKERRQ(ierr);
 	if (reason < 0) {
@@ -117,7 +113,6 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = VecMin(fields->VelnPress,PETSC_NULL,&VelPmin);CHKERRQ(ierr);
 	ierr = VecMax(fields->VelnPress,PETSC_NULL,&VelPmax);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      VelP min / max:     %e %e\n",VelPmin,VelPmax);CHKERRQ(ierr);
-	ierr = VecCopy(ctx->RHSVelP,ctx->RHSVelPpre);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);

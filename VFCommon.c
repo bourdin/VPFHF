@@ -110,7 +110,9 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",VFUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
     ctx->flowcase = ALLNORMALFLOWBC;
     ierr          = PetscOptionsEnum("-flowBC","\n\tFlow boundary conditions","",VFFlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
-
+/*
+    ctx->fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
+ */
     ctx->fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
     ierr                    = PetscOptionsEnum("-fractureflowsolver","\n\tFracture Flow solver","",VFFractureFlowSolverName,(PetscEnum)ctx->fractureflowsolver,(PetscEnum*)&ctx->fractureflowsolver,PETSC_NULL);CHKERRQ(ierr);
 
@@ -727,6 +729,9 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) ctx->U,"Displacement in ctx");CHKERRQ(ierr);
   ierr = VecSet(ctx->U,0.0);CHKERRQ(ierr);
 
+  ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->PreFlowFields);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->PreFlowFields,"Previous time step flow fields");CHKERRQ(ierr);
+
   /*
    Create optional penny-shaped and rectangular cracks
    */
@@ -1109,6 +1114,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = PetscViewerDestroy(&ctx->energyviewer);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->U_old);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->U);CHKERRQ(ierr);
+  ierr = VecDestroy(&ctx->PreFlowFields);CHKERRQ(ierr);
 
   ierr = VecDestroy(&fields->fracpressure);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->fracvelocity);CHKERRQ(ierr);

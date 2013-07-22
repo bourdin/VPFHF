@@ -103,7 +103,7 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
   case FRACTUREFLOWSOLVER_SNESMIXEDFEM:
     ierr = MixedFractureFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
     break;
-  default:
+    case FRACTUREFLOWSOLVER_NONE:
     break;
   }
   PetscFunctionReturn(0);
@@ -265,8 +265,6 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
   switch (ctx->fractureflowsolver) {
   case FRACTUREFLOWSOLVER_SNESMIXEDFEM:
     ierr = MixedFracFlowSNESSolve(ctx,fields);CHKERRQ(ierr);
-    break;
-  default:
     break;
   }
   PetscFunctionReturn(0);
