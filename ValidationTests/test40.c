@@ -1,5 +1,5 @@
 /*
- test40.c: 2D SNES. Single well problem. Source term implemented as dirac function and analytical solution is 3D Green's function. All pressure boundary condition.
+ test40.c: 2D SNES. Single well problem. Source term implemented as dirac function and analytical solution is 2D Green's function. All pressure boundary condition.
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
  ./test40  -n 201,201,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nw 2 -w0_coords 0.50001,0.50001,0.00 -w0_Qw 0.5 -w0_constraint Rate -w0_rw 0.1 -w0_type INJECTOR -w1_coords 0.50001,0.50001,1 -w1_Qw 0.5 -w1_constraint Rate -w1_rw 0.1 -w1_type INJECTOR -m_inv 0
@@ -119,22 +119,22 @@ int main(int argc,char **argv)
           if(i == 0){
             dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][i][1]),2));
             presbc_array[k][j][i] = 1./(2.*pi)*log(dist);
-            presbc_array[k][j][i] = 10.;
+//            presbc_array[k][j][i] = 10.;
         }
           if(i == nx-1){
             dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][i][1]),2));
             presbc_array[k][j][i] = 1./(2.*pi)*log(dist);
-            presbc_array[k][j][i] = 10.;
+//            presbc_array[k][j][i] = 10.;
           }
           if(j == 0){
             dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][i][1]),2));
             presbc_array[k][j][i] = 1./(2.*pi)*log(dist);
-            presbc_array[k][j][i] = 10.;
+//            presbc_array[k][j][i] = 10.;
           }
           if(j == ny-1){
             dist = sqrt(pow((ctx.well[0].coords[0]-coords_array[k][j][i][0]),2)+pow((ctx.well[0].coords[1]-coords_array[k][j][i][1]),2));
             presbc_array[k][j][i] = 1./(2.*pi)*log(dist);
-            presbc_array[k][j][i] = 10.;
+//            presbc_array[k][j][i] = 10.;
           }
       }
     }  

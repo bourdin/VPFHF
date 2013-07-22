@@ -955,19 +955,6 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
           }
         }
         ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K_local,ADD_VALUES);CHKERRQ(ierr);
-      }
-    }
-  }
-  ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  
-  ierr = MatApplyDirichletBC(K,ctx->daVect,&ctx->bcU[0]);CHKERRQ(ierr);
-  ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  
-  for (ek = zs; ek < zs + zm; ek++) {
-    for (ej = ys; ej < ys+ym; ej++) {
-      for (ei = xs; ei < xs+xm; ei++) {
         /*
          Compute and accumulate the local contribution of the effective strain contribution to the global RHS
          */
@@ -1068,7 +1055,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    RHS_array[nz-1][ej+j][ei+i][c] += RHS_local[l];
+                    RHS_array[nz][ej+j][ei+i][c] += RHS_local[l];
                     RHS_local[l]                    =0;
                   }
                 }
@@ -1141,7 +1128,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    RHS_array[ek+k][ny-1][ei+i][c] += RHS_local[l];
+                    RHS_array[ek+k][ny][ei+i][c] += RHS_local[l];
                     RHS_local[l]                    =0;
                   }
                 }
@@ -1215,7 +1202,7 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    RHS_array[ek+k][ej+j][nx-1][c] += RHS_local[l];
+                    RHS_array[ek+k][ej+j][nx][c] += RHS_local[l];
                     RHS_local[l]                    =0;
                   }
                 }
@@ -1232,6 +1219,13 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx)
   /*
    Global Assembly and Boundary Conditions
    */
+  ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  
+  ierr = MatApplyDirichletBC(K,ctx->daVect,&ctx->bcU[0]);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,RHS_localVec,&RHS_array);CHKERRQ(ierr);
   ierr = DMLocalToGlobalBegin(ctx->daVect,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
   ierr = DMLocalToGlobalEnd(ctx->daVect,RHS_localVec,ADD_VALUES,RHS);CHKERRQ(ierr);
@@ -2883,7 +2877,6 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
   MatStencil     *row;
   PetscReal      hx,hy,hz;
   PetscReal      ****coords_array;
-  Vec            Vlb;
   
   PetscFunctionBegin;
   /*
@@ -3028,14 +3021,7 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
   ierr = PetscFree2(Jac_local,row);CHKERRQ(ierr);
   
   ierr = MatApplyDirichletBCRowCol(*Jac,ctx->daScal,ctx->bcV);CHKERRQ(ierr);
-  if (ctx->vfprop.atnum == 2) {
-    ierr = VF_IrrevApplyEQMat(*Jac,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
-  } else {
-    ierr = VecDuplicate(ctx->fields->VIrrev,&Vlb);CHKERRQ(ierr);
-    ierr = VecSet(Vlb,0.0);CHKERRQ(ierr);
-    ierr = SNESVISetVariableBounds(snes,Vlb,ctx->fields->VIrrev);CHKERRQ(ierr);
-    ierr = VecDestroy(&Vlb);CHKERRQ(ierr);
-  }
+  ierr = VF_IrrevApplyEQMat(*Jac,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
   *str = SAME_NONZERO_PATTERN;
   PetscFunctionReturn(0);
 }

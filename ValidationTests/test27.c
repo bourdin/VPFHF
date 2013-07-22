@@ -3,6 +3,8 @@
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
  ./test27 -n 11,11,11 -l 1,1,1 -m_inv 0 -theta 1 -velp_pc_type jacobi -maxtimestep 1
+ ./test27 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_TSMIXEDFEM
+
  */
 
 #include "petsc.h"
@@ -120,32 +122,37 @@ int main(int argc,char **argv)
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
 	ctx.maxtimestep = 1;
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
-		ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
-		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-		switch (ctx.fileformat) {
-			case FILEFORMAT_HDF5:       
-				ierr = FieldsH5Write(&ctx,&fields);
-				break;
-			case FILEFORMAT_BIN:
-				ierr = FieldsBinaryWrite(&ctx,&fields);
-				break; 
-		} 
-		ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
-		ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
-		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
-		ierr = PetscViewerDestroy(&logviewer);
-	}
-	Vec error;
-	PetscReal norm_1,norm_2,norm_inf;
-	ierr = VecDuplicate(fields.VelnPress,&error);
-	ierr = VecWAXPY(error,-1.0,fields.VelnPress,fields.FlowBCArray);
-	ierr = VecNorm(error,NORM_1,&norm_1);
-	ierr = VecNorm(error,NORM_2,&norm_2);
-	ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1_NORM = %f \n 2_norm = %f \n inf_norm = %f \n",norm_1, norm_2,norm_inf);CHKERRQ(ierr);	
+  if(ctx.flowsolver == FLOWSOLVER_TSMIXEDFEM || ctx.flowsolver == FLOWSOLVER_TS){
+  	ctx.maxtimestep = 1;
+    ctx.maxtimevalue = 60.;
+    ctx.timevalue = 1.;
+    ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = FieldsH5Write(&ctx,&fields);
+  }
+  else{
+    /*Initialization Set initial flow field values. This case is zero. This will have to be called an initialization function*/
+    ierr = VecSet(ctx.PreFlowFields,0.);CHKERRQ(ierr);
+    ierr = VecSet(ctx.RHSVelPpre,0.);CHKERRQ(ierr);
+    for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
+      ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
+      ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+      ierr = FieldsH5Write(&ctx,&fields);
+      /*This will have to be called "an update function"*/
+      ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
+      ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
+      
+    }
+    Vec error;
+    PetscReal norm_1,norm_2,norm_inf;
+    ierr = VecDuplicate(fields.VelnPress,&error);
+    ierr = VecWAXPY(error,-1.0,fields.VelnPress,fields.FlowBCArray);
+    ierr = VecNorm(error,NORM_1,&norm_1);
+    ierr = VecNorm(error,NORM_2,&norm_2);
+    ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1_NORM = %f \n 2_norm = %f \n inf_norm = %f \n",norm_1, norm_2,norm_inf);CHKERRQ(ierr);
+  }
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);

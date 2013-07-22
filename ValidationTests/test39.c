@@ -1,5 +1,5 @@
 /*
- test39.c: 2D SNES. Coupled flow and fracture problem using VFRectangularCrackCreate.
+ test39.c: 2D SNES. Coupled flow and fracture problem using fracture solver.
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
  ./test39 -n 101,101,2 -epsilon 0.01 -Gc 0.6667  -l 1,1,0.01 -m_inv 0. -Qw 0.1 -maxtimestep 5 -nrc 1 -rc0_corners 0.45,0.5,0,0.55,0.5,0.0,0.44,0.5,0.01 -rc0_thickness 0.005 -nw 1
@@ -59,10 +59,13 @@ int main(int argc,char **argv)
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	
-    ctx.flowsolver = FLOWSOLVER_SNES;
-    ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;	
-	
+//    ctx.flowsolver = FLOWSOLVER_SNES;
+  ctx.flowsolver = FLOWSOLVER_NONE;
+    ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
+  ctx.fractureflowsolver = FRACTUREFLOWSOLVER_SNESMIXEDFEM;
+
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
+
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -199,7 +202,8 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 
 	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
-    
+	ierr = VecSet(fields.pressure,0.01);CHKERRQ(ierr);
+  
 	ctx.current_time = 0.;
 	ctx.timevalue = 0.;
 //	PetscInt local_timestep =0;
@@ -213,27 +217,26 @@ int main(int argc,char **argv)
  
 //        ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);	
 		ierr = VecCopy(fields.pressure,Pold);CHKERRQ(ierr);	
-      do{
-		do {
+
 		    ierr = VecCopy(Pold,fields.pressure);CHKERRQ(ierr);	
 		    ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);		
-            ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);		
-            ierr = VecCopy(fields.U,Uold);CHKERRQ(ierr);	
-		    ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+            ierr = VecCopy(fields.U,Uold);CHKERRQ(ierr);
+		    ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
+      ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+
+      ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+
             ierr = VecAXPY(Uold,-1.,fields.U);CHKERRQ(ierr);
             ierr = VecNorm(Uold,NORM_INFINITY,&errU);CHKERRQ(ierr);
             ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max change on U: %e \n",errU);CHKERRQ(ierr);		
 	        altminit++;
-		} while ((errU >= ctx.altmintol) && altminit <= ctx.altminmaxit);
 		   		
 		
 		ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
-//		ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
         ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
         ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
         ierr = PetscPrintf(PETSC_COMM_WORLD,"   Max change on V: %e\n",errV);CHKERRQ(ierr);
 		
-		} while ((errV >= ctx.altmintol) && altminit <= ctx.altminmaxit);
 		
 /*		ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr); 
 		ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);

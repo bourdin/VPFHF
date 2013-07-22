@@ -1,0 +1,157 @@
+/*
+ test31.c: 2D Elasticity. Test of equivalence between displacement loading and stress loading.
+ 
+ (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
+ 
+./test31 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM
+ */
+
+#include "petsc.h"
+#include "CartFE.h"
+#include "VFCommon.h"
+#include "VFMech.h"
+#include "VFFlow.h"
+
+VFCtx               ctx;
+VFFields            fields;
+
+#undef __FUNCT__
+#define __FUNCT__ "main"
+int main(int argc,char **argv)
+{	
+	PetscErrorCode  ierr;
+	PetscViewer		viewer;
+	PetscViewer     logviewer;
+	char			filename[FILENAME_MAX];
+	PetscInt		i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+	PetscReal		BBmin[3],BBmax[3];
+	PetscReal		***presbc_array;
+	PetscReal		****coords_array;
+	PetscReal		hx,hy,hz;
+	PetscReal		gx,gy,gz;
+	PetscReal		lx,ly,lz;
+	PetscReal		gamma, beta, rho, mu;
+	PetscReal		pi,dist;
+  PetscReal		***pre_array;
+	PetscReal   ****perm_array;
+	PetscInt    xs1,xm1,ys1,ym1,zs1,zm1;
+  Vec         V_hold;
+  PetscReal   ****bcu_array;
+	PetscReal		****velbc_array;
+  PetscInt       mode=1;
+
+
+		
+	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
+	ctx.flowsolver = FLOWSOLVER_KSPMIXEDFEM;
+	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(ctx.daScal,&V_hold);CHKERRQ(ierr);
+	ierr = VecSet(ctx.PresBCArray,0.);CHKERRQ(ierr);
+  ierr = VecSet(ctx.VelBCArray,0.);CHKERRQ(ierr);
+	ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);	
+	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
+
+  
+  /*Beginning of mechanical part of code*/
+    /*
+	 Reset all BC for U and V
+	 */
+	for (i = 0; i < 6; i++) {
+		ctx.bcV[0].face[i]=NONE;
+		for (j = 0; j < 3; j++) {
+			ctx.bcU[j].face[i] = NONE;
+		}
+	}
+	for (i = 0; i < 12; i++) {
+		ctx.bcV[0].edge[i]=NONE;
+		for (j = 0; j < 3; j++) {
+			ctx.bcU[j].edge[i] = NONE;
+		}
+	}
+	for (i = 0; i < 8; i++) {
+		ctx.bcV[0].vertex[i]=NONE;
+		for (j = 0; j < 3; j++) {
+			ctx.bcU[j].vertex[i] = NONE;
+		}
+	}
+  ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
+
+//We will use Z and X direction
+  /*	face X0	*/
+  ctx.bcU[0].face[X0]= ZERO;
+  ctx.bcU[1].face[X0]= ZERO;
+  /*	face X1	*/
+  ctx.bcU[0].face[X1]= ZERO;
+  ctx.bcU[1].face[X1]= ZERO;
+  /*	face Y0	*/
+  ctx.bcU[1].face[Y0]= ZERO;
+  /*	face Y1	*/
+  ctx.bcU[1].face[Y1]= ZERO;
+  /*	face Z0	*/
+  ctx.bcU[0].face[Z0]= ZERO;
+  ctx.bcU[1].face[Z0]= ZERO;
+  ctx.bcU[2].face[Z0]= ZERO;
+  /*	face Z1	*/
+  ctx.bcU[0].face[Z1]= ZERO;
+  ctx.bcU[1].face[Z1]= ZERO;
+  ierr = PetscOptionsGetInt(PETSC_NULL,"-mode",&mode,PETSC_NULL);CHKERRQ(ierr);
+  switch (mode) {
+    case 0:
+      ctx.hasInsitu        = PETSC_FALSE;
+      ctx.bcU[2].face[Z1]= FIXED;
+      for (k = zs; k < zs + zm; k++){
+        for (j = ys; j < ys+ym; j++){
+          for (i = xs; i < xs+xm; i++) {
+            if(k == nz-1){
+              bcu_array[k][j][i][2] = -5.1e-4;
+            }
+          }
+        }
+      }
+      break;
+    case 1:
+  ctx.hasInsitu        = PETSC_TRUE;
+  ctx.bcU[2].face[Z1]= NONE;
+      for (i = 0; i < 6; i++) {
+        ctx.insitumax[i] = 0.;
+        ctx.insitumin[i] = 0.;
+      }
+      ctx.insitumax[2] = ctx.insitumin[2] = -2.72;
+      break;
+    default:
+      SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: mode should be one of {0,1,2,3,4,5,6,7},got %i\n",mode);
+      break;
+  }
+  ctx.FlowDisplCoupling = PETSC_TRUE;
+	ctx.hasCrackPressure = PETSC_FALSE;
+
+	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
+	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
+	ierr = VecSet(fields.pressure,10);CHKERRQ(ierr);
+	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
+  ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
+  ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
+  
+  ctx.timestep = 0;
+  ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+  ierr = FieldsH5Write(&ctx,&fields);
+  
+  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
+	ierr = PetscFinalize();
+	return(0);
+}
+
