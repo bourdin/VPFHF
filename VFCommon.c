@@ -457,7 +457,8 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
     ierr = PetscOptionsInt("-atnum", "\n\t Ambrosio Tortorelli variant", "", vfprop->atnum, &vfprop->atnum, PETSC_NULL);CHKERRQ(ierr);
     switch (vfprop->atnum ) {
       case 1:
-        vfprop->atCv = 2/3;
+        //XX//vfprop->atCv = 2./3.;
+        vfprop->atCv = .5;        
         break;
       case 2:
         vfprop->atCv = .5;
@@ -958,6 +959,7 @@ extern PetscErrorCode VFLayerInit(VFCtx *ctx)
  */
 extern PetscErrorCode VFTimeStepPrepare(VFCtx *ctx,VFFields *fields)
 {
+  Vec            lbV;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -967,10 +969,17 @@ extern PetscErrorCode VFTimeStepPrepare(VFCtx *ctx,VFFields *fields)
   ierr = VecCopy(fields->V,fields->VIrrev);CHKERRQ(ierr);
 
   /*
-   Set boundary values for U and V
+   Set boundary values for U and V,
+   Update the SNESVI upper bound for V if atnum = 1
    */
   ierr = VecApplyDirichletBC(fields->U,fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
   ierr = VecApplyDirichletBC(fields->V,fields->V,&ctx->bcV[0]);CHKERRQ(ierr);
+  if (ctx->vfprop.atnum == 1) {
+    ierr = VecDuplicate(fields->VIrrev,&lbV);CHKERRQ(ierr);
+    ierr = VecSet(lbV,0.0);CHKERRQ(ierr);
+    ierr = SNESVISetVariableBounds(ctx->snesV,lbV,fields->VIrrev);CHKERRQ(ierr);
+    ierr = VecDestroy(&lbV);CHKERRQ(ierr);
+  }
 
   PetscFunctionReturn(0);
 }

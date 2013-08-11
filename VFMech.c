@@ -2481,7 +2481,8 @@ extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFC
         ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         switch (ctx->vfprop.atnum ) {
           case 1:
-            ierr = VF_AT1SurfaceEnergy3D_local(&mySurfaceEnergy,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            //XX//ierr = VF_AT1SurfaceEnergy3D_local(&mySurfaceEnergy,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            ierr = VF_AT2SurfaceEnergy3D_local(&mySurfaceEnergy,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
             break;
           case 2:
             ierr = VF_AT2SurfaceEnergy3D_local(&mySurfaceEnergy,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
@@ -2853,6 +2854,8 @@ extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
   
   ierr = PetscFree2(residual_local,K_local);CHKERRQ(ierr);
   
+  //ierr = VecView(residual,PETSC_VIEWER_STDOUT_WORLD); CHKERRQ(ierr);
+  
   if (ctx->vfprop.atnum == 2)
     ierr = VF_IrrevApplyEQVec(residual,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
   /*
@@ -2965,7 +2968,14 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
          */
         for (l = 0; l < nrow * nrow; l++)
           Jac_local[l] = 0.;
-        ierr = VF_MatVAT2Surface3D_local(Jac_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+        switch (ctx->vfprop.atnum ) {
+          case 1:
+            ierr = VF_MatVAT1Surface3D_local(Jac_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            break;
+          case 2:
+            ierr = VF_MatVAT2Surface3D_local(Jac_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            break;
+        }
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
             ierr = VF_MatVCoupling3D_local(Jac_local,U_array,theta_array,thetaRef_array,
@@ -3030,7 +3040,9 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
   ierr = PetscFree2(Jac_local,row);CHKERRQ(ierr);
   
   ierr = MatApplyDirichletBCRowCol(*Jac,ctx->daScal,ctx->bcV);CHKERRQ(ierr);
-  ierr = VF_IrrevApplyEQMat(*Jac,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
+  if (ctx->vfprop.atnum == 2)
+    ierr = VF_IrrevApplyEQMat(*Jac,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
+  
   *str = SAME_NONZERO_PATTERN;
   PetscFunctionReturn(0);
 }
