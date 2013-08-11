@@ -267,7 +267,7 @@ typedef struct {
 	PetscReal           LeakOffRate;
 	/*
 	 Global variables for Mixed Darcy Flow
-	 */
+  */
 	Mat                 KVelP;
 	PC                  pcVelP;
 	KSP                 kspVelP;
@@ -296,7 +296,7 @@ typedef struct {
 	
 	/*
 	 Global Variables for Heat Transfer
-	 */
+  */
 	Mat                 KT;
 	Mat                 KTlhs;
 	
