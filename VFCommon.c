@@ -457,8 +457,7 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
     ierr = PetscOptionsInt("-atnum", "\n\t Ambrosio Tortorelli variant", "", vfprop->atnum, &vfprop->atnum, PETSC_NULL);CHKERRQ(ierr);
     switch (vfprop->atnum ) {
       case 1:
-        //XX//vfprop->atCv = 2./3.;
-        vfprop->atCv = .5;        
+        vfprop->atCv = 2./3.;
         break;
       case 2:
         vfprop->atCv = .5;
@@ -615,7 +614,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   PetscInt       c;
 
   PetscFunctionBegin;
-  fields->numfields = 9;
+  fields->numfields = 19;
   ierr              = DMCreateGlobalVector(ctx->daVect,&fields->U);CHKERRQ(ierr);
   ierr              = PetscObjectSetName((PetscObject) fields->U,"Displacement");CHKERRQ(ierr);
   ierr              = VecSet(fields->U,0.0);CHKERRQ(ierr);
@@ -1257,6 +1256,33 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
   PetscFunctionReturn(0);
 }
 
+
+#undef __FUNCT__
+#define __FUNCT__ "FieldsVTKWrite"
+/*
+ FieldsBinaryWrite: Export all fields in PETSc VTK format.
+ 
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ */
+extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char name[])
+{
+  PetscErrorCode ierr;
+  PetscViewer    viewer;
+  Vec            *allVec;
+  char            filename[FILENAME_MAX],fieldnameDof[FILENAME_MAX];
+  const char      fieldname[FILENAME_MAX];
+  PetscInt        numfields,field,numcomp,comp;
+
+  PetscFunctionBegin;
+  allVec = fields + sizeof(PetscInt);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"numfields: %i\n",fields->numfields);CHKERRQ(ierr);
+  for (field = 0; field < fields->numfields; field++) {
+    ierr = VecGetBlockSize(allVec[field],&numcomp);
+    PetscObjectGetName((PetscObject) allVec[field],&fieldname);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Field %i, numcomp: %i, name %s\n",field,numcomp,fieldname);
+  }
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "PermUpdate"
