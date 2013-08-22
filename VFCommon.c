@@ -113,7 +113,6 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 /*
     ctx->fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
  */
-    ctx->fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
     ierr                    = PetscOptionsEnum("-fractureflowsolver","\n\tFracture Flow solver","",VFFractureFlowSolverName,(PetscEnum)ctx->fractureflowsolver,(PetscEnum*)&ctx->fractureflowsolver,PETSC_NULL);CHKERRQ(ierr);
 
     ctx->heatsolver = HEATSOLVER_SNESFEM;
