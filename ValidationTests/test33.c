@@ -40,6 +40,12 @@
  
  ./test33 -n 101,2,101 -l 4,0.04,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.02,2 -pc0_thickness 0.08 -epsilon 0.04 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -nw 1 -w0_coords 2,0.02,2 -w0_Qw 0.01 -w0_constraint Rate -w0_rw 0.1 -w0_type injector -fracsnes_snes_type tr 
  
+ ./test33 -n 101,2,101 -l 4,0.04,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.02,2 -pc0_thickness 0.12 -epsilon 0.08 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -nw 4 -w0_coords 1.96,0.02,2 -w0_Qw 0.01 -w0_constraint Rate -w0_rw 0.1 -w0_type injector -fracsnes_snes_type tr -w1_coords 2.04,0.02,2 -w1_Qw 0.01 -w1_constraint Rate -w1_rw 0.1 -w1_type injector -w2_coords 2.08,0.02,2 -w2_Qw 0.01 -w2_constraint Rate -w2_rw 0.1 -w2_type injector -w3_coords 1.92,0.02,2 -w3_Qw 0.01 -w3_constraint Rate -w3_rw 0.1 -w3_type injector
+ 
+ ./test33 -n 101,2,101 -l 4,0.04,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.02,2 -pc0_thickness 0.12 -epsilon 0.08 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -nw 4 -w0_coords 1.96,0.02,2 -w0_Qw 0.01 -w0_constraint Rate -w0_rw 0.1 -w0_type injector -fracsnes_snes_type tr -w1_coords 2.04,0.02,2 -w1_Qw 0.01 -w1_constraint Rate -w1_rw 0.1 -w1_type injector -w2_coords 2.08,0.02,2 -w2_Qw 0.01 -w2_constraint Rate -w2_rw 0.1 -w2_type injector -w3_coords 1.92,0.02,2 -w3_Qw 0.01 -w3_constraint Rate -w3_rw 0.1 -w3_type injector -Fracsnes_snes_monitor -fracsnes_snes_type ls
+ 
+ ./test33 -n 101,2,101 -l 4,0.04,4 -npc 1 -pc0_r 0.2 -pc0_center 2.,0.02,2 -pc0_thickness 0.12 -epsilon 0.08 -pc0_theta 0 -pc0_phi 90 -orientation 1 -nw 1 -Fracsnes_snes_max_linear_solve_fail  -nw 4 -w0_coords 1.96,0.02,2 -w0_Qw 0.0 -w0_constraint Rate -w0_rw 0.1 -w0_type injector -fracsnes_snes_type tr -w1_coords 2.04,0.02,2 -w1_Qw 0.0 -w1_constraint Rate -w1_rw 0.1 -w1_type injector -w2_coords 2.08,0.02,2 -w2_Qw 0.0 -w2_constraint Rate -w2_rw 0.1 -w2_type injector -w3_coords 1.92,0.02,2 -w3_Qw 0.0 -w3_constraint Rate -w3_rw 0.1 -w3_type injector -Fracsnes_snes_monitor -fracsnes_snes_type ls
+ 
  */
 
 #include "petsc.h"
@@ -347,7 +353,7 @@ int main(int argc,char **argv)
   
   ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsH5Write(&ctx,&fields);
-
+/*
   ctx.timestep++;
   ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsH5Write(&ctx,&fields);
@@ -382,6 +388,7 @@ int main(int argc,char **argv)
   ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
   ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
   ierr = FieldsH5Write(&ctx,&fields);
+  */
 
   ctx.ElasticEnergy=0;
   ctx.InsituWork=0;

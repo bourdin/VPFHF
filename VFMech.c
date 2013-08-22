@@ -171,7 +171,7 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
   PetscReal      lambda,mu,alpha,coefbeta;
   /*
    PetscReal      myElasticEnergyDensity = 0;
-  */
+   */
   
   PetscFunctionBegin;
   lambda   = matprop->lambda;
@@ -500,25 +500,21 @@ extern PetscErrorCode VF_RHSUCoupling3D_local(PetscReal *RHS_local,PetscReal ***
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
   PetscInt       dim=3;
-  PetscReal      *theta_elem,*v_elem;
-  PetscReal      *dPdx_elem,*dPdy_elem,*dPdz_elem;
+  PetscReal      *theta_elem,*pressure_elem,*v_elem;
   PetscReal      coefalpha,beta;
   
   PetscFunctionBegin;
   coefalpha = (3.* matprop->lambda + 2. * matprop->mu) * matprop->alpha;
   beta      = matprop->beta;
   
-  ierr = PetscMalloc2(e->ng,PetscReal,&theta_elem,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&dPdx_elem,e->ng,PetscReal,&dPdy_elem,e->ng,PetscReal,&dPdz_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,PetscReal,&theta_elem,e->ng,PetscReal,&pressure_elem,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
   /*
    Initialize pressure_Elem, theta_Elem and v_elem
    */
   for (g = 0; g < e->ng; g++) {
-    theta_elem[g] = 0;
-    dPdx_elem[g]  = 0;
-    dPdy_elem[g]  = 0;
-    dPdz_elem[g]  = 0;
-    v_elem[g]     = 0.;
+    theta_elem[g]    = 0;
+    pressure_elem[g] = 0;
+    v_elem[g]        = 0.;
   }
   /*
    Compute theta_elem
@@ -527,16 +523,16 @@ extern PetscErrorCode VF_RHSUCoupling3D_local(PetscReal *RHS_local,PetscReal ***
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
         for (g = 0; g < e->ng; g++) {
-          theta_elem[g] += e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
-          dPdx_elem[g] += e->dphi[k][j][i][0][g] * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i]);
-          dPdy_elem[g] += e->dphi[k][j][i][1][g] * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i]);
-          dPdz_elem[g] += e->dphi[k][j][i][2][g] * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i]);
+          theta_elem[g] += e->phi[k][j][i][g]
+          * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
+          pressure_elem[g] += e->phi[k][j][i][g]
+          * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i]);
           v_elem[g] += e->phi[k][j][i][g] * v_array[ek+k][ej+j][ei+i];
         }
       }
     }
   }
-  ierr = PetscLogFlops(14 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  ierr = PetscLogFlops(8 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
   /*
    Accumulate the contribution of the current element to the local
    version of the RHS
@@ -544,15 +540,11 @@ extern PetscErrorCode VF_RHSUCoupling3D_local(PetscReal *RHS_local,PetscReal ***
   for (l=0,k = 0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
-        for (g = 0; g < e->ng; g++) {
-          RHS_local[l+0] += e->weight[g] * e->phi[k][j][i][g] * beta * dPdx_elem[g] * (v_elem[g] * v_elem[g] + vfprop->eta);
-          RHS_local[l+1] += e->weight[g] * e->phi[k][j][i][g] * beta * dPdy_elem[g] * (v_elem[g] * v_elem[g] + vfprop->eta);
-          RHS_local[l+2] += e->weight[g] * e->phi[k][j][i][g] * beta * dPdz_elem[g] * (v_elem[g] * v_elem[g] + vfprop->eta);
-        }
         for (c = 0; c < dim; c++,l++) {
           for (g = 0; g < e->ng; g++) {
             RHS_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
-            * coefalpha * theta_elem[g] * (v_elem[g] * v_elem[g] + vfprop->eta);
+            * (coefalpha * theta_elem[g] + beta * pressure_elem[g])
+            * (v_elem[g] * v_elem[g] + vfprop->eta);
           }
         }
       }
@@ -562,8 +554,7 @@ extern PetscErrorCode VF_RHSUCoupling3D_local(PetscReal *RHS_local,PetscReal ***
   /*
    Clean up
    */
-  ierr = PetscFree2(theta_elem,v_elem);CHKERRQ(ierr);
-  ierr = PetscFree3(dPdx_elem,dPdx_elem,dPdz_elem);CHKERRQ(ierr);
+  ierr = PetscFree3(theta_elem,pressure_elem,v_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

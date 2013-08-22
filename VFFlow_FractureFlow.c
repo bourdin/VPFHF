@@ -60,8 +60,8 @@ extern PetscErrorCode MixedFractureFlowSolverInitialize(VFCtx *ctx, VFFields *fi
   
   ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->PreFracFlowFields);CHKERRQ(ierr);
   ierr = VecSet(ctx->PreFracFlowFields,0.0);CHKERRQ(ierr);
-  
-  ierr = PetscPrintf(PETSC_COMM_WORLD," Step:I am initializing \n\n");CHKERRQ(ierr);
+//  
+//  ierr = PetscPrintf(PETSC_COMM_WORLD," Step:I am initializing \n\n");CHKERRQ(ierr);
 
   
   ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->FracResidual);CHKERRQ(ierr);
@@ -568,6 +568,29 @@ extern PetscErrorCode FracFlow_MatB(PetscReal *KB_ele,CartFE_Element3D *e,PetscI
       }
     }
   }
+  
+  
+  
+  
+  
+  
+  PetscReal velem;
+  velem = 0;
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        velem += v_array[ek+k][ej+j][ei+i];
+      }
+    }
+  }
+  velem = velem/8.;
+  for(l = 0; l < 64; l++){
+    if(velem <= 0.2)
+      KB_ele[l] += 1e-6;
+  }
+  
+  
+  
   ierr = PetscFree6(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2]);CHKERRQ(ierr);
   ierr = PetscFree4(n_elem[0],n_elem[1],n_elem[2],n_mag_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -643,6 +666,26 @@ extern PetscErrorCode FracFlow_MatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscI
 			}
 		}
 	}
+  
+  
+  
+  
+  PetscReal velem;
+  velem = 0;
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        velem += v_array[ek+k][ej+j][ei+i];
+      }
+    }
+  }
+  velem = velem/8.;
+  for(l = 0; l < 64; l++){
+    if(velem <= 0.2)
+      Kd_ele[l] += 1e-6;
+  }
+  
+  
   ierr = PetscFree6(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2]);CHKERRQ(ierr);
   ierr = PetscFree4(n_elem[0],n_elem[1],n_elem[2],n_mag_elem);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
@@ -729,6 +772,26 @@ extern PetscErrorCode FracFlow_MatBTranspose(PetscReal *KB_ele,CartFE_Element3D 
       }
     }
   }
+  
+  
+  PetscReal velem;
+  velem = 0;
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        velem += v_array[ek+k][ej+j][ei+i];
+      }
+    }
+  }
+  velem = velem/8.;
+  for(l = 0; l < 64; l++){
+    if(velem <= 0.2)
+      KB_ele[l] += 1e-6;
+  }
+  
+  
+  
+  
   ierr = PetscFree6(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2]);CHKERRQ(ierr);
   ierr = PetscFree4(n_elem[0],n_elem[1],n_elem[2],n_mag_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -782,6 +845,23 @@ extern PetscErrorCode FracFlow_MatS(PetscReal *S_local,CartFE_Element3D *e,Petsc
       }
     }
   }
+  
+  
+  PetscReal velem;
+  velem = 0;
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        velem += v_array[ek+k][ej+j][ei+i];
+      }
+    }
+  }
+  velem = velem/8.;
+  for(l = 0; l < 64; l++){
+    if(velem <= 0.2)
+      S_local[l] += 1e-6;
+  }
+  
   ierr = PetscFree6(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2]);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -834,6 +914,22 @@ extern PetscErrorCode FracFlow_MatA(PetscReal *A_local,CartFE_Element3D *e,Petsc
       }
     }
   }
+  
+  PetscReal velem;
+  velem = 0;
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        velem += v_array[ek+k][ej+j][ei+i];
+        }
+      }
+    }
+  velem = velem/8.;
+  for(l = 0; l < 64; l++){
+    if(velem <= 0.2)
+    A_local[l] += 1e-6;
+  }
+  
   ierr = PetscFree6(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2]);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
