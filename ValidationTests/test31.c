@@ -1,11 +1,11 @@
 /*
- test29.c: 1D. Test for transient solver
+ test31.c: 1D. Test for transient solver
  http://tutorial.math.lamar.edu/Classes/DE/SolvingHeatEquation.aspx
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
- ./test29 -n 51,51,2 -l 1,1,0.01 -m_inv 1 -ts_dt 0.005 -ts_max_steps 20
- ./test29 -n 51,51,2 -l 1,1,0.01 -m_inv 1 -maxtimestep 20 -flowsolver FLOWSOLVER_snesMIXEDFEM -timestepsize 0.005
- ./test31 -n 21,21,2 -l 1,1,0.01 -m_inv 1 -maxtimestep 20 -flowsolver FLOWSOLVER_snesMIXEDFEM -timestepsize 0.005
+ ./test31 -n 51,51,2 -l 1,1,0.01 -m_inv 1 -ts_dt 0.005 -ts_max_steps 20
+ ./test31 -n 51,2,51 -l 1,0.01,1 -m_inv 1 -maxtimestep 20 -flowsolver FLOWSOLVER_kspMIXEDFEM -timestepsize 0.005
+ ./test31 -n 21,2,21 -l 1,0.01,1 -m_inv 1 -maxtimestep 20 -flowsolver FLOWSOLVER_snesMIXEDFEM -timestepsize 0.005
  */
 
 #include "petsc.h"
@@ -145,10 +145,12 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
+        if(k == nz-1){
 				velbc_array[k][j][i][0] = 0.;
 				velbc_array[k][j][i][1] = 0.;
 				velbc_array[k][j][i][2] = 0.;
 				presbc_array[k][j][i] = 0.;
+        }
 			}
 		}
 	}	
