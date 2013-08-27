@@ -3,7 +3,7 @@
  
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
-./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2
+./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 20 -timestepsize 2
  */
 
 #include "petsc.h"
@@ -100,8 +100,6 @@ int main(int argc,char **argv)
 	ctx.bcQ[2].face[Z1] = FIXED;
   ierr = VecSet(ctx.VelBCArray,0);CHKERRQ(ierr);
   ierr = VecSet(ctx.PresBCArray,0);CHKERRQ(ierr);
-  
-  
  ctx.flowprop.alphabiot = 	ctx.matprop[0].beta = .79;									//biot's constant
  ctx.flowprop.theta = 1.;
  ctx.matprop[0].E = 1.44e4;										//Young's modulus
@@ -165,11 +163,6 @@ int main(int argc,char **argv)
   }
   ctx.insitumax[2] = ctx.insitumin[2] = -4.;
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
-
-  
-  
-  
-  
   ctx.hasInsitu        = PETSC_TRUE;
   ctx.FlowDisplCoupling = PETSC_TRUE;
 	ctx.hasCrackPressure = PETSC_TRUE;
@@ -183,15 +176,10 @@ int main(int argc,char **argv)
   ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
  /*End of mechanical part of code*/
 
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
   ctx.flowprop.timestepsize = 0.;
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
-	ctx.maxtimestep = 5;
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-  
-  
+
   PetscReal displ_p_tol = 1e-6;
   Vec error;
   Vec PreIteSol;
@@ -216,12 +204,13 @@ int main(int argc,char **argv)
       displ_iter++;
       ierr = VecWAXPY(error,-1.0,fields.VelnPress,PreIteSol);
       ierr = VecCopy(fields.VelnPress,PreIteSol);CHKERRQ(ierr);
-      ierr = VecNorm(error,NORM_1,&norm_1);
-      ierr = VecNorm(error,NORM_2,&norm_2);
       ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1_NORM = %f \n 2_norm = %f \n inf_norm = %f \n",norm_1, norm_2,norm_inf);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"\n inf_norm = %f \n",norm_inf);CHKERRQ(ierr);
     }
     ierr = FieldsH5Write(&ctx,&fields);
+  
+  
+
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
 	for (i = 0; i < 6; i++) {
@@ -252,19 +241,28 @@ int main(int argc,char **argv)
   ierr = VecSet(ctx.VelBCArray,0);CHKERRQ(ierr);
 
   
-
-  
-
   ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
-  ierr = VecSet(ctx.RHSVelPpre,0.);CHKERRQ(ierr);
+//  ierr = VecSet(ctx.RHSVelPpre,0.);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
   ctx.flowprop.timestepsize = 1.;
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
-  norm_inf = 1.;
   ctx.maxtimestep = 10;
-  displ_iter = 0;
+  ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
   for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
-    ierr = VecCopy(fields.U,ctx.U_old);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n");CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      ##########################################################\n");CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                                                        #\n");CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                          STAGE %d!!!                    #\n",ctx.timestep );CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                                                        #\n");CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      #        Start of drained consolidation steps            #\n");CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      #                                                        #\n");CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      ##########################################################\n\n\n");CHKERRQ(ierr);
 
+    
+    ierr = VecCopy(fields.U,ctx.U_old);CHKERRQ(ierr);
+    norm_inf = 1e+3;
+    displ_iter = 0;
     ierr = PetscPrintf(PETSC_COMM_WORLD,"  Computing solution at %d time step solution \n", ctx.timestep);CHKERRQ(ierr);
     ierr = VecCopy(fields.VelnPress,PreIteSol);CHKERRQ(ierr);
   while (norm_inf > displ_p_tol) {
@@ -274,32 +272,15 @@ int main(int argc,char **argv)
     displ_iter++;
     ierr = VecWAXPY(error,-1.0,fields.VelnPress,PreIteSol);
     ierr = VecCopy(fields.VelnPress,PreIteSol);CHKERRQ(ierr);
-    ierr = VecNorm(error,NORM_1,&norm_1);
-    ierr = VecNorm(error,NORM_2,&norm_2);
     ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1_NORM = %f \n 2_norm = %f \n inf_norm = %f \n",norm_1, norm_2,norm_inf);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n inf_norm = %f \n",norm_inf);CHKERRQ(ierr);
     }
-    norm_inf = 1e+3;
     ierr = FieldsH5Write(&ctx,&fields);
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
   }
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   ierr = VecDestroy(&PreIteSol);CHKERRQ(ierr);
   ierr = VecDestroy(&error);CHKERRQ(ierr);
-
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
