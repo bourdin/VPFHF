@@ -212,7 +212,7 @@ extern PetscErrorCode FormFracSNESIFunction(SNES snes,Vec VelnPress,Vec Residual
   ierr = VecCopy(ctx->RHSFracVelP,VecRHS);CHKERRQ(ierr);
   ierr = VecAXPBY(VecRHS,dt_dot_one_minus_theta,dt_dot_theta,ctx->RHSFracVelPpre);CHKERRQ(ierr);
   ierr = MatMultAdd(ctx->KFracVelPlhs,ctx->PreFracFlowFields,VecRHS,VecRHS);CHKERRQ(ierr);
-  ierr = VecApplySNESVelocityBC(VecRHS,ctx->FracVelBCArray,&ctx->bcFracQ[0],ctx);CHKERRQ(ierr);
+  ierr = VecApplyVelocityBC(VecRHS,ctx->FracVelBCArray,&ctx->bcFracQ[0],ctx);CHKERRQ(ierr);
   ierr = MatMult(ctx->KFracVelP,VelnPress,Residual);CHKERRQ(ierr);
   ierr = VecAXPY(Residual,-1.0,VecRHS);CHKERRQ(ierr);
   ierr = VecDestroy(&VecRHS);CHKERRQ(ierr);

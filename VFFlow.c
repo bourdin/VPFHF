@@ -794,6 +794,7 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFUnit flowunit,VFResProp
   flowprop->M_inv        = 0.;
   flowprop->Kw           = 1.;
   flowprop->alphabiot           = 1.;
+  flowprop->K_dr    = 1.;                                       /*Drained bulk modulusty*/
   switch (flowunit) {
   case UnitaryUnits:
     flowprop->mu    = 1.;                                         /*viscosity in cp*/

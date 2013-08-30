@@ -13,7 +13,6 @@ extern PetscErrorCode VFFlow_DarcyMixedFEMSteadyState(VFCtx *ctx, VFFields *fiel
 extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop, VFUnit flowunit, VFResProp resprop);
 extern PetscErrorCode ResetFlowBC(BC *bcP,BC *bcQ, VFFlowCases flowcase);
-extern PetscErrorCode VecApplyVelocityBC(Vec RHS,BC *bcQ,VFCtx *ctx, PetscReal ****UnPre_array);
 extern PetscErrorCode FlowMatnVecAssemble(Mat K, Mat Krhs, Vec RHS, VFFields *fields, VFCtx *ctx);
 extern PetscErrorCode Flow_Vecg(PetscReal *Kg_local, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, VFFlowProp flowpropty, PetscReal ****perm_array, PetscReal ***v_array);
 extern PetscErrorCode Flow_Vecf(PetscReal *Kf_ele, CartFE_Element3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, PetscInt c, VFFlowProp flowpropty, PetscReal ***v_array);
@@ -34,6 +33,7 @@ extern PetscErrorCode VecApplyWellFlowRate(PetscReal *RHS_local,CartFE_Element3D
 extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VF_MatA_local(PetscReal *A_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array);
 extern PetscErrorCode VF_RHSFlowMechUCoupling_local(PetscReal *K_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****u_diff_array,PetscReal ***v_array);
-extern PetscErrorCode VF_RHSAddMechUCoupling(Vec RHS,VFCtx *ctx);
+extern PetscErrorCode VF_MatAddMechUCoupling_local(PetscReal *Kc_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ***v_array);
+
 
 #endif /* VFFLOW_MIXEDFEM_H */
