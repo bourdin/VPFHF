@@ -21,7 +21,13 @@ typedef struct {
 	PetscReal   Cp;			  /* Specific heat capacity */
 	PetscReal   Kw;         /* Modulus of liquid               */
 	PetscReal   alphabiot;         /* Biot's coeficient              */
+	PetscReal   K_dr;         /* Undrained bulk modulus              */
 } VFFlowProp;
+
+typedef enum {
+	FIXEDSTRAIN,
+	FIXEDSTRESS,
+} ResFlowMechCouplingType;
 
 /*
  all fields involved in the computations
@@ -377,6 +383,7 @@ typedef struct {
   Vec                 U_old;
   Vec                 U;
   PetscBool           FlowDisplCoupling;
+  ResFlowMechCouplingType ResFlowMechCoupling;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

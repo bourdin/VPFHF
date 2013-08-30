@@ -78,11 +78,11 @@ extern PetscErrorCode MixedFlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 	PetscReal          ****vel_array;
 	PetscInt           i,j,k,c,veldof = 3;
 	PetscInt           xs,xm,ys,ym,zs,zm;
-	PetscReal           VelPmin,VelPmax;
+	PetscReal           Velmin,Velmax;
+	PetscReal           Pmin,Pmax;
 
 	PetscFunctionBegin;
   /*	temporary created V in ctx so V-field in fields can be in ctx	*/
-	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->V);CHKERRQ(ierr);
 	ierr = VecSet(ctx->V,1.0);CHKERRQ(ierr);
 	ierr = VecCopy(fields->V,ctx->V);CHKERRQ(ierr);
   
@@ -113,9 +113,6 @@ extern PetscErrorCode MixedFlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"      tsVelP converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
 	}
  */
-	ierr = VecMin(fields->VelnPress,PETSC_NULL,&VelPmin);CHKERRQ(ierr);
-	ierr = VecMax(fields->VelnPress,PETSC_NULL,&VelPmax);CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      VelP min / max:     %e %e\n",VelPmin,VelPmax);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
@@ -134,7 +131,12 @@ extern PetscErrorCode MixedFlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,fields->VelnPress,&VelnPress_array);CHKERRQ(ierr);	
 	ierr = VecDestroy(&ctx->Perm);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->V);CHKERRQ(ierr);
+  ierr = VecMin(fields->velocity,PETSC_NULL,&Velmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->velocity,PETSC_NULL,&Velmax);CHKERRQ(ierr);
+  ierr = VecMin(fields->pressure,PETSC_NULL,&Pmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->pressure,PETSC_NULL,&Pmax);CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      Velocity min / max:     %e %e\n",Velmin,Velmax);CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      Pressure min / max:     %e %e\n",Pmin,Pmax);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
@@ -459,8 +461,8 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 						}
 					}
 					ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KA_local,ADD_VALUES);CHKERRQ(ierr);
-					ierr = MatSetValuesStencil(K,nrow,row1,nrow,row,KB_local,ADD_VALUES);CHKERRQ(ierr);
-					ierr = MatSetValuesStencil(K,nrow,row,nrow,row1,KBTrans_local,ADD_VALUES);CHKERRQ(ierr);
+					ierr = MatSetValuesStencil(K,nrow,row,nrow,row1,KB_local,ADD_VALUES);CHKERRQ(ierr);
+					ierr = MatSetValuesStencil(K,nrow,row1,nrow,row,KBTrans_local,ADD_VALUES);CHKERRQ(ierr);
 				}
 				ierr = Flow_MatD(KD_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {

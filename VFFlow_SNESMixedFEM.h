@@ -15,7 +15,7 @@ extern PetscErrorCode FormSNESIJacobian(SNES snes,Vec VelnPress,Mat *Jac,Mat *Ja
 extern PetscErrorCode FormSNESIFunction(SNES snes,Vec VelnPress,Vec Func,void *user);
 extern PetscErrorCode MixedFEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode MixedFEMSNESFlowSolverFinalize(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode MatApplySNESVelocityBC(Mat K,Mat Klhs,BC *bcQ);
-extern PetscErrorCode VecApplySNESVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx);
+//extern PetscErrorCode MatApplySNESVelocityBC(Mat K,Mat Klhs,BC *bcQ);
+extern PetscErrorCode VecApplyVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx);
 
 #endif /* VFFLOW_MIXEDFEM_H */

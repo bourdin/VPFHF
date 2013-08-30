@@ -730,6 +730,10 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) ctx->U,"Displacement in ctx");CHKERRQ(ierr);
   ierr = VecSet(ctx->U,0.0);CHKERRQ(ierr);
 
+  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->V);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->V,"Fracture in ctx");CHKERRQ(ierr);
+  ierr = VecSet(ctx->V,1.0);CHKERRQ(ierr);
+  
   ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->PreFlowFields);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->PreFlowFields,"Previous time step flow fields");CHKERRQ(ierr);
 
@@ -1123,6 +1127,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = PetscViewerDestroy(&ctx->energyviewer);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->U_old);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->U);CHKERRQ(ierr);
+  ierr = VecDestroy(&ctx->V);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->PreFlowFields);CHKERRQ(ierr);
 
   ierr = VecDestroy(&fields->fracpressure);CHKERRQ(ierr);

@@ -3,7 +3,7 @@
  
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
-./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 20 -timestepsize 2
+./test34 -l 0.5,1,1 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 100 -nu 0.35 -maxtimestep 20 -timestepsize 2
  */
 
 #include "petsc.h"
@@ -62,9 +62,9 @@ int main(int argc,char **argv)
   for (k = zs1; k < zs1+zm1; k++) {
     for (j = ys1; j < ys1+ym1; j++) {
       for (i = xs1; i < xs1+xm1; i++) {
-        perm_array[k][j][i][0] = 2e-13;
+        perm_array[k][j][i][0] = 1;
         perm_array[k][j][i][1] = 0;
-        perm_array[k][j][i][2] = 2e-13;
+        perm_array[k][j][i][2] = 1;
         perm_array[k][j][i][3] = 0.;
         perm_array[k][j][i][4] = 0.;
         perm_array[k][j][i][5] = 0.;
@@ -96,18 +96,20 @@ int main(int argc,char **argv)
   ctx.bcQ[0].face[X1] = FIXED;
   ctx.bcQ[1].face[Y0] = FIXED;
   ctx.bcQ[1].face[Y1] = FIXED;
-  ctx.bcQ[2].face[Z0] = FIXED;
-	ctx.bcQ[2].face[Z1] = FIXED;
-  ierr = VecSet(ctx.VelBCArray,0);CHKERRQ(ierr);
+  ctx.bcP[0].face[Z0] = FIXED;
+  ctx.bcP[0].face[Z1] = FIXED;
   ierr = VecSet(ctx.PresBCArray,0);CHKERRQ(ierr);
- ctx.flowprop.alphabiot = 	ctx.matprop[0].beta = .79;									//biot's constant
+  ierr = VecSet(ctx.VelBCArray,0);CHKERRQ(ierr);
+
+//  ierr = VecSet(ctx.PresBCArray,-5);CHKERRQ(ierr);
+ ctx.flowprop.alphabiot = 	ctx.matprop[0].beta = .9;									//biot's constant
  ctx.flowprop.theta = 1.;
- ctx.matprop[0].E = 1.44e4;										//Young's modulus
-  ctx.flowprop.M_inv = 1./12300.0;
+ ctx.matprop[0].E = 100;										//Young's modulus
+  ctx.flowprop.M_inv = 1./100.0;
   ctx.flowprop.K_dr = 100000;
- ctx.matprop[0].nu = 0.2;										//Poisson's ratio's modulus
- ctx.flowprop.rho = 1788e-6;									 //density in lb/ft^3
-  ctx.flowprop.mu = (1.3e-4)*(940e-6);                    //viscosity in cp
+ ctx.matprop[0].nu = 0.35;										//Poisson's ratio's modulus
+ ctx.flowprop.rho = 2.2;									 //density in lb/ft^3
+  ctx.flowprop.mu = 1;                    //viscosity in cp
  ctx.flowprop.cf = 1.;										  //compressibility in psi^{-1}
  ctx.flowprop.beta = 1.;										  //flow rate conversion constant
  ctx.flowprop.gamma = 1.;										  //pressue conversion constant
@@ -162,7 +164,7 @@ int main(int argc,char **argv)
     ctx.insitumax[i] = 0.;
     ctx.insitumin[i] = 0.;
   }
-  ctx.insitumax[2] = ctx.insitumin[2] = -4.;
+  ctx.insitumax[2] = ctx.insitumin[2] = -5.;
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
   ctx.hasInsitu        = PETSC_TRUE;
   ctx.FlowDisplCoupling = PETSC_TRUE;
@@ -180,7 +182,7 @@ int main(int argc,char **argv)
  /*End of mechanical part of code*/
 
   ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
-  ctx.flowprop.timestepsize = 0.;
+  ctx.flowprop.timestepsize = 01.;
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
 
   PetscReal displ_p_tol = 1e-6;
@@ -211,11 +213,12 @@ int main(int argc,char **argv)
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n inf_norm = %f \n",norm_inf);CHKERRQ(ierr);
     }
     ierr = FieldsH5Write(&ctx,&fields);
+ 
   
-  
-
+/*
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
+
 	for (i = 0; i < 6; i++) {
 		ctx.bcP[0].face[i] = NONE;
 		for (c = 0; c < 3; c++) {
@@ -242,7 +245,7 @@ int main(int argc,char **argv)
   ctx.bcP[0].face[Z1] = FIXED;
   ierr = VecSet(ctx.PresBCArray,0);CHKERRQ(ierr);
   ierr = VecSet(ctx.VelBCArray,0);CHKERRQ(ierr);
-
+*/
   
   ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
 //  ierr = VecSet(ctx.RHSVelPpre,0.);CHKERRQ(ierr);

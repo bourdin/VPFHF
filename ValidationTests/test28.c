@@ -6,6 +6,8 @@
  ./test28 -n 101,101,2 -l 1,1,0.01 -m_inv 10 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -npc 1 -pc0_r 0.15 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.04 -epsilon 0.02 -pc0_theta 0 -pc0_phi 90 
  ./test28 -n 101,101,2 -l 1,1,0.01 -m_inv 10 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -npc 1 -pc0_r 0.15 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.04 -epsilon 0.02 -pc0_theta 0 -pc0_phi 90
  ./test28 -n 51,11,2 -l 1,1,0.01 -m_inv 10 -maxtimestep 20 -flowsolver FLOWSOLVER_snesMIXEDFEM
+ 
+ ./test28 -n 51,51,2 -l 1,1,0.01 -m_inv 10 -ts_dt 1 -ts_max_steps 20 -flowsolver FLOWSOLVER_tsMIXEDFEM
  */
 
 #include "petsc.h"
@@ -46,7 +48,7 @@ int main(int argc,char **argv)
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-  ctx.FlowDisplCoupling = PETSC_TRUE;
+  ctx.FlowDisplCoupling = PETSC_FALSE;
   ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
 	ierr = VecSet(ctx.VelBCArray,0.);CHKERRQ(ierr);
 	ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
