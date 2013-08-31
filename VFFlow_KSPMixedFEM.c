@@ -704,33 +704,35 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
       }
     }
   }
+  PetscInt  w_no = 0;
   if(ctx->hasFlowWells){
-    for(ii = 0; ii < ctx->numWells; ii++){
+    while(w_no < ctx->numWells){
+//    for(ii = 0; ii < ctx->numWells; ii++){
       for (ek = zs; ek < zs+zm; ek++) {
         for (ej = ys; ej < ys+ym; ej++) {
           for (ei = xs; ei < xs+xm; ei++) {
             if(
-               ((coords_array[ek][ej][ei+1][0] >= ctx->well[ii].coords[0]) && (coords_array[ek][ej][ei][0] <= ctx->well[ii].coords[0] ))    &&
-               ((coords_array[ek][ej+1][ei][1] >= ctx->well[ii].coords[1]) && (coords_array[ek][ej][ei][1] <= ctx->well[ii].coords[1] ))    &&
-               ((coords_array[ek+1][ej][ei][2] >= ctx->well[ii].coords[2]) && (coords_array[ek][ej][ei][2] <= ctx->well[ii].coords[2] ))
+               ((coords_array[ek][ej][ei+1][0] >= ctx->well[w_no].coords[0]) && (coords_array[ek][ej][ei][0] <= ctx->well[w_no].coords[0] ))    &&
+               ((coords_array[ek][ej+1][ei][1] >= ctx->well[w_no].coords[1]) && (coords_array[ek][ej][ei][1] <= ctx->well[w_no].coords[1] ))    &&
+               ((coords_array[ek+1][ej][ei][2] >= ctx->well[w_no].coords[2]) && (coords_array[ek][ej][ei][2] <= ctx->well[w_no].coords[2] ))
                )
             {
               hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
               hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
               hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
               ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-              hwx = (ctx->well[ii].coords[0]-coords_array[ek][ej][ei][0])/hx;
-              hwy = (ctx->well[ii].coords[1]-coords_array[ek][ej][ei][1])/hy;
-              hwz = (ctx->well[ii].coords[2]-coords_array[ek][ej][ei][2])/hz;
-              if(ctx->well[ii].condition == RATE){
-                ierr = VecApplyWellFlowRate(RHS_local,&ctx->e3D,ctx->well[ii].Qw,hwx,hwy,hwz,ek,ej,ei,v_array);CHKERRQ(ierr);
+              hwx = (ctx->well[w_no].coords[0]-coords_array[ek][ej][ei][0])/hx;
+              hwy = (ctx->well[w_no].coords[1]-coords_array[ek][ej][ei][1])/hy;
+              hwz = (ctx->well[w_no].coords[2]-coords_array[ek][ej][ei][2])/hz;
+              if(ctx->well[w_no].condition == RATE){
+                ierr = VecApplyWellFlowRate(RHS_local,&ctx->e3D,ctx->well[w_no].Qw,hwx,hwy,hwz,ek,ej,ei,v_array);CHKERRQ(ierr);
                 for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
                   for (j = 0; j < ctx->e3D.nphiy; j++) {
                     for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-                      if(ctx->well[ii].type == INJECTOR){
+                      if(ctx->well[w_no].type == INJECTOR){
                         RHS_array[ek+k][ej+j][ei+i][3] -= timestepsize*RHS_local[l];
                       }
-                      else if(ctx->well[ii].type == PRODUCER)
+                      else if(ctx->well[w_no].type == PRODUCER)
                       {
                         RHS_array[ek+k][ej+j][ei+i][3] -= -timestepsize*RHS_local[l];
                       }
@@ -738,15 +740,15 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields * fiel
                   }
                 }
               }
-              else if(ctx->well[ii].condition == PRESSURE){
-                
+              else if(ctx->well[w_no].condition == PRESSURE){
               }
-              goto outer;
+//              goto outer;
             }
           }
         }
       }
-    outer:;
+//    outer:;
+      w_no++;
     }
   }
   ierr = MatAssemblyBegin(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
