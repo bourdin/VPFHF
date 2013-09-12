@@ -59,8 +59,7 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,ctx.Cond,&cond_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.TBCArray,&Tbc_array);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.velocity,&vel_array);CHKERRQ(ierr); 
-	
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.velocity,&vel_array);CHKERRQ(ierr);
 	ctx.hasHeatSources = PETSC_TRUE;
 
 	ctx.flowprop.theta = 1.;
@@ -70,7 +69,14 @@ int main(int argc,char **argv)
 	lx = BBmax[0]-BBmin[0];
 	hx = lx/(nx-1);
 	hy = ly/(nx-1);
-	hz = lz/(nz-1);	
+	hz = lz/(nz-1);
+  ctx.matprop[0].rho = 0;
+	ctx.matprop[0].Cp = 0;
+
+  
+  ierr = PetscOptionsGetReal(PETSC_NULL,"-cond",&condctvty,PETSC_NULL);CHKERRQ(ierr);
+
+  
 	for (k = zs1; k < zs1+zm1; k++) {
 		for (j = ys1; j < ys1+ym1; j++) {
 			for (i = xs1; i < xs1+xm1; i++) {
@@ -80,26 +86,24 @@ int main(int argc,char **argv)
 	}
 	for (i = 0; i < 6; i++) {
 		ctx.bcT[0].face[i] = NONE;
-		ctx.bcQT[0].face[i] = NONE;
+    for(j = 0; j < 3; j++){
+      ctx.bcQT[j].face[i] = NONE;
+    }
 	}
 	for (i = 0; i < 12; i++) {
 		ctx.bcT[0].edge[i] = NONE;
-		ctx.bcQT[0].edge[i] = NONE;
+    for(j = 0; j < 3; j++){
+      ctx.bcQT[j].edge[i] = NONE;
+    }
 	}
 	for (i = 0; i < 8; i++) {
 		ctx.bcT[0].vertex[i] = NONE;
-		ctx.bcQT[0].vertex[i] = NONE;
+    for(j = 0; j < 3; j++){
+      ctx.bcQT[j].vertex[i] = NONE;
+    }
 	}
 	ctx.bcT[0].face[X0] = FIXED;
 	ctx.bcT[0].face[X1] = FIXED;
-	
-/*	
-	PetscInt dof = 1;c = 0;
-	for (i = 0; i < 6; i++) {
-			ierr = PetscPrintf(PETSC_COMM_WORLD,"    %s[%i]=%s ",FACE_NAME[i],c,BCTYPE_NAME[ ctx.bcT[0].face[i] ]);CHKERRQ(ierr);
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n");CHKERRQ(ierr);
-	}
-*/
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
@@ -134,8 +138,13 @@ int main(int argc,char **argv)
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
 		ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
+    
 		ierr = VF_HeatTimeStep(&ctx,&fields);CHKERRQ(ierr);
-		ierr = FieldsH5Write(&ctx,&fields);		
+    
+    ierr = VecCopy(ctx.RHST,ctx.RHSTpre);CHKERRQ(ierr);
+    ierr = VecCopy(fields.theta,ctx.prevT);CHKERRQ(ierr);
+
+		ierr = FieldsH5Write(&ctx,&fields);
 		ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
 		ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
 		ierr = PetscLogView(logviewer);CHKERRQ(ierr);

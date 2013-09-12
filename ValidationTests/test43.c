@@ -70,26 +70,42 @@ int main(int argc,char **argv)
 	lx = BBmax[0]-BBmin[0];
 	hx = lx/(nx-1);
 	hy = ly/(nx-1);
-	hz = lz/(nz-1);	
+	hz = lz/(nz-1);
+  ctx.matprop[0].rho = 0;
+	ctx.matprop[0].Cp = 0;
+
+  
+  
 	for (k = zs1; k < zs1+zm1; k++) {
 		for (j = ys1; j < ys1+ym1; j++) {
 			for (i = xs1; i < xs1+xm1; i++) {
 				cond_array[k][j][i][0] = condctvty;
+//				cond_array[k][j][i][1] = condctvty;
 			}
 		}
 	}
 	for (i = 0; i < 6; i++) {
 		ctx.bcT[0].face[i] = NONE;
-		ctx.bcQT[0].face[i] = NONE;
+    for(j = 0; j < 3; j++){
+      ctx.bcQT[j].face[i] = NONE;
+    }
 	}
 	for (i = 0; i < 12; i++) {
 		ctx.bcT[0].edge[i] = NONE;
-		ctx.bcQT[0].edge[i] = NONE;
+    for(j = 0; j < 3; j++){
+      ctx.bcQT[j].edge[i] = NONE;
+    }
 	}
 	for (i = 0; i < 8; i++) {
 		ctx.bcT[0].vertex[i] = NONE;
-		ctx.bcQT[0].vertex[i] = NONE;
+    for(j = 0; j < 3; j++){
+      ctx.bcQT[j].vertex[i] = NONE;
+    }
 	}
+  ctx.bcQT[1].face[Y0] = FIXED;
+  ctx.bcQT[1].face[Y1] = FIXED;
+  ctx.bcQT[2].face[Z0] = FIXED;
+  ctx.bcQT[2].face[Z1] = FIXED;
 	ctx.bcT[0].face[X0] = FIXED;
 	ctx.bcT[0].face[X1] = FIXED;
 /*	
@@ -117,6 +133,7 @@ int main(int argc,char **argv)
 			for (i = xs; i < xs+xm; i++) {
 				heatsrc_array[k][j][i] = src; 
 				vel_array[k][j][i][0] = ux;
+				vel_array[k][j][i][1] = 0;
 			}
 		}
 	}
@@ -136,6 +153,8 @@ int main(int argc,char **argv)
 		ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
 		ierr = VF_HeatTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VecCopy(ctx.RHST,ctx.RHSTpre);CHKERRQ(ierr);
+    ierr = VecCopy(fields.theta,ctx.prevT);CHKERRQ(ierr);
 		ierr = FieldsH5Write(&ctx,&fields);		
 		ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
 		ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);

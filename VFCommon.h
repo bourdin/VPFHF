@@ -24,10 +24,6 @@ typedef struct {
 	PetscReal   K_dr;         /* Undrained bulk modulus              */
 } VFFlowProp;
 
-typedef enum {
-	FIXEDSTRAIN,
-	FIXEDSTRESS,
-} ResFlowMechCouplingType;
 
 /*
  all fields involved in the computations
@@ -110,6 +106,7 @@ typedef enum {
 	RATE
 } WellConstraint;
 
+
 typedef enum {
 	INJECTOR,
 	PRODUCER
@@ -154,13 +151,18 @@ typedef enum {
 	FLOWSOLVER_TSMIXEDFEM,
 	FLOWSOLVER_FAKE,
 	FLOWSOLVER_READFROMFILES,
-	FLOWSOLVER_NONE,
+	FLOWSOLVER_NONE
 } VFFlowSolverType;
 
 typedef enum {
 	FRACTUREFLOWSOLVER_SNESMIXEDFEM,
-	FRACTUREFLOWSOLVER_NONE,
+	FRACTUREFLOWSOLVER_NONE
 } VFFractureFlowSolverType;
+
+typedef enum {
+	FIXEDSTRAIN,
+	FIXEDSTRESS
+} ResFlowMechCouplingType;
 
 typedef enum {
 	HEATSOLVER_SNESFEM,
@@ -364,8 +366,8 @@ typedef struct {
 	Vec					        HeatFluxBCArray;
 	PetscBool           hasHeatSources;
 	Vec                 prevT;
-	Vec                 Cond;
-	BC                  bcQT[1];        /*heat flux in heat equation*/
+	Vec                 Cond;           /*thermal conductivity in ctx*/
+	BC                  bcQT[3];        /*heat flux in heat equation*/
 	Vec					        TBCArray;
 	Mat                 KFracVelP;
 	Mat                 JacFracVelP;
