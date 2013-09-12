@@ -92,12 +92,15 @@ int main(int argc,char **argv)
 			ctx.bcQ[c].vertex[i] = NONE;
 		}
 	}
+ 
    ctx.bcP[0].face[X0] = FIXED;
    ctx.bcP[0].face[X1] = FIXED;
    ctx.bcQ[1].face[Y0] = FIXED;
    ctx.bcQ[1].face[Y1] = FIXED;
    ctx.bcQ[2].face[Z0] = FIXED;
    ctx.bcQ[2].face[Z1] = FIXED;
+ 
+  
 /*
   ctx.bcP[0].face[X0] = FIXED;
 	ctx.bcP[0].face[X1] = FIXED;

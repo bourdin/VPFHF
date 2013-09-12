@@ -34,7 +34,6 @@ extern PetscErrorCode VF_FEMSNESHeatSolverInitialize(VFCtx *ctx, VFFields *field
   ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KT);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KTlhs);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->JacT);CHKERRQ(ierr);
-
 	ierr = MatZeroEntries(ctx->KT);CHKERRQ(ierr);
 	ierr = MatZeroEntries(ctx->KTlhs);CHKERRQ(ierr);
 	ierr = MatZeroEntries(ctx->JacT);CHKERRQ(ierr);
@@ -49,7 +48,10 @@ extern PetscErrorCode VF_FEMSNESHeatSolverInitialize(VFCtx *ctx, VFFields *field
 	ierr = PetscObjectSetName((PetscObject)ctx->HeatFunct,"RHS of SNES heat solver");CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSTpre);CHKERRQ(ierr);
 	ierr = VecSet(ctx->RHSTpre,0.);CHKERRQ(ierr);
+  
 	ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesT);CHKERRQ(ierr);
+  ierr = SNESAppendOptionsPrefix(ctx->snesT,"HeatSnes_");CHKERRQ(ierr);
+  ierr = SNESSetFromOptions(ctx->snesT);CHKERRQ(ierr);
 	ierr = BCTInit(&ctx->bcT[0],ctx);
 	ierr = BCQTInit(&ctx->bcQT[0],ctx);	
 		//	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
@@ -77,19 +79,15 @@ extern PetscErrorCode VF_FEMSNESHeatSolverFinalize(VFCtx *ctx,VFFields *fields)
 #define __FUNCT__ "VF_HeatFEMSNESSolve"
 extern PetscErrorCode VF_HeatFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 {
-	PetscErrorCode     ierr;
+	PetscErrorCode      ierr;
 	SNESConvergedReason reason;	
-	PetscInt           its;
+	PetscInt            its;
 	PetscReal           Tmin,Tmax;
-	Vec					VecRHS;
 	
 	PetscFunctionBegin;	
-	ierr = VecCopy(fields->theta,ctx->prevT);CHKERRQ(ierr);	
-	ierr = VecDuplicate(ctx->RHST,&VecRHS);CHKERRQ(ierr);
 	ierr = FormHeatMatricesnVector(ctx->KT,ctx->KTlhs,ctx->RHST,ctx,fields);CHKERRQ(ierr);
-	ierr = VecCopy(ctx->RHST,VecRHS);CHKERRQ(ierr);
 	ierr = SNESSetFunction(ctx->snesT,ctx->HeatFunct,FormSNESHeatIFunction,ctx);CHKERRQ(ierr);
-    ierr = SNESSetJacobian(ctx->snesT,ctx->JacT,ctx->JacT,FormSNESHeatIJacobian,ctx);CHKERRQ(ierr);	
+    ierr = SNESSetJacobian(ctx->snesT,ctx->JacT,ctx->JacT,FormSNESHeatIJacobian,ctx);CHKERRQ(ierr);
 	if (ctx->verbose > 1) {
 		ierr = SNESMonitorSet(ctx->snesT,FEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	}	
@@ -104,8 +102,6 @@ extern PetscErrorCode VF_HeatFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = VecMin(fields->theta,PETSC_NULL,&Tmin);CHKERRQ(ierr);
 	ierr = VecMax(fields->theta,PETSC_NULL,&Tmax);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      T min / max:     %e %e\n",Tmin,Tmax);CHKERRQ(ierr);
-	ierr = VecCopy(VecRHS,ctx->RHSTpre);CHKERRQ(ierr);	
-	ierr = VecDestroy(&VecRHS);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
@@ -136,20 +132,17 @@ extern PetscErrorCode FormSNESHeatIFunction(SNES snes,Vec T,Vec Func,void *user)
 	
 	PetscErrorCode ierr;
 	VFCtx			*ctx=(VFCtx*)user;
-	PetscReal		theta,timestepsize;
-	PetscReal		dt_dot_theta,dt_dot_one_minus_theta;
+	PetscReal		theta,one_minus_theta;
 	Vec             VecRHS;
 	
 	PetscFunctionBegin;
-	timestepsize = ctx->flowprop.timestepsize;
 	theta = ctx->flowprop.theta;
-	dt_dot_theta = timestepsize*theta;
-	dt_dot_one_minus_theta = timestepsize*(1.-theta);
+	one_minus_theta = (1.-theta);
 	
 	ierr = VecDuplicate(ctx->RHST,&VecRHS);CHKERRQ(ierr);
 	ierr = VecCopy(ctx->RHST,VecRHS);CHKERRQ(ierr);
 	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
-	ierr = VecAXPBY(VecRHS,dt_dot_one_minus_theta,dt_dot_theta,ctx->RHSTpre);CHKERRQ(ierr);	
+	ierr = VecAXPBY(VecRHS,one_minus_theta,theta,ctx->RHSTpre);CHKERRQ(ierr);	
 	ierr = MatMultAdd(ctx->KTlhs,ctx->prevT,VecRHS,VecRHS);CHKERRQ(ierr);	
 	ierr = VecApplyDirichletBC(VecRHS,ctx->TBCArray,&ctx->bcT[0]);CHKERRQ(ierr);
 	ierr = MatMult(ctx->KT,T,Func);CHKERRQ(ierr);	
@@ -177,8 +170,8 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	PetscReal      theta,timestepsize;
 	PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
 	MatStencil     *row;
-	FACE			face;
-	MatStructure	flg;
+	FACE           face;
+	MatStructure   flg;
 	PetscReal      *KM_local,*KC_local,*KD_local,*K1_local,*K2_local,*KN_local,*KS_local;
 	Vec            diffsvty_local;
 	PetscReal      ****diffsvty_array;
@@ -279,7 +272,7 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 				hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				/*	Assembling the sub-Matrices	*/
-				rhoCp_eff_array=rho_liq_array*Cp_liq_array+rho_sol_array*Cp_sol_array;				
+				rhoCp_eff_array=rho_liq_array*Cp_liq_array+rho_sol_array*Cp_sol_array;
 				ierr = VF_MatA_local(KM_local,&ctx->e3D,ek,ej,ei,v_array);CHKERRQ(ierr);
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -289,56 +282,42 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 					}
 				}
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KM_local,ADD_VALUES);CHKERRQ(ierr);			
-				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,KM_local,ADD_VALUES);CHKERRQ(ierr);			
-				ierr = Flow_HMatD(KD_local,&ctx->e3D,ek,ej,ei,diffsvty_array,v_array);CHKERRQ(ierr);
-				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
-					for (j = 0; j < ctx->e3D.nphiy; j++) {
-						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-							row[l].i = ei+i;row[l].j = ej+j;row[l].k = ek+k;row[l].c = 0;
-						}
-					}
-				}
+				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,KM_local,ADD_VALUES);CHKERRQ(ierr);
+				ierr = VF_HeatMatK_local(KD_local,&ctx->e3D,ek,ej,ei,diffsvty_array,v_array);CHKERRQ(ierr);
+
 				for (l = 0; l < nrow*nrow; l++) {
 					K1_local[l] = theta*timestepsize*(1./rhoCp_eff_array)*KD_local[l];
 					K2_local[l] = -1.*(1.-theta)*timestepsize*(1./rhoCp_eff_array)*KD_local[l];
 				}
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K1_local,ADD_VALUES);CHKERRQ(ierr);
 				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,K2_local,ADD_VALUES);CHKERRQ(ierr);
-				ierr = HeatMatC(KC_local,&ctx->e3D,ek,ej,ei,vel_array,v_array);CHKERRQ(ierr);
-				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
-					for (j = 0; j < ctx->e3D.nphiy; j++) {
-						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-							row[l].i = ei+i;row[l].j = ej+j;row[l].k = ek+k;row[l].c = 0;
-						}
-					}
-				}
+				ierr = VF_HeatMatC_local(KC_local,&ctx->e3D,ek,ej,ei,vel_array,v_array);CHKERRQ(ierr);
+
 				for (l = 0; l < nrow*nrow; l++) {
 					K1_local[l] = theta*timestepsize*(rho_liq_array*Cp_liq_array/rhoCp_eff_array)*KC_local[l];
+					K1_local[l] = timestepsize*KC_local[l];
 					K2_local[l] = -1.0*(1.-theta)*timestepsize*(rho_liq_array*Cp_liq_array/rhoCp_eff_array)*KC_local[l];
 				}
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K1_local,ADD_VALUES);CHKERRQ(ierr);
 				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,K2_local,ADD_VALUES);CHKERRQ(ierr);
-				ierr = HeatMatN(KN_local,&ctx->e3D,ek,ej,ei,vel_array,v_array);CHKERRQ(ierr);
-				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
-					for (j = 0; j < ctx->e3D.nphiy; j++) {
-						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-							row[l].i = ei+i;row[l].j = ej+j;row[l].k = ek+k;row[l].c = 0;
-						}
-					}
-				}
+				ierr = VF_HeatMatN_local(KN_local,&ctx->e3D,ek,ej,ei,vel_array,v_array);CHKERRQ(ierr);
+
 				for (l = 0; l < nrow*nrow; l++) {		
 					K1_local[l] = 1./2.*theta*timestepsize*timestepsize*(rho_liq_array*Cp_liq_array/rhoCp_eff_array)*(rho_liq_array*Cp_liq_array/rhoCp_eff_array)*KN_local[l];
 					K2_local[l] = -1./2.*(1-theta)*timestepsize*timestepsize*(rho_liq_array*Cp_liq_array/rhoCp_eff_array)*(rho_liq_array*Cp_liq_array/rhoCp_eff_array)*KN_local[l];
-				}
-				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K1_local,ADD_VALUES);CHKERRQ(ierr);
-				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,K2_local,ADD_VALUES);CHKERRQ(ierr);
-				/*	Assembling the righthand side vector	*/
+          
+        }
+
+//        ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K1_local,ADD_VALUES);CHKERRQ(ierr);
+//				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,K2_local,ADD_VALUES);CHKERRQ(ierr);
+        /*	Assembling the righthand side vector	*/
 				if(ctx->hasHeatSources){
 					ierr = VecApplyHeatSourceTerms(RHS_local,RHS1_local,heatsource_array,&ctx->e3D,ek,ej,ei,ctx,vel_array,v_array);
 					for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 						for (j = 0; j < ctx->e3D.nphiy; j++) {
-							for (i = 0; i < ctx->e3D.nphix; i++,l++) {								
-								RHS_array[ek+k][ej+j][ei+i] += 1.0*(1./rhoCp_eff_array)*(RHS_local[l]-timestepsize*(rho_liq_array*Cp_liq_array/rhoCp_eff_array)*RHS1_local[l]);
+							for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+								RHS_array[ek+k][ej+j][ei+i] += timestepsize*(1./rhoCp_eff_array)*RHS_local[l];
+//                RHS_array[ek+k][ej+j][ei+i] += -timestepsize*timestepsize*(1./rhoCp_eff_array)*(rho_liq_array*Cp_liq_array/rhoCp_eff_array)*RHS1_local[l];
 							}
 						}
 					}
@@ -348,12 +327,12 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 					/*					 Face X0			*/
 					face = X0;	
 					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
-					if (ctx->bcQT[0].face[face] == VALUE) {
+					if (ctx->bcQT[X0].face[face] == VALUE) {
 						ierr = VecApplyHeatFluxBC(RHS_local,fluxbc_array,ek,ej,ei,face,&ctx->e2D,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
 								for (i = 0; i < ctx->e2D.nphiz; i++, l++) {
-									RHS_array[ek+k][ej+j][ei+i] +=  -1.0*(1./rhoCp_eff_array)*RHS_local[l];
+									RHS_array[ek+k][ej+j][ei+i] +=  -timestepsize*(1./rhoCp_eff_array)*RHS_local[l];
 								}
 							}
 						}
@@ -363,12 +342,12 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 					/*					 Face X1		*/
 					face = X1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
-					if (ctx->bcQT[0].face[face] == VALUE) {
+					if (ctx->bcQT[X1].face[face] == VALUE) {
 						ierr = VecApplyHeatFluxBC(RHS_local,fluxbc_array,ek,ej,ei,face,&ctx->e2D,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
 								for (i = 0; i < ctx->e2D.nphiz; i++, l++) {
-									RHS_array[ek+k][ej+j][ei+1] +=  -1.0*(1./rhoCp_eff_array)*RHS_local[l];
+									RHS_array[ek+k][ej+j][ei+1] +=  -timestepsize*(1./rhoCp_eff_array)*RHS_local[l];
 								}
 							}
 						}
@@ -378,12 +357,12 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 					/*					 Face Y0		*/
 					face = Y0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
-					if (ctx->bcQT[0].face[face] == VALUE) {
+					if (ctx->bcQT[Y0].face[face] == VALUE) {
 						ierr = VecApplyHeatFluxBC(RHS_local,fluxbc_array,ek,ej,ei,face,&ctx->e2D,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
 							for (j = 0; j < ctx->e2D.nphiz; j++) {
 								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
-									RHS_array[ek+k][ej+j][ei+i] +=  -1.0*(1./rhoCp_eff_array)*RHS_local[l];
+									RHS_array[ek+k][ej+j][ei+i] +=  -timestepsize*(1./rhoCp_eff_array)*RHS_local[l];
 								}
 							}
 						}
@@ -393,12 +372,12 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 					/*					 Face Y1		*/
 					face = Y1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
-					if (ctx->bcQT[0].face[face] == VALUE) {
+					if (ctx->bcQT[Y1].face[face] == VALUE) {
 						ierr = VecApplyHeatFluxBC(RHS_local,fluxbc_array,ek,ej,ei,face,&ctx->e2D,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
 							for (j = 0; j < ctx->e2D.nphiz; j++) {
 								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
-									RHS_array[ek+k][ej+1][ei+i] +=  -1.0*(1./rhoCp_eff_array)*RHS_local[l];
+									RHS_array[ek+k][ej+1][ei+i] +=  -timestepsize*(1./rhoCp_eff_array)*RHS_local[l];
 								}
 							}
 						}
@@ -408,12 +387,12 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 					/*					 Face Z0		*/
 					face = Z0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
-					if (ctx->bcQT[0].face[face] == VALUE) {
+					if (ctx->bcQT[Z0].face[face] == VALUE) {
 						ierr = VecApplyHeatFluxBC(RHS_local,fluxbc_array,ek,ej,ei,face,&ctx->e2D,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
 								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
-									RHS_array[ek+k][ej+j][ei+i] +=  -1.0*(1./rhoCp_eff_array)*RHS_local[l];
+									RHS_array[ek+k][ej+j][ei+i] +=  -timestepsize*(1./rhoCp_eff_array)*RHS_local[l];
 								}
 							}
 						}
@@ -423,12 +402,12 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 					/*					 Face Z1		*/
 					face = Z1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
-					if (ctx->bcQT[0].face[face] == VALUE) {
+					if (ctx->bcQT[Z1].face[face] == VALUE) {
 						ierr = VecApplyHeatFluxBC(RHS_local,fluxbc_array,ek,ej,ei,face,&ctx->e2D,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
 								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
-									RHS_array[ek+1][ej+j][ei+i] +=  -1.0*(1./rhoCp_eff_array)*RHS_local[l];
+									RHS_array[ek+1][ej+j][ei+i] +=  -timestepsize*(1./rhoCp_eff_array)*RHS_local[l];
 								}
 							}
 						}
@@ -469,7 +448,22 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	 ierr = DMRestoreLocalVector(ctx->daScal,&rho_sol_local);CHKERRQ(ierr);
 	 ierr = DMDAVecRestoreArray(ctx->daScal,Cp_sol_local,&Cp_sol_array);CHKERRQ(ierr);
 	 ierr = DMRestoreLocalVector(ctx->daScal,&Cp_sol_local);CHKERRQ(ierr);
-	 */	
+	 */
+  
+/*
+   PetscViewer viewer;
+   ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrix.txt",&viewer);CHKERRQ(ierr);
+   ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+   ierr = MatView(K,viewer);CHKERRQ(ierr);
+   
+   ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrixlhs.txt",&viewer);CHKERRQ(ierr);
+   ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+   ierr = MatView(Klhs,viewer);CHKERRQ(ierr);
+   
+   ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS.txt",&viewer);CHKERRQ(ierr);
+   ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
+   ierr = VecView(RHS,viewer);CHKERRQ(ierr);
+ */
 	ierr = DMDAVecRestoreArray(ctx->daScal,fluxbc_local,&fluxbc_array);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daScal,&fluxbc_local);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
@@ -479,58 +473,7 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "Flow_HMatD"
-extern PetscErrorCode Flow_HMatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****diffsvty_array,PetscReal ***v_array)
-{
-  PetscErrorCode  ierr;
-	PetscInt        i,j,k,l;
-	PetscInt        ii,jj,kk;
-	PetscInt        eg;
-	PetscReal       kx,ky,kz,kxy,kxz,kyz;	
-  PetscReal		   *v_elem;
 
-	PetscFunctionBegin;
-  ierr = PetscMalloc(e->ng*sizeof(PetscReal),&v_elem);CHKERRQ(ierr);
-	kx     = diffsvty_array[ek][ej][ei][0];
-	ky     = diffsvty_array[ek][ej][ei][1];
-	kz     = diffsvty_array[ek][ej][ei][2];
-	kxy    = diffsvty_array[ek][ej][ei][3];
-	kxz    = diffsvty_array[ek][ej][ei][4];
-	kyz    = diffsvty_array[ek][ej][ei][5];
-  for (eg = 0; eg < e->ng; eg++){
-		v_elem[eg] = 0.;
-	}
-  for (k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++) {
-        for (eg = 0; eg < e->ng; eg++) {
-          v_elem[eg] += v_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
-        }
-      }
-    }
-  }
-	for (l = 0,k = 0; k < e->nphiz; k++) {
-		for (j = 0; j < e->nphiy; j++) {
-			for (i = 0; i < e->nphix; i++) {
-				for (kk = 0; kk < e->nphiz; kk++) {
-					for (jj = 0; jj < e->nphiy; jj++) {
-						for (ii = 0; ii < e->nphix; ii++,l++) {
-							Kd_ele[l] = 0.;
-							for (eg = 0; eg < e->ng; eg++) {
-								Kd_ele[l] += ((kx*e->dphi[k][j][i][0][eg]+kxy*e->dphi[k][j][i][1][eg]+kxz*e->dphi[k][j][i][2][eg])*e->dphi[kk][jj][ii][0][eg]
-											  +(kxy*e->dphi[k][j][i][0][eg]+ky*e->dphi[k][j][i][1][eg]+kyz*e->dphi[k][j][i][2][eg])*e->dphi[kk][jj][ii][1][eg]
-											  +(kxz*e->dphi[k][j][i][0][eg]+kyz*e->dphi[k][j][i][1][eg]+kz*e->dphi[k][j][i][2][eg])*e->dphi[kk][jj][ii][2][eg])*(pow(v_elem[eg],2))*e->weight[eg];
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-  ierr = PetscFree(v_elem);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
-}
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyHeatFluxBC"
@@ -692,8 +635,62 @@ extern PetscErrorCode VecApplyHeatFluxBC(PetscReal *RHS_local,PetscReal ***flux_
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "HeatMatN"
-extern PetscErrorCode HeatMatN(PetscReal *KN_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei, PetscReal ****vel_array,PetscReal ***v_array)
+#define __FUNCT__ "VF_HeatMatK_local"
+extern PetscErrorCode VF_HeatMatK_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****diffsvty_array,PetscReal ***v_array)
+{
+  PetscErrorCode  ierr;
+	PetscInt        i,j,k,l;
+	PetscInt        ii,jj,kk;
+	PetscInt        eg;
+	PetscReal       kx,ky,kz,kxy,kxz,kyz;
+  PetscReal		   *v_elem;
+  
+	PetscFunctionBegin;
+  ierr = PetscMalloc(e->ng*sizeof(PetscReal),&v_elem);CHKERRQ(ierr);
+	kx     = diffsvty_array[ek][ej][ei][0];
+	ky     = diffsvty_array[ek][ej][ei][1];
+	kz     = diffsvty_array[ek][ej][ei][2];
+	kxy    = diffsvty_array[ek][ej][ei][3];
+	kxz    = diffsvty_array[ek][ej][ei][4];
+	kyz    = diffsvty_array[ek][ej][ei][5];
+  for (eg = 0; eg < e->ng; eg++){
+		v_elem[eg] = 0.;
+	}
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        for (eg = 0; eg < e->ng; eg++) {
+          v_elem[eg] += v_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
+        }
+      }
+    }
+  }
+	for (l = 0,k = 0; k < e->nphiz; k++) {
+		for (j = 0; j < e->nphiy; j++) {
+			for (i = 0; i < e->nphix; i++) {
+				for (kk = 0; kk < e->nphiz; kk++) {
+					for (jj = 0; jj < e->nphiy; jj++) {
+						for (ii = 0; ii < e->nphix; ii++,l++) {
+							Kd_ele[l] = 0.;
+							for (eg = 0; eg < e->ng; eg++) {
+								Kd_ele[l] += ((kx*e->dphi[kk][jj][ii][0][eg]+kxy*e->dphi[kk][jj][ii][1][eg]+kxz*e->dphi[kk][jj][ii][2][eg])*e->dphi[k][j][i][0][eg]
+                              +(kxy*e->dphi[kk][jj][ii][0][eg]+ky*e->dphi[kk][jj][ii][1][eg]+kyz*e->dphi[kk][jj][ii][2][eg])*e->dphi[k][j][i][1][eg]
+                              +(kxz*e->dphi[kk][jj][ii][0][eg]+kyz*e->dphi[kk][jj][ii][1][eg]+kz*e->dphi[kk][jj][ii][2][eg])*e->dphi[k][j][i][2][eg])*(pow(v_elem[eg],2))*e->weight[eg];
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+  ierr = PetscFree(v_elem);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_HeatMatN_local"
+extern PetscErrorCode VF_HeatMatN_local(PetscReal *KN_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei, PetscReal ****vel_array,PetscReal ***v_array)
 {
 	PetscErrorCode ierr;
 	PetscInt i,j,k,l;
@@ -762,6 +759,66 @@ extern PetscErrorCode HeatMatN(PetscReal *KN_ele,CartFE_Element3D *e,PetscInt ek
 	PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "VF_HeatMatC_local"
+extern PetscErrorCode VF_HeatMatC_local(PetscReal *KC_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei, PetscReal ****vel_array,PetscReal ***v_array)
+{
+  
+	PetscErrorCode ierr;
+	PetscInt i,j,k,l;
+	PetscInt ii,jj,kk;
+	PetscInt eg;
+	PetscReal		*velx_loc;
+	PetscReal		*vely_loc;
+	PetscReal		*velz_loc;
+	PetscReal		*v_elem;
+  
+	PetscFunctionBegin;
+	ierr = PetscMalloc4(e->ng,PetscReal,&velx_loc,e->ng,PetscReal,&vely_loc,e->ng,PetscReal,&velz_loc,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
+	for (eg = 0; eg < e->ng; eg++){
+		velx_loc[eg] = 0.;
+		vely_loc[eg] = 0.;
+		velz_loc[eg] = 0.;
+		v_elem[eg] = 0.;
+	}
+	for (eg = 0; eg < e->ng; eg++) {
+		for (k = 0; k < e->nphiz; k++) {
+			for (j = 0; j < e->nphiy; j++) {
+				for (i = 0; i < e->nphix; i++) {
+					velx_loc[eg] += vel_array[ek+k][ej+j][ei+i][0] * e->phi[k][j][i][eg];
+					vely_loc[eg] += vel_array[ek+k][ej+j][ei+i][1] * e->phi[k][j][i][eg];
+					velz_loc[eg] += vel_array[ek+k][ej+j][ei+i][2] * e->phi[k][j][i][eg];
+					v_elem[eg] += v_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
+				}
+			}
+		}
+//    ierr = PetscPrintf(PETSC_COMM_WORLD,"eg = %d \t velx = %g \t vely = %g velz = %g \n",eg, velx_loc[eg],vely_loc[eg],velz_loc[eg]);CHKERRQ(ierr);
+	}
+	for (l = 0,k = 0; k < e->nphiz; k++) {
+		for (j = 0; j < e->nphiy; j++) {
+			for (i = 0; i < e->nphix; i++) {
+				for (kk = 0; kk < e->nphiz; kk++) {
+					for (jj = 0; jj < e->nphiy; jj++) {
+						for (ii = 0; ii < e->nphix; ii++,l++) {
+							KC_ele[l] = 0.;
+							for (eg = 0; eg < e->ng; eg++) {
+								KC_ele[l] += e->phi[k][j][i][eg]*(velx_loc[eg]*e->dphi[kk][jj][ii][0][eg]
+																  +vely_loc[eg]*e->dphi[kk][jj][ii][1][eg]+velz_loc[eg]*e->dphi[kk][jj][ii][2][eg])*(pow(v_elem[eg],2))*e->weight[eg];
+                
+                
+//                KC_ele[l] += e->phi[kk][jj][ii][eg]*(velx_loc[eg]*e->dphi[k][j][i][0][eg])*(pow(v_elem[eg],2))*e->weight[eg];
+                
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	ierr = PetscFree4(velx_loc,vely_loc,velz_loc,v_elem);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyHeatSourceTerms"
@@ -771,9 +828,9 @@ extern PetscErrorCode VecApplyHeatSourceTerms(PetscReal *K1_local,PetscReal *K2_
 	PetscInt       i,j,k,l;
 	PetscInt       eg;
 	PetscReal      *loc_source;
-	PetscReal		*dsource_dx_loc;  
-	PetscReal		*dsource_dy_loc;  
-	PetscReal		*dsource_dz_loc;  
+	PetscReal		*dsource_dx_loc;
+	PetscReal		*dsource_dy_loc;
+	PetscReal		*dsource_dz_loc;
 	PetscReal		*velx_loc;
 	PetscReal		*vely_loc;
 	PetscReal		*velz_loc;
@@ -824,61 +881,4 @@ extern PetscErrorCode VecApplyHeatSourceTerms(PetscReal *K1_local,PetscReal *K2_
 	ierr = PetscFree4(loc_source,dsource_dx_loc,dsource_dy_loc,dsource_dz_loc);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
-
-#undef __FUNCT__
-#define __FUNCT__ "HeatMatC"
-extern PetscErrorCode HeatMatC(PetscReal *KC_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei, PetscReal ****vel_array,PetscReal ***v_array)
-{
-	PetscErrorCode ierr;
-	PetscInt i,j,k,l;
-	PetscInt ii,jj,kk;
-	PetscInt eg;
-	PetscReal		*velx_loc;
-	PetscReal		*vely_loc;
-	PetscReal		*velz_loc;
-	PetscReal		*v_elem;
-  
-	PetscFunctionBegin;
-	ierr = PetscMalloc4(e->ng,PetscReal,&velx_loc,e->ng,PetscReal,&vely_loc,e->ng,PetscReal,&velz_loc,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
-	for (eg = 0; eg < e->ng; eg++){
-		velx_loc[eg] = 0.;
-		vely_loc[eg] = 0.;
-		velz_loc[eg] = 0.;
-		v_elem[eg] = 0.;
-	}
-	for (eg = 0; eg < e->ng; eg++) {
-		for (k = 0; k < e->nphiz; k++) {
-			for (j = 0; j < e->nphiy; j++) {
-				for (i = 0; i < e->nphix; i++) {
-					velx_loc[eg] += vel_array[ek+k][ej+j][ei+i][0] * e->phi[k][j][i][eg];
-					vely_loc[eg] += vel_array[ek+k][ej+j][ei+i][1] * e->phi[k][j][i][eg];
-					velz_loc[eg] += vel_array[ek+k][ej+j][ei+i][2] * e->phi[k][j][i][eg];
-					v_elem[eg] += v_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
-				}
-			}
-		}
-	}
-	for (l = 0,k = 0; k < e->nphiz; k++) {
-		for (j = 0; j < e->nphiy; j++) {
-			for (i = 0; i < e->nphix; i++) {
-				for (kk = 0; kk < e->nphiz; kk++) {
-					for (jj = 0; jj < e->nphiy; jj++) {
-						for (ii = 0; ii < e->nphix; ii++,l++) {
-							KC_ele[l] = 0.;
-							for (eg = 0; eg < e->ng; eg++) {
-								KC_ele[l] += e->phi[k][j][i][eg]*(velx_loc[eg]*e->dphi[kk][jj][ii][0][eg]
-																  +vely_loc[eg]*e->dphi[kk][jj][ii][1][eg]+velz_loc[eg]*e->dphi[kk][jj][ii][2][eg])*(pow(v_elem[eg],2))*e->weight[eg];
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	ierr = PetscFree4(velx_loc,vely_loc,velz_loc,v_elem);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
-}
-
-
-
 

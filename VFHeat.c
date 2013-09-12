@@ -31,7 +31,7 @@ extern PetscErrorCode BCQTInit(BC *BCQT,VFCtx *ctx)
 	PetscErrorCode ierr;
 	
 	PetscFunctionBegin;
-	ierr = BCInit(BCQT,1);CHKERRQ(ierr);	
+	ierr = BCInit(BCQT,3);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 

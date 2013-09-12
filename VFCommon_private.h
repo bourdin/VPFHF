@@ -73,6 +73,14 @@ static const char *VFFractureFlowSolverName[] = {
 	0
 };
 
+static const char *ResFlowMechCouplingName[] = {
+	"FIXEDSTRAIN",
+	"FIXEDSTRESS",
+  "ResFlowMechCouplingName",
+	"",
+	0
+};
+
 static const char *VFHeatSolverName[] = {
 	"HEATSOLVER_SNESFEM",
 	"VFHeatSolverName",
@@ -88,5 +96,7 @@ static const char *VFFileFormatName[] = {
 	"",
 	0
 };
+
+
 
 #endif

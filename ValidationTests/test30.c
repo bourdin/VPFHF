@@ -1,9 +1,12 @@
 /*
- test30.c: 1D. Terzaghi problem. Coupling of flow and displacmement solver for geomechanics application.
+ test30.c: 1D Terzaghi problem from Zheng et al. Coupling of flow and displacmement solver for geomechanics application.
+ 
+ Reservoir simultion with the finite element method using Biot poroelastic approach
+ Zheng, Y., Burridge R. and Burns D.
  
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
-./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 20 -timestepsize 2
+./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 20 -timestepsize 2 -resflowmechcoupling fixedstrain
  */
 
 #include "petsc.h"
@@ -104,7 +107,7 @@ int main(int argc,char **argv)
  ctx.flowprop.theta = 1.;
  ctx.matprop[0].E = 1.44e4;										//Young's modulus
   ctx.flowprop.M_inv = 1./12300.0;
-  ctx.flowprop.K_dr = 100000;
+  ctx.flowprop.K_dr = 10000;
  ctx.matprop[0].nu = 0.2;										//Poisson's ratio's modulus
  ctx.flowprop.rho = 1788e-6;									 //density in lb/ft^3
   ctx.flowprop.mu = (1.3e-4)*(940e-6);                    //viscosity in cp
@@ -167,8 +170,8 @@ int main(int argc,char **argv)
   ctx.hasInsitu        = PETSC_TRUE;
   ctx.FlowDisplCoupling = PETSC_TRUE;
 	ctx.hasCrackPressure = PETSC_TRUE;
-  ctx.ResFlowMechCoupling = FIXEDSTRESS;
-  ctx.ResFlowMechCoupling = FIXEDSTRAIN;
+//  ctx.ResFlowMechCoupling = FIXEDSTRESS;
+//  ctx.ResFlowMechCoupling = FIXEDSTRAIN;
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);

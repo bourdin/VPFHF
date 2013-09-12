@@ -62,8 +62,8 @@ int main(int argc,char **argv)
   for (k = zs1; k < zs1+zm1; k++) {
     for (j = ys1; j < ys1+ym1; j++) {
       for (i = xs1; i < xs1+xm1; i++) {
-        perm_array[k][j][i][0] = 1;
-        perm_array[k][j][i][1] = 1;
+        perm_array[k][j][i][0] = 0.1;
+        perm_array[k][j][i][1] = 0.1;
         perm_array[k][j][i][2] = 0.;
         perm_array[k][j][i][3] = 0.;
         perm_array[k][j][i][4] = 0.;
@@ -75,12 +75,14 @@ int main(int argc,char **argv)
     for (j = ys1; j < ys1+ym1; j++) {
       for (i = xs1; i < xs1+xm1; i++) {
         if((j == ny/2 || j == ny/2-1) && ( i > nx/8 && i < 8*nx/10)){
-          perm_array[k][j][i][0] = 1.;
-          perm_array[k][j][i][1] = 1.;
+          perm_array[k][j][i][0] = 0.1;
+          perm_array[k][j][i][1] = 0.1;
         }
       }
     }
   }
+  ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);
+
 	pi = 6.*asin(0.5);
 	rho = ctx.flowprop.rho;									 
 	mu = ctx.flowprop.mu;     
@@ -222,7 +224,6 @@ int main(int argc,char **argv)
   
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();

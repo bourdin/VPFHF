@@ -110,6 +110,8 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",VFUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
     ctx->flowcase = ALLNORMALFLOWBC;
     ierr          = PetscOptionsEnum("-flowBC","\n\tFlow boundary conditions","",VFFlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
+  
+    ierr          = PetscOptionsEnum("-resflowmechcoupling","\n\tRes flow mech coupling","",ResFlowMechCouplingName,(PetscEnum)ctx->ResFlowMechCoupling,(PetscEnum*)&ctx->ResFlowMechCoupling,PETSC_NULL);CHKERRQ(ierr);
 /*
     ctx->fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
  */
@@ -700,7 +702,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 
   ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Cond);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->Cond,"Thermal Conductivity of Rock");CHKERRQ(ierr);
-  ierr = VecSet(ctx->Cond,1.0);CHKERRQ(ierr);
+  ierr = VecSet(ctx->Cond,0.0);CHKERRQ(ierr);
 
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->TBCArray);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->TBCArray,"Temperature Boundary Term");CHKERRQ(ierr);
