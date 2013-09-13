@@ -23,32 +23,12 @@ extern PetscErrorCode MixedFEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *field
 {
 	PetscMPIInt    comm_size;
 	PetscErrorCode ierr;
-	
-	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KVelP);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KVelPlhs);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->JacVelP);CHKERRQ(ierr);
-	ierr = MatZeroEntries(ctx->JacVelP);CHKERRQ(ierr);
-	ierr = MatSetOption(ctx->KVelP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = MatSetOption(ctx->KVelPlhs,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = MatSetOption(ctx->JacVelP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->RHSVelP);CHKERRQ(ierr);
-	ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->FlowFunct);CHKERRQ(ierr);
-	ierr = PetscObjectSetName((PetscObject)ctx->RHSVelP,"RHS vector of flow equation");CHKERRQ(ierr);
-	ierr = PetscObjectSetName((PetscObject)ctx->FlowFunct,"RHS of TS flow solver");CHKERRQ(ierr);
-	
+		
 	ierr = TSCreate(PETSC_COMM_WORLD,&ctx->tsVelP);CHKERRQ(ierr);
-	//	ierr = TSAppendOptionsPrefix(ctx->tsVelP,"VelP_");CHKERRQ(ierr);
+//  ierr = TSAppendOptionsPrefix(ctx->tsVelP,"TSVelP_");CHKERRQ(ierr);
 	ierr = TSSetDM(ctx->tsVelP,ctx->daFlow);CHKERRQ(ierr);
 	ierr = TSSetProblemType(ctx->tsVelP,TS_LINEAR);CHKERRQ(ierr);
 	ierr = TSSetType(ctx->tsVelP,TSBEULER);CHKERRQ(ierr);
-	
-	ierr = BCPInit(&ctx->bcP[0],ctx);
-	ierr = BCQInit(&ctx->bcQ[0],ctx);
-	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-//	ierr = ResetFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	
-	ierr = ResetSourceTerms(ctx->Source,ctx->flowprop);
-	ierr = ResetBoundaryTerms(ctx,fields);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
@@ -58,11 +38,7 @@ extern PetscErrorCode MixedFEMTSFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 {
 	PetscErrorCode ierr;
 	PetscFunctionBegin;
-	ierr = MatDestroy(&ctx->KVelP);CHKERRQ(ierr);
-	ierr = MatDestroy(&ctx->KVelPlhs);CHKERRQ(ierr);
-	ierr = MatDestroy(&ctx->JacVelP);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->RHSVelP);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->FlowFunct);CHKERRQ(ierr);
+
 	ierr = TSDestroy(&ctx->tsVelP);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }

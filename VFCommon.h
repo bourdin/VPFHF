@@ -143,6 +143,7 @@ typedef enum {
 } VFUnilateralType;
 
 typedef enum {
+  FLOWSOLVER_SNESSTANDARDFEM,
 	FLOWSOLVER_TS,
 	FLOWSOLVER_SNES,
 	FLOWSOLVER_FEM,
