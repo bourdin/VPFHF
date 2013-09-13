@@ -7,6 +7,7 @@
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
 ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 20 -timestepsize 2 -resflowmechcoupling fixedstrain
+ ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 10 -resflowmechcoupling fixedstrain
  */
 
 #include "petsc.h"

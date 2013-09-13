@@ -66,8 +66,8 @@ extern PetscErrorCode FEMSNESFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 	PetscErrorCode ierr;
 	
 	PetscFunctionBegin;
-    ierr = MatDestroy(&ctx->KP);CHKERRQ(ierr);
-    ierr = MatDestroy(&ctx->KPlhs);CHKERRQ(ierr);
+  ierr = MatDestroy(&ctx->KP);CHKERRQ(ierr);
+  ierr = MatDestroy(&ctx->KPlhs);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->JacP);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->PrePressure);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSP);CHKERRQ(ierr);

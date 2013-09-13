@@ -52,6 +52,7 @@ static const char *VFUnilateralName[] = {
 };
 
 static const char *VFFlowSolverName[] = {
+	"FLOWSOLVER_SNESSTANDARDFEM",
 	"FLOWSOLVER_TS",
 	"FLOWSOLVER_SNES",
 	"FLOWSOLVER_FEM",
