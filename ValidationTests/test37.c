@@ -175,6 +175,10 @@ int main(int argc,char **argv)
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 		ierr = FieldsH5Write(&ctx,&fields);
+    ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
+    ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
+    ierr = VecCopy(fields.pressure,ctx.PrePressure);CHKERRQ(ierr);
+    ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
 	}
 	ierr = DMDAVecGetArray(ctx.daScal,fields.pressure,&pre_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx.daScal,fields.pressure,&pre_array);CHKERRQ(ierr);

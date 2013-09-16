@@ -4,7 +4,7 @@
  Taken from
  http://www.cs.uky.edu/~jzhang/pub/PAPER/adi4th.pdf   
 
- ./test47 -n 51,51,2 -l 2,2,0.01  -theta 1  -timestepsize 0.125 -maxtimestep 50 -condx 0.01 -condy 0.01 -velx 0.8 -vely 0.8
+ ./test47 -n 51,51,2 -l 2,2,0.01  -theta 1  -timestepsize 0.01 -maxtimestep 50 -condx 0.01 -condy 0.01 -velx 0.8 -vely 0.8
  
  ./test47 -n 101,101,2 -l 2,2,0.01  -theta 1  -timestepsize 0.001 -maxtimestep 200 -condx 0.01 -condy 0.01 -velx 01 -vely 01
 
@@ -34,7 +34,7 @@ int main(int argc,char **argv)
 	PetscReal		hx,hy,hz;
 	PetscReal		lx,ly,lz;
 	PetscReal		***heatsrc_array;
-	PetscReal		***heatfluxbc_array;
+	PetscReal		****heatfluxbc_array;
 	PetscReal		****cond_array;
 	PetscReal		****vel_array;
   PetscReal		***Tbc_array;
@@ -58,7 +58,7 @@ int main(int argc,char **argv)
 	ierr = VecSet(ctx.PresBCArray,0.);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.HeatSource,&heatsrc_array);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx.daScal,ctx.HeatFluxBCArray,&heatfluxbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.HeatFluxBCArray,&heatfluxbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,ctx.Cond,&cond_array);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.velocity,&vel_array);CHKERRQ(ierr);
@@ -125,7 +125,7 @@ int main(int argc,char **argv)
   ierr = DMDAVecRestoreArray(ctx.daScal,fields.theta,&T_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,ctx.Cond,&cond_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.HeatFluxBCArray,&heatfluxbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.HeatFluxBCArray,&heatfluxbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.HeatSource,&heatsrc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);

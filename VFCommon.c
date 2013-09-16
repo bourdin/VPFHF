@@ -696,7 +696,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) ctx->HeatSource,"Heat Source Term");CHKERRQ(ierr);
   ierr = VecSet(ctx->HeatSource,0.0);CHKERRQ(ierr);
 
-  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->HeatFluxBCArray);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(ctx->daVect,&ctx->HeatFluxBCArray);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->HeatFluxBCArray,"Heat Flux Boundary Term");CHKERRQ(ierr);
   ierr = VecSet(ctx->HeatFluxBCArray,0.0);CHKERRQ(ierr);
 
@@ -739,17 +739,6 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->PreFlowFields);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->PreFlowFields,"Previous time step flow fields");CHKERRQ(ierr);
 
-  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSP);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) ctx->RHSP,"RHS of FEM Pressure");CHKERRQ(ierr);
-  ierr = VecSet(ctx->RHSP,0.);CHKERRQ(ierr);
-
-	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSPpre);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject)ctx->RHSPpre,"RHS of FEM previous pressure");CHKERRQ(ierr);
-  ierr = VecSet(ctx->RHSPpre,0.);CHKERRQ(ierr);
-
-	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->PFunct);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject)ctx->PFunct,"RHS of FEM SNES flow solver");CHKERRQ(ierr);
-  ierr = VecSet(ctx->PFunct,0.);CHKERRQ(ierr);
 
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->PrePressure);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->PrePressure,"Previous Pressure");CHKERRQ(ierr);
@@ -1121,9 +1110,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
 
   ierr = VecDestroy(&ctx->PrePressure);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->RHSP);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->RHSPpre);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->PFunct);CHKERRQ(ierr);
+
   
   ierr = VecDestroy(&fields->VelnPress);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->vfperm);CHKERRQ(ierr);

@@ -49,6 +49,7 @@ int main(int argc,char **argv)
 	ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
 	ierr = VecSet(fields.U,0.);CHKERRQ(ierr);
 	ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
+	ierr = VecSet(ctx.PrePressure,0.);CHKERRQ(ierr);
 	ctx.hasFluidSources = PETSC_TRUE;
 	ctx.hasFlowWells = PETSC_FALSE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
@@ -104,10 +105,12 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				src_array[k][j][i] = 4.*pi*pi*beta/mu*sin(2.*pi*k*hz/lz)*sin(2.*pi*j*hy/ly)*sin(2.*pi*i*hx/lx)*( (1/(lx*lx))+(1/(ly*ly))+(1/(lz*lz)) );
+         src_array[k][j][i] = 4.*pi*pi*beta/mu*sin(2.*pi*k*hz/lz)*sin(2.*pi*j*hy/ly)*sin(2.*pi*i*hx/lx)*( (1/(lx*lx))+(1/(ly*ly))+(1/(lz*lz)) );
 			}
 		}
 	}
+
+  
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
@@ -127,6 +130,8 @@ int main(int argc,char **argv)
     /*Initialization Set initial flow field values. This case is zero. This will have to be called an initialization function*/
     ierr = VecSet(ctx.PreFlowFields,0.);CHKERRQ(ierr);
     ierr = VecSet(ctx.RHSVelPpre,0.);CHKERRQ(ierr);
+    ierr = VecSet(ctx.PrePressure,0.);CHKERRQ(ierr);
+    ierr = VecSet(ctx.RHSPpre,0.);CHKERRQ(ierr);
     for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
       ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
@@ -136,7 +141,8 @@ int main(int argc,char **argv)
       /*This will have to be called "an update function"*/
       ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
       ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
-      
+      ierr = VecCopy(fields.pressure,ctx.PrePressure);CHKERRQ(ierr);
+      ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
     }
     Vec error;
     PetscReal norm_1,norm_2,norm_inf;
