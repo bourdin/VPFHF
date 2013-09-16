@@ -21,9 +21,9 @@
 #define __FUNCT__ "MixedFEMTSFlowSolverInitialize"
 extern PetscErrorCode MixedFEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 {
-	PetscMPIInt    comm_size;
 	PetscErrorCode ierr;
-		
+  PetscFunctionBegin;
+
 	ierr = TSCreate(PETSC_COMM_WORLD,&ctx->tsVelP);CHKERRQ(ierr);
 //  ierr = TSAppendOptionsPrefix(ctx->tsVelP,"TSVelP_");CHKERRQ(ierr);
 	ierr = TSSetDM(ctx->tsVelP,ctx->daFlow);CHKERRQ(ierr);

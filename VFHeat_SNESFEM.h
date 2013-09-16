@@ -13,7 +13,7 @@ extern PetscErrorCode VF_HeatFEMSNESSolve(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FormSNESHeatIJacobian(SNES snes,Vec T,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user);
 extern PetscErrorCode FormSNESHeatIFunction(SNES snes,Vec T,Vec Func,void *user);
 extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx, VFFields *field);
-extern PetscErrorCode VecApplyHeatFluxBC(PetscReal *RHS_local,PetscReal ***flux_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element2D *e,PetscReal ***v_array);
+extern PetscErrorCode VecApplyFluxBC(PetscReal *RHS_local,PetscReal ****flux_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element2D *e,PetscReal ***v_array);
 extern PetscErrorCode VF_HeatMatN_local(PetscReal *KN_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei, PetscReal ****vel_array,PetscReal ***v_array);
 extern PetscErrorCode VecApplyHeatSourceTerms(PetscReal *K1_local,PetscReal *K2_local,PetscReal ***source_array,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFCtx *ctx, PetscReal ****vel_array,PetscReal ***v_array);
 extern PetscErrorCode VF_HeatMatC_local(PetscReal *KC_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei, PetscReal ****vel_array,PetscReal ***v_array);

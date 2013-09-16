@@ -41,6 +41,14 @@ extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
 	ierr = MatDestroy(&ctx->KVelPlhs);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->JacVelP);CHKERRQ(ierr);
   
+  ierr = VecDestroy(&ctx->RHSP);CHKERRQ(ierr);
+	ierr = VecDestroy(&ctx->RHSPpre);CHKERRQ(ierr);
+	ierr = VecDestroy(&ctx->PFunct);CHKERRQ(ierr);
+  
+  ierr = MatDestroy(&ctx->KP);CHKERRQ(ierr);
+	ierr = MatDestroy(&ctx->KPlhs);CHKERRQ(ierr);
+	ierr = MatDestroy(&ctx->JacP);CHKERRQ(ierr);
+  
   switch (ctx->flowsolver) {
   case FLOWSOLVER_KSPMIXEDFEM:
     ierr = MixedFEMFlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
@@ -50,6 +58,9 @@ extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
     break;
   case FLOWSOLVER_SNESMIXEDFEM:
     ierr = MixedFEMSNESFlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
+    break;
+  case FLOWSOLVER_SNESSTANDARDFEM:
+    ierr = VFFlow_SNESStandardFEMFinalize(ctx,fields);CHKERRQ(ierr);
     break;
   case FLOWSOLVER_FEM:
     break;
@@ -83,14 +94,25 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
   PetscErrorCode ierr;
   PetscMPIInt    comm_size;
 
-  
   PetscFunctionBegin;
-  
+    
   ierr = BCPInit(&ctx->bcP[0],ctx);
 	ierr = BCQInit(&ctx->bcQ[0],ctx);
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
 	ierr = ResetSourceTerms(ctx->Source,ctx->flowprop);
 	ierr = ResetBoundaryTerms(ctx,fields);CHKERRQ(ierr);
+  
+  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KP);CHKERRQ(ierr);
+  ierr = MatSetOption(ctx->KP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = MatZeroEntries(ctx->KP);CHKERRQ(ierr);
+
+  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KPlhs);CHKERRQ(ierr);
+  ierr = MatSetOption(ctx->KPlhs,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = MatZeroEntries(ctx->KPlhs);CHKERRQ(ierr);
+
+  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->JacP);CHKERRQ(ierr);
+  ierr = MatSetOption(ctx->JacP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = MatZeroEntries(ctx->JacP);CHKERRQ(ierr);  
   
   ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KVelP);CHKERRQ(ierr);
@@ -117,6 +139,18 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 	ierr = PetscObjectSetName((PetscObject)ctx->FlowFunct,"RHS of SNES flow solver");CHKERRQ(ierr);
 	ierr = VecSet(ctx->FlowFunct,0.);CHKERRQ(ierr);
   
+  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSP);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->RHSP,"RHS of Standard Flow FEM Formulation");CHKERRQ(ierr);
+  ierr = VecSet(ctx->RHSP,0.);CHKERRQ(ierr);
+  
+	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSPpre);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->RHSPpre,"RHS of Standard Flow FEM Formulation");CHKERRQ(ierr);
+  ierr = VecSet(ctx->RHSPpre,0.);CHKERRQ(ierr);
+  
+	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->PFunct);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject)ctx->PFunct,"Residual of Standard FEM Flow Formulation");CHKERRQ(ierr);
+  ierr = VecSet(ctx->PFunct,0.);CHKERRQ(ierr);
+  
   switch (ctx->flowsolver) {
   case FLOWSOLVER_KSPMIXEDFEM:
     ierr = MixedFEMFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
@@ -126,6 +160,9 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
     break;
   case FLOWSOLVER_SNESMIXEDFEM:
     ierr = MixedFEMSNESFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
+    break;
+  case FLOWSOLVER_SNESSTANDARDFEM:
+    ierr = VFFlow_SNESStandardFEMInitialize(ctx,fields);CHKERRQ(ierr);
     break;
   case FLOWSOLVER_FEM:
     break;
@@ -148,6 +185,73 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
     break;
     case FRACTUREFLOWSOLVER_NONE:
     break;
+  }
+  PetscFunctionReturn(0);
+}
+
+
+/*
+ VFFlowTimeStep: Does one time step of the flow solver selected in ctx.flowsolver
+ */
+#undef __FUNCT__
+#define __FUNCT__ "VFFlowTimeStep"
+extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
+{
+  char           filename[FILENAME_MAX];
+  PetscViewer    viewer;
+  PetscErrorCode ierr;
+  
+  PetscFunctionBegin;
+  switch (ctx->flowsolver) {
+    case FLOWSOLVER_TS:
+      ierr = FlowFEMTSSolve(ctx,fields);CHKERRQ(ierr);
+      break;
+    case FLOWSOLVER_FEM:
+      /*
+       ierr = VFFlow_FEM(ctx,fields);CHKERRQ(ierr);
+       */
+      break;
+    case FLOWSOLVER_SNES:
+      ierr = FlowFEMSNESSolve(ctx,fields);CHKERRQ(ierr);
+      break;
+    case FLOWSOLVER_KSPMIXEDFEM:
+      ierr = MixedFlowFEMKSPSolve(ctx,fields);CHKERRQ(ierr);
+      break;
+    case FLOWSOLVER_TSMIXEDFEM:
+      ierr = MixedFlowFEMTSSolve(ctx,fields);CHKERRQ(ierr);
+      break;
+    case FLOWSOLVER_SNESMIXEDFEM:
+      ierr = MixedFlowFEMSNESSolve(ctx,fields);CHKERRQ(ierr);
+      break;
+    case FLOWSOLVER_SNESSTANDARDFEM:
+    ierr = VF_FlowStandardFEMSNESSolve(ctx,fields);CHKERRQ(ierr);
+      break;
+    case FLOWSOLVER_FAKE:
+      ierr = VFFlow_Fake(ctx,fields);CHKERRQ(ierr);
+      break;
+    case FLOWSOLVER_READFROMFILES:
+      switch (ctx->fileformat) {
+        case FILEFORMAT_HDF5:
+#if defined(PETSC_HAVE_HDF5)
+          ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+          /*
+           ierr = VecLoad(viewer,fields->theta);CHKERRQ(ierr);
+           */
+          ierr = VecLoad(fields->pressure,viewer);CHKERRQ(ierr);
+          ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+#endif
+          break;
+        case FILEFORMAT_BIN:
+          SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"Reading from binary files not implemented yet");
+          break;
+      }
+    default:
+      break;
+  }
+  switch (ctx->fractureflowsolver) {
+    case FRACTUREFLOWSOLVER_SNESMIXEDFEM:
+      ierr = MixedFracFlowSNESSolve(ctx,fields);CHKERRQ(ierr);
+      break;
   }
   PetscFunctionReturn(0);
 }
@@ -250,68 +354,6 @@ extern PetscErrorCode SETBoundaryTerms_P(VFCtx *ctx, VFFields *fields)
   PetscFunctionReturn(0);
 }
 
-/*
-  VFFlowTimeStep: Does one time step of the flow solver selected in ctx.flowsolver
-*/
-#undef __FUNCT__
-#define __FUNCT__ "VFFlowTimeStep"
-extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
-{
-  char           filename[FILENAME_MAX];
-  PetscViewer    viewer;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  switch (ctx->flowsolver) {
-  case FLOWSOLVER_TS:
-    ierr = FlowFEMTSSolve(ctx,fields);CHKERRQ(ierr);
-    break;
-  case FLOWSOLVER_FEM:
-    /*
-      ierr = VFFlow_FEM(ctx,fields);CHKERRQ(ierr);
-    */
-    break;
-  case FLOWSOLVER_SNES:
-    ierr = FlowFEMSNESSolve(ctx,fields);CHKERRQ(ierr);
-    break;
-  case FLOWSOLVER_KSPMIXEDFEM:
-    ierr = MixedFlowFEMKSPSolve(ctx,fields);CHKERRQ(ierr);
-    break;
-  case FLOWSOLVER_TSMIXEDFEM:
-    ierr = MixedFlowFEMTSSolve(ctx,fields);CHKERRQ(ierr);
-    break;
-  case FLOWSOLVER_SNESMIXEDFEM:
-    ierr = MixedFlowFEMSNESSolve(ctx,fields);CHKERRQ(ierr);
-    break;
-  case FLOWSOLVER_FAKE:
-    ierr = VFFlow_Fake(ctx,fields);CHKERRQ(ierr);
-    break;
-  case FLOWSOLVER_READFROMFILES:
-    switch (ctx->fileformat) {
-    case FILEFORMAT_HDF5:
-#if defined(PETSC_HAVE_HDF5)
-      ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-      /*
-        ierr = VecLoad(viewer,fields->theta);CHKERRQ(ierr);
-      */
-      ierr = VecLoad(fields->pressure,viewer);CHKERRQ(ierr);
-      ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-#endif
-      break;
-    case FILEFORMAT_BIN:
-      SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"Reading from binary files not implemented yet");
-      break;
-    }
-  default:
-    break;
-  }
-  switch (ctx->fractureflowsolver) {
-  case FRACTUREFLOWSOLVER_SNESMIXEDFEM:
-    ierr = MixedFracFlowSNESSolve(ctx,fields);CHKERRQ(ierr);
-    break;
-  }
-  PetscFunctionReturn(0);
-}
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyPressureBC_SNES"

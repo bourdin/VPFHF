@@ -28,9 +28,8 @@
 #define __FUNCT__ "MixedFEMSNESFlowSolverInitialize"
 extern PetscErrorCode MixedFEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 {
-	PetscMPIInt    comm_size;
 	PetscErrorCode ierr;
-	  
+  PetscFunctionBegin;
 	ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesVelP);CHKERRQ(ierr);
   ierr = SNESAppendOptionsPrefix(ctx->snesVelP,"FlowSnes_");CHKERRQ(ierr);
   ierr = SNESSetFromOptions(ctx->snesVelP);CHKERRQ(ierr);
@@ -43,7 +42,6 @@ extern PetscErrorCode MixedFEMSNESFlowSolverFinalize(VFCtx *ctx,VFFields *fields
 {
 	PetscErrorCode ierr;
 	PetscFunctionBegin;
-
 	ierr = SNESDestroy(&ctx->snesVelP);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }

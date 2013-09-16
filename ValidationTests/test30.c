@@ -171,8 +171,6 @@ int main(int argc,char **argv)
   ctx.hasInsitu        = PETSC_TRUE;
   ctx.FlowDisplCoupling = PETSC_TRUE;
 	ctx.hasCrackPressure = PETSC_TRUE;
-//  ctx.ResFlowMechCoupling = FIXEDSTRESS;
-//  ctx.ResFlowMechCoupling = FIXEDSTRAIN;
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
@@ -192,25 +190,27 @@ int main(int argc,char **argv)
   Vec PreIteSol;
 	PetscReal norm_1 = 1e+3,norm_2 = 1e+3,norm_inf = 1e+3;
   PetscInt displ_iter = 0;
-  ierr = VecDuplicate(fields.VelnPress,&error);
-  ierr = VecDuplicate(fields.VelnPress,&PreIteSol);
+  ierr = VecDuplicate(fields.pressure,&error);
+  ierr = VecDuplicate(fields.pressure,&PreIteSol);
   
   /*Initialization Set initial flow field values. This case is zero. This will have to be called an initialization function*/
   
   ierr = VecSet(ctx.PreFlowFields,0.);CHKERRQ(ierr);
   ierr = VecSet(ctx.RHSVelPpre,0.);CHKERRQ(ierr);
+  ierr = VecSet(ctx.PrePressure,0.);CHKERRQ(ierr);
+  ierr = VecSet(ctx.RHSPpre,0.);CHKERRQ(ierr);
   ctx.timestep = 0;
     ierr = PetscPrintf(PETSC_COMM_WORLD,"  Computing initial time step solution\n");CHKERRQ(ierr);
     ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-    ierr = VecCopy(fields.VelnPress,PreIteSol);CHKERRQ(ierr);
+    ierr = VecCopy(fields.pressure,PreIteSol);CHKERRQ(ierr);
     while (norm_inf > displ_p_tol) {
       ierr = PetscPrintf(PETSC_COMM_WORLD,"   Iteration Step: %d\n",displ_iter);CHKERRQ(ierr);
       ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
       ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
       displ_iter++;
-      ierr = VecWAXPY(error,-1.0,fields.VelnPress,PreIteSol);
-      ierr = VecCopy(fields.VelnPress,PreIteSol);CHKERRQ(ierr);
+      ierr = VecWAXPY(error,-1.0,fields.pressure,PreIteSol);
+      ierr = VecCopy(fields.pressure,PreIteSol);CHKERRQ(ierr);
       ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n inf_norm = %f \n",norm_inf);CHKERRQ(ierr);
     }
@@ -218,8 +218,10 @@ int main(int argc,char **argv)
   
   
 
-    ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
-    ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
+  ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
+  ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
+  ierr = VecCopy(fields.pressure,ctx.PrePressure);CHKERRQ(ierr);
+  ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
 	for (i = 0; i < 6; i++) {
 		ctx.bcP[0].face[i] = NONE;
 		for (c = 0; c < 3; c++) {
@@ -271,20 +273,22 @@ int main(int argc,char **argv)
     norm_inf = 1e+3;
     displ_iter = 0;
     ierr = PetscPrintf(PETSC_COMM_WORLD,"  Computing solution at %d time step solution \n", ctx.timestep);CHKERRQ(ierr);
-    ierr = VecCopy(fields.VelnPress,PreIteSol);CHKERRQ(ierr);
+    ierr = VecCopy(fields.pressure,PreIteSol);CHKERRQ(ierr);
   while (norm_inf > displ_p_tol) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"  Step %d, Iteration Step: %d\n",ctx.timestep, displ_iter);CHKERRQ(ierr);
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
     ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
     displ_iter++;
-    ierr = VecWAXPY(error,-1.0,fields.VelnPress,PreIteSol);
-    ierr = VecCopy(fields.VelnPress,PreIteSol);CHKERRQ(ierr);
+    ierr = VecWAXPY(error,-1.0,fields.pressure,PreIteSol);
+    ierr = VecCopy(fields.pressure,PreIteSol);CHKERRQ(ierr);
     ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n inf_norm = %f \n",norm_inf);CHKERRQ(ierr);
     }
     ierr = FieldsH5Write(&ctx,&fields);
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
+    ierr = VecCopy(fields.pressure,ctx.PrePressure);CHKERRQ(ierr);
+    ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
   }
   ierr = VecDestroy(&PreIteSol);CHKERRQ(ierr);
   ierr = VecDestroy(&error);CHKERRQ(ierr);

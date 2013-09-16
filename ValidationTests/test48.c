@@ -1,5 +1,5 @@
 /*
- test48.c: Solves same problem as test28, but using the heat solver.
+ test43.c: 1D SNES. Heat problem with heat source term = 1. All temperature boundary condition. [Homomogeneous temperature boundaries.
  (c) 2010-2013 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
  ./test48 -n 51,51,2 -l 1,1,0.01  -maxtimestep 20 -timestepsize 0.005
@@ -55,7 +55,7 @@ int main(int argc,char **argv)
 	ierr = VecSet(ctx.PresBCArray,0.);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.HeatSource,&heatsrc_array);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx.daScal,ctx.HeatFluxBCArray,&heatfluxbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.HeatFluxBCArray,&heatfluxbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,ctx.Cond,&cond_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.TBCArray,&Tbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,fields.theta,&T_array);CHKERRQ(ierr);
@@ -105,23 +105,16 @@ int main(int argc,char **argv)
       ctx.bcQT[j].vertex[i] = NONE;
     }
 	}
+  
   ctx.bcQT[1].face[Y0] = FIXED;
   ctx.bcQT[1].face[Y1] = FIXED;
   ctx.bcQT[2].face[Z0] = FIXED;
   ctx.bcQT[2].face[Z1] = FIXED;
 	ctx.bcT[0].face[X0] = FIXED;
 	ctx.bcT[0].face[X1] = FIXED;
-//	ctx.bcT[0].face[Y0] = FIXED;
-//	ctx.bcT[0].face[Y1] = FIXED;
-//	ctx.bcT[0].face[Z0] = FIXED;
-//	ctx.bcT[0].face[Z1] = FIXED;
-
-
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-        
-//        Tbc_array[k][j][i] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz))/(3.*pi*pi);
         Tbc_array[k][j][i] = 0;
         T_array[k][j][i] = 6.*sin(pi*hx*i/lx);
 
@@ -132,18 +125,45 @@ int main(int argc,char **argv)
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
 				heatsrc_array[k][j][i] = src;
-//        heatsrc_array[k][j][i] = cos(pi*k*hz/lz)*cos(pi*j*hy/ly)*cos(pi*i*hx/lx)/3.*((1./(lx*lx))+(1./(ly*ly))+(1./(lz*lz)));
         heatsrc_array[k][j][i] = 0.;
 				vel_array[k][j][i][0] = ux;
 				vel_array[k][j][i][1] = 0;
 			}
 		}
 	}
+  
+  
+ /*
+  ctx.bcT[0].face[Y0] = FIXED;
+  ctx.bcT[0].face[Y1] = FIXED;
+  ctx.bcT[0].face[Z0] = FIXED;
+  ctx.bcT[0].face[Z1] = FIXED;
+	ctx.bcT[0].face[X0] = FIXED;
+	ctx.bcT[0].face[X1] = FIXED;
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) {
+        Tbc_array[k][j][i] = 0;
+        Tbc_array[k][j][i] = (cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz))/(3.*pi*pi);
+			}
+		}
+	}
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) {
+        heatsrc_array[k][j][i] = cos(pi*k*hz/lz)*cos(pi*j*hy/ly)*cos(pi*i*hx/lx)/3.*((1./(lx*lx))+(1./(ly*ly))+(1./(lz*lz)));
+			}
+		}
+	}
+  */
+  
+  
+  
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.TBCArray,&Tbc_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx.daScal,fields.theta,&T_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,ctx.Cond,&cond_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.HeatFluxBCArray,&heatfluxbc_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.HeatFluxBCArray,&heatfluxbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.HeatSource,&heatsrc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
@@ -165,6 +185,18 @@ int main(int argc,char **argv)
 		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
 		ierr = PetscViewerDestroy(&logviewer);
 	}
+
+	ctx.timestep++; 
+	ierr = DMDAVecGetArray(ctx.daScal,fields.theta,&Tbc_array);CHKERRQ(ierr);
+	for (k = zs; k < zs+zm; k++) {
+		for (j = ys; j < ys+ym; j++) {
+			for (i = xs; i < xs+xm; i++) {
+				Tbc_array[k][j][i] = i*hx-( exp(-1.*(1.-i*hx)/condctvty)-exp(-1./condctvty) )/(1.-exp(-1./condctvty)); 
+			}
+		}
+	}
+	ierr = DMDAVecRestoreArray(ctx.daScal,fields.theta,&Tbc_array);CHKERRQ(ierr);
+	ierr = FieldsH5Write(&ctx,&fields);		
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
