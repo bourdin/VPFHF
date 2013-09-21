@@ -124,7 +124,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   Vec            RHS_localVec;
   Vec            perm_local;
   PetscReal      hx,hy,hz;  
-  PetscReal      *K1_local,*K2_local,*KS_local,*KD_local;
+  PetscReal      *K1_local,*K2_local,*KS_local,*KD_local,*KF_local;
   PetscReal      beta_c,alpha_c,mu;
   PetscReal      theta,timestepsize;
   PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
@@ -141,11 +141,14 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   Vec            v_local;
   PetscReal      ****u_diff_array;
 	Vec            U_diff,u_diff_local;
-
+  PetscReal      ****u_array;
+	Vec            u_local;
+  PetscReal      ****u_old_array;
+	Vec            u_old_local;
+  PetscReal      ***v_old_array;
+	Vec            v_old_local;
   
   PetscFunctionBegin;
-  
-  
   
   flg = SAME_NONZERO_PATTERN;
   M_inv     = ctx->flowprop.M_inv;
@@ -185,6 +188,11 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
 
+  ierr = DMGetLocalVector(ctx->daScal,&v_old_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->V_old,INSERT_VALUES,v_old_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->V_old,INSERT_VALUES,v_old_local);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,v_old_local,&v_old_array);CHKERRQ(ierr);
+  
   ierr = DMCreateGlobalVector(ctx->daVect,&U_diff);CHKERRQ(ierr);
   ierr = VecSet(U_diff,0.);CHKERRQ(ierr);
   ierr = VecAXPY(U_diff,-1.0,ctx->U_old);CHKERRQ(ierr);
@@ -194,6 +202,17 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 	ierr = DMGlobalToLocalBegin(ctx->daVect,U_diff,INSERT_VALUES,u_diff_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daVect,U_diff,INSERT_VALUES,u_diff_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_diff_local,&u_diff_array);CHKERRQ(ierr);
+  
+  ierr = DMGetLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daVect,ctx->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daVect,ctx->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
+
+  ierr = DMGetLocalVector(ctx->daVect,&u_old_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daVect,ctx->U_old,INSERT_VALUES,u_old_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daVect,ctx->U_old,INSERT_VALUES,u_old_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_old_local,&u_old_array);CHKERRQ(ierr);
+
   
   ierr = PetscMalloc6(nrow*nrow,PetscReal,&K1_local,
                       nrow*nrow,PetscReal,&K2_local,
@@ -238,6 +257,48 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 				}
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K1_local,ADD_VALUES);CHKERRQ(ierr);
 				ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,K2_local,ADD_VALUES);CHKERRQ(ierr);
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        if(ctx->FractureFlowCoupling){
+          ierr = VF_MatFractureFlowCoupling_local(KD_local,&ctx->e3D,ek,ej,ei,u_array,v_array);CHKERRQ(ierr);
+
+          for (l = 0; l < nrow*nrow; l++) {
+            K1_local[l] = theta/(12.*mu)*timestepsize*KD_local[l];
+            K2_local[l] = -1.*(1.-theta)/(12.*mu)*timestepsize*KD_local[l];
+          }
+          ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K1_local,ADD_VALUES);CHKERRQ(ierr);
+          ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,K2_local,ADD_VALUES);CHKERRQ(ierr);
+          
+          ierr = VF_RHSFractureFlowCoupling_local(RHS_local,&ctx->e3D,ek,ej,ei,u_array,v_array,u_old_array,v_old_array);
+          for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
+            for (j = 0; j < ctx->e3D.nphiy; j++) {
+              for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+                RHS_array[ek+k][ej+j][ei+i] += -1.0*RHS_local[l];
+              }
+            }
+          }
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         ierr = Flow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -246,7 +307,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
             }
           }
         }
-       
+
         if(ctx->hasFluidSources){
           ierr = VecApplySourceTerms(RHS_local,source_array,&ctx->e3D,ek,ej,ei,ctx,v_array);
           for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
@@ -374,6 +435,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   
   
   PetscInt  w_no = 0;
+  PetscInt  fw_no = 0;
   if(ctx->hasFlowWells){
     while(w_no < ctx->numWells){
       for (ek = zs; ek < zs+zm; ek++) {
@@ -416,6 +478,52 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
       }
       w_no++;
     }
+    
+    w_no = 0;
+    while(w_no < ctx->numfracWells){
+      for (ek = zs; ek < zs+zm; ek++) {
+        for (ej = ys; ej < ys+ym; ej++) {
+          for (ei = xs; ei < xs+xm; ei++) {
+            if(
+               ((coords_array[ek][ej][ei+1][0] >= ctx->fracwell[w_no].coords[0]) && (coords_array[ek][ej][ei][0] <= ctx->fracwell[w_no].coords[0] ))    &&
+               ((coords_array[ek][ej+1][ei][1] >= ctx->fracwell[w_no].coords[1]) && (coords_array[ek][ej][ei][1] <= ctx->fracwell[w_no].coords[1] ))    &&
+               ((coords_array[ek+1][ej][ei][2] >= ctx->fracwell[w_no].coords[2]) && (coords_array[ek][ej][ei][2] <= ctx->fracwell[w_no].coords[2] ))
+               )
+            {
+              hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+              hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+              hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+              ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+              hwx = (ctx->fracwell[w_no].coords[0]-coords_array[ek][ej][ei][0])/hx;
+              hwy = (ctx->fracwell[w_no].coords[1]-coords_array[ek][ej][ei][1])/hy;
+              hwz = (ctx->fracwell[w_no].coords[2]-coords_array[ek][ej][ei][2])/hz;
+              if(ctx->fracwell[w_no].condition == RATE){
+                ierr = VecApplyFractureWellFlowRate(RHS_local,&ctx->e3D,ctx->fracwell[w_no].Qw,hwx,hwy,hwz,ek,ej,ei,v_array);CHKERRQ(ierr);
+                for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
+                  for (j = 0; j < ctx->e3D.nphiy; j++) {
+                    for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+                      if(ctx->fracwell[w_no].type == INJECTOR){
+                        RHS_array[ek+k][ej+j][ei+i] += timestepsize*RHS_local[l];
+                      }
+                      else if(ctx->well[w_no].type == PRODUCER)
+                      {
+                        RHS_array[ek+k][ej+j][ei+i] += -timestepsize*RHS_local[l];
+                      }
+                    }
+                  }
+                }
+              }
+              else if(ctx->fracwell[w_no].condition == PRESSURE){
+              }
+            }
+          }
+        }
+      }
+      w_no++;
+    }
+    
+    
+    
   }
   
   
@@ -431,12 +539,21 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_old_local,&u_old_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daVect,&u_old_local);CHKERRQ(ierr);
+
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
+
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_diff_local,&u_diff_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daVect,&u_diff_local);CHKERRQ(ierr);
   
   ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
-  
+
+  ierr = DMDAVecRestoreArray(ctx->daScal,v_old_local,&v_old_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&v_old_local);CHKERRQ(ierr);
+
   ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
   

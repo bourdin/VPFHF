@@ -35,6 +35,10 @@ extern PetscErrorCode VF_MatA_local(PetscReal *A_local,CartFE_Element3D *e,Petsc
 extern PetscErrorCode VF_RHSFlowMechUCoupling_local(PetscReal *K_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****u_diff_array,PetscReal ***v_array);
 extern PetscErrorCode VF_MatAddMechUCoupling_local(PetscReal *Kc_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ***v_array);
 extern PetscErrorCode VF_MatAddMechUCoupling(Mat Jac,VFCtx *ctx);
+extern PetscErrorCode VF_MatFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array);
+extern PetscErrorCode VF_RHSFractureFlowCoupling_local(PetscReal *K_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array,PetscReal ****u_old_array,PetscReal ***v_old_array);
+
+
 
 
 #endif /* VFFLOW_MIXEDFEM_H */
