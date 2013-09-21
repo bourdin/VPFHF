@@ -152,6 +152,10 @@ extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal *CrackVolume_loca
   if(volcrackopening_array[ek][ej][ei] < 0){
     volcrackopening_array[ek][ej][ei] = 0.;
   }
+/*  The if statement below was added to remove negative contributions to crack volume. Was not there in SPE paper. Thus if discrepancies arise, remove these lines to cross-check */
+  if(*CrackVolume_local < 0){
+    *CrackVolume_local = 0.;
+  }
 	ierr = PetscFree3(dx_vfield_loc,dy_vfield_loc,dz_vfield_loc);CHKERRQ(ierr);
 	ierr = PetscFree3(udispl_loc,vdispl_loc,wdispl_loc);CHKERRQ(ierr);
   PetscFunctionReturn(0);

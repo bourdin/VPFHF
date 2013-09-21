@@ -16,8 +16,8 @@
 #include "VFFlow_KSPMixedFEM.h"
 #include "VFFlow_SNESMixedFEM.h"
 #include "VFFlow_TSMixedFEM.h"
-#include "VFFlow_FractureFlow.h"
 #include "VFHeat_SNESFEM.h"
+# include "VFFlow_SNESStandardFEM.h"
 
 
 
@@ -75,13 +75,6 @@ extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields)
   case FLOWSOLVER_READFROMFILES:
     break;
   case FLOWSOLVER_NONE:
-    break;
-  }
-  switch (ctx->fractureflowsolver) {
-  case FRACTUREFLOWSOLVER_SNESMIXEDFEM:
-    ierr = MixedFractureFlowSolverFinalize(ctx,fields);CHKERRQ(ierr);
-    break;
-  case FRACTUREFLOWSOLVER_NONE:
     break;
   }
   PetscFunctionReturn(0);
@@ -179,13 +172,6 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
   default:
     break;
   }
-  switch (ctx->fractureflowsolver) {
-  case FRACTUREFLOWSOLVER_SNESMIXEDFEM:
-    ierr = MixedFractureFlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
-    break;
-    case FRACTUREFLOWSOLVER_NONE:
-    break;
-  }
   PetscFunctionReturn(0);
 }
 
@@ -246,11 +232,6 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
           break;
       }
     default:
-      break;
-  }
-  switch (ctx->fractureflowsolver) {
-    case FRACTUREFLOWSOLVER_SNESMIXEDFEM:
-      ierr = MixedFracFlowSNESSolve(ctx,fields);CHKERRQ(ierr);
       break;
   }
   PetscFunctionReturn(0);

@@ -234,6 +234,21 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
         ierr = VFWellView(&(ctx->well[i]),PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
       }
     }
+    
+
+    ctx->numfracWells = 0;
+    ierr          = PetscOptionsInt("-nfw","\n\tNumber of fracture wells to insert","",ctx->numfracWells,&ctx->numfracWells,PETSC_NULL);CHKERRQ(ierr);
+    
+    ierr          = PetscMalloc(ctx->numfracWells*sizeof(VFWell),&ctx->fracwell);CHKERRQ(ierr);
+    for (i = 0; i < ctx->numfracWells; i++) {
+      ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"fracw%d_",i);CHKERRQ(ierr);
+      ierr = VFWellCreate(&(ctx->fracwell[i]));CHKERRQ(ierr);
+      ierr = VFWellGet(prefix, &(ctx->fracwell[i]));CHKERRQ(ierr);
+      if (ctx->verbose > 0) {
+        ierr = VFWellView(&(ctx->fracwell[i]),PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+      }
+    }
+    
     ierr = PetscFree(buffer);CHKERRQ(ierr);
   }
   ierr           = PetscOptionsEnd();CHKERRQ(ierr);
@@ -728,6 +743,10 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) ctx->U_old,"Previous time step displacement");CHKERRQ(ierr);
   ierr = VecSet(ctx->U_old,0.0);CHKERRQ(ierr);
 
+  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->V_old);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->V_old,"Previous time step v-field");CHKERRQ(ierr);
+  ierr = VecSet(ctx->V_old,0.0);CHKERRQ(ierr);
+  
   ierr = DMCreateGlobalVector(ctx->daVect,&ctx->U);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->U,"Displacement in ctx");CHKERRQ(ierr);
   ierr = VecSet(ctx->U,0.0);CHKERRQ(ierr);
@@ -1139,6 +1158,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&fields->pmult);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&ctx->energyviewer);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->U_old);CHKERRQ(ierr);
+  ierr = VecDestroy(&ctx->V_old);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->U);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->V);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->PreFlowFields);CHKERRQ(ierr);
@@ -1147,6 +1167,9 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&fields->fracvelocity);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->fracVelnPress);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->FracVelBCArray);CHKERRQ(ierr);
+
+  ierr = PetscFree(ctx->fracwell);CHKERRQ(ierr);
+  ierr = PetscFree(ctx->well);CHKERRQ(ierr);
 
 
   ierr = VF_HeatSolverFinalize(ctx,fields);CHKERRQ(ierr);

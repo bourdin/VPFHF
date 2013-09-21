@@ -387,6 +387,10 @@ typedef struct {
   Vec                 U;
   PetscBool           FlowDisplCoupling;
   ResFlowMechCouplingType ResFlowMechCoupling;
+  PetscBool           FractureFlowCoupling;
+  Vec                 V_old;
+  VFWell              *fracwell;
+  PetscInt            numfracWells;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

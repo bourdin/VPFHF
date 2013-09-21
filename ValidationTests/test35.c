@@ -108,6 +108,7 @@ int main(int argc,char **argv)
     // flow part
   ctx.hasFluidSources = PETSC_FALSE;
   ctx.hasFlowWells = PETSC_TRUE;
+  ctx.FractureFlowCoupling = PETSC_TRUE;
   ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.FracVelBCArray,&fracvelbc_array);CHKERRQ(ierr);
