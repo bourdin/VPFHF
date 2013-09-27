@@ -409,9 +409,10 @@ extern PetscErrorCode VFMatPropGet(VFMatProp *matprop,PetscInt n);
 extern PetscErrorCode VFLayerInit(VFCtx *ctx);
 extern PetscErrorCode VFResPropGet(VFResProp *resprop);
 
+extern PetscErrorCode VecViewVTKDof(DM da,Vec X,PetscViewer viewer);
 extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char name[]);
+extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char nodalName[], const char cellName[]);
 
 extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx);
 extern PetscErrorCode VFMatPropFieldsInitialize(VFCtx *ctx, VFMatProp *matprop);

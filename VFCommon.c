@@ -1295,35 +1295,94 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "VecViewVTKDof"
+/*
+ VecViewVTKDof: Export all nodal fields in PETSc VTK format.
+ 
+ (c) 2013 Blaise Bourdin bourdin@lsu.edu
+ */
+extern PetscErrorCode VecViewVTKDof(DM da,Vec X,PetscViewer viewer)
+{
+  PetscErrorCode ierr;
+  Vec            UDof;
+  PetscInt       dof,c;
+  char           fieldnamedof[FILENAME_MAX];
+  const char     *fieldname;
+
+  ierr = VecGetBlockSize(X,&dof);CHKERRQ(ierr);
+  if (dof == 1) {
+    ierr = VecView(X,viewer);CHKERRQ(ierr);
+  } else {
+    ierr = DMGetGlobalVector(da,&UDof);CHKERRQ(ierr);
+    ierr = PetscObjectGetName((PetscObject) X,&fieldname);CHKERRQ(ierr);
+    for (c = 0; c < dof; c++) {
+      ierr = VecStrideGather(X,c,UDof,INSERT_VALUES);CHKERRQ(ierr);
+      ierr = PetscSNPrintf(fieldnamedof,FILENAME_MAX,"%s_%i",fieldname,c);CHKERRQ(ierr);
+      ierr = PetscObjectSetName((PetscObject)UDof,fieldnamedof);CHKERRQ(ierr);
+      ierr = VecView(UDof,viewer);CHKERRQ(ierr);
+    }
+    ierr = DMRestoreGlobalVector(da,&UDof);CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "FieldsVTKWrite"
 /*
- FieldsBinaryWrite: Export all fields in PETSc VTK format.
- 
+ FieldsVTKWrite: Export all fields in VTK binary format.
+
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char name[])
+extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char nodalName[], const char cellName[])
 {
-  PetscErrorCode ierr;
-  PetscViewer    viewer;
-  Vec            *allVec;
+  PetscErrorCode  ierr;
   char            filename[FILENAME_MAX],fieldnameDof[FILENAME_MAX];
-  //const char      fieldname[FILENAME_MAX];
-  PetscInt        numfields,field,numcomp,comp;
+  PetscViewer     viewer;
+  Vec             UDof;
+  PetscInt        c;
 
   PetscFunctionBegin;
+
   /*
-  allVec = fields + sizeof(PetscInt);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"numfields: %i\n",fields->numfields);CHKERRQ(ierr);
-  for (field = 0; field < fields->numfields; field++) {
-    ierr = VecGetBlockSize(allVec[field],&numcomp);
-    PetscObjectGetName((PetscObject) allVec[field],&fieldname);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Field %i, numcomp: %i, name %s\n",field,numcomp,fieldname);
-  }
+    Nodal variables
   */
+  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
+  ierr = PetscViewerSetType(viewer,PETSCVIEWERVTK);CHKERRQ(ierr);
+  if (nodalName == NULL) {
+    ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s_nodal.%.5i.vts",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
+    ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
+  } else {
+    ierr = PetscViewerFileSetName(viewer,nodalName);CHKERRQ(ierr);
+  }
+  ierr = VecViewVTKDof(ctx->daScal,fields->U,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->velocity,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->fracvelocity,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->V,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->theta,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->pressure,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->fracpressure,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->VolCrackOpening,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->VolLeakOffRate,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+
+  /*
+    Cell Variables
+  */
+  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
+  ierr = PetscViewerSetType(viewer,PETSCVIEWERVTK);CHKERRQ(ierr);
+  if (cellName == NULL) {
+    ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s_cell.%.5i.vts",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
+    ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
+  } else {
+    ierr = PetscViewerFileSetName(viewer,cellName);CHKERRQ(ierr);
+  }
+  ierr = VecViewVTKDof(ctx->daScalCell,fields->vfperm,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScalCell,fields->pmult,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
 
 #undef __FUNCT__
 #define __FUNCT__ "PermUpdate"
