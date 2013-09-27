@@ -171,9 +171,8 @@ int main(int argc,char **argv)
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
   
-  ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
-  ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
+  ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
   ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);

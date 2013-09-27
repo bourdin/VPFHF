@@ -14,6 +14,7 @@ extern PetscErrorCode VFPennyCrackView(VFPennyCrack *PennyCrack,PetscViewer view
 extern PetscErrorCode VFPennyCrackSetName(VFPennyCrack *PennyCrack,const char name[]);
 extern PetscErrorCode VFDistanceToPennyCrack(PetscReal *d,PetscReal *x,VFPennyCrack *PennyCrack);
 extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx);
+extern PetscErrorCode VFPennyCrackBuildVAT1(Vec V,VFPennyCrack *crack,VFCtx *ctx);
 
 
 extern PetscErrorCode VFRectangularCrackGet(const char prefix[],VFRectangularCrack *RectangularCrack);
@@ -22,5 +23,6 @@ extern PetscErrorCode VFRectangularCrackView(VFRectangularCrack *RectangularCrac
 extern PetscErrorCode VFRectangularCrackSetName(VFRectangularCrack *RectangularCrack,const char name[]);
 extern PetscErrorCode VFDistanceToRectangularCrack(PetscReal *d,PetscReal *x,VFRectangularCrack *RectangularCrack);
 extern PetscErrorCode VFRectangularCrackBuildVAT2(Vec V,VFRectangularCrack *crack,VFCtx *ctx);
+extern PetscErrorCode VFRectangularCrackBuildVAT1(Vec V,VFRectangularCrack *crack,VFCtx *ctx);
 
 #endif /* VFCRACKS_H */
