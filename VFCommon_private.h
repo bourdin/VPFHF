@@ -62,6 +62,7 @@ static const char *VFFlowSolverName[] = {
 	"FAKE",
 	"READFROMFILES",
 	"FLOWSOLVER_NONE",
+	"VFFlowSolverName",
 	"",
 	0
 };
