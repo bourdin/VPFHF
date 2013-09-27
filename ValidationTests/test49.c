@@ -1,22 +1,11 @@
 /*
- test38.c: 2D SNES. Single well problem. Source term implemented as dirac function and analytical solution is 2D Green's function. All pressure boundary condition.
+ test49.c: 2D SNES. Single well problem. Source term implemented as dirac function and analytical solution is 2D Green's function. All pressure boundary condition.
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
-  
  
- ./test38  -n 101,2,101 -l 4,0.04,4 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 2,0.02,1 -w0_constraint Rate -w0_rw 0.01 -w0_type injector -m_inv 0 -flowsolver FLOWSOLVER_snesstandardFEM -npc 1 -pc0_r 0.2 -pc0_center 2.,0.02,2 -pc0_thickness 0.16 -epsilon 0.3 -pc0_theta 0 -pc0_phi 90 -nfw 1 -fracw0_coords 2,0.02,2.  -fracw0_constraint Rate -fracw0_rw 0.01 -fracw0_type injector -w0_Qw 0 -fracw0_Qw 1e-4 -pc0_thickness 0.04
+
  
- ./test38  -n 101,2,101 -l 4,0.04,4 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 2,0.02,1 -w0_constraint Rate -w0_rw 0.01 -w0_type injector -m_inv 0 -flowsolver FLOWSOLVER_snesstandardFEM -npc 1 -pc0_r 0.5 -pc0_center 2.,0.02,2 -pc0_thickness 0.16 -epsilon 0.3 -pc0_theta 0 -pc0_phi 90 -nfw 1 -fracw0_coords 2,0.02,2.  -fracw0_constraint Rate -fracw0_rw 0.01 -fracw0_type injector -w0_Qw 0 -fracw0_Qw 1e-4 -pc0_thickness 0.08
+ ./test49  -n 101,2,101 -l 4,0.04,4 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 2,0.02,1 -w0_constraint Rate -w0_rw 0.01 -w0_type injector -m_inv 0 -flowsolver FLOWSOLVER_snesstandardFEM -npc 1 -pc0_r 0.5 -pc0_center 2.,0.02,2 -pc0_thickness 0.16 -epsilon 0.3 -pc0_theta 0 -pc0_phi 90 -nfw 1 -fracw0_coords 2,0.02,2.  -fracw0_constraint Rate -fracw0_rw 0.01 -fracw0_type injector -w0_Qw 0 -fracw0_Qw 01e-4 -pc0_thickness 0.08 -maxtimestep 15  -perm 5e-3 -FlowStSnes_pc_type lu
  
- 
- ./test38  -n 101,2,101 -l 4,0.04,4 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 2,0.02,1 -w0_constraint Rate -w0_rw 0.01 -w0_type injector -m_inv 0 -flowsolver FLOWSOLVER_snesstandardFEM -npc 1 -pc0_r 0.5 -pc0_center 2.,0.02,2 -pc0_thickness 0.16 -epsilon 0.3 -pc0_theta 0 -pc0_phi 90 -nfw 1 -fracw0_coords 2,0.02,2.  -fracw0_constraint Rate -fracw0_rw 0.01 -fracw0_type injector -w0_Qw 0 -fracw0_Qw 1e-4 -pc0_thickness 0.08 -maxtimestep 5 -FlowStSnes_pc_type lu
- 
- 
- 
- 
- 
- 
- 
- ./test38  -n 101,2,101 -l 4,0.04,4 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 2,0.02,1 -w0_constraint Rate -w0_rw 0.01 -w0_type injector -m_inv 0 -flowsolver FLOWSOLVER_snesstandardFEM -npc 1 -pc0_r 0.5 -pc0_center 2.,0.02,2 -pc0_thickness 0.16 -epsilon 0.3 -pc0_theta 0 -pc0_phi 90 -nfw 1 -fracw0_coords 2,0.02,2.  -fracw0_constraint Rate -fracw0_rw 0.01 -fracw0_type injector -w0_Qw 0 -fracw0_Qw 01e-4 -pc0_thickness 0.08 -maxtimestep 15  -perm 5e-3 -FlowStSnes_pc_type lu
  
   */
 
@@ -54,6 +43,7 @@ int main(int argc,char **argv)
   Vec                 Vold;
   PetscInt            altminit=1;
   PetscReal    perm = 1e-2;
+  PetscReal    pre = 1e-2;
 
   
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -75,6 +65,7 @@ int main(int argc,char **argv)
   ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);
   
   ierr = PetscOptionsGetReal(PETSC_NULL,"-perm",&perm,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(PETSC_NULL,"-pre",&pre,PETSC_NULL);CHKERRQ(ierr);
 
   for (k = zs1; k < zs1+zm1; k++) {
     for (j = ys1; j < ys1+ym1; j++) {
@@ -193,7 +184,7 @@ int main(int argc,char **argv)
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressure,0.01);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressure,pre);CHKERRQ(ierr);
   ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
   ctx.flowprop.alphabiot = 	ctx.matprop[0].beta = .0;									//biot's constant
   ctx.hasCrackPressure = PETSC_TRUE;
@@ -234,21 +225,18 @@ int main(int argc,char **argv)
   ctx.FractureFlowCoupling = PETSC_TRUE;
   ierr = VecDuplicate(fields.V,&Vtemp);
   ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-  for(i = 0; i < 20; i++){
-    for (j = 0; j < ctx.maxtimestep; j++){
-      ctx.timestep = i*ctx.maxtimestep+j;
+
       ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
       ierr = VF_StepU(&fields,&ctx);
       ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Initial crack volume =  %e\n\n\n",ctx.CrackVolume);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Timestep .... =  %d\n",ctx.timestep);CHKERRQ(ierr);
-      ierr = FieldsH5Write(&ctx,&fields);
-    }
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"........New fracture volume iteration .... \n");CHKERRQ(ierr);
-    ierr = VF_StepV(&fields,&ctx);
-  }
   ctx.timestep++;
-  ierr = FieldsH5Write(&ctx,&fields);
+      ierr = FieldsH5Write(&ctx,&fields);
+
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"........New fracture volume iteration .... \n");CHKERRQ(ierr);
+//    ierr = VF_StepV(&fields,&ctx);
+
 
   
   ierr = VecDestroy(&Vtemp);CHKERRQ(ierr);

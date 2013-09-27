@@ -124,7 +124,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   Vec            RHS_localVec;
   Vec            perm_local;
   PetscReal      hx,hy,hz;  
-  PetscReal      *K1_local,*K2_local,*KS_local,*KD_local,*KF_local;
+  PetscReal      *K1_local,*K2_local,*KS_local,*KD_local;
   PetscReal      beta_c,alpha_c,mu;
   PetscReal      theta,timestepsize;
   PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
@@ -257,18 +257,8 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 				}
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K1_local,ADD_VALUES);CHKERRQ(ierr);
 				ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,K2_local,ADD_VALUES);CHKERRQ(ierr);
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if(ctx->FractureFlowCoupling){
-          ierr = VF_MatFractureFlowCoupling_local(KD_local,&ctx->e3D,ek,ej,ei,u_array,v_array);CHKERRQ(ierr);
+          ierr = VF_MatDFractureFlowCoupling_local(KD_local,&ctx->e3D,ek,ej,ei,u_array,v_array);CHKERRQ(ierr);
 
           for (l = 0; l < nrow*nrow; l++) {
             K1_local[l] = theta/(12.*mu)*timestepsize*KD_local[l];
@@ -281,24 +271,11 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
           for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
             for (j = 0; j < ctx->e3D.nphiy; j++) {
               for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-                RHS_array[ek+k][ej+j][ei+i] += -1.0*RHS_local[l];
+//                RHS_array[ek+k][ej+j][ei+i] += -1.0*RHS_local[l];
               }
             }
           }
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         ierr = Flow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -307,7 +284,6 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
             }
           }
         }
-
         if(ctx->hasFluidSources){
           ierr = VecApplySourceTerms(RHS_local,source_array,&ctx->e3D,ek,ej,ei,ctx,v_array);
           for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
@@ -318,7 +294,6 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
             }
           }
         }
-        
         if(ctx->FlowDisplCoupling){
           ierr = VF_RHSFlowMechUCoupling_local(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,u_diff_array,v_array);
           for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
@@ -329,16 +304,6 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
             }
           }
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if (ei == 0) {
             //					 Face X0
 					face = X0;
@@ -435,7 +400,6 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   
   
   PetscInt  w_no = 0;
-  PetscInt  fw_no = 0;
   if(ctx->hasFlowWells){
     while(w_no < ctx->numWells){
       for (ek = zs; ek < zs+zm; ek++) {
