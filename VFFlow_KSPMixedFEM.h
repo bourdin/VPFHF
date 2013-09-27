@@ -35,9 +35,14 @@ extern PetscErrorCode VF_MatA_local(PetscReal *A_local,CartFE_Element3D *e,Petsc
 extern PetscErrorCode VF_RHSFlowMechUCoupling_local(PetscReal *K_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****u_diff_array,PetscReal ***v_array);
 extern PetscErrorCode VF_MatAddMechUCoupling_local(PetscReal *Kc_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ***v_array);
 extern PetscErrorCode VF_MatAddMechUCoupling(Mat Jac,VFCtx *ctx);
-extern PetscErrorCode VF_MatFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array);
+extern PetscErrorCode VF_MatDFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array);
 extern PetscErrorCode VF_RHSFractureFlowCoupling_local(PetscReal *K_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array,PetscReal ****u_old_array,PetscReal ***v_old_array);
-
+extern PetscErrorCode VF_MatBTFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ****u_array,PetscReal ***v_array);
+extern PetscErrorCode VF_MatAFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array);
+extern PetscErrorCode VF_MatBFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ****u_array,PetscReal ***v_array);
+extern PetscErrorCode VF_MatLeakOff_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ***v_array);
+extern PetscErrorCode VecApplyFractureWellFlowRate(PetscReal *RHS_local,CartFE_Element3D *e,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array);
+extern PetscErrorCode VecApplyVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx);
 
 
 

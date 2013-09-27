@@ -441,15 +441,8 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 					ierr = MatSetValuesStencil(K,nrow,row1,nrow,row,KBTrans_local,ADD_VALUES);CHKERRQ(ierr);
 				}
 				ierr = Flow_MatD(KD_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
-				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
-					for (j = 0; j < ctx->e3D.nphiy; j++) {
-						for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-							row[l].i = ei+i;row[l].j = ej+j;row[l].k = ek+k;row[l].c = 3;
-						}
-					}
-				}
-				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KD_local,ADD_VALUES);CHKERRQ(ierr);
-				ierr = MatSetValuesStencil(Klhs,nrow,row,nrow,row,Klhs_local,ADD_VALUES);CHKERRQ(ierr);
+				ierr = MatSetValuesStencil(K,nrow,row1,nrow,row1,KD_local,ADD_VALUES);CHKERRQ(ierr);
+				ierr = MatSetValuesStencil(Klhs,nrow,row1,nrow,row1,Klhs_local,ADD_VALUES);CHKERRQ(ierr);
 				/*Assembling the righthand side vector f*/
 				for (c = 0; c < veldof; c++) {
 					ierr = Flow_Vecf(RHS_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,v_array);CHKERRQ(ierr);
