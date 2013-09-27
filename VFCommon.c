@@ -25,6 +25,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   char           filename[FILENAME_MAX];
 
   PetscFunctionBegin;
+  ctx->printhelp = PETSC_FALSE;
   ierr = PetscPrintf(PETSC_COMM_WORLD,banner);CHKERRQ(ierr);
 #if defined(PETSC_USE_DEBUG)
   ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n");CHKERRQ(ierr);
@@ -50,7 +51,6 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VFMatPropFieldsInitialize(ctx, ctx->matprop);
 
   if (ctx->printhelp) PetscFunctionReturn(0);
-
 
   ierr = VFFieldsInitialize(ctx,fields);CHKERRQ(ierr);
   ierr = VFBCInitialize(ctx);CHKERRQ(ierr);
@@ -102,19 +102,18 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
   {
     ctx->verbose = 0;
     ierr         = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
-    /*
-      ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
-    */
+
+    ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
     ierr          = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
     ctx->units    = UnitaryUnits;
     ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",VFUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
     ctx->flowcase = ALLNORMALFLOWBC;
     ierr          = PetscOptionsEnum("-flowBC","\n\tFlow boundary conditions","",VFFlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
   
+    ctx->ResFlowMechCoupling = FIXEDSTRESS;
     ierr          = PetscOptionsEnum("-resflowmechcoupling","\n\tRes flow mech coupling","",ResFlowMechCouplingName,(PetscEnum)ctx->ResFlowMechCoupling,(PetscEnum*)&ctx->ResFlowMechCoupling,PETSC_NULL);CHKERRQ(ierr);
-/*
+
     ctx->fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
- */
     ierr                    = PetscOptionsEnum("-fractureflowsolver","\n\tFracture Flow solver","",VFFractureFlowSolverName,(PetscEnum)ctx->fractureflowsolver,(PetscEnum*)&ctx->fractureflowsolver,PETSC_NULL);CHKERRQ(ierr);
 
     ctx->heatsolver = HEATSOLVER_SNESFEM;
@@ -248,10 +247,10 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
         ierr = VFWellView(&(ctx->fracwell[i]),PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
       }
     }
-    
     ierr = PetscFree(buffer);CHKERRQ(ierr);
   }
-  ierr           = PetscOptionsEnd();CHKERRQ(ierr);
+  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+
   ctx->timestep  = 1;
   ctx->timevalue = 0.;
   PetscFunctionReturn(0);
@@ -1310,10 +1309,11 @@ extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char name
   PetscViewer    viewer;
   Vec            *allVec;
   char            filename[FILENAME_MAX],fieldnameDof[FILENAME_MAX];
-  const char      fieldname[FILENAME_MAX];
+  //const char      fieldname[FILENAME_MAX];
   PetscInt        numfields,field,numcomp,comp;
 
   PetscFunctionBegin;
+  /*
   allVec = fields + sizeof(PetscInt);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"numfields: %i\n",fields->numfields);CHKERRQ(ierr);
   for (field = 0; field < fields->numfields; field++) {
@@ -1321,6 +1321,7 @@ extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char name
     PetscObjectGetName((PetscObject) allVec[field],&fieldname);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Field %i, numcomp: %i, name %s\n",field,numcomp,fieldname);
   }
+  */
   PetscFunctionReturn(0);
 }
 
