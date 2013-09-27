@@ -14,4 +14,5 @@ extern PetscErrorCode VFWellView(VFWell *well,PetscViewer viewer);
 extern PetscErrorCode VFWellSetName(VFWell *well,const char name[]);
 extern PetscErrorCode VFDistanceToWell(PetscReal *d,PetscReal *x,VFWell *well);
 extern PetscErrorCode VFWellBuildVAT2(Vec V,VFWell *well,VFCtx *ctx);
+extern PetscErrorCode VFRegDiracDeltaFunction(Vec V,VFWell *well,VFCtx *ctx);
 #endif /* VFWELL_H */
