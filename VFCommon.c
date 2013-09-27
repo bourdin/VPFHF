@@ -763,21 +763,28 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VecSet(ctx->PrePressure,0.);CHKERRQ(ierr);
 
   
-
-  
   /*
    Create optional penny-shaped and rectangular cracks
    */
   ierr = VecSet(fields->V,1.0);CHKERRQ(ierr);
   ierr = VecSet(fields->VIrrev,1.0);CHKERRQ(ierr);
   for (c = 0; c < ctx->numPennyCracks; c++) {
-    ierr = VFPennyCrackBuildVAT2(fields->V,&(ctx->pennycrack[c]),ctx);CHKERRQ(ierr);
-    ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
+    if (ctx->vfprop.atnum == 1) {
+        ierr = VFPennyCrackBuildVAT1(fields->V,&(ctx->pennycrack[c]),ctx);CHKERRQ(ierr);
+    } else {
+        ierr = VFPennyCrackBuildVAT2(fields->V,&(ctx->pennycrack[c]),ctx);CHKERRQ(ierr);
+    }
+   ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
   }
   for (c = 0; c < ctx->numRectangularCracks; c++) {
-    ierr = VFRectangularCrackBuildVAT2(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
+    if (ctx->vfprop.atnum == 1) {
+      ierr = VFRectangularCrackBuildVAT1(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
+    } else {
+      ierr = VFRectangularCrackBuildVAT2(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
+    }
     ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
   }
+  
   /*
    Create optional wells
    */

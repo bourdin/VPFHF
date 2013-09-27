@@ -1,34 +1,76 @@
+test1: uniaxial tension test. mechanics only
+
 TEST10: 2D (hydraulic fracturing) static line crack case: Computes v-field and displacement for pressure loaded line crack of any given length using VFRectangularCrackCreate and VFPennyCrackCreate.
-TEST11: 2D validation of crack opening displacement: Pulling and sliding experiment to compute crack surface displacement for crack that divides a material into two equal halves.
-TEST12: 2D crack initiation and propagation under application of monotonically increasing tension and shear forces: Computes v-field and displacement for material subjected to tension and shear forces to simulate crack initiation and propagation.
-TEST13: 2D crack initiation and propagation under application of monotonically increasing tension and shear forces in the presence of weak (seed) points and pre-existing cracks (using VFRectangularCrackCreate): Simulates crack propagation by tension, shear and a combination of both. Tension force is applied by displacement boundary condition normal to the pulled boundary while shear force is implemented by specify displacement component tangential to the pulled surface. Specifying both displacements normal and perpendicular to a surface implements the combination of tension and shear forces.
-TEST14: 3D case: Crack initiation test. Computation of pressure required to initiate propagation of fracture of any given length.
-TEST15: 2D (hydraulic fracturing) static line crack case: Computes v-field and displacement for pressure loaded line crack of any given length.
-TEST16: 2D (hydraulic fracturing) propagating line crack case: Computes v-field and displacement for volume driven propagation of line crack of any given length.
-TEST17: 2D (hydraulic fracturing) multiple propagating line crack case: Computes v-field and displacement for volume driven propagation of arbitrary number of line crack of any length using VFRectangularCrackCreate.
-TEST18: 3D (hydraulic fracturing) static penny-shaped crack case: Computes v-field and displacement for pressure loaded penny-shaped crack of any given length.crack.
-TEST19: 3D (hydraulic fracturing) propagating penny-shaped crack case: Computes v-field and displacement for volume driven propagation of penny-shaped crack of any given radius.
-TEST20: 3D (hydraulic fracturing) propagating penny-shaped crack case: Computes v-field and displacement for volume driven propagation of penny-shaped crack of any given radius.
-TEST21: 3D (hydraulic fracturing) propagation of multiple penny-shaped cracks: Computes v-field and displacement for volume driven propagation of multiple penny-shaped cracks of arbitrary radii, using VFPennyCrackCreate.
-TEST22: 3D (hydraulic fracturing) propagation of multiple penny-shaped cracks: Computes v-field and displacement for volume driven propagation of multiple penny-shaped cracks of arbitrary radii, using VFPennyCrackCreate.
-TEST23: 3D penny-shaped surface area: Computes v-field to calculate penny shape crack surface area.
-TEST24: 3D MixedFEMFlowSolver Validation: Solution of velocity and pressure for flow problem with exact pressure, p = sin(2Πx)sin(2Πy)sin(2Πz).Normal veolocity condition is implemented on all boundaries.
-TEST25: 3D MixedFEMFlowSolver Validation: Solution of velocity and pressure for flow problem with exact pressure, p = sin(2Πx)sin(2Πy)sin(2Πz).Pressure condition is implemented on all boundaries.
-TEST26: 3D MixedFEMFlowSolver Validation: Solution of velocity and pressure for flow problem with exact pressure, p = cos(Πx)cos(Πy)cos(Πz)/(3Π2). Normal velocity boundary condition is implemented on all boundaries.
-TEST27: 3D MixedFEMFlowSolver Validation: Solution of velocity and pressure for flow problem with exact pressure, p = cos(Πx)cos(Πy)cos(Πz)/(3Π2). Pressure condition is implemented on all boundaries.
-TEST28: 1D. Flow problem with source term = 1 and Homogeneous pressure boundary conditions on all sides. Analytical solution is p = x(x-1)/2.
-TEST29: 1D. Test for transient solver http://tutorial.math.lamar.edu/Classes/DE/SolvingHeatEquation.aspx. Zero source term and homogeneous pressure boundary condition on all sides. Initial solution is p (x,0)= 6sin(pi*x/Lx).
-TEST30: 1D Terzaghi problem rfom Zheng et al.  Coupling of reservoir flow and displacement solver for geomechanics.
-TEST31: 2D Surface subsidence example from Zheng et at.  Coupling of reservoir flow and displacement solver for geomechanics.
-TEST35: 2D Coupled fracture fluid flow and mech solvers. Real fracture fluid flow solver is used. Initial attempt to couple flow and fracture propagation.
-TEST36: 2D Coupled flow and fracture test. Fracture permeability is only a function of crack (v-field), varying between vmax and vmin. Flow solver is either KSP or SNES.TEST37: 2D. Single well problem/Poisson problem with dirac source term at (xo,yo) with varying permeability along a streak of cells, to test heterogeneity in permeability
-TEST38: 2D TS Coupled flow and fracture test.
-TEST39: 2D Coupled fracture fluid flow and fracture mechanics test.
-TEST40: 2D. Single well problem/Poisson problem with dirac source term at (xo,yo). Analytical solution is given by p(x,y)=-1/(2*pi)*ln(r). r=|x-xo|. Implemented with pressure boundary conditions with values from analytical solution.
-TEST41: 3D SNES. Single well problem/Poisson problem with dirac source term at (xo,yo,zo). Analytical solution is given by p(x,y,z)=-1/(4*pi*r). r=|x-xo|. Implemented with pressure boundary conditions with values from analytical solution.
-TEST42: 1D Heat problem with source term = 1. All temperature boundary conditions T(0) = 1; T(1) = 0.
-TEST43: 1D Heat problem with source term = 1.  All homogeneous temperature boundary conditions.
-TEST44: 2D Mandel’s problem.  Coupling of reservoir flow and displacement solver for geomechanics.
-TEST46: 2D Heat problem, advection and diffusion with heat source = 1.  All temperature (homogeneous) boundary conditions. Also useful for testing diffusion part of heat problem by specifying zero velocity. 
-TEST47: 2D Heat problem, advection and diffusion with no heat source.  All temperature boundary conditions implemented by specifying analytical solution pressure values on the boundaries. Taken from http://www.cs.uky.edu/~jzhang/pub/PAPER/adi4th.pdfAlso useful for testing diffusion part of heat problem by specifying zero velocity.
-TEST48: Solves same problem as test28, but using the heat solver. 
+
+TEST11: 2D validation of crack opening displacement: Pulling and sliding experiment to compute crack surface displacement for crack that divides a material into two equal halves.
+
+TEST12: 2D crack initiation and propagation under application of monotonically increasing tension and shear forces: Computes v-field and displacement for material subjected to tension and shear forces to simulate crack initiation and propagation.
+
+TEST13: 2D crack initiation and propagation under application of monotonically increasing tension and shear forces in the presence of weak (seed) points and pre-existing cracks (using VFRectangularCrackCreate): Simulates crack propagation by tension, shear and a combination of both. Tension force is applied by displacement boundary condition normal to the pulled boundary while shear force is implemented by specify displacement component tangential to the pulled surface. Specifying both displacements normal and perpendicular to a surface implements the combination of tension and shear forces.
+
+TEST14: 3D case: Crack initiation test. Computation of pressure required to initiate propagation of fracture of any given length.
+
+TEST15: 2D (hydraulic fracturing) static line crack case: Computes v-field and displacement for pressure loaded line crack of any given length.
+
+TEST16: 2D (hydraulic fracturing) propagating line crack case: Computes v-field and displacement for volume driven propagation of line crack of any given length.
+
+TEST17: 2D (hydraulic fracturing) multiple propagating line crack case: Computes v-field and displacement for volume driven propagation of arbitrary number of line crack of any length using VFRectangularCrackCreate.
+
+TEST18: 3D (hydraulic fracturing) static penny-shaped crack case: Computes v-field and displacement for pressure loaded penny-shaped crack of any given length.
+crack.
+
+TEST19: 3D (hydraulic fracturing) propagating penny-shaped crack case: Computes v-field and displacement for volume driven propagation of penny-shaped crack of any given radius.
+
+TEST20: 3D (hydraulic fracturing) propagating penny-shaped crack case: Computes v-field and displacement for volume driven propagation of penny-shaped crack of any given radius.
+
+TEST21: 3D (hydraulic fracturing) propagation of multiple penny-shaped cracks: Computes v-field and displacement for volume driven propagation of multiple penny-shaped cracks of arbitrary radii, using VFPennyCrackCreate.
+
+TEST22: 3D (hydraulic fracturing) propagation of multiple penny-shaped cracks: Computes v-field and displacement for volume driven propagation of multiple penny-shaped cracks of arbitrary radii, using VFPennyCrackCreate.
+
+TEST23: 3D penny-shaped surface area: Computes v-field to calculate penny shape crack surface area.
+
+TEST24: 3D MixedFEMFlowSolver Validation: Solution of velocity and pressure for flow problem with exact pressure, p = sin(2Πx)sin(2Πy)sin(2Πz).Normal veolocity condition is implemented on all boundaries.
+
+TEST25: 3D MixedFEMFlowSolver Validation: Solution of velocity and pressure for flow problem with exact pressure, p = sin(2Πx)sin(2Πy)sin(2Πz).Pressure condition is implemented on all boundaries.
+
+TEST26: 3D MixedFEMFlowSolver Validation: Solution of velocity and pressure for flow problem with exact pressure, p = cos(Πx)cos(Πy)cos(Πz)/(3Π2). Normal velocity boundary condition is implemented on all boundaries.
+
+TEST27: 3D MixedFEMFlowSolver Validation: Solution of velocity and pressure for flow problem with exact pressure, p = cos(Πx)cos(Πy)cos(Πz)/(3Π2). Pressure condition is implemented on all boundaries.
+
+TEST28: 1D. Flow problem with source term = 1 and Homogeneous pressure boundary conditions on all sides. Analytical solution is p = x(x-1)/2.
+
+TEST29: 1D. Test for transient solver http://tutorial.math.lamar.edu/Classes/DE/SolvingHeatEquation.aspx. Zero source term and homogeneous pressure boundary condition on all sides. Initial solution is p (x,0)= 6sin(pi*x/Lx).
+
+TEST30: 1D Terzaghi problem rfom Zheng et al.  Coupling of reservoir flow and displacement solver for geomechanics.
+
+TEST31: 2D Surface subsidence example from Zheng et at.  Coupling of reservoir flow and displacement solver for geomechanics.
+
+TEST35: 2D Coupled fracture fluid flow and mech solvers. Real fracture fluid flow solver is used. Initial attempt to couple flow and fracture propagation.
+
+TEST36: 2D Coupled flow and fracture test. Fracture permeability is only a function of crack (v-field), varying between vmax and vmin. Flow solver is either KSP or SNES.
+TEST37: 2D. Single well problem/Poisson problem with dirac source term at (xo,yo) with varying permeability along a streak of cells, to test heterogeneity in permeability
+
+TEST38: 2D TS Coupled flow and fracture test.
+
+TEST39: 2D Coupled fracture fluid flow and fracture mechanics test.
+
+TEST40: 2D. Single well problem/Poisson problem with dirac source term at (xo,yo). Analytical solution is given by p(x,y)=-1/(2*pi)*ln(r). r=|x-xo|. Implemented with pressure boundary conditions with values from analytical solution.
+
+TEST41: 3D SNES. Single well problem/Poisson problem with dirac source term at (xo,yo,zo). Analytical solution is given by p(x,y,z)=-1/(4*pi*r). r=|x-xo|. Implemented with pressure boundary conditions with values from analytical solution.
+
+TEST42: 1D Heat problem with source term = 1. All temperature boundary conditions T(0) = 1; T(1) = 0.
+
+TEST43: 1D Heat problem with source term = 1.  All homogeneous temperature boundary conditions.
+
+TEST44: 2D Mandel’s problem.  Coupling of reservoir flow and displacement solver for geomechanics.
+
+TEST46: 2D Heat problem, advection and diffusion with heat source = 1.  All temperature (homogeneous) boundary conditions. Also useful for testing diffusion part of heat problem by specifying zero velocity. 
+
+TEST47: 2D Heat problem, advection and diffusion with no heat source.  All temperature boundary conditions implemented by specifying analytical solution pressure values on the boundaries. Taken from http://www.cs.uky.edu/~jzhang/pub/PAPER/adi4th.pdf
+Also useful for testing diffusion part of heat problem by specifying zero velocity.
+
+TEST48: Solves same problem as test28, but using the heat solver. 
+
+
+
+
