@@ -21,7 +21,8 @@ TEST10: 2D (hydraulic fracturing) static line crack case: Computes v-field and d
 TEST30: 1D Terzaghi problem rfom Zheng et al.  Coupling of reservoir flow and displacement solver for geomechanics.
 TEST31: 2D Surface subsidence example from Zheng et at.  Coupling of reservoir flow and displacement solver for geomechanics.
 TEST35: 2D Coupled fracture fluid flow and mech solvers. Real fracture fluid flow solver is used. Initial attempt to couple flow and fracture propagation.
-TEST36: 2D Coupled flow and fracture test. Fracture permeability is only a function of crack (v-field), varying between vmax and vmin. Flow solver is either KSP or SNES.TEST37: 2D. Single well problem/Poisson problem with dirac source term at (xo,yo) with varying permeability along a streak of cells, to test heterogeneity in permeability
+TEST36: 2D Coupled flow and fracture test. Fracture permeability is only a function of crack (v-field), varying between vmax and vmin. Flow solver is either KSP or SNES.
+TEST37: 2D. Single well problem/Poisson problem with dirac source term at (xo,yo) with varying permeability along a streak of cells, to test heterogeneity in permeability
 TEST38: 2D TS Coupled flow and fracture test.
 TEST39: 2D Coupled fracture fluid flow and fracture mechanics test.
 TEST40: 2D. Single well problem/Poisson problem with dirac source term at (xo,yo). Analytical solution is given by p(x,y)=-1/(2*pi)*ln(r). r=|x-xo|. Implemented with pressure boundary conditions with values from analytical solution.

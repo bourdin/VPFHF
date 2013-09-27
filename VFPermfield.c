@@ -1128,7 +1128,6 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 
 
 
-
 /*
 #undef __FUNCT__
 #define __FUNCT__ "VF_UdotVAverage_local"
