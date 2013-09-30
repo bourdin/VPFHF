@@ -253,6 +253,18 @@ int main(int argc,char **argv)
       p_old = p;
       ierr  = PetscPrintf(PETSC_COMM_WORLD,"  Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit,p);CHKERRQ(ierr);
 
+      switch (ctx.fileformat) {
+      case FILEFORMAT_HDF5:
+        ierr = FieldsH5Write(&ctx,&fields);CHKERRQ(ierr);
+        break;
+      case FILEFORMAT_BIN:
+        ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
+        break;
+      case FILEFORMAT_VTK:
+        ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+        break;
+      }
+
       /*
         Update the pressure based on the relation
             V = p vol_1 + vol_s
@@ -313,6 +325,9 @@ int main(int argc,char **argv)
         case FILEFORMAT_BIN:
           ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
           break;
+        case FILEFORMAT_VTK:
+          ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+          break;
         }
         ctx.ElasticEnergy = 0;
         ctx.InsituWork    = 0;
@@ -344,6 +359,9 @@ int main(int argc,char **argv)
         break;
       case FILEFORMAT_BIN:
         ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
+        break;
+      case FILEFORMAT_VTK:
+        ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
         break;
       }
       ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
