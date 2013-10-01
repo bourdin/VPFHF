@@ -203,12 +203,11 @@ int main(int argc,char **argv)
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 
   ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);CHKERRQ(ierr);  
-  ctx.hasCrackPressure = PETSC_TRUE;
-  ierr                 = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
-  ierr                 = VecDuplicate(fields.U,&U_s);CHKERRQ(ierr);
-  ierr                 = PetscObjectSetName((PetscObject) U_s,"U_s");CHKERRQ(ierr);
-  ierr                 = VecDuplicate(fields.U,&U_1);CHKERRQ(ierr);
-  ierr                 = PetscObjectSetName((PetscObject) U_1,"U_1");CHKERRQ(ierr);
+  ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
+  ierr = VecDuplicate(fields.U,&U_s);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) U_s,"U_s");CHKERRQ(ierr);
+  ierr = VecDuplicate(fields.U,&U_1);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) U_1,"U_1");CHKERRQ(ierr);
 
   ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetType(viewer,PETSCVIEWERASCII);CHKERRQ(ierr);
@@ -223,31 +222,11 @@ int main(int argc,char **argv)
   ierr  = VecSet(fields.pressure,p);CHKERRQ(ierr);
   ierr  = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
   ierr  = VecSet(fields.U,0.0);CHKERRQ(ierr);
+  ierr  = VecSet(U_s,0.0);CHKERRQ(ierr);
+  ierr  = VecSet(U_1,0.0);CHKERRQ(ierr);
 
-  ierr                = VecSet(U_s,0.0);CHKERRQ(ierr);
-  ierr                = VecSet(U_1,0.0);CHKERRQ(ierr);
   ctx.matprop[0].beta = 0.;
   ctx.timevalue       = 0;
-
-  ctx.hasCrackPressure = PETSC_FALSE;
-  ctx.hasInsitu        = PETSC_TRUE;
-
-  ierr = VecCopy(U_s,fields.U);CHKERRQ(ierr);
-  ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-  ierr = VolumetricCrackOpening(&vol_s,&ctx,&fields);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"  minvol %g\n",vol_s);CHKERRQ(ierr);
-  
-  switch (ctx.fileformat) {
-  case FILEFORMAT_HDF5:
-    ierr = FieldsH5Write(&ctx,&fields);CHKERRQ(ierr);
-    break;
-  case FILEFORMAT_BIN:
-    ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
-    break;
-  case FILEFORMAT_VTK:
-    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-    break;
-  }
 
 
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++) {
@@ -260,18 +239,6 @@ int main(int argc,char **argv)
     do {
       p_old = p;
       ierr  = PetscPrintf(PETSC_COMM_WORLD,"  Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit,p);CHKERRQ(ierr);
-
-      switch (ctx.fileformat) {
-      case FILEFORMAT_HDF5:
-        ierr = FieldsH5Write(&ctx,&fields);CHKERRQ(ierr);
-        break;
-      case FILEFORMAT_BIN:
-        ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
-        break;
-      case FILEFORMAT_VTK:
-        ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-        break;
-      }
 
       /*
         Update the pressure based on the relation
