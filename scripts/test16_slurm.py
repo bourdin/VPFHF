@@ -6,7 +6,7 @@ def parseCommandLine(debug=False):
     parser = argparse.ArgumentParser()
     ### Mesh stuff
     vfArgs = parser.add_argument_group('VF_Standalone')
-    vfArgs.add_argument('--n',type=float,nargs=3,default=[100,2,100],help='number of grid points')
+    vfArgs.add_argument('--n',type=int,nargs=3,default=[100,2,100],help='number of grid points')
     vfArgs.add_argument('--l',type=float,nargs=3,default=[8,.1,8],help='geometry')
     vfArgs.add_argument('--altmintol',type=float,default=1e-4,help='Tolerance on alternate minimization')
     vfArgs.add_argument('--altminmaxit',type=int,default=100,help='Maximum number of alternate minimizations')
@@ -23,6 +23,7 @@ def parseCommandLine(debug=False):
 
     vfArgs.add_argument('--insitumin',type=float,nargs=6,default=[0,0,0,0,0,0],help='Insitu stresses in the plane Z0')
     vfArgs.add_argument('--insitumax',type=float,nargs=6,default=None,help='Insitu stresses in the plane Z1')
+    vfArgs.add_argument('--gamg',default=False,action='store_true',help='Use PETSc GAMG solvers')
     
     misc = parser.add_argument_group('misc')
     misc.add_argument('--mpiexec',help='mpi exec command',default='srun')
@@ -115,9 +116,15 @@ def main():
   print test16bin
   cmd = '%s %s -p %s '%(args['mpiexec'],test16bin,args['prefix'])
   for k in sorted(args.keys()):
-    if k not in ['gceff','mpiexec','workdir','prefix']:
+    if k not in ['gceff','mpiexec','workdir','prefix','gamg']:
       val = ('%s'%args[k]).strip('[ ]').replace(' ','')
       cmd += '-%s %s '%(k,val)
+  if args['gamg']:
+    cmd += '-U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg '
+    cmd += '-V_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -V_mg_levels_ksp_type chebyshev -V_mg_levels_pc_type sor -V_pc_gamg_agg_nsmooths 1 -V_pc_gamg_threshold 0 -V_pc_gamg_type agg -V_pc_type gamg '
+    
+      
+  print "Now running %s"%cmd
   os.system(cmd)
   return 0
     
