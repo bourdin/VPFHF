@@ -467,7 +467,6 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
     ierr             = PetscOptionsReal("-irrevtol","\n\tThreshold on v below which fracture irreversibility is enforced","",vfprop->irrevtol,&vfprop->irrevtol,PETSC_NULL);CHKERRQ(ierr);
     vfprop->permmax  = 5.;
     ierr             = PetscOptionsReal("-permmax","\n\tPermeability multiplier of cracks (achieved at  v=0.)","",vfprop->permmax,&vfprop->permmax,PETSC_NULL);CHKERRQ(ierr);
-    vfprop->atCv     = .5;
     vfprop->atnum    = 2;
     ierr = PetscOptionsInt("-atnum", "\n\t Ambrosio Tortorelli variant", "", vfprop->atnum, &vfprop->atnum, PETSC_NULL);CHKERRQ(ierr);
     switch (vfprop->atnum ) {
