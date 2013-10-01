@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-#PBS -V
-#PBS -N test16
-#PBS -lnodes=4:ppn=12
-#PBS -q normal
-#PBS -l walltime=4:00:00
-
 
 def parseCommandLine(debug=False):
     import argparse 
@@ -124,9 +118,7 @@ def main():
     if k not in ['gceff','mpiexec','workdir','prefix']:
       val = ('%s'%args[k]).strip('[ ]').replace(' ','')
       cmd += '-%s %s '%(k,val)
-  
-  print cmd
-
+  os.system(cmd)
   return 0
     
 import sys  
