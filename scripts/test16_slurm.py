@@ -121,8 +121,8 @@ def main():
       cmd += '-%s %s '%(k,val)
   if args['gamg']:
     cmd += '-U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg '
-    cmd += '-V_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -V_mg_levels_ksp_type chebyshev -V_mg_levels_pc_type sor -V_pc_gamg_agg_nsmooths 1 -V_pc_gamg_threshold 0 -V_pc_gamg_type agg -V_pc_type gamg '
-  cmd += rgs['extraopts']  
+    #cmd += '-V_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -V_mg_levels_ksp_type chebyshev -V_mg_levels_pc_type sor -V_pc_gamg_agg_nsmooths 1 -V_pc_gamg_threshold 0 -V_pc_gamg_type agg -V_pc_type gamg '
+  cmd += args['extraopts']  
       
   print "Now running %s"%cmd
   os.system(cmd)
