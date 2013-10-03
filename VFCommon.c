@@ -346,7 +346,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 
 
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
-                      DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,6,1,
+                      DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,6,0,
                       olx,oly,olz,&ctx->daVFperm);CHKERRQ(ierr);
 
   /*
