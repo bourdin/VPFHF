@@ -31,6 +31,7 @@ def main():
     import matplotlib
     import numpy as np
     import os.path
+    import json
     options = parse()
 
     if options.outputfile != None:
@@ -43,18 +44,26 @@ def main():
             plt.plot(p[:,1],p[:,2],'--',lw=2,label=f)
         if (os.path.isdir(f)):
             infotxt = os.path.join(f,'00_INFO.txt')
-            if (os.path.exists(infotxt)):
-                print 'Reading parameters for %s'%infotxt
+            infojson = os.path.join(f,'00_INFO.json')
+            if os.path.exists(infojson):
+                json_file = open(infojson)
+                D = json.load(json_file)
+                json_file.close()
+                presfile = os.path.join(f,D['prefix']+'.pres')
+                hx = D['l'][0]/(D['n'][0]+0.0)
+                l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['epsilon']/hx,f)
+                #l = '$ \phi=%s \ (%s)$'%(D['c0_phi'],f)
+            elif (os.path.exists(infotxt)):
                 D = Dictreadtxt(infotxt)
                 presfile = os.path.join(f,f+'.pres')
-                if os.path.exists(presfile):
-                    p = np.loadtxt(presfile)    
-                    hx = D['LX']/(D['NX']+0.0)
-                    l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['EPSILON']/hx,f)
-                    l = '$ \phi=%s \ (%s)$'%(D['C0_PHI'],f)
-                    #l = '$h=%.2E$, $\epsilon/h=%.2f$'%(hx,D['EPSILON']/hx)
-                    #plt.plot(p[:,1]/D['LZ'],p[:,2],lw=2,label=l)
-                    plt.plot(p[:,1],p[:,2],lw=2,label=l)
+                hx = D['LX']/(D['NX']+0.0)
+                l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['EPSILON']/hx,f)
+                #l = '$ \phi=%s \ (%s)$'%(D['C0_PHI'],f)
+            if os.path.exists(presfile):
+                p = np.loadtxt(presfile)    
+                #l = '$h=%.2E$, $\epsilon/h=%.2f$'%(hx,D['EPSILON']/hx)
+                #plt.plot(p[:,1]/D['LZ'],p[:,2],lw=2,label=l)
+                plt.plot(p[:,1],p[:,2],lw=2,label=l)
                 
     ax = plt.gca()
     ax.grid()
