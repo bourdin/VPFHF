@@ -41,6 +41,9 @@ def parseCommandLine(debug=False):
     args,CL = parser.parse_known_args()
     
     h = min( [l/float(n) for l,n in zip(args.l,args.n)])
+
+    h = args.l[0] / float(args.n[0])
+    
     for c in range(args.npc):
       pc.add_argument('--pc%i_R'%c,type=float,default=.5,help='Radius of penny shaped cracks %i'%c)  
       pc.add_argument('--pc%i_center'%c,type=float,nargs=3,default=[x/2. for x in args.l],help='Center of penny shaped cracks %i'%c)  
