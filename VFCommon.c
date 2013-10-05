@@ -920,7 +920,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 
   /*
     Setting SNES default tolerance to something a bit more reasonable than the default.
-    This may allow us to relax teh KSP tol a bit. Will need to investigate in the future
+    This may allow us to relax the KSP tol a bit. Will need to investigate in the future
   */
   ierr = SNESSetTolerances(ctx->snesV,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = SNESSetFromOptions(ctx->snesV);CHKERRQ(ierr);

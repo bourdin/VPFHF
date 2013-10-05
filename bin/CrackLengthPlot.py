@@ -40,8 +40,12 @@ def main():
     
     for f in options.inputfile:
         if (os.path.isfile(f)):
-            p = np.loadtxt(f)    
-            plt.plot(p[:,1],p[:,2],'--',lw=2,label=f)
+            p = np.loadtxt(f)
+            if options.dim == 2:
+                pp = p[:,3] - p[0,3]
+            else: 
+                pp = p[:,3]
+            plt.plot(p[:,1],pp,'--',lw=2,label=f)
         if (os.path.isdir(f)):
             infotxt = os.path.join(f,'00_INFO.txt')
             infojson = os.path.join(f,'00_INFO.json')
@@ -64,7 +68,7 @@ def main():
                 #l = '$h=%.2E$, $\epsilon/h=%.2f$'%(hx,D['EPSILON']/hx)
                 #plt.plot(p[:,1]/D['LZ'],p[:,2],lw=2,label=l)
                 pp = p[:,3]
-                if options.dim ==2:
+                if options.dim == 2:
                     pp -= p[0,3]
                 plt.plot(p[:,1],pp,label=l,lw=2)
 
