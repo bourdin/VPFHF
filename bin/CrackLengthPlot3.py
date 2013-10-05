@@ -56,7 +56,7 @@ def main():
                 presfile = os.path.join(f,D['prefix']+'.pres')
                 hx = D['l'][0]/(D['n'][0]+0.0)
                 #l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['epsilon']/hx,f)
-                l = '$ \phi=%s \ (%s)$'%(D['c0_phi'],f)
+                l = '$ \phi=%s \ (%s)$'%(D['pc0_phi'],f)
             elif (os.path.exists(infotxt)):
                 D = Dictreadtxt(infotxt)
                 presfile = os.path.join(f,f+'.pres')
