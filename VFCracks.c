@@ -160,8 +160,12 @@ extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx
         if (crack->r == 0) v_array[k][j][i] = 1.;
         else {
           ierr = VFDistanceToPennyCrack(&dist,x,crack);CHKERRQ(ierr);
-          if (dist <= crack->thickness/2.) v_array[k][j][i] = 0.;
-          else v_array[k][j][i] = 1.-exp(-dist/2/ctx->vfprop.epsilon);
+          dist -= crack->thickness/2.;
+          if (dist <= 0) {
+            v_array[k][j][i] = 0.;
+          } else {
+            v_array[k][j][i] = 1.-exp(-dist/2/ctx->vfprop.epsilon);
+          }
         }
       }
   }
@@ -206,6 +210,60 @@ extern PetscErrorCode VFPennyNFBuildVAT2(VFPennyCrack *crack,VFCtx *ctx)
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VFPennyCrackBuildVAT1"
+/*
+ VFPennyCrackBuildVAT1:  Build the V-field associated with the array of penny-shaped cracks
+ following the construction in Bourdin-Francfort-Marigo '08.
+
+ (c) 2013 Blaise Bourdin bourdin@lsu.edu
+ */
+extern PetscErrorCode VFPennyCrackBuildVAT1(Vec V,VFPennyCrack *crack,VFCtx *ctx)
+{
+  PetscErrorCode ierr;
+  PetscInt       i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+  PetscReal      ****coords_array;
+  PetscReal      ***v_array;
+  PetscReal      x[3];
+  PetscReal      dist;
+
+  PetscFunctionBegin;
+  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+
+  ierr = VecSet(V,1.0);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  for (k = zs; k < zs+zm; k++) {
+    for (j = ys; j < ys+ym; j++)
+      for (i = xs; i < xs+xm; i++) {
+        x[2] = coords_array[k][j][i][2];
+        x[1] = coords_array[k][j][i][1];
+        x[0] = coords_array[k][j][i][0];
+        if (crack->r == 0) {
+          v_array[k][j][i] = 1.;
+        } else {
+          ierr = VFDistanceToPennyCrack(&dist,x,crack);CHKERRQ(ierr);
+          dist -= crack->thickness/2.;
+          if (dist <= 0) {
+            v_array[k][j][i] = 0.;
+          } else if (dist < 2. * ctx->vfprop.epsilon) {
+            v_array[k][j][i] = dist/ctx->vfprop.epsilon * (1.- .25*dist/ctx->vfprop.epsilon);
+          } else {
+            v_array[k][j][i] = 1.;
+          }
+        }
+      }
+  }
+  ierr = DMDAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "VFRectangularCrackGet"
 /*
@@ -404,7 +462,7 @@ extern PetscErrorCode VFDistanceToRectangularCrack(PetscReal *d,PetscReal *x,VFR
 #undef __FUNCT__
 #define __FUNCT__ "VFRectangularCrackBuildVAT2"
 /*
- VFPennyCrackBuildVAT2:  Build the V-field associated with the array of penny-shaped cracks
+ VFRectangularCrackBuildVAT2:  Build the V-field associated with the array of rectangular cracks
  following the construction in Bourdin-Francfort-Marigo '08.
 
  (c) 2010-2012 Chukwudi Chukwuzodie cchukw1@tigers.lsu.edu
@@ -436,6 +494,55 @@ extern PetscErrorCode VFRectangularCrackBuildVAT2(Vec V,VFRectangularCrack *crac
         ierr = VFDistanceToRectangularCrack(&dist,x,crack);CHKERRQ(ierr);
         if (dist <= crack->thickness) v_array[k][j][i] = 0.;
         else v_array[k][j][i] = 1.-exp(-dist/2/ctx->vfprop.epsilon);
+      }
+  }
+  ierr = DMDAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VFRectangularCrackBuildVAT1"
+/*
+ VFRectangularCrackBuildVAT1:  Build the V-field associated with the array of rectangular cracks
+ following the construction in Bourdin-Francfort-Marigo '08.
+
+ (c) 2010-2013 Chukwudi Chukwuzodie cchukw1@tigers.lsu.edu
+               Blaise Bourdin       bourdin@lsu.edu
+ */
+extern PetscErrorCode VFRectangularCrackBuildVAT1(Vec V,VFRectangularCrack *crack,VFCtx *ctx)
+{
+  PetscErrorCode ierr;
+  PetscInt       i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+  PetscReal      ****coords_array;
+  PetscReal      ***v_array;
+  PetscReal      x[3];
+  PetscReal      dist;
+
+  PetscFunctionBegin;
+  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+
+  ierr = VecSet(V,1.0);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  for (k = zs; k < zs+zm; k++) {
+    for (j = ys; j < ys+ym; j++)
+      for (i = xs; i < xs+xm; i++) {
+        x[2] = coords_array[k][j][i][2];
+        x[1] = coords_array[k][j][i][1];
+        x[0] = coords_array[k][j][i][0];
+        ierr = VFDistanceToRectangularCrack(&dist,x,crack);CHKERRQ(ierr);
+        dist -= crack->thickness/2.;
+        if (dist <= 0) {
+          v_array[k][j][i] = 0.;
+        } else if (dist < 2. * ctx->vfprop.epsilon) {
+          v_array[k][j][i] = dist/ctx->vfprop.epsilon * (1.- .25*dist/ctx->vfprop.epsilon);
+        } else {
+          v_array[k][j][i] = 1.;
+        }
       }
   }
   ierr = DMDAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);

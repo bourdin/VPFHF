@@ -12,26 +12,6 @@
 #include "VFFlow.h"
 
 #undef __FUNCT__
-#define __FUNCT__ "fieldsWrite"
-PetscErrorCode fieldsWrite(VFCtx *ctx,PetscViewer viewer){
-  PetscErrorCode ierr;
-  Vec            UDof;
-  PetscInt       c;
-  char           fieldNameDof[FILENAME_MAX];
-
-  ierr = DMGetGlobalVector(ctx->daScal,&UDof);CHKERRQ(ierr);
-  for (c = 0; c < 3; c++) {
-    ierr = VecStrideGather(ctx->fields->U,c,UDof,INSERT_VALUES);CHKERRQ(ierr);
-    ierr = PetscSNPrintf(fieldNameDof,FILENAME_MAX,"%s_%i","Displacement",c);CHKERRQ(ierr);
-    ierr = PetscObjectSetName((PetscObject)UDof,fieldNameDof);CHKERRQ(ierr);
-    ierr = VecView(UDof,viewer);CHKERRQ(ierr);
-  }
-  ierr = DMRestoreGlobalVector(ctx->daScal,&UDof);CHKERRQ(ierr);
-  ierr = VecView(ctx->fields->V,viewer);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "boundaryConditionsInitialize"
 PetscErrorCode boundaryConditionsInitialize(VFCtx *ctx,PetscInt orientation){
   PetscInt       i,j,c;
@@ -191,9 +171,8 @@ int main(int argc,char **argv)
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
   
-  ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
-  ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
+  ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
   ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
@@ -252,17 +231,7 @@ int main(int argc,char **argv)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Total  energy:            %e\n",ctx.TotalEnergy);CHKERRQ(ierr);
 		ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%d \t\t%e \t%e \t%e \t%e \t%e \t%e\n",ctx.timestep,ctx.timevalue,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.InsituWork,ctx.TotalEnergy);
     
-    /*
-     Save fields and write statistics about current run
-     */
-    ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.%.5i.vts",ctx.prefix,ctx.timestep);CHKERRQ(ierr);
-    ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
-    ierr = PetscViewerSetType(viewer,PETSCVIEWERVTK);CHKERRQ(ierr);
-    ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
-    ierr = fieldsWrite(&ctx,viewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-    
-    ierr = FieldsVTKWrite(&ctx,&fields,PETSC_NULL);
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);
   }
   ierr = VecDestroy(&Vold);CHKERRQ(ierr);
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);

@@ -51,14 +51,14 @@ def main():
                 json_file.close()
                 presfile = os.path.join(f,D['prefix']+'.pres')
                 hx = D['l'][0]/(D['n'][0]+0.0)
-                l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['epsilon']/hx,f)
-                #l = '$ \phi=%s \ (%s)$'%(D['c0_phi'],f)
+                #l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['epsilon']/hx,f)
+                l = '$ \phi=%s \ (%s)$'%(D['pc0_phi'],f)
             elif (os.path.exists(infotxt)):
                 D = Dictreadtxt(infotxt)
                 presfile = os.path.join(f,f+'.pres')
                 hx = D['LX']/(D['NX']+0.0)
-                l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['EPSILON']/hx,f)
-                #l = '$ \phi=%s \ (%s)$'%(D['C0_PHI'],f)
+                #l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['EPSILON']/hx,f)
+                l = '$ \phi=%s \ (%s)$'%(D['C0_PHI'],f)
             if os.path.exists(presfile):
                 p = np.loadtxt(presfile)    
                 #l = '$h=%.2E$, $\epsilon/h=%.2f$'%(hx,D['EPSILON']/hx)

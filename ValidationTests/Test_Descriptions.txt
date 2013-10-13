@@ -1,3 +1,5 @@
+test1: uniaxial tension test. mechanics only
+
 TEST10: 2D (hydraulic fracturing) static line crack case: Computes v-field and displacement for pressure loaded line crack of any given length using VFRectangularCrackCreate and VFPennyCrackCreate.
 TEST11: 2D validation of crack opening displacement: Pulling and sliding experiment to compute crack surface displacement for crack that divides a material into two equal halves.
 TEST12: 2D crack initiation and propagation under application of monotonically increasing tension and shear forces: Computes v-field and displacement for material subjected to tension and shear forces to simulate crack initiation and propagation.
@@ -32,4 +34,4 @@ TEST10: 2D (hydraulic fracturing) static line crack case: Computes v-field and d
 TEST44: 2D Mandel’s problem.  Coupling of reservoir flow and displacement solver for geomechanics.
 TEST46: 2D Heat problem, advection and diffusion with heat source = 1.  All temperature (homogeneous) boundary conditions. Also useful for testing diffusion part of heat problem by specifying zero velocity. 
 TEST47: 2D Heat problem, advection and diffusion with no heat source.  All temperature boundary conditions implemented by specifying analytical solution pressure values on the boundaries. Taken from http://www.cs.uky.edu/~jzhang/pub/PAPER/adi4th.pdfAlso useful for testing diffusion part of heat problem by specifying zero velocity.
-TEST48: Solves same problem as test28, but using the heat solver. 
+TEST48: Solves same problem as test28, but using the heat solver. 

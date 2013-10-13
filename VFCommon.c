@@ -346,7 +346,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 
 
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
-                      DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,6,1,
+                      DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,6,0,
                       olx,oly,olz,&ctx->daVFperm);CHKERRQ(ierr);
 
   /*
@@ -467,7 +467,6 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
     ierr             = PetscOptionsReal("-irrevtol","\n\tThreshold on v below which fracture irreversibility is enforced","",vfprop->irrevtol,&vfprop->irrevtol,PETSC_NULL);CHKERRQ(ierr);
     vfprop->permmax  = 5.;
     ierr             = PetscOptionsReal("-permmax","\n\tPermeability multiplier of cracks (achieved at  v=0.)","",vfprop->permmax,&vfprop->permmax,PETSC_NULL);CHKERRQ(ierr);
-    vfprop->atCv     = .5;
     vfprop->atnum    = 2;
     ierr = PetscOptionsInt("-atnum", "\n\t Ambrosio Tortorelli variant", "", vfprop->atnum, &vfprop->atnum, PETSC_NULL);CHKERRQ(ierr);
     switch (vfprop->atnum ) {
@@ -765,8 +764,6 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RegFracWellFlowRate);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->RegFracWellFlowRate,"Regularized Fracture Well Flow Rate");CHKERRQ(ierr);
   ierr = VecSet(ctx->RegFracWellFlowRate,0.);CHKERRQ(ierr);
-
-
   
   /*
    Create optional penny-shaped and rectangular cracks
@@ -774,21 +771,29 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VecSet(fields->V,1.0);CHKERRQ(ierr);
   ierr = VecSet(fields->VIrrev,1.0);CHKERRQ(ierr);
   for (c = 0; c < ctx->numPennyCracks; c++) {
-    ierr = VFPennyCrackBuildVAT2(fields->V,&(ctx->pennycrack[c]),ctx);CHKERRQ(ierr);
-    ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
+    if (ctx->vfprop.atnum == 1) {
+        ierr = VFPennyCrackBuildVAT1(fields->V,&(ctx->pennycrack[c]),ctx);CHKERRQ(ierr);
+    } else {
+        ierr = VFPennyCrackBuildVAT2(fields->V,&(ctx->pennycrack[c]),ctx);CHKERRQ(ierr);
+    }
+   ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
   }
   for (c = 0; c < ctx->numRectangularCracks; c++) {
-    ierr = VFRectangularCrackBuildVAT2(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
+    if (ctx->vfprop.atnum == 1) {
+      ierr = VFRectangularCrackBuildVAT1(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
+    } else {
+      ierr = VFRectangularCrackBuildVAT2(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
+    }
     ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
   }
-
-  
-  
   ierr = VecSet(ctx->RegFracWellFlowRate,0.0);CHKERRQ(ierr);
   for (c = 0; c < ctx->numfracWells; c++) {
     ierr = VFRegDiracDeltaFunction(ctx->RegFracWellFlowRate,&ctx->fracwell[c],ctx);CHKERRQ(ierr);
   }
   
+  /*
+   Create optional wells
+   */
   for (c = 0; c < ctx->numWells; c++) {
     /*    ierr = VFWellBuildVAT2(fields->V,&(ctx->well[c]),ctx);CHKERRQ(ierr);
      ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
@@ -923,7 +928,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 
   /*
     Setting SNES default tolerance to something a bit more reasonable than the default.
-    This may allow us to relax teh KSP tol a bit. Will need to investigate in the future
+    This may allow us to relax the KSP tol a bit. Will need to investigate in the future
   */
   ierr = SNESSetTolerances(ctx->snesV,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = SNESSetFromOptions(ctx->snesV);CHKERRQ(ierr);
@@ -1303,35 +1308,94 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "VecViewVTKDof"
+/*
+ VecViewVTKDof: Export all nodal fields in PETSc VTK format.
+ 
+ (c) 2013 Blaise Bourdin bourdin@lsu.edu
+ */
+extern PetscErrorCode VecViewVTKDof(DM da,Vec X,PetscViewer viewer)
+{
+  PetscErrorCode ierr;
+  Vec            UDof;
+  PetscInt       dof,c;
+  char           fieldnamedof[FILENAME_MAX];
+  const char     *fieldname;
+
+  ierr = VecGetBlockSize(X,&dof);CHKERRQ(ierr);
+  if (dof == 1) {
+    ierr = VecView(X,viewer);CHKERRQ(ierr);
+  } else {
+    ierr = DMGetGlobalVector(da,&UDof);CHKERRQ(ierr);
+    ierr = PetscObjectGetName((PetscObject) X,&fieldname);CHKERRQ(ierr);
+    for (c = 0; c < dof; c++) {
+      ierr = VecStrideGather(X,c,UDof,INSERT_VALUES);CHKERRQ(ierr);
+      ierr = PetscSNPrintf(fieldnamedof,FILENAME_MAX,"%s_%i",fieldname,c);CHKERRQ(ierr);
+      ierr = PetscObjectSetName((PetscObject)UDof,fieldnamedof);CHKERRQ(ierr);
+      ierr = VecView(UDof,viewer);CHKERRQ(ierr);
+    }
+    ierr = DMRestoreGlobalVector(da,&UDof);CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "FieldsVTKWrite"
 /*
- FieldsBinaryWrite: Export all fields in PETSc VTK format.
- 
+ FieldsVTKWrite: Export all fields in VTK binary format.
+
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char name[])
+extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char nodalName[], const char cellName[])
 {
-  PetscErrorCode ierr;
-  PetscViewer    viewer;
-  Vec            *allVec;
+  PetscErrorCode  ierr;
   char            filename[FILENAME_MAX],fieldnameDof[FILENAME_MAX];
-  //const char      fieldname[FILENAME_MAX];
-  PetscInt        numfields,field,numcomp,comp;
+  PetscViewer     viewer;
+  Vec             UDof;
+  PetscInt        c;
 
   PetscFunctionBegin;
+
   /*
-  allVec = fields + sizeof(PetscInt);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"numfields: %i\n",fields->numfields);CHKERRQ(ierr);
-  for (field = 0; field < fields->numfields; field++) {
-    ierr = VecGetBlockSize(allVec[field],&numcomp);
-    PetscObjectGetName((PetscObject) allVec[field],&fieldname);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Field %i, numcomp: %i, name %s\n",field,numcomp,fieldname);
-  }
+    Nodal variables
   */
+  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
+  ierr = PetscViewerSetType(viewer,PETSCVIEWERVTK);CHKERRQ(ierr);
+  if (nodalName == NULL) {
+    ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s_nodal.%.5i.vts",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
+    ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
+  } else {
+    ierr = PetscViewerFileSetName(viewer,nodalName);CHKERRQ(ierr);
+  }
+  ierr = VecViewVTKDof(ctx->daScal,fields->U,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->velocity,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->fracvelocity,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->V,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->theta,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->pressure,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->fracpressure,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->VolCrackOpening,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->VolLeakOffRate,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+
+  /*
+    Cell Variables
+  */
+  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
+  ierr = PetscViewerSetType(viewer,PETSCVIEWERVTK);CHKERRQ(ierr);
+  if (cellName == NULL) {
+    ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s_cell.%.5i.vts",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
+    ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
+  } else {
+    ierr = PetscViewerFileSetName(viewer,cellName);CHKERRQ(ierr);
+  }
+  ierr = VecViewVTKDof(ctx->daScalCell,fields->vfperm,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScalCell,fields->pmult,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
 
 #undef __FUNCT__
 #define __FUNCT__ "PermUpdate"
