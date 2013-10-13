@@ -40,8 +40,12 @@ def main():
     
     for f in options.inputfile:
         if (os.path.isfile(f)):
-            p = np.loadtxt(f)    
-            plt.plot(p[:,1],p[:,2],'--',lw=2,label=f)
+            p = np.loadtxt(f)
+            if options.dim == 2:
+                pp = p[:,3] - p[0,3]
+            else: 
+                pp = p[:,3]
+            plt.plot(p[:,1],pp,'--',lw=2,label=f)
         if (os.path.isdir(f)):
             infotxt = os.path.join(f,'00_INFO.txt')
             infojson = os.path.join(f,'00_INFO.json')
@@ -51,42 +55,53 @@ def main():
                 json_file.close()
                 presfile = os.path.join(f,D['prefix']+'.pres')
                 hx = D['l'][0]/(D['n'][0]+0.0)
-                l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['epsilon']/hx,f)
-                #l = '$ \phi=%s \ (%s)$'%(D['c0_phi'],f)
+                #l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['epsilon']/hx,f)
+                l = '$ \phi=%s \ (%s)$'%(D['pc0_phi'],f)
             elif (os.path.exists(infotxt)):
                 D = Dictreadtxt(infotxt)
                 presfile = os.path.join(f,f+'.pres')
                 hx = D['LX']/(D['NX']+0.0)
-                l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['EPSILON']/hx,f)
-                #l = '$ \phi=%s \ (%s)$'%(D['C0_PHI'],f)
+                #l = '$h=%.2E$, $\epsilon/h=%.2f\ (%s)$'%(hx,D['EPSILON']/hx,f)
+                l = '$ \phi=%s \ (%s)$'%(D['C0_PHI'],f)
             if os.path.exists(presfile):
                 p = np.loadtxt(presfile)    
                 #l = '$h=%.2E$, $\epsilon/h=%.2f$'%(hx,D['EPSILON']/hx)
                 #plt.plot(p[:,1]/D['LZ'],p[:,2],lw=2,label=l)
-                plt.plot(p[:,1],p[:,2],lw=2,label=l)
-                
+                pp = p[:,3]
+                if options.dim == 2:
+                    pp -= p[0,3]
+                plt.plot(p[:,1],pp,label=l,lw=2)
+
+    plt.legend(loc=0)
+    if options.dim ==2:
+        plt.xlabel('Injected volume $(\mathrm{m}^2)$')
+        plt.ylabel('Crack increment $(\mathrm{m})$')
+    else:
+        plt.xlabel('Injected volume $(\mathrm{m}^3)$')
+        plt.ylabel('Crack radius $(\mathrm{m})$')
+
     ax = plt.gca()
     ax.grid()
-    #ax.axis([0,.025,0,1.5])
+    #ax.axis([0,.025,0,.015])
     plt.legend(loc=0,labelspacing=.1)
     leg = plt.gca().get_legend()
     ltext  = leg.get_texts()
     plt.setp(ltext, fontsize='small')
 
-    if options.dim ==2:
-        plt.xlabel('Injected volume $(\mathrm{m}^2)$')
-    else:
-        plt.xlabel('Injected volume $(\mathrm{m}^3)$')
-    plt.ylabel('Pressure $(\mathrm{MPa})$')
     if not options.title:
-        plt.title('Pressure vs. injected volume')
+        if options.dim ==2:
+            plt.title('Crack increment vs. injected volume')
+        else:
+            plt.title('Crack radius vs. injected volume')
     else:
         plt.title(options.title)
         
+
     if options.outputfile != None:
       plt.savefig(options.outputfile)
     else:
       plt.show()
-      
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+        sys.exit(main())

@@ -164,7 +164,7 @@ temp: temp.o ${VFOBJ} chkopts
 	
 runtest1: test1
 	@echo "Running " $@
-	-@ARGS='-n 41,41,81 -l 1,1,2 -radius .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8';\
+	-@ARGS=' -n 201,2,2 -l 10,1,1 -orientation 0 -nu 0 -epsilon 0.25 -eta 0 -gc .1 -maxtimestep 11 -maxtimevalue 4 -atnum 1';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \

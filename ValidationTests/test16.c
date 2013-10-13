@@ -182,6 +182,7 @@ int main(int argc,char **argv)
     break;
   }
 
+  /*
   for (c = 0; c < ctx.numPennyCracks; c++) {
     ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
     ierr = VFPennyCrackBuildVAT2(fields.VIrrev,&ctx.pennycrack[c],&ctx);CHKERRQ(ierr);
@@ -198,23 +199,15 @@ int main(int argc,char **argv)
     ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
   }
   ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
+  */
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 
-  switch (ctx.fileformat) {
-  case FILEFORMAT_HDF5:
-    ierr = FieldsH5Write(&ctx,&fields);CHKERRQ(ierr);
-    break;
-  case FILEFORMAT_BIN:
-    ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
-    break;
-  }
-
-  ctx.hasCrackPressure = PETSC_TRUE;
-  ierr                 = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
-  ierr                 = VecDuplicate(fields.U,&U_s);CHKERRQ(ierr);
-  ierr                 = PetscObjectSetName((PetscObject) U_s,"U_s");CHKERRQ(ierr);
-  ierr                 = VecDuplicate(fields.U,&U_1);CHKERRQ(ierr);
-  ierr                 = PetscObjectSetName((PetscObject) U_1,"U_1");CHKERRQ(ierr);
+  ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);CHKERRQ(ierr);  
+  ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
+  ierr = VecDuplicate(fields.U,&U_s);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) U_s,"U_s");CHKERRQ(ierr);
+  ierr = VecDuplicate(fields.U,&U_1);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) U_1,"U_1");CHKERRQ(ierr);
 
   ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetType(viewer,PETSCVIEWERASCII);CHKERRQ(ierr);
@@ -229,21 +222,15 @@ int main(int argc,char **argv)
   ierr  = VecSet(fields.pressure,p);CHKERRQ(ierr);
   ierr  = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
   ierr  = VecSet(fields.U,0.0);CHKERRQ(ierr);
+  ierr  = VecSet(U_s,0.0);CHKERRQ(ierr);
+  ierr  = VecSet(U_1,0.0);CHKERRQ(ierr);
 
-  ierr                = VecSet(U_s,0.0);CHKERRQ(ierr);
-  ierr                = VecSet(U_1,0.0);CHKERRQ(ierr);
   ctx.matprop[0].beta = 0.;
   ctx.timevalue       = 0;
 
-  ctx.hasCrackPressure = PETSC_FALSE;
-  ctx.hasInsitu        = PETSC_TRUE;
-
-  ierr = VecCopy(U_s,fields.U);CHKERRQ(ierr);
-  ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-  ierr = VolumetricCrackOpening(&vol_s,&ctx,&fields);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"  minvol %g\n",vol_s);CHKERRQ(ierr);
 
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++) {
+    ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
     targetVol = minvol + flowrate * ctx.timestep;
     ierr      = PetscPrintf(PETSC_COMM_WORLD,"Time step %i. Targeting injected volume of %g\n",ctx.timestep,targetVol);CHKERRQ(ierr);
     ierr      = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
@@ -313,6 +300,9 @@ int main(int argc,char **argv)
         case FILEFORMAT_BIN:
           ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
           break;
+        case FILEFORMAT_VTK:
+          ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+          break;
         }
         ctx.ElasticEnergy = 0;
         ctx.InsituWork    = 0;
@@ -344,6 +334,9 @@ int main(int argc,char **argv)
         break;
       case FILEFORMAT_BIN:
         ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
+        break;
+      case FILEFORMAT_VTK:
+        ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
         break;
       }
       ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
