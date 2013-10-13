@@ -680,7 +680,11 @@ extern PetscErrorCode VF_HeatMatK_local(PetscReal *Kd_ele,CartFE_Element3D *e,Pe
 							for (eg = 0; eg < e->ng; eg++) {
 								Kd_ele[l] += ((kx*e->dphi[kk][jj][ii][0][eg]+kxy*e->dphi[kk][jj][ii][1][eg]+kxz*e->dphi[kk][jj][ii][2][eg])*e->dphi[k][j][i][0][eg]
                               +(kxy*e->dphi[kk][jj][ii][0][eg]+ky*e->dphi[kk][jj][ii][1][eg]+kyz*e->dphi[kk][jj][ii][2][eg])*e->dphi[k][j][i][1][eg]
-                              +(kxz*e->dphi[kk][jj][ii][0][eg]+kyz*e->dphi[kk][jj][ii][1][eg]+kz*e->dphi[kk][jj][ii][2][eg])*e->dphi[k][j][i][2][eg])*(pow(v_elem[eg],2))*e->weight[eg];
+                              +(kxz*e->dphi[kk][jj][ii][0][eg]+kyz*e->dphi[kk][jj][ii][1][eg]+kz*e->dphi[kk][jj][ii][2][eg])*e->dphi[k][j][i][2][eg])*e->weight[eg];
+     
+//                The line below highlights the fact that v^2 was removed from above
+//                +(kxz*e->dphi[kk][jj][ii][0][eg]+kyz*e->dphi[kk][jj][ii][1][eg]+kz*e->dphi[kk][jj][ii][2][eg])*e->dphi[k][j][i][2][eg])*(pow(v_elem[eg],2))*e->weight[eg];
+
 							}
 						}
 					}

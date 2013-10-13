@@ -1084,6 +1084,42 @@ extern PetscErrorCode VecApplyFractureWellFlowRate(PetscReal *RHS_local,CartFE_E
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "VecApplyRegularizedFractureWellFlowRate"
+extern PetscErrorCode VecApplyRegularizedFractureWellFlowRate(PetscReal *RHS_local,CartFE_Element3D *e,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array)
+{
+  PetscReal       phi[2][2][2];
+  PetscInt        i,j,k,l;
+  PetscReal             v_elem_pt = 0.;
+  
+  PetscFunctionBegin;
+  phi[0][0][0] = (1.-hwz)*(1.-hwy)*(1.-hwx);
+  phi[0][0][1] = (1.-hwz)*(1.-hwy)*hwx;
+  phi[0][1][0] = (1.-hwz)*hwy*(1.-hwx);
+  phi[0][1][1] = (1.-hwz)*hwy*hwx;
+  phi[1][0][0] = hwz*(1.-hwy)*(1.-hwx);
+  phi[1][0][1] = hwz*(1.-hwy)*hwx;
+  phi[1][1][0] = hwz*hwy*(1.-hwx);
+  phi[1][1][1] = hwz*hwy*hwx;
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        v_elem_pt += v_array[ek+k][ej+j][ei+i] * phi[k][j][i];
+      }
+    }
+  }
+  for(l = 0, k = 0; k < 2; k++){
+    for(j = 0; j < 2; j++){
+      for(i = 0; i < 2; i++, l++){
+        RHS_local[l] = 0;
+        RHS_local[l] = Q*phi[k][j][i]*(1.0-(pow(v_elem_pt,2)));
+      }
+    }
+  }
+  PetscFunctionReturn(0);
+}
+
+
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyPressureBC"
@@ -2386,18 +2422,29 @@ extern PetscErrorCode VF_MatDFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE
 							Kd_ele[l] = 0.;
 							for (eg = 0; eg < e->ng; eg++) {
                  
+                Kd_ele[l] += ((1.-(pow(n_elem[0][eg],2)))*e->dphi[k][j][i][0][eg]
+                              -e->dphi[k][j][i][1][eg]*n_elem[0][eg]*n_elem[1][eg]
+                              -e->dphi[k][j][i][2][eg]*n_elem[0][eg]*n_elem[2][eg])*
+                ((1.-(pow(n_elem[0][eg],2)))*e->dphi[kk][jj][ii][0][eg]
+                 -e->dphi[kk][jj][ii][1][eg]*n_elem[0][eg]*n_elem[1][eg]
+                 -e->dphi[kk][jj][ii][2][eg]*n_elem[0][eg]*n_elem[2][eg])
+                *4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*(pow(v_mag_elem[eg],1))*e->weight[eg];
                 
-                Kd_ele[l] += ((1.-(pow(n_elem[0][eg],2)))*e->dphi[kk][jj][ii][0][eg]
-                              -e->dphi[kk][jj][ii][1][eg]*n_elem[0][eg]*n_elem[1][eg]
-                              -e->dphi[kk][jj][ii][2][eg]*n_elem[0][eg]*n_elem[2][eg])*e->dphi[k][j][i][0][eg]*4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*v_mag_elem[eg]*e->weight[eg];
- 
-                Kd_ele[l] += (-e->dphi[kk][jj][ii][0][eg]*n_elem[0][eg]*n_elem[1][eg]
-                               +(1.-pow(n_elem[1][eg],2))*e->dphi[kk][jj][ii][1][eg]
-                               -e->dphi[kk][jj][ii][2][eg]*n_elem[1][eg]*n_elem[2][eg])*e->dphi[k][j][i][1][eg]*4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*v_mag_elem[eg]*e->weight[eg];
+                Kd_ele[l] += (-e->dphi[k][j][i][0][eg]*n_elem[0][eg]*n_elem[1][eg]
+                              +(1.-pow(n_elem[1][eg],2))*e->dphi[k][j][i][1][eg]
+                              -e->dphi[k][j][i][2][eg]*n_elem[1][eg]*n_elem[2][eg])
+                *(-e->dphi[kk][jj][ii][0][eg]*n_elem[0][eg]*n_elem[1][eg]
+                  +(1.-pow(n_elem[1][eg],2))*e->dphi[kk][jj][ii][1][eg]
+                  -e->dphi[kk][jj][ii][2][eg]*n_elem[1][eg]*n_elem[2][eg])
+                *4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*(pow(v_mag_elem[eg],1))*e->weight[eg];
                 
-                Kd_ele[l] += (-e->dphi[kk][jj][ii][0][eg]*n_elem[0][eg]*n_elem[2][eg]
-                              -e->dphi[kk][jj][ii][1][eg]*n_elem[1][eg]*n_elem[2][eg]
-                              +(1.-pow(n_elem[2][eg],2))*e->dphi[kk][jj][ii][2][eg])*e->dphi[k][j][i][2][eg]*4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*v_mag_elem[eg]*e->weight[eg];
+                Kd_ele[l] += (-e->dphi[k][j][i][0][eg]*n_elem[0][eg]*n_elem[2][eg]
+                              -e->dphi[k][j][i][1][eg]*n_elem[1][eg]*n_elem[2][eg]
+                              +(1.-pow(n_elem[2][eg],2))*e->dphi[k][j][i][2][eg])
+                *(-e->dphi[kk][jj][ii][0][eg]*n_elem[0][eg]*n_elem[2][eg]
+                  -e->dphi[kk][jj][ii][1][eg]*n_elem[1][eg]*n_elem[2][eg]
+                  +(1.-pow(n_elem[2][eg],2))*e->dphi[kk][jj][ii][2][eg])
+                *4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*(pow(v_mag_elem[eg],1))*e->weight[eg];
                 
               }
 						}
@@ -2406,7 +2453,7 @@ extern PetscErrorCode VF_MatDFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE
 			}
 		}
 	}
-    
+  
   ierr = PetscFree6(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2]);CHKERRQ(ierr);
   ierr = PetscFree4(n_elem[0],n_elem[1],n_elem[2],v_mag_elem);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
