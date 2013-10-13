@@ -306,11 +306,15 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec V,VFWell *well,VFCtx *ctx)
         dist =    sqrt((x[0] - x0[0]) * (x[0] - x0[0]) +
                        (x[1] - x0[1]) * (x[1] - x0[1]) +
                        (x[2] - x0[2]) * (x[2] - x0[2]));
-        if(dist <= ctx->well->rw){
+
+        if(dist <= well->rw){
           v_array[k][j][i] = well->Qw;
         } else {
           v_array[k][j][i] = well->Qw*exp(-dist/ctx->vfprop.epsilon);
         }
+
+//        v_array[k][j][i] = well->Qw*exp(-dist/ctx->vfprop.epsilon);
+
       }
     }
   }

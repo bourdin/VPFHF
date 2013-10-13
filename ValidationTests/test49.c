@@ -227,7 +227,7 @@ int main(int argc,char **argv)
   ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
 
       ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-      ierr = VF_StepU(&fields,&ctx);
+//      ierr = VF_StepU(&fields,&ctx);
       ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Initial crack volume =  %e\n\n\n",ctx.CrackVolume);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Timestep .... =  %d\n",ctx.timestep);CHKERRQ(ierr);

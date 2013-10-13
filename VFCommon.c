@@ -762,9 +762,9 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) ctx->PrePressure,"Previous Pressure");CHKERRQ(ierr);
   ierr = VecSet(ctx->PrePressure,0.);CHKERRQ(ierr);
 
-  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RegDirac);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) ctx->RegDirac,"Regularized Dirac Delta FUnction");CHKERRQ(ierr);
-  ierr = VecSet(ctx->RegDirac,0.);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RegFracWellFlowRate);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->RegFracWellFlowRate,"Regularized Fracture Well Flow Rate");CHKERRQ(ierr);
+  ierr = VecSet(ctx->RegFracWellFlowRate,0.);CHKERRQ(ierr);
 
 
   
@@ -784,9 +784,9 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 
   
   
-  ierr = VecSet(ctx->RegDirac,0.0);CHKERRQ(ierr);
+  ierr = VecSet(ctx->RegFracWellFlowRate,0.0);CHKERRQ(ierr);
   for (c = 0; c < ctx->numfracWells; c++) {
-    ierr = VFRegDiracDeltaFunction(ctx->RegDirac,&ctx->fracwell[c],ctx);CHKERRQ(ierr);
+    ierr = VFRegDiracDeltaFunction(ctx->RegFracWellFlowRate,&ctx->fracwell[c],ctx);CHKERRQ(ierr);
   }
   
   for (c = 0; c < ctx->numWells; c++) {
@@ -1170,7 +1170,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&ctx->U);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->V);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->PreFlowFields);CHKERRQ(ierr);
-  ierr = VecDestroy(&ctx->RegDirac);CHKERRQ(ierr);
+  ierr = VecDestroy(&ctx->RegFracWellFlowRate);CHKERRQ(ierr);
 
   ierr = VecDestroy(&fields->fracpressure);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->fracvelocity);CHKERRQ(ierr);
@@ -1239,7 +1239,7 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   ierr = VecView(fields->pmult,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->theta,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->pressure,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(ctx->RegDirac,H5Viewer);CHKERRQ(ierr);
+  ierr = VecView(ctx->RegFracWellFlowRate,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->VolCrackOpening,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->VolLeakOffRate,H5Viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&H5Viewer);CHKERRQ(ierr);
@@ -1260,7 +1260,7 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,1,"Scalar","Cell",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Pressure");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Regularized Dirac Delta FUnction");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Regularized Fracture Well Flow Rate");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Volumetric Crack Opening");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Volumetric Leakoff Rate");CHKERRQ(ierr);
   ierr = XDMFuniformgridFinalize(XDMFViewer);CHKERRQ(ierr);

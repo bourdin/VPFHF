@@ -391,7 +391,7 @@ typedef struct {
   Vec                 V_old;
   VFWell              *fracwell;
   PetscInt            numfracWells;
-  Vec                 RegDirac;
+  Vec                 RegFracWellFlowRate;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

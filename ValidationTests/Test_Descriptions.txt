@@ -18,7 +18,7 @@ TEST10: 2D (hydraulic fracturing) static line crack case: Computes v-field and d
 TEST27: 3D MixedFEMFlowSolver Validation: Solution of velocity and pressure for flow problem with exact pressure, p = cos(Πx)cos(Πy)cos(Πz)/(3Π2). Pressure condition is implemented on all boundaries.
 TEST28: 1D. Flow problem with source term = 1 and Homogeneous pressure boundary conditions on all sides. Analytical solution is p = x(x-1)/2.
 TEST29: 1D. Test for transient solver http://tutorial.math.lamar.edu/Classes/DE/SolvingHeatEquation.aspx. Zero source term and homogeneous pressure boundary condition on all sides. Initial solution is p (x,0)= 6sin(pi*x/Lx).
-TEST30: 1D Terzaghi problem rfom Zheng et al.  Coupling of reservoir flow and displacement solver for geomechanics.
+TEST30: 1D Terzaghi problem from Zheng et al.  Coupling of reservoir flow and displacement solver for geomechanics.
 TEST31: 2D Surface subsidence example from Zheng et at.  Coupling of reservoir flow and displacement solver for geomechanics.
 TEST35: 2D Coupled fracture fluid flow and mech solvers. Real fracture fluid flow solver is used. Initial attempt to couple flow and fracture propagation.
 TEST36: 2D Coupled flow and fracture test. Fracture permeability is only a function of crack (v-field), varying between vmax and vmin. Flow solver is either KSP or SNES.
