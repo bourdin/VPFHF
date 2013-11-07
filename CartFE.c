@@ -951,7 +951,7 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC)
       l++;
     }
     if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] != NONE && dim ==3) { 
-      row[l].i = nx=1; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
+      row[l].i = nx-1; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
       l++;
     }
     
@@ -1115,7 +1115,7 @@ extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,BC *BC)
       l++;
     }
     if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] != NONE && dim ==3) { 
-      row[l].i = nx=1; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
+      row[l].i = nx-1; row[l].j = ny-1; row[l].k = nz-1; row[l].c = c; 
       l++;
     }
     
