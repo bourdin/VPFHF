@@ -344,7 +344,10 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
                       olx,oly,olz,&ctx->daScalCell);CHKERRQ(ierr);
   ierr = DMDASetFieldName(ctx->daScalCell,0,"");CHKERRQ(ierr);
 
-
+  ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
+                      DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,3,0,
+                      olx,oly,olz,&ctx->daVectCell);CHKERRQ(ierr);
+  
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,6,0,
                       olx,oly,olz,&ctx->daVFperm);CHKERRQ(ierr);
@@ -757,9 +760,9 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) ctx->PreFlowFields,"Previous time step flow fields");CHKERRQ(ierr);
 
 
-	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->PrePressure);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) ctx->PrePressure,"Previous Pressure");CHKERRQ(ierr);
-  ierr = VecSet(ctx->PrePressure,0.);CHKERRQ(ierr);
+	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->pressure_old);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->pressure_old,"Previous Pressure");CHKERRQ(ierr);
+  ierr = VecSet(ctx->pressure_old,0.);CHKERRQ(ierr);
 
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RegFracWellFlowRate);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->RegFracWellFlowRate,"Regularized Fracture Well Flow Rate");CHKERRQ(ierr);
@@ -780,7 +783,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   }
   for (c = 0; c < ctx->numRectangularCracks; c++) {
     if (ctx->vfprop.atnum == 1) {
-      ierr = VFRectangularCrackBuildVAT1(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
+      ierr = VFRectangularCrackBuildVAT2(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
     } else {
       ierr = VFRectangularCrackBuildVAT2(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
     }
@@ -788,7 +791,12 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   }
   ierr = VecSet(ctx->RegFracWellFlowRate,0.0);CHKERRQ(ierr);
   for (c = 0; c < ctx->numfracWells; c++) {
-    ierr = VFRegDiracDeltaFunction(ctx->RegFracWellFlowRate,&ctx->fracwell[c],ctx);CHKERRQ(ierr);
+    if(ctx->vfprop.atnum == 1){
+      ierr = VFRegDiracDeltaFunction2(ctx->RegFracWellFlowRate,&ctx->fracwell[c],&(ctx->pennycrack[c]),ctx,fields->V);CHKERRQ(ierr);
+    }
+    else {
+      ierr = VFRegDiracDeltaFunction2(ctx->RegFracWellFlowRate,&ctx->fracwell[c],&(ctx->pennycrack[c]),ctx,fields->V);CHKERRQ(ierr);
+    }
   }
   
   /*
@@ -1131,6 +1139,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = DMDestroy(&ctx->daVFperm);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daFlow);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daScalCell);CHKERRQ(ierr);
+  ierr = DMDestroy(&ctx->daVectCell);CHKERRQ(ierr);
 
   ierr = MatDestroy(&ctx->KU);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->RHSU);CHKERRQ(ierr);
@@ -1141,7 +1150,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 
   ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
 
-  ierr = VecDestroy(&ctx->PrePressure);CHKERRQ(ierr);
+  ierr = VecDestroy(&ctx->pressure_old);CHKERRQ(ierr);
 
   
   ierr = VecDestroy(&fields->VelnPress);CHKERRQ(ierr);

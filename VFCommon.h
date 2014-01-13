@@ -269,7 +269,7 @@ typedef struct {
 	SNES                snesP;
 	Vec                 RHSP;
 	Vec                 RHSPpre;
-	Vec                 PrePressure;
+	Vec                 pressure_old;
 	Vec                 PFunct;
 	Vec                 PresBC;
 	PetscReal           CrackVolume;
@@ -392,6 +392,7 @@ typedef struct {
   VFWell              *fracwell;
   PetscInt            numfracWells;
   Vec                 RegFracWellFlowRate;
+  DM                  daVectCell;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

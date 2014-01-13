@@ -15,9 +15,21 @@
  
  
  
+ ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 0.50001,0.50001,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type pRoducer -m_inv 0. -flowsolver FLOWSOLVER_snesstandarDFEM
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 0.50001,0.50001,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type pRoducer -m_inv 0 -flowsolver FLOWSOLVER_tsMIXEDFEM -ts_dt 1 -ts_max_steps 1
  
  ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 0.50001,0.50001,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type pRoducer -m_inv 0 -flowsolver FLOWSOLVER_kspMIXEDFEM
+ 
  ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 0.5,0.5,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type producer -m_inv 0 -flowsolver FLOWSOLVER_SNESMIXEDFEM
  */
 
@@ -158,6 +170,13 @@ int main(int argc,char **argv)
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
     ierr = FieldsH5Write(&ctx,&fields);
   }
+  PetscReal vol1,vol2,vol3,vol4;
+  ierr = VFCheckVolumeBalance(&vol1,&vol2,&vol3,&vol4,&ctx,&fields);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n divergence_volume = %g\n",vol1);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n surface_flux_volume = %g\n",vol2);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n well_volume = %g\n",vol3);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n source_volume = %g\n",vol4);CHKERRQ(ierr);
+  
   ierr = VecSet(fields.VelnPress,0.);CHKERRQ(ierr);
   ierr = VecSet(fields.velocity,0.);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,0.);CHKERRQ(ierr);
@@ -177,6 +196,7 @@ int main(int argc,char **argv)
   ++ctx.timestep;
   ierr = FieldsH5Write(&ctx,&fields);
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
+
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscFinalize();
   return(0);

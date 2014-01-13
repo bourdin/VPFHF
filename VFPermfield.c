@@ -170,6 +170,273 @@ extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal *CrackVolume_loca
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "VFCheckVolumeBalance"
+extern PetscErrorCode VFCheckVolumeBalance(PetscReal *DivVolume, PetscReal *SurfVolume, PetscReal *SumWellRate,PetscReal *SumSourceRate,VFCtx *ctx, VFFields *fields)
+{
+	PetscErrorCode  ierr;
+	PetscInt		    ek, ej, ei,i;
+	PetscInt		    xs,xm,nx;
+	PetscInt		    ys,ym,ny;
+	PetscInt		    zs,zm,nz;
+	PetscReal		    hx,hy,hz;
+	PetscReal       ****coords_array;
+	PetscReal       ****vel_array;
+	Vec             vel_local;
+	PetscReal       ***src_array;
+	Vec             src_local;
+  PetscReal       mydivVolumeLocal = 0.,mydivVolume = 0.;
+  PetscReal       mysurfVolumeLocal = 0.,mysurfVolume = 0.;
+  PetscReal       mysourceVolumeLocal = 0.,mysourceVolume = 0.;
+  FACE           face;
+
+  PetscFunctionBegin;
+  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	
+	ierr = DMGetLocalVector(ctx->daScal,&src_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->Source,INSERT_VALUES,src_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->Source,INSERT_VALUES,src_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,src_local,&src_array);CHKERRQ(ierr);
+  
+	ierr = DMGetLocalVector(ctx->daVect,&vel_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daVect,fields->velocity,INSERT_VALUES,vel_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daVect,fields->velocity,INSERT_VALUES,vel_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,vel_local,&vel_array);CHKERRQ(ierr);
+	
+	*DivVolume = 0.;
+  *SurfVolume = 0;
+  *SumWellRate = 0;
+  *SumSourceRate = 0;
+	for (ek = zs; ek < zs+zm; ek++) {
+		for (ej = ys; ej < ys+ym; ej++) {
+			for (ei = xs; ei < xs+xm; ei++) {
+				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = DivergenceVolume_local(&mydivVolumeLocal, vel_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
+				ierr = SourceVolume_local(&mysourceVolumeLocal, src_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
+        mysourceVolume += mysourceVolumeLocal;
+        mydivVolume += mydivVolumeLocal;
+        if(ei == 0){
+          face = X0;
+          ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+          ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,vel_array,ek,ej,ei,face,&ctx->e2D);
+          mysurfVolume += mysurfVolumeLocal;
+        }
+        if(ei == nx-1){
+          face = X1;
+          ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+          ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,vel_array,ek,ej,ei,face,&ctx->e2D);
+          mysurfVolume += mysurfVolumeLocal;
+        }
+        if(ej == 0){
+          face = Y0;
+          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+          ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,vel_array,ek,ej,ei,face,&ctx->e2D);
+          mysurfVolume += mysurfVolumeLocal;
+        }
+        if(ej == ny-1){
+          face = Y1;
+          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+          ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,vel_array,ek,ej,ei,face,&ctx->e2D);
+          mysurfVolume += mysurfVolumeLocal;
+        }
+        if(ek == 0){
+          face = Z0;
+          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+          ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,vel_array,ek,ej,ei,face,&ctx->e2D);
+          mysurfVolume += mysurfVolumeLocal;
+        }
+        if(ek == nz-1){
+          face = Z1;
+          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+          ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,vel_array,ek,ej,ei,face,&ctx->e2D);
+          mysurfVolume += mysurfVolumeLocal;
+        }
+			}
+		}
+	}
+  *SumWellRate = 0;
+  for (i = 0; i < ctx->numWells; i++) {
+    if(ctx->well[i].type == INJECTOR){
+      *SumWellRate = *SumWellRate + ctx->well[i].Qw;
+    }
+    else{
+      *SumWellRate = *SumWellRate - ctx->well[i].Qw;
+    }
+  }
+	ierr = MPI_Allreduce(&mydivVolume,DivVolume,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+	ierr = MPI_Allreduce(&mysurfVolume,SurfVolume,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+	ierr = MPI_Allreduce(&mysourceVolume,SumSourceRate,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx->daScal,src_local,&src_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daScal,&src_local);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,vel_local,&vel_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daVect,&vel_local);CHKERRQ(ierr);	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SurfaceFluxVolume_local"
+extern PetscErrorCode SurfaceFluxVolume_local(PetscReal *mysurfVolumeLocal, PetscReal ****vel_array,PetscInt ek, PetscInt ej, PetscInt ei, FACE face, CartFE_Element2D *e)
+{
+  
+	PetscErrorCode ierr;
+	PetscInt		i, j, k, c;
+	PetscInt		g;
+	PetscReal   *flux_elem;
+  
+	PetscFunctionBegin;
+  ierr = PetscMalloc(e->ng*sizeof(PetscReal),&flux_elem);CHKERRQ(ierr);
+	for (g = 0; g < e->ng; g++){
+    flux_elem[g] = 0;
+	}
+  *mysurfVolumeLocal = 0.;
+  switch (face) {
+		case X0:
+			for (k = 0; k < e->nphix; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphiz; i++) {
+						for (g = 0; g < e->ng; g++) {
+							flux_elem[g] += -1*e->phi[i][j][k][g]*vel_array[ek+k][ej+j][ei+i][0];
+						}
+					}
+				}
+			}
+			break;
+    case X1:
+			for (k = 0; k < e->nphix; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphiz; i++) {
+						for (g = 0; g < e->ng; g++) {
+							flux_elem[g] += e->phi[i][j][k][g]*vel_array[ek+k][ej+j][ei+1][0];
+						}
+					}
+				}
+			}
+      break;
+    case Y0:
+			for (k = 0; k < e->nphiy; k++) {
+				for (j = 0; j < e->nphiz; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+              flux_elem[g] += -1*e->phi[j][k][i][g]*vel_array[ek+k][ej+j][ei+i][1];
+
+						}
+					}
+				}
+			}
+			break;
+    case Y1:
+			for (k = 0; k < e->nphiy; k++) {
+				for (j = 0; j < e->nphiz; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+              flux_elem[g] += e->phi[j][k][i][g]*vel_array[ek+k][ej+1][ei+i][1];              
+						}
+					}
+				}
+			}
+      break;
+    case Z0:
+			for (k = 0; k < e->nphiz; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+              flux_elem[g] += -1*e->phi[k][j][i][g]*vel_array[ek+k][ej+i][ei+i][2];
+						}
+					}
+				}
+			}
+      break;
+    case Z1:
+			for (k = 0; k < e->nphiz; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+              flux_elem[g] += e->phi[k][j][i][g]*vel_array[ek+1][ej+i][ei+i][2];
+						}
+					}
+				}
+			}
+  }
+  for(g = 0; g < e->ng; g++){
+    *mysurfVolumeLocal += flux_elem[g]*e->weight[g];
+  }
+  ierr = PetscFree(flux_elem);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "DivergenceVolume_local"
+extern PetscErrorCode DivergenceVolume_local(PetscReal *DivVolume_local, PetscReal ****vel_array,PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+{
+  
+	PetscErrorCode ierr;
+	PetscInt		i, j, k, c;
+	PetscInt		eg;
+	PetscReal		*dvel_elem[3];
+	PetscFunctionBegin;
+  ierr = PetscMalloc3(e->ng,PetscReal,&dvel_elem[0],e->ng,PetscReal,&dvel_elem[1],e->ng,PetscReal,&dvel_elem[2]);CHKERRQ(ierr);
+	for (eg = 0; eg < e->ng; eg++){
+    for (c = 0; c < 3; c++){
+      dvel_elem[c][eg] = 0;
+    }
+	}
+	for (eg = 0; eg < e->ng; eg++) {
+		for (k = 0; k < e->nphiz; k++) {
+			for (j = 0; j < e->nphiy; j++) {
+				for (i = 0; i < e->nphix; i++) {
+          for(c = 0; c < 3; c++){
+            dvel_elem[c][eg] += vel_array[ek+k][ej+j][ei+i][c]*e->dphi[k][j][i][c][eg];
+          }
+				}
+			}
+		}
+	}
+	*DivVolume_local = 0.;
+	for(eg = 0; eg < e->ng; eg++){
+		*DivVolume_local += (dvel_elem[0][eg] + dvel_elem[1][eg] + dvel_elem[2][eg])*e->weight[eg];
+	}
+	ierr = PetscFree3(dvel_elem[0],dvel_elem[1],dvel_elem[2]);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SourceVolume_local"
+extern PetscErrorCode SourceVolume_local(PetscReal *SrcVolume_local, PetscReal ***src_array,PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+{
+  
+	PetscErrorCode ierr;
+	PetscInt		i, j, k, c;
+	PetscInt		eg;
+	PetscReal		*src_elem;
+  
+	PetscFunctionBegin;
+  ierr = PetscMalloc(e->ng*sizeof(PetscReal),&src_elem);CHKERRQ(ierr);
+	for (eg = 0; eg < e->ng; eg++){
+    src_elem[eg] = 0;
+	}
+	for (eg = 0; eg < e->ng; eg++) {
+		for (k = 0; k < e->nphiz; k++) {
+			for (j = 0; j < e->nphiy; j++) {
+				for (i = 0; i < e->nphix; i++) {
+          src_elem[eg] += src_array[ek+k][ej+j][ei+i]*e->phi[k][j][i][eg];
+				}
+			}
+		}
+	}
+	*SrcVolume_local = 0.;
+	for(eg = 0; eg < e->ng; eg++){
+		*SrcVolume_local += src_elem[eg]*e->weight[eg];
+	}
+	ierr = PetscFree(src_elem);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "CellToNodeInterpolation"
 extern PetscErrorCode CellToNodeInterpolation(Vec node_vec,Vec cell_vec,VFCtx *ctx)
 {
@@ -220,9 +487,16 @@ extern PetscErrorCode CellToNodeInterpolation(Vec node_vec,Vec cell_vec,VFCtx *c
 		ierr = DMDAVecGetArray(dm,node_local,&node_array);CHKERRQ(ierr);
 		ierr = DMDAVecGetArray(ctx->daScalCell,cell_vec,&cell_array);CHKERRQ(ierr);
 	}
-	else
+	else if (dof == 3)
 	{
-    /*For now, no cell DA for variables with dof = 3*/
+		ierr = DMGetLocalVector(dm,&node_local);CHKERRQ(ierr);
+		ierr = DMGlobalToLocalBegin(dm,node_vec,INSERT_VALUES,node_local);CHKERRQ(ierr);
+		ierr = DMGlobalToLocalEnd(dm,node_vec,INSERT_VALUES,node_local);CHKERRQ(ierr);
+		ierr = DMDAVecGetArrayDOF(dm, node_local,&node_arraydof);CHKERRQ(ierr);
+		ierr = DMDAVecGetArrayDOF(ctx->daVectCell,cell_vec,&cell_arraydof);CHKERRQ(ierr);
+	}
+  else
+  {
 		ierr = DMGetLocalVector(dm,&node_local);CHKERRQ(ierr);
 		ierr = DMGlobalToLocalBegin(dm,node_vec,INSERT_VALUES,node_local);CHKERRQ(ierr);
 		ierr = DMGlobalToLocalEnd(dm,node_vec,INSERT_VALUES,node_local);CHKERRQ(ierr);
@@ -326,6 +600,11 @@ extern PetscErrorCode CellToNodeInterpolation(Vec node_vec,Vec cell_vec,VFCtx *c
 	if(dof == 1){
 		ierr = DMDAVecRestoreArray(dm,node_vec,&node_array);CHKERRQ(ierr);
 		ierr = DMDAVecRestoreArray(ctx->daScalCell,cell_vec,&cell_array);CHKERRQ(ierr);
+	}
+  else if (dof == 3)
+	{
+		ierr = DMDAVecRestoreArrayDOF(dm,node_vec,&node_arraydof);CHKERRQ(ierr);
+		ierr = DMDAVecRestoreArrayDOF(ctx->daVectCell,cell_vec,&cell_arraydof);CHKERRQ(ierr);
 	}
   else
 	{
@@ -1072,6 +1351,9 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 	PetscReal	vmult = 0;
 	PetscReal  maxperm = 10;
 	PetscReal  minperm = 0.01;
+  ierr = PetscOptionsGetReal(PETSC_NULL,"-perm",&minperm,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(PETSC_NULL,"-permmax",&maxperm,PETSC_NULL);CHKERRQ(ierr);
+
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -1086,12 +1368,16 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 				Ele_v_ave = Ele_v_ave/8.;
         
 				if (Ele_v_ave > 0.2){
-                    for(c = 0; c < 2; c++)
-                      perm_array[ek][ej][ei][c] = minperm;
+//                    for(c = 0; c < 2; c++)
+//                      perm_array[ek][ej][ei][c] = minperm;
+                        perm_array[ek][ej][ei][0] = minperm;
+                        perm_array[ek][ej][ei][2] = minperm;
 				}
 				else {
-                  for(c = 0; c < 2; c++)
-                    perm_array[ek][ej][ei][c] = maxperm;
+//                  for(c = 0; c < 2; c++)
+//                    perm_array[ek][ej][ei][c] = maxperm;
+                    perm_array[ek][ej][ei][0] = maxperm;
+                    perm_array[ek][ej][ei][2] = maxperm;
 				}
 			}
 		}
@@ -1435,3 +1721,112 @@ extern PetscErrorCode TrialFunctionCompute(PetscReal *FunctionValue, VFCtx *ctx,
 }
 
 */
+
+
+
+
+
+
+
+
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VolumetricFractureWellRate"
+extern PetscErrorCode VolumetricFractureWellRate(PetscReal *InjectedVolume, VFCtx *ctx, VFFields *fields)
+{
+	PetscErrorCode  ierr;
+	PetscInt		    ek, ej, ei;
+	PetscInt		    xs,xm,nx;
+	PetscInt		    ys,ym,ny;
+	PetscInt		    zs,zm,nz;
+	PetscReal		    hx,hy,hz;
+	PetscReal       ****coords_array;
+	PetscReal       ***regrate_array;
+	Vec             regrate_local;
+	PetscReal       ***v_array;
+	Vec             v_local;
+	PetscReal       myInjVolumeRateLocal = 0.,myInjVolumeRate = 0.;
+  
+	
+  PetscFunctionBegin;
+  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	
+	ierr = DMGetLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
+  
+  ierr = DMGetLocalVector(ctx->daScal,&regrate_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->RegFracWellFlowRate,INSERT_VALUES,regrate_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->RegFracWellFlowRate,INSERT_VALUES,regrate_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,regrate_local,&regrate_array);CHKERRQ(ierr);
+
+	*InjectedVolume = 0.;
+	for (ek = zs; ek < zs+zm; ek++) {
+		for (ej = ys; ej < ys+ym; ej++) {
+			for (ei = xs; ei < xs+xm; ei++) {
+				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VolumetricFractureWellRate_local(&myInjVolumeRateLocal, regrate_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
+        myInjVolumeRate += myInjVolumeRateLocal;
+			}
+		}
+	}
+	ierr = MPI_Allreduce(&myInjVolumeRate,InjectedVolume,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
+
+  ierr = DMDAVecRestoreArray(ctx->daScal,regrate_local,&regrate_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daScal,&regrate_local);CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VolumetricFractureWellRate_local"
+extern PetscErrorCode VolumetricFractureWellRate_local(PetscReal *InjVolume_local, PetscReal ***regrate_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+{
+	PetscErrorCode ierr;
+	PetscInt		i, j, k,c;
+	PetscInt		eg;
+  PetscReal    *dv_elem[3],*regrate_elem;
+  
+	PetscFunctionBegin;
+	ierr = PetscMalloc4(e->ng,PetscReal,&dv_elem[0],e->ng,PetscReal,&dv_elem[1],e->ng,PetscReal,&dv_elem[2],e->ng,PetscReal,&regrate_elem);CHKERRQ(ierr);
+  
+	for (eg = 0; eg < e->ng; eg++){
+    for(c = 0; c < 3; c++){
+      dv_elem[c][eg] = 0;
+    }
+		regrate_elem[eg] = 0.;
+	}
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        for (eg = 0; eg < e->ng; eg++) {
+          for (c = 0; c < 3; c++){
+            dv_elem[c][eg] += v_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][c][eg];
+          }
+          regrate_elem[eg] += regrate_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
+        }
+      }
+    }
+  }
+  *InjVolume_local = 0.;
+
+  for(eg = 0; eg < e->ng; eg++){
+    *InjVolume_local += regrate_elem[eg]*(sqrt((pow(dv_elem[0][eg],2))+(pow(dv_elem[1][eg],2))+(pow(dv_elem[2][eg],2))))*e->weight[eg];
+  }
+	ierr = PetscFree4(dv_elem[0],dv_elem[1],dv_elem[2],regrate_elem);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}

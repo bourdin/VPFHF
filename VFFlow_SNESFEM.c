@@ -31,9 +31,9 @@ extern PetscErrorCode FEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSP);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RHSPpre);CHKERRQ(ierr);
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->PFunct);CHKERRQ(ierr);
-	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->PrePressure);CHKERRQ(ierr);
+	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->pressure_old);CHKERRQ(ierr);
 	ierr = VecSet(ctx->RHSPpre,0.);CHKERRQ(ierr);	
-	ierr = VecCopy(fields->pressure,ctx->PrePressure);CHKERRQ(ierr);
+	ierr = VecCopy(fields->pressure,ctx->pressure_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->RHSP,"RHS of FEM Pressure");CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject)ctx->RHSPpre,"RHS of FEM previous pressure");CHKERRQ(ierr);
 	ierr = PetscObjectSetName((PetscObject)ctx->PFunct,"RHS of FEM SNES flow solver");CHKERRQ(ierr);
@@ -69,7 +69,7 @@ extern PetscErrorCode FEMSNESFlowSolverFinalize(VFCtx *ctx,VFFields *fields)
   ierr = MatDestroy(&ctx->KP);CHKERRQ(ierr);
   ierr = MatDestroy(&ctx->KPlhs);CHKERRQ(ierr);
 	ierr = MatDestroy(&ctx->JacP);CHKERRQ(ierr);
-	ierr = VecDestroy(&ctx->PrePressure);CHKERRQ(ierr);
+	ierr = VecDestroy(&ctx->pressure_old);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSP);CHKERRQ(ierr);
 	ierr = VecDestroy(&ctx->RHSPpre);CHKERRQ(ierr);	
 	ierr = VecDestroy(&ctx->PFunct);CHKERRQ(ierr);
@@ -90,7 +90,7 @@ extern PetscErrorCode FlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
 	ierr = VecSet(ctx->Perm,0.0);CHKERRQ(ierr);
 	ierr = VecCopy(fields->vfperm,ctx->Perm);CHKERRQ(ierr);
-    ierr = VecCopy(fields->pressure,ctx->PrePressure);CHKERRQ(ierr);
+    ierr = VecCopy(fields->pressure,ctx->pressure_old);CHKERRQ(ierr);
 	
 	ierr = SNESSetFunction(ctx->snesP,ctx->PFunct,FormSNESIFunction_P,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesP,ctx->JacP,ctx->JacP,FormSNESIJacobian_P,ctx);CHKERRQ(ierr);
@@ -335,7 +335,7 @@ extern PetscErrorCode FormSNESIFunction_P(SNES snes,Vec pressure,Vec Func,void *
 	ierr = VecCopy(ctx->RHSP,VecRHS);CHKERRQ(ierr);
 	ierr = VecAXPBY(VecRHS,dt_dot_one_minus_theta,dt_dot_theta,ctx->RHSPpre);CHKERRQ(ierr);	
 	ierr = VecCopy(ctx->RHSP,ctx->RHSPpre);CHKERRQ(ierr);
-	ierr = MatMultAdd(ctx->KPlhs,ctx->PrePressure,VecRHS,VecRHS);CHKERRQ(ierr);	
+	ierr = MatMultAdd(ctx->KPlhs,ctx->pressure_old,VecRHS,VecRHS);CHKERRQ(ierr);
 //	ierr = VecApplyPressureBC_FEM(VecRHS,ctx->PresBCArray,&ctx->bcP[0]);CHKERRQ(ierr);
 
 /*	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS.txt",&viewer);CHKERRQ(ierr);

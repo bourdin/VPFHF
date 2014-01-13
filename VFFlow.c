@@ -17,7 +17,8 @@
 #include "VFFlow_SNESMixedFEM.h"
 #include "VFFlow_TSMixedFEM.h"
 #include "VFHeat_SNESFEM.h"
-# include "VFFlow_SNESStandardFEM.h"
+#include "VFFlow_SNESStandardFEM.h"
+#include "VFPermfield.h"
 
 
 
