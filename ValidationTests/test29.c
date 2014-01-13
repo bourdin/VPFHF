@@ -156,10 +156,10 @@ int main(int argc,char **argv)
   /*Initialization Set initial flow field values. This case is zero. This will have to be called an initialization function*/
   ierr = VecSet(ctx.PreFlowFields,0.);CHKERRQ(ierr);
   ierr = VecSet(ctx.RHSVelPpre,0.);CHKERRQ(ierr);
-  ierr = VecSet(ctx.PrePressure,0.);CHKERRQ(ierr);
+  ierr = VecSet(ctx.pressure_old,0.);CHKERRQ(ierr);
   ierr = VecSet(ctx.RHSPpre,0.);CHKERRQ(ierr);
   ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
-  ierr = VecCopy(fields.pressure,ctx.PrePressure);CHKERRQ(ierr);
+  ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
 		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
@@ -167,7 +167,7 @@ int main(int argc,char **argv)
     /*This will have to be called "an update function"*/
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
-    ierr = VecCopy(fields.pressure,ctx.PrePressure);CHKERRQ(ierr);
+    ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
 	}
 	Vec error;

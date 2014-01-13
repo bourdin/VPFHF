@@ -20,4 +20,12 @@ extern PetscErrorCode Permeabilityfield(PetscReal *COD_local, PetscReal ***volcr
 extern PetscErrorCode VolumetricLeakOffRate_local(PetscReal *LeakoffRate_local, PetscReal ***volleakoffrate_array, PetscReal ****q_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e);
 extern PetscErrorCode VolumetricLeakOffRate(PetscReal *LeakOffRate, VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields);
+extern PetscErrorCode VFCheckVolumeBalance(PetscReal *DivVolume, PetscReal *SurfVolume, PetscReal *SumWellRate,PetscReal *SumSourceRate,VFCtx *ctx, VFFields *fields);
+extern PetscErrorCode SourceVolume_local(PetscReal *SrcVolume_local, PetscReal ***src_array,PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e);
+extern PetscErrorCode DivergenceVolume_local(PetscReal *DivVolume_local, PetscReal ****vel_array,PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e);
+extern PetscErrorCode SurfaceFluxVolume_local(PetscReal *mysurfVolumeLocal, PetscReal ****vel_array,PetscInt ek, PetscInt ej, PetscInt ei, FACE face, CartFE_Element2D *e);
+
+
+
+
 #endif 

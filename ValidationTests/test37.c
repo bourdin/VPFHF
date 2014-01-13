@@ -177,7 +177,7 @@ int main(int argc,char **argv)
 		ierr = FieldsH5Write(&ctx,&fields);
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
-    ierr = VecCopy(fields.pressure,ctx.PrePressure);CHKERRQ(ierr);
+    ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
 	}
 	ierr = DMDAVecGetArray(ctx.daScal,fields.pressure,&pre_array);CHKERRQ(ierr);

@@ -108,7 +108,6 @@ int main(int argc,char **argv)
  ctx.flowprop.theta = 1.;
  ctx.matprop[0].E = 1.44e4;										//Young's modulus
   ctx.flowprop.M_inv = 1./12300.0;
-  ctx.flowprop.K_dr = 10000;
  ctx.matprop[0].nu = 0.2;										//Poisson's ratio's modulus
  ctx.flowprop.rho = 1788e-6;									 //density in lb/ft^3
   ctx.flowprop.mu = (1.3e-4)*(940e-6);                    //viscosity in cp
@@ -119,6 +118,10 @@ int main(int argc,char **argv)
  ctx.flowprop.g[0] = 0.;										  //x-component of gravity. unit is ft/s^2
  ctx.flowprop.g[1] = 0.;										  //y-component of gravity. unit is ft/s^2
  ctx.flowprop.g[2] = 0.;								  //z-component of gravity. unit is ft/s^2
+//  ctx.flowprop.K_dr = ctx.matprop[0].E/(2*(1+ctx.matprop[0].nu)*(1-2*ctx.matprop[0].nu));   // For 2D
+  ctx.flowprop.K_dr = ctx.matprop[0].E/(3*(1-2*ctx.matprop[0].nu));   //For 3D
+
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"   K_Dr = : %e\n\n\n\n\n",ctx.flowprop.K_dr);CHKERRQ(ierr);
 
   /*
    Beginning of mechanical part of code*/
@@ -197,7 +200,7 @@ int main(int argc,char **argv)
   
   ierr = VecSet(ctx.PreFlowFields,0.);CHKERRQ(ierr);
   ierr = VecSet(ctx.RHSVelPpre,0.);CHKERRQ(ierr);
-  ierr = VecSet(ctx.PrePressure,0.);CHKERRQ(ierr);
+  ierr = VecSet(ctx.pressure_old,0.);CHKERRQ(ierr);
   ierr = VecSet(ctx.RHSPpre,0.);CHKERRQ(ierr);
   ctx.timestep = 0;
     ierr = PetscPrintf(PETSC_COMM_WORLD,"  Computing initial time step solution\n");CHKERRQ(ierr);
@@ -220,7 +223,7 @@ int main(int argc,char **argv)
 
   ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
   ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
-  ierr = VecCopy(fields.pressure,ctx.PrePressure);CHKERRQ(ierr);
+  ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
   ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
 	for (i = 0; i < 6; i++) {
 		ctx.bcP[0].face[i] = NONE;
@@ -287,7 +290,7 @@ int main(int argc,char **argv)
     ierr = FieldsH5Write(&ctx,&fields);
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
-    ierr = VecCopy(fields.pressure,ctx.PrePressure);CHKERRQ(ierr);
+    ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
   }
   ierr = VecDestroy(&PreIteSol);CHKERRQ(ierr);
