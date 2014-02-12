@@ -228,7 +228,6 @@ int main(int argc,char **argv)
   ctx.matprop[0].beta = 0.;
   ctx.timevalue       = 0;
 
-
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++) {
     ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
     targetVol = minvol + flowrate * ctx.timestep;
@@ -343,7 +342,6 @@ int main(int argc,char **argv)
       ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
       ierr = PetscLogView(logviewer);CHKERRQ(ierr);
       ierr = PetscViewerDestroy(&logviewer);CHKERRQ(ierr);
-
 
       ctx.ElasticEnergy = 0;
       ctx.InsituWork    = 0;

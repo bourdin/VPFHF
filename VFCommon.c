@@ -407,8 +407,8 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
     ierr = VecView(ctx->coordinates,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
     break;
-#if defined(PETSC_HAVE_HDF5)
   case FILEFORMAT_HDF5:
+#if defined(PETSC_HAVE_HDF5)
     /*
      Write headers in multistep XDMF file
      */
@@ -424,6 +424,9 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
     ierr = VecView(ctx->coordinates,h5viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&h5viewer);CHKERRQ(ierr);
 #endif
+    break;
+  case FILEFORMAT_VTK:
+    break;
   }
 
   /*
@@ -901,10 +904,9 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   PetscErrorCode ierr;
   KSP            kspU,kspV;
   PC             pcU,pcV;
-  SNESLineSearch linesearchV;
   Vec            lbV,ubV;
-  Mat            JacV;
-  Vec            residualV;
+  Mat            JacV,JacU;
+  Vec            residualV,residualU;
   PetscFunctionBegin;
   /*
    U solver initialization
@@ -914,9 +916,15 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = SNESSetOptionsPrefix(ctx->snesU,"U_");CHKERRQ(ierr);
   ierr = SNESSetType(ctx->snesU,SNESKSPONLY);CHKERRQ(ierr);
   ierr = SNESSetFromOptions(ctx->snesU);CHKERRQ(ierr);
+  
+  ierr = DMCreateGlobalVector(ctx->daVect,&residualU);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daVect,PETSC_NULL,&JacU);CHKERRQ(ierr);
+  ierr = MatSetOption(JacU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 
-  ierr = DMCreateGlobalVector(ctx->daVect,&ctx->UResidual);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) ctx->UResidual,"U_Residual");CHKERRQ(ierr);
+  ierr = SNESSetFunction(ctx->snesU,residualU,VF_UResidual,ctx);CHKERRQ(ierr);
+  ierr = SNESSetJacobian(ctx->snesU,JacU,JacU,VF_UIJacobian,ctx);CHKERRQ(ierr);
+
+
 
   /*
    KU and RHSU will go when we update the residual evaluation
@@ -924,7 +932,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = DMCreateGlobalVector(ctx->daVect,&ctx->RHSU);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->RHSU,"RHSU");CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daVect,PETSC_NULL,&ctx->KU);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daVect,PETSC_NULL,&ctx->JacU);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->KU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 
   ierr = SNESGetKSP(ctx->snesU,&kspU);CHKERRQ(ierr);
@@ -1169,10 +1176,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
 
   ierr = MatDestroy(&ctx->KU);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->RHSU);CHKERRQ(ierr);
-  ierr = VecDestroy(&ctx->UResidual);CHKERRQ(ierr);
   ierr = SNESDestroy(&ctx->snesU);CHKERRQ(ierr);
-  ierr = MatDestroy(&ctx->JacU);CHKERRQ(ierr);
-
 
   ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
 
@@ -1266,6 +1270,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
  */
 extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
 {
+#if defined(PETSC_HAVE_HDF5)
   PetscErrorCode ierr;
   char           H5filename[FILENAME_MAX],H5coordfilename[FILENAME_MAX],XDMFfilename[FILENAME_MAX];
   PetscViewer    H5Viewer,XDMFViewer;
@@ -1275,7 +1280,6 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   /*
    Write the hdf5 files
   */
-#if defined(PETSC_HAVE_HDF5)
   ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
@@ -1393,10 +1397,8 @@ extern PetscErrorCode VecViewVTKDof(DM da,Vec X,PetscViewer viewer)
 extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char nodalName[], const char cellName[])
 {
   PetscErrorCode  ierr;
-  char            filename[FILENAME_MAX],fieldnameDof[FILENAME_MAX];
+  char            filename[FILENAME_MAX];
   PetscViewer     viewer;
-  Vec             UDof;
-  PetscInt        c;
 
   PetscFunctionBegin;
 

@@ -259,8 +259,8 @@ typedef struct {
 	VFPreset            preset;
 	SNES                snesV;
 	SNES                snesU;
-	Vec                 UResidual;
-	Mat                 JacU;
+	//Vec                 UResidual;
+	//Mat                 JacU;
 	Mat                 KU;
 	Vec                 RHSU;
 	/*

@@ -157,11 +157,9 @@ int main(int argc,char **argv)
   VFCtx          ctx;
   VFFields       fields;
   PetscErrorCode ierr;
-  PetscViewer    viewer;
   Vec            Vold;
   PetscReal      errV;
   PetscInt       altminit;
-  char           filename[FILENAME_MAX];
   
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
