@@ -8,6 +8,8 @@
  
 ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 20 -timestepsize 2 -resflowmechcoupling fixedstrain
  ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 10 -resflowmechcoupling fixedstrain
+ 
+ ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 2 -resflowmechcoupling fixedstrain
  */
 
 #include "petsc.h"
@@ -15,6 +17,7 @@
 #include "VFCommon.h"
 #include "VFMech.h"
 #include "VFFlow.h"
+#include "VFPermfield.h"
 
 VFCtx               ctx;
 VFFields            fields;
@@ -42,6 +45,8 @@ int main(int argc,char **argv)
   Vec         V_hold;
   PetscReal   ****bcu_array;
 	PetscReal		****velbc_array;
+  PetscReal   vol,vol1,vol2,vol3,vol4,vol5;
+
 
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -287,6 +292,16 @@ int main(int argc,char **argv)
     ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n inf_norm = %f \n",norm_inf);CHKERRQ(ierr);
     }
+    
+    ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," divergence_volume = %g\n",vol1);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," surface_flux_volume = %g\n",vol2);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," well_volume = %g\n",vol3);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," source_volume = %g\n",vol4);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," vol.strain_volume = %g\n",vol5);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," Volume Balance ::: RHS = %g \t LHS = %g \n",vol+vol1,vol3+vol4+vol5);CHKERRQ(ierr);
+
     ierr = FieldsH5Write(&ctx,&fields);
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);

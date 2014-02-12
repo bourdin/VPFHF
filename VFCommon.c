@@ -759,7 +759,6 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->PreFlowFields);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->PreFlowFields,"Previous time step flow fields");CHKERRQ(ierr);
 
-
 	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->pressure_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->pressure_old,"Previous Pressure");CHKERRQ(ierr);
   ierr = VecSet(ctx->pressure_old,0.);CHKERRQ(ierr);
@@ -767,6 +766,33 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RegFracWellFlowRate);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->RegFracWellFlowRate,"Regularized Fracture Well Flow Rate");CHKERRQ(ierr);
   ierr = VecSet(ctx->RegFracWellFlowRate,0.);CHKERRQ(ierr);
+  
+  
+  
+  
+  ierr = DMCreateGlobalVector(ctx->daFlow,&fields->VelnPress_old);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->VelnPress_old,"Previous Velocity and Pressure");CHKERRQ(ierr);
+  ierr = VecSet(fields->VelnPress_old,0.0);CHKERRQ(ierr);
+  
+  ierr = DMCreateGlobalVector(ctx->daVect,&fields->velocity_old);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->velocity_old,"Previous Fluid Velocity");CHKERRQ(ierr);
+  ierr = VecSet(fields->velocity_old,0.0);CHKERRQ(ierr);
+  
+  ierr = DMCreateGlobalVector(ctx->daVect,&fields->U_old);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->U_old,"Previous Displacement");CHKERRQ(ierr);
+  ierr = VecSet(fields->U_old,0.0);CHKERRQ(ierr);
+  
+  ierr = DMCreateGlobalVector(ctx->daScal,&fields->V_old);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->V_old,"Previous Fracture");CHKERRQ(ierr);
+  ierr = VecSet(fields->V_old,1.0);CHKERRQ(ierr);
+  
+  ierr = DMCreateGlobalVector(ctx->daScal,&fields->theta_old);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->theta_old,"Previous Temperature");CHKERRQ(ierr);
+  ierr = VecSet(fields->theta_old,0.);CHKERRQ(ierr);
+  
+  ierr = DMCreateGlobalVector(ctx->daScal,&fields->pressure_old);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->pressure_old,"Previous Pressure");CHKERRQ(ierr);
+  ierr = VecSet(fields->pressure_old,0.);CHKERRQ(ierr);
   
   /*
    Create optional penny-shaped and rectangular cracks
@@ -1185,6 +1211,14 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&ctx->V);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->PreFlowFields);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->RegFracWellFlowRate);CHKERRQ(ierr);
+
+  
+  ierr = VecDestroy(&fields->U_old);CHKERRQ(ierr);
+  ierr = VecDestroy(&fields->V_old);CHKERRQ(ierr);
+  ierr = VecDestroy(&fields->VelnPress_old);CHKERRQ(ierr);
+  ierr = VecDestroy(&fields->pressure_old);CHKERRQ(ierr);
+  ierr = VecDestroy(&fields->velocity_old);CHKERRQ(ierr);
+  ierr = VecDestroy(&fields->theta_old);CHKERRQ(ierr);
 
   ierr = VecDestroy(&fields->fracpressure);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->fracvelocity);CHKERRQ(ierr);

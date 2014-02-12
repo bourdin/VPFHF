@@ -1,0 +1,12 @@
+#! /bin/bash
+#SBATCH -n 10
+#SBATCH -t 25:00:00
+#SBATCH -e job.%i.err
+#SBATCH -o job.%j.out
+#SBATCH -J test38
+#SBATCH --mail-user cchukw1@tigers.lsu.edu
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=END
+#SBATCH --mail-type=FAIL
+
+srun ./test38 -n 401,2,401 -l 50,1,50 -m_inv 20 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25.,0.5,25 -epsilon 0.5 -pc0_theta 0 -pc0_phi 90  -atnum 1 -pc0_thickness 0.6 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-3  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize .5  -Gc 5e-4 -FlowstSnes_ksp_type gmres

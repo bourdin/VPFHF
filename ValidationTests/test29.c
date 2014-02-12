@@ -1,5 +1,5 @@
 /*
- test28.c: 1D. Flow problem with source term = 1 and Homogeneous pressure boundary conditions on all sides. Analytical solution is p = x(x-1)/2
+ test28.c: 1D. Transient flow problem with no source term and homogeneous pressure boundary conditions on all sides taken from http://tutorial.math.lamar.edu/Classes/DE/SolvingHeatEquation.aspx. Initial pressure is p (x,0)= 6sin(pi*x/Lx)
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
 ./test29 -n 51,51,2 -l 1,1,0.01 -m_inv 1 -ts_dt 0.005 -ts_max_steps 20 -flowsolver FLOWSOLVER_tsMIXEDFEM
@@ -36,6 +36,7 @@ int main(int argc,char **argv)
   PetscReal		****velnpre_array;
 	PetscReal		***pres_ini_array;
 	PetscReal		****vel_ini_array;
+  PetscReal   vol,vol1,vol2,vol3,vol4,vol5;
 
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -164,6 +165,16 @@ int main(int argc,char **argv)
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
 		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
 		ierr = FieldsH5Write(&ctx,&fields);
+    
+    ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," divergence_volume = %g\n",vol1);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," surface_flux_volume = %g\n",vol2);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," well_volume = %g\n",vol3);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," source_volume = %g\n",vol4);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," vol.strain_volume = %g\n",vol5);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," Volume Balance ::: RHS = %g \t LHS = %g \n",vol+vol1,vol3+vol4+vol5);CHKERRQ(ierr);
+
     /*This will have to be called "an update function"*/
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);

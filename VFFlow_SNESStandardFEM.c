@@ -404,8 +404,6 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 				}
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K1_local,ADD_VALUES);CHKERRQ(ierr);
         ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,K2_local,ADD_VALUES);CHKERRQ(ierr);
-
-        
         
         if(ctx->FractureFlowCoupling){
           ierr = VF_MatDFractureFlowCoupling_local(KD_local,&ctx->e3D,ek,ej,ei,u_array,v_array);CHKERRQ(ierr);       
@@ -670,14 +668,8 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_diff_local,&u_diff_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daVect,&u_diff_local);CHKERRQ(ierr);
   
-  
-  
-  
-  
-  
   ierr = DMDAVecRestoreArray(ctx->daScal,pressure_diff_local,&pressure_diff_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&pressure_diff_local);CHKERRQ(ierr);
-
   
   ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
@@ -711,6 +703,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = VecDestroy(&U_diff);CHKERRQ(ierr);
   ierr = VecDestroy(&Pressure_diff);CHKERRQ(ierr);
   ierr = VecDestroy(&Ones);CHKERRQ(ierr);
+  
   /*
   PetscViewer viewer;
   ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrixf.txt",&viewer);CHKERRQ(ierr);
@@ -738,7 +731,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS1.txt",&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
   ierr = VecView(rhsc1,viewer);CHKERRQ(ierr);
-  */
+ */
   
   PetscFunctionReturn(0);
 }

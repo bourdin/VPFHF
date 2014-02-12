@@ -63,6 +63,9 @@ int main(int argc,char **argv)
   PetscReal    ***pre_array;
   PetscReal   ****perm_array;
   PetscInt    xs1,xm1,ys1,ym1,zs1,zm1;
+  PetscReal   vol,vol1,vol2,vol3,vol4,vol5;
+
+  
   
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
@@ -167,16 +170,26 @@ int main(int argc,char **argv)
   ctx.maxtimestep = 1;
   ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
+    
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
     ierr = FieldsH5Write(&ctx,&fields);
-  }
-  PetscReal vol1,vol2,vol3,vol4;
-  ierr = VFCheckVolumeBalance(&vol1,&vol2,&vol3,&vol4,&ctx,&fields);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n divergence_volume = %g\n",vol1);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n surface_flux_volume = %g\n",vol2);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n well_volume = %g\n",vol3);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n source_volume = %g\n",vol4);CHKERRQ(ierr);
   
+  ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," divergence_volume = %g\n",vol1);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," surface_flux_volume = %g\n",vol2);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," well_volume = %g\n",vol3);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," source_volume = %g\n",vol4);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," vol.strain_volume = %g\n",vol5);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," Volume Balance ::: RHS = %g \t LHS = %g \n",vol+vol1,vol3+vol4+vol5);CHKERRQ(ierr);
+  
+    
+    ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
+    ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
+    ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
+    ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
+  }
   ierr = VecSet(fields.VelnPress,0.);CHKERRQ(ierr);
   ierr = VecSet(fields.velocity,0.);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,0.);CHKERRQ(ierr);
