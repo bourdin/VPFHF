@@ -49,6 +49,12 @@ typedef struct {
 	Vec fracpressure;
 	Vec fracvelocity;
 	Vec fracVelnPress;
+  Vec pressure_old;
+	Vec U_old;
+	Vec V_old;
+  Vec theta_old;
+  Vec VelnPress_old;
+  Vec velocity_old;
 } VFFields;
 
 /*
