@@ -244,17 +244,6 @@ extern PetscErrorCode VecApplyFractureWellSource(PetscReal *Ks_local,PetscReal *
       }
     }
   }
-  /*
-  for (l = 0,k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++,l++) {
-        if(v_array[ek+k][ej+j][ei+i] > 0.05){
-          Ks_local[l] = 0.;
-        }
-      }
-    }
-  }
-  */
   ierr = PetscFree6(loc_source,v_elem,dv_elem[0],dv_elem[1],dv_elem[2],v_mag_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -299,17 +288,6 @@ extern PetscErrorCode VecApplySourceTerms(PetscReal *Ks_local,PetscReal ***sourc
       }
     }
   }
-  /*
-  for (l = 0,k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++,l++) {
-        if(v_array[ek+k][ej+j][ei+i] > 0.05 ){
-          Ks_local[l] = 0.;
-        }
-      }
-    }
-  }
-  */
   ierr = PetscFree2(loc_source,v_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -737,8 +715,6 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
         }
         for (c = 0; c < veldof; c++) {
           ierr = Flow_MatA(KA_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,perm_array,one_array);CHKERRQ(ierr);
-//          ierr = Flow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c,v_array);CHKERRQ(ierr);
-//          ierr = Flow_MatBTranspose(KBTrans_local,&ctx->e3D,ek,ej,ei,c,v_array);CHKERRQ(ierr);
           ierr = Flow_MatB(KB_local,&ctx->e3D,ek,ej,ei,c,one_array);CHKERRQ(ierr);
           ierr = Flow_MatBTranspose(KBTrans_local,&ctx->e3D,ek,ej,ei,c,one_array);CHKERRQ(ierr);
           for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
@@ -777,14 +753,6 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
         
         ierr = MatSetValuesStencil(K,nrow,row1,nrow,row1,KS_local,ADD_VALUES);CHKERRQ(ierr);
         ierr = MatSetValuesStencil(Krhs,nrow,row1,nrow,row1,KS_local,ADD_VALUES);CHKERRQ(ierr);
-        
-        
-        
-        
-        
-        
-        
-   
         if(ctx->FractureFlowCoupling){
           for (c = 0; c < veldof; c++) {
             ierr = VF_MatAFractureFlowCoupling_local(KAf_local,&ctx->e3D,ek,ej,ei,u_array,v_array);CHKERRQ(ierr);
@@ -851,19 +819,11 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
           for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
             for (j = 0; j < ctx->e3D.nphiy; j++) {
               for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-//                RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l];
+/*                RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l]; */
               }
             }
           }
         }
-        
-        
-        
-        
-        
-        
-        
-        
         /*Assembling the righthand side vector f*/
         for (c = 0; c < veldof; c++) {
           ierr = Flow_Vecf(RHS_local,&ctx->e3D,ek,ej,ei,c,ctx->flowprop,v_array);CHKERRQ(ierr);
@@ -1094,10 +1054,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
       }
       w_no++;
     }
-*/
-    
-    
-    
+*/  
   }
   ierr = MatAssemblyBegin(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -1282,7 +1239,7 @@ extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_a
   kx = perm_array[ek][ej][ei][0];
   ky = perm_array[ek][ej][ei][1];
   kz = perm_array[ek][ej][ei][2];
-    // Initialize pre_Elem
+    /* Initialize pre_Elem  */
   for (g = 0; g < e->ng; g++) {
     pre_elem[g] = 0;
     v_elem[g] = 0.;
@@ -1581,7 +1538,6 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,BC *bcQ)
     
   }
   ierr = MatZeroRowsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-    //      ierr = MatZeroRowsStencil(Klhs,numBC,row,zero,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscFree(row);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -2038,18 +1994,6 @@ extern PetscErrorCode VF_RHSFlowMechUCouplingFIXSTRESS_local(PetscReal *K_local,
   PetscFunctionReturn(0);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 #undef __FUNCT__
 #define __FUNCT__ "VF_RHSFractureFlowCoupling_local"
 extern PetscErrorCode VF_RHSFractureFlowCoupling_local(PetscReal *K_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array,PetscReal ****u_old_array,PetscReal ***v_old_array)
@@ -2149,38 +2093,12 @@ extern PetscErrorCode VF_RHSFractureFlowCoupling_local(PetscReal *K_local,CartFE
     }
   }
   
-/*
-  for (l = 0,k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++,l++) {
-        if(v_array[ek+k][ej+j][ei+i] > 0.05 ){
-          K_local[l] = 0.;
-        }
-      }
-    }
-  }
-  */
-  
   ierr = PetscFree6(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2]);CHKERRQ(ierr);
   ierr = PetscFree6(dv_old_elem[0],dv_old_elem[1],dv_old_elem[2],u_old_elem[0],u_old_elem[1],u_old_elem[2]);CHKERRQ(ierr);
   ierr = PetscFree4(n_elem[0],n_elem[1],n_elem[2],v_mag_elem);CHKERRQ(ierr);
   ierr = PetscFree4(n_old_elem[0],n_old_elem[1],n_old_elem[2],v_old_mag_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatAFractureFlowCoupling_local"
@@ -2233,10 +2151,6 @@ extern PetscErrorCode VF_MatAFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE
   ierr = PetscFree6(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2]);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
-
-
-
-
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatLeakOff_local"
@@ -2363,11 +2277,6 @@ extern PetscErrorCode VF_MatBTFractureFlowCoupling_local(PetscReal *Kd_ele,CartF
   ierr = PetscFree4(n_elem[0],n_elem[1],n_elem[2],v_mag_elem);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
-
-
-
-
-
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatBFractureFlowCoupling_local"
@@ -2549,10 +2458,6 @@ extern PetscErrorCode VF_MatDFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE
 	PetscFunctionReturn(0);
 }
 
-
-
-
-
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatFluidCompreStiffMatrix_local"
 extern PetscErrorCode VF_MatFluidCompreStiffMatrix_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array)
@@ -2605,14 +2510,6 @@ extern PetscErrorCode VF_MatFluidCompreStiffMatrix_local(PetscReal *Kd_ele,CartF
 	PetscFunctionReturn(0);
 }
 
-
-
-
-
-
-
-
-
 #undef __FUNCT__
 #define __FUNCT__ "VF_FlowStiffnessMatrixEps_local"
 extern PetscErrorCode VF_FlowStiffnessMatrixEps_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array)
@@ -2623,7 +2520,7 @@ extern PetscErrorCode VF_FlowStiffnessMatrixEps_local(PetscReal *Kd_ele,CartFE_E
 	PetscInt        eg;
 	PetscReal       kx_ep,ky_ep,kz_ep;
   PetscReal		   *v_elem;
-  PetscReal		   val = 1e-15;
+  PetscReal		   val = 1e-17;
   
 	PetscFunctionBegin;
   kx_ep = val;

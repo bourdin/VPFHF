@@ -471,7 +471,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
           }
         }
         if (ei == 0) {
-            //					 Face X0
+            /*					 Face X0  */
 					face = X0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
           if (ctx->bcQ[0].face[face] == FIXED) {
@@ -486,7 +486,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 					}
 				}
 				if (ei == nx-1) {
-            //					 Face X1
+            /*					 Face X1  */
 					face = X1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
 					if (ctx->bcQ[0].face[face] == FIXED) {
@@ -501,7 +501,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 					}
 				}
 				if (ej == 0) {
-            //					 Face Y0
+            /*					 Face Y0  */
 					face = Y0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
 					if (ctx->bcQ[1].face[face] == FIXED) {
@@ -516,7 +516,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 					}
 				}
 				if (ej == ny-1) {
-            //					 Face Y1
+            /*					 Face Y1  */
 					face = Y1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
 					if (ctx->bcQ[1].face[face] == FIXED) {
@@ -531,7 +531,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 					}
 				}
 				if (ek == 0) {
-            //					 Face Z0
+            /*					 Face Z0  */
 					face = Z0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
 					if (ctx->bcQ[2].face[face] == FIXED) {
@@ -546,7 +546,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 					}
 				}
 				if (ek == nz-1) {
-            //					 Face Z1
+            /*					 Face Z1  */
 					face = Z1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
 					if (ctx->bcQ[2].face[face] == FIXED) {
@@ -630,11 +630,11 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
                   for (j = 0; j < ctx->e3D.nphiy; j++) {
                     for (i = 0; i < ctx->e3D.nphix; i++,l++) {
                       if(ctx->fracwell[w_no].type == INJECTOR){
-//                        RHS_array[ek+k][ej+j][ei+i] += timestepsize*RHS_local[l];
+/*                        RHS_array[ek+k][ej+j][ei+i] += timestepsize*RHS_local[l]; */
                       }
                       else if(ctx->well[w_no].type == PRODUCER)
                       {
-//                        RHS_array[ek+k][ej+j][ei+i] += -timestepsize*RHS_local[l];
+/*                        RHS_array[ek+k][ej+j][ei+i] += -timestepsize*RHS_local[l];  */
                       }
                     }
                   }
