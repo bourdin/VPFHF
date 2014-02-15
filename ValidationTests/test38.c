@@ -228,25 +228,14 @@ int main(int argc,char **argv)
   ctx.hasFluidSources = PETSC_FALSE;
   ctx.hasFlowWells = PETSC_TRUE;
 
-  
-//  ierr = VecSet(fields.V,1.0);
-  
-  
-  
-
-
   ierr = VecSet(ctx.PreFlowFields,0.);CHKERRQ(ierr);
   ierr = VecSet(ctx.RHSVelPpre,0.);CHKERRQ(ierr);
   ierr = VecSet(ctx.pressure_old,0.);CHKERRQ(ierr);
   ierr = VecSet(ctx.RHSPpre,0.);CHKERRQ(ierr);
   
-  
-  
-  
   ierr = VolumetricFractureWellRate(&InjVolrate,&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD," \n\n\n    Injected Rate: %e\n\n\n\n",InjVolrate);
   Q_inj = InjVolrate;
-  
   
   ctx.timestep = 0;
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
@@ -302,6 +291,7 @@ int main(int argc,char **argv)
     }
     crackvolume_o = ctx.CrackVolume;
     ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
+    
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," divergence_volume = %g\n",vol1);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," surface_flux_volume = %g\n",vol2);CHKERRQ(ierr);

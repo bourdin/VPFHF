@@ -319,7 +319,6 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->V_old,INSERT_VALUES,v_old_local);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,v_old_local,&v_old_array);CHKERRQ(ierr);
   
-  
   ierr = DMCreateGlobalVector(ctx->daScal,&Pressure_diff);CHKERRQ(ierr);
   ierr = VecSet(Pressure_diff,0.);CHKERRQ(ierr);
   ierr = VecAXPY(Pressure_diff,-1.0,ctx->pressure_old);CHKERRQ(ierr);
@@ -471,7 +470,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
           }
         }
         if (ei == 0) {
-            /*					 Face X0  */
+/*            					 Face X0  */
 					face = X0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
           if (ctx->bcQ[0].face[face] == FIXED) {
@@ -486,7 +485,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 					}
 				}
 				if (ei == nx-1) {
-            /*					 Face X1  */
+/*            					 Face X1  */
 					face = X1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
 					if (ctx->bcQ[0].face[face] == FIXED) {
@@ -501,7 +500,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 					}
 				}
 				if (ej == 0) {
-            /*					 Face Y0  */
+/*            					 Face Y0  */
 					face = Y0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
 					if (ctx->bcQ[1].face[face] == FIXED) {
@@ -516,7 +515,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 					}
 				}
 				if (ej == ny-1) {
-            /*					 Face Y1  */
+/*            					 Face Y1  */
 					face = Y1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
 					if (ctx->bcQ[1].face[face] == FIXED) {
@@ -531,7 +530,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 					}
 				}
 				if (ek == 0) {
-            /*					 Face Z0  */
+/*            					 Face Z0  */
 					face = Z0;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
 					if (ctx->bcQ[2].face[face] == FIXED) {
@@ -546,7 +545,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 					}
 				}
 				if (ek == nz-1) {
-            /*					 Face Z1  */
+/*            					 Face Z1  */
 					face = Z1;
 					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
 					if (ctx->bcQ[2].face[face] == FIXED) {
@@ -563,7 +562,9 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
       }
     }
   }
+  
   PetscInt  w_no = 0;
+  PetscInt  w_no1 = 0;
   if(ctx->hasFlowWells){
     while(w_no < ctx->numWells){
       for (ek = zs; ek < zs+zm; ek++) {
@@ -600,12 +601,16 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
               }
               else if(ctx->well[w_no].condition == PRESSURE){
               }
-              w_no++;
+              w_no1++;
             }
           }
         }
       }
+      ierr = MPI_Allreduce(&w_no1,&w_no,1,MPIU_INT,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+
     }
+  
+ /*
     w_no = 0;
     while(w_no < ctx->numfracWells){
       for (ek = zs; ek < zs+zm; ek++) {
@@ -630,11 +635,11 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
                   for (j = 0; j < ctx->e3D.nphiy; j++) {
                     for (i = 0; i < ctx->e3D.nphix; i++,l++) {
                       if(ctx->fracwell[w_no].type == INJECTOR){
-/*                        RHS_array[ek+k][ej+j][ei+i] += timestepsize*RHS_local[l]; */
+//                        RHS_array[ek+k][ej+j][ei+i] += timestepsize*RHS_local[l];
                       }
                       else if(ctx->well[w_no].type == PRODUCER)
                       {
-/*                        RHS_array[ek+k][ej+j][ei+i] += -timestepsize*RHS_local[l];  */
+//                        RHS_array[ek+k][ej+j][ei+i] += -timestepsize*RHS_local[l];  
                       }
                     }
                   }
@@ -647,8 +652,13 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
           }
         }
       }
-    }
+    }*/
+  
+  
+  
+  
   }
+
   ierr = MatAssemblyBegin(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);

@@ -968,6 +968,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
     }
   }
   PetscInt  w_no = 0;
+  PetscInt  w_no1 = 0;
   if(ctx->hasFlowWells){
     while(w_no < ctx->numWells){
       for (ek = zs; ek < zs+zm; ek++) {
@@ -1004,11 +1005,12 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
               }
               else if(ctx->well[w_no].condition == PRESSURE){
               }
-              w_no++;
+              w_no1++;
             }
           }
         }
       }
+      ierr = MPI_Allreduce(&w_no1,&w_no,1,MPIU_INT,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
     }
     
  /*
