@@ -239,10 +239,17 @@ int main(int argc,char **argv)
   
   ctx.timestep = 0;
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressure,1e-9);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressure,1e-3);CHKERRQ(ierr);
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
   ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
   ierr = FieldsH5Write(&ctx,&fields);
+  
+  ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
+
+  ctx.flowprop.timestepsize = 1.0*(ctx.CrackVolume-crackvolume_o)/(Q_inj);
+
+  ierr = PetscPrintf(PETSC_COMM_WORLD," crack volume =  %e  timesize = %e \n InjVol = %e\n",ctx.CrackVolume,ctx.flowprop.timestepsize);CHKERRQ(ierr);
+
 
   ctx.timestep = 0;
   for(i = 1; i < num; i++){
