@@ -239,7 +239,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   Vec            RHS_localVec;
   Vec            perm_local;
   PetscReal      hx,hy,hz;  
-  PetscReal      *K1_local,*K2_local,*KS_local,*KD_local;
+  PetscReal      *K1_local,*K2_local,*KS_local,*K3_local,*K4_local,*KD_local,*KDF_local;
   PetscReal      beta_c,alpha_c,mu;
   PetscReal      theta,timestepsize;
   PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
@@ -369,6 +369,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
                       nrow,PetscReal,&RHS_local,
                       4,PetscReal,&RHS1_local,
                       nrow,MatStencil,&row);CHKERRQ(ierr);
+  ierr = PetscMalloc3(nrow*nrow,PetscReal,&K3_local,nrow*nrow,PetscReal,&K4_local,nrow*nrow,PetscReal,&KDF_local);CHKERRQ(ierr);
   
   for (ek = zs; ek < zs+zm; ek++) {
     for (ej = ys; ej < ys+ym; ej++) {
@@ -405,7 +406,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
         ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,K2_local,ADD_VALUES);CHKERRQ(ierr);
         
         if(ctx->FractureFlowCoupling){
-          ierr = VF_MatDFractureFlowCoupling_local(KD_local,&ctx->e3D,ek,ej,ei,u_array,v_array);CHKERRQ(ierr);       
+          ierr = VF_MatDFractureFlowCoupling_local(KD_local,&ctx->e3D,ek,ej,ei,u_array,v_array);CHKERRQ(ierr);
           for (l = 0; l < nrow*nrow; l++) {
             K1_local[l] = theta/(12.*mu)*timestepsize*KD_local[l];
             K2_local[l] = -1.*(1.-theta)/(12.*mu)*timestepsize*KD_local[l];
@@ -709,6 +710,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = DMRestoreLocalVector(ctx->daScal,&one_local);CHKERRQ(ierr);
 
   ierr = PetscFree7(K1_local,K2_local,KS_local,KD_local,RHS_local,RHS1_local,row);CHKERRQ(ierr);
+  ierr = PetscFree3(K3_local,K4_local,KDF_local);CHKERRQ(ierr);
   
   ierr = VecDestroy(&U_diff);CHKERRQ(ierr);
   ierr = VecDestroy(&Pressure_diff);CHKERRQ(ierr);
