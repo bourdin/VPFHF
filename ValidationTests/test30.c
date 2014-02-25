@@ -9,7 +9,7 @@
 ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 20 -timestepsize 2 -resflowmechcoupling fixedstrain
  ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 10 -resflowmechcoupling fixedstrain
  
- ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 2 -resflowmechcoupling fixedstrain
+ ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 2 -resflowmechcoupling fixedstress
  */
 
 #include "petsc.h"
@@ -123,8 +123,9 @@ int main(int argc,char **argv)
  ctx.flowprop.g[0] = 0.;										  //x-component of gravity. unit is ft/s^2
  ctx.flowprop.g[1] = 0.;										  //y-component of gravity. unit is ft/s^2
  ctx.flowprop.g[2] = 0.;								  //z-component of gravity. unit is ft/s^2
-//  ctx.flowprop.K_dr = ctx.matprop[0].E/(2*(1+ctx.matprop[0].nu)*(1-2*ctx.matprop[0].nu));   // For 2D
+  ctx.flowprop.K_dr = ctx.matprop[0].E/(2*(1+ctx.matprop[0].nu)*(1-2*ctx.matprop[0].nu));   // For 2D
   ctx.flowprop.K_dr = ctx.matprop[0].E/(3*(1-2*ctx.matprop[0].nu));   //For 3D
+  ctx.flowprop.K_dr = (1-ctx.matprop[0].nu)*ctx.matprop[0].E/((1+ctx.matprop[0].nu)*(1-2*ctx.matprop[0].nu));   // For 1D
 
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   K_Dr = : %e\n\n\n\n\n",ctx.flowprop.K_dr);CHKERRQ(ierr);
 
