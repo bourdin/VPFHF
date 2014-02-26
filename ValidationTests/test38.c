@@ -301,13 +301,13 @@ int main(int argc,char **argv)
     while (errP >= tolP){
       ierr = VecCopy(fields.pressure,Pold);CHKERRQ(ierr);
       ite++;
-      ctx.timestep++;
+//      ctx.timestep++;
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\nTime step = %d .......Iteration step =  %i \t timevalue = %e \t timestepsize = %e \t errP = %e \t vtkfiletime = %i\n",i,ite, ctx.flowprop.timestepsize,ctx.flowprop.timestepsize, errP, ctx.timestep);CHKERRQ(ierr);
    		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
       ierr = VF_StepU(&fields,&ctx);
       ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
       ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
-      ierr = FieldsH5Write(&ctx,&fields);
+//      ierr = FieldsH5Write(&ctx,&fields);
 //      ctx.flowprop.timestepsize = (ctx.CrackVolume-crackvolume_o)/(Q_inj-ctx.LeakOffRate);
       ierr = VecAXPY(Pold,-1.,fields.pressure);CHKERRQ(ierr);
       ierr = VecNorm(Pold,NORM_1,&errP);CHKERRQ(ierr);
