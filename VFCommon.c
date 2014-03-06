@@ -926,7 +926,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
 
   ierr = SNESGetKSP(ctx->snesU,&kspU);CHKERRQ(ierr);
   ierr = KSPSetTolerances(kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
-  ierr = KSPSetType(kspU,KSPBCGSL);CHKERRQ(ierr);
+  ierr = KSPSetType(kspU,KSPCG);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(kspU);CHKERRQ(ierr);
   ierr = KSPGetPC(kspU,&pcU);CHKERRQ(ierr);
   ierr = PCSetType(pcU,PCBJACOBI);CHKERRQ(ierr);
