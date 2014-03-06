@@ -46,6 +46,7 @@ static const char *VFMechSolverName[] = {
 static const char *VFUnilateralName[] = {
 	"NONE",
 	"SHEARONLY",
+	"NOCOMPRESSION",
 	"VFUnilateralName",
 	"",
 	0

@@ -493,26 +493,44 @@ extern PetscErrorCode VF_BilinearFormUShearOnly3D_local(PetscReal *Mat_local,Pet
 
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_BilinearFormUUnilateral3D_local"
+#define __FUNCT__ "VF_BilinearFormUNoCompression3D_local"
 /*
- VF_BilinearFormUUnilateral3D_local
+ VF_BilinearFormUNoCompression3D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_BilinearFormUUnilateral3D_local(PetscReal *Mat_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local,PetscReal ****u_array,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,c1,c2,l;
   PetscReal      lambda,mu,kappa;
-  PetscReal      *v_elem;
+  PetscReal      *v_elem,*tr_epsilon;
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
-  ierr   = PetscMalloc(e->ng * sizeof(PetscReal),&v_elem);CHKERRQ(ierr);
+  ierr   = PetscMalloc2(e->ng,PetscReal,&v_elem,
+                        e->ng,PetscReal,&tr_epsilon);CHKERRQ(ierr);
   lambda = matprop->lambda;
   mu     = matprop->mu;
   kappa  = lambda + 2. * mu / 3.;
   
-  for (g = 0; g < e->ng; g++) v_elem[g] = 0.;
+  for (g = 0; g < e->ng; g++) {
+    v_elem[g] = 0.;
+    tr_epsilon[g] = 0;
+  }
+  for (k1 = 0; k1 < e->nphiz; k1++) {
+    for (j1 = 0; j1 < e->nphiy; j1++) {
+      for (i1 = 0; i1 < e->nphix; i1++) {
+        for (g = 0; g < e->ng; g++) {
+          v_elem[g]     += v_array[ek+k1][ej+j1][ei+i1] * e->phi[k1][j1][i1][g];
+          tr_epsilon[g] += e->dphi[k1][j1][i1][0][g] * u_array[ek+k1][ej+j1][ei+i1][0] +
+                           e->dphi[k1][j1][i1][1][g] * u_array[ek+k1][ej+j1][ei+i1][1] +
+                           e->dphi[k1][j1][i1][2][g] * u_array[ek+k1][ej+j1][ei+i1][2];         
+        }
+      }
+    }
+  }
+  ierr = PetscLogFlops(8 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  
   for (k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {
       for (i1 = 0; i1 < e->nphix; i1++) {
@@ -524,32 +542,56 @@ extern PetscErrorCode VF_BilinearFormUUnilateral3D_local(PetscReal *Mat_local,Pe
   }
   ierr = PetscLogFlops(2 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
   
-  for (l = 0,k1 = 0; k1 < e->nphiz; k1++)
-    for (j1 = 0; j1 < e->nphiy; j1++) {
-      for (i1 = 0; i1 < e->nphix; i1++) {
-        for (c1 = 0; c1 < e->dim; c1++) {
-          for (k2 = 0; k2 < e->nphiz; k2++) {
-            for (j2 = 0; j2 < e->nphiy; j2++) {
-              for (i2 = 0; i2 < e->nphix; i2++) {
-                for (c2 = 0; c2 < e->dim; c2++,l++) {
-                  Mat_local[l] = 0;
-                  for (g = 0; g < e->ng; g++) {
-                    if (c1 == c2) {
-                      Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
-                                                            + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
-                                                            + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]
-                                                            + e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.)
-                                                      * (v_elem[g] * v_elem[g] + vfprop->eta)
-                                                      + kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g]);
+  for (l = 0; l < 9 * e->nphix * e->nphiy * e->nphiz * e->nphix * e->nphiy * e->nphiz; l++) {
+  Mat_local[l] = 0;
+  }
+  for (g = 0; g < e->ng; g++) {
+    for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
+      for (j1 = 0; j1 < e->nphiy; j1++) {
+        for (i1 = 0; i1 < e->nphix; i1++) {
+          for (c1 = 0; c1 < e->dim; c1++) {
+            for (k2 = 0; k2 < e->nphiz; k2++) {
+              for (j2 = 0; j2 < e->nphiy; j2++) {
+                for (i2 = 0; i2 < e->nphix; i2++) {
+                  for (c2 = 0; c2 < e->dim; c2++,l++) {
+                    if (tr_epsilon[g] > 0) {
+                      /*
+                        Opening crack
+                      */
+                      if (c1 == c2) {
+                        Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
+                                                              + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
+                                                              + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g])
+                                                        + (lambda + mu) * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g])
+                        * (v_elem[g] * v_elem[g] + vfprop->eta);
                       
-                      ierr = PetscLogFlops(17);CHKERRQ(ierr);
+                        ierr = PetscLogFlops(15);CHKERRQ(ierr);
+                      } else {
+                        Mat_local[l] += e->weight[g] * (lambda * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g]
+                                                        + mu * e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g])
+                        * (v_elem[g] * v_elem[g] + vfprop->eta);
+                        ierr = PetscLogFlops(10);CHKERRQ(ierr);
+                      }
                     } else {
-                      Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g]
-                                                            - 2. * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.)
-                                                      * (v_elem[g] * v_elem[g] + vfprop->eta)
-                                                      + kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g]);
-                      ierr = PetscLogFlops(14);CHKERRQ(ierr);
+                      /* 
+                        Compressive crack
+                      */
+                      if (c1 == c2) {
+                        Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
+                                                              + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
+                                                              + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]
+                                                              + e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.)
+                                                        * (v_elem[g] * v_elem[g] + vfprop->eta)
+                                                        + kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g]);
                       
+                        ierr = PetscLogFlops(17);CHKERRQ(ierr);
+                      } else {
+                        Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g]
+                                                              - 2. * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.)
+                                                        * (v_elem[g] * v_elem[g] + vfprop->eta)
+                                                        + kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g]);
+                        ierr = PetscLogFlops(14);CHKERRQ(ierr);
+                      }
                     }
                   }
                 }
@@ -559,19 +601,20 @@ extern PetscErrorCode VF_BilinearFormUUnilateral3D_local(PetscReal *Mat_local,Pe
         }
       }
     }
-  ierr = PetscFree(v_elem);CHKERRQ(ierr);
+  }
+  ierr = PetscFree2(v_elem,tr_epsilon);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_RHSUCoupling3D_local"
+#define __FUNCT__ "VF_ResidualUThermoPoro3D_local"
 /*
- VF_RHSUCoupling3D_local
+ VF_ResidualUThermoPoro3D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_RHSUCoupling3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_ResidualUThermoPoro3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
@@ -636,13 +679,13 @@ extern PetscErrorCode VF_RHSUCoupling3D_local(PetscReal *residual_local,PetscRea
 
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_RHSUCouplingShearOnly3D_local"
+#define __FUNCT__ "VF_ResidualUThermoPoroShearOnly3D_local"
 /*
- VF_RHSUCouplingShearOnly3D_local
+ VF_ResidualUThermoPoroShearOnly3D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_RHSUCouplingShearOnly3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_ResidualUThermoPoroShearOnly3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
@@ -703,13 +746,13 @@ extern PetscErrorCode VF_RHSUCouplingShearOnly3D_local(PetscReal *residual_local
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_RHSUPressure3D_local"
+#define __FUNCT__ "VF_ResidualUCrackPressure3D_local"
 /*
- VF_RHSUPressure3D_local
+ VF_ResidualUCrackPressure3D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_RHSUPressure3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_ResidualUCrackPressure3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
@@ -769,13 +812,13 @@ extern PetscErrorCode VF_RHSUPressure3D_local(PetscReal *residual_local,PetscRea
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_RHSUInSituStresses3D_local"
+#define __FUNCT__ "VF_ResidualUInSituStresses3D_local"
 /*
- VF_RHSUInSituStresses3D_local: Accumulates the contribution of surface forces along the face of an element
+ VF_ResidualUInSituStresses3D_local: Accumulates the contribution of surface forces along the face of an element
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_RHSUInSituStresses3D_local(PetscReal *residual_local,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element3D *e)
+extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_local,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,l,c,g;
@@ -1732,6 +1775,10 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
             ierr = VF_BilinearFormUShearOnly3D_local(bilinearForm_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                             ek,ej,ei,&ctx->e3D);
             break;
+          case UNILATERAL_NOCOMPRESSION:
+            ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
+                                            ek,ej,ei,&ctx->e3D);
+            break;
         }
         /*
           Accumulate residual += BilinearForm . U in local indexing
@@ -1760,20 +1807,20 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
         for (l = 0; l < nrow; l++) residual_local[l] = 0.;
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
-            ierr = VF_RHSUCoupling3D_local(residual_local,v_array,theta_array,thetaRef_array,
+            ierr = VF_ResidualUThermoPoro3D_local(residual_local,v_array,theta_array,thetaRef_array,
                                            pressure_array,pressureRef_array,
                                            &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                            ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
             break;
           case UNILATERAL_SHEARONLY:
-            ierr = VF_RHSUCouplingShearOnly3D_local(residual_local,v_array,theta_array,thetaRef_array,
+            ierr = VF_ResidualUThermoPoroShearOnly3D_local(residual_local,v_array,theta_array,thetaRef_array,
                                                     pressure_array,pressureRef_array,
                                                     &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                                     ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
             break;
         }
         if (ctx->hasCrackPressure) {
-          ierr = VF_RHSUPressure3D_local(residual_local,v_array,pressure_array,pressureRef_array,
+          ierr = VF_ResidualUCrackPressure3D_local(residual_local,v_array,pressure_array,pressureRef_array,
                                          &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                          ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
         }
@@ -1814,7 +1861,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                 }
               }
             }
-            ierr = VF_RHSUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_ResidualUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1850,7 +1897,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                 }
               }
             }
-            ierr = VF_RHSUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_ResidualUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1887,7 +1934,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                 }
               }
             }
-            ierr = VF_RHSUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_ResidualUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1923,7 +1970,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                 }
               }
             }
-            ierr = VF_RHSUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_ResidualUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1960,7 +2007,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                 }
               }
             }
-            ierr = VF_RHSUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_ResidualUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1997,7 +2044,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                 }
               }
             }
-            ierr = VF_RHSUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_ResidualUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -2064,9 +2111,9 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
   PetscInt       ei,ej,ek,i,j,k,c,l;
   PetscInt       dim  = 3;
   PetscInt       nrow = dim * ctx->e3D.nphix * ctx->e3D.nphiy * ctx->e3D.nphiz;
-  Vec            V_localVec;
-  PetscReal      ***v_array;
-  PetscReal      *K_local;
+  Vec            V_localVec,U_localVec;
+  PetscReal      ***v_array,****u_array;
+  PetscReal      *bilinearForm_local;
   MatStencil     *row;
   PetscReal      hx,hy,hz;
   PetscReal      ****coords_array;
@@ -2091,9 +2138,18 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
   ierr = DMDAVecGetArray(ctx->daScal,V_localVec,&v_array);CHKERRQ(ierr);
 
   /*
-   get local mat and RHS
+    get u_array if necessary
+  */
+  if (ctx->unilateral == UNILATERAL_NOCOMPRESSION) {
+    ierr = DMGetLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
+    ierr = DMGlobalToLocalBegin(ctx->daVect,U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
+    ierr = DMGlobalToLocalEnd(ctx->daScal,U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(ctx->daVect,U_localVec,&u_array);CHKERRQ(ierr);
+  }
+  /*
+   get local mat
    */
-  ierr = PetscMalloc2(nrow * nrow,PetscReal,&K_local,
+  ierr = PetscMalloc2(nrow * nrow,PetscReal,&bilinearForm_local,
                       nrow,MatStencil,&row);CHKERRQ(ierr);
 
   /*
@@ -2109,14 +2165,17 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
         /*
          Compute and accumulate the contribution of the local stiffness matrix to the global stiffness matrix
          */
-        for (l = 0; l < nrow * nrow; l++) K_local[l] = 0.;
+        for (l = 0; l < nrow * nrow; l++) bilinearForm_local[l] = 0.;
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
-            ierr = VF_BilinearFormU3D_local(K_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
+            ierr = VF_BilinearFormU3D_local(bilinearForm_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                    ek,ej,ei,&ctx->e3D);
             break;
           case UNILATERAL_SHEARONLY:
-            ierr = VF_BilinearFormUShearOnly3D_local(K_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
+            ierr = VF_BilinearFormUShearOnly3D_local(bilinearForm_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
+                                            ek,ej,ei,&ctx->e3D);
+          case UNILATERAL_NOCOMPRESSION:
+            ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                             ek,ej,ei,&ctx->e3D);
             break;
         }
@@ -2130,7 +2189,7 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
             }
           }
         }
-        ierr = MatSetValuesStencil(*K,nrow,row,nrow,row,K_local,ADD_VALUES);CHKERRQ(ierr);
+        ierr = MatSetValuesStencil(*K,nrow,row,nrow,row,bilinearForm_local,ADD_VALUES);CHKERRQ(ierr);
       }
     }
   }
@@ -2144,7 +2203,12 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx->daScal,V_localVec,&v_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&V_localVec);CHKERRQ(ierr);
-  ierr = PetscFree2(K_local,row);CHKERRQ(ierr);
+  if (ctx->unilateral == UNILATERAL_NOCOMPRESSION) {
+    ierr = DMDAVecRestoreArrayDOF(ctx->daVect,U_localVec,&u_array);CHKERRQ(ierr);
+    ierr = DMRestoreLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
+  }
+
+  ierr = PetscFree2(bilinearForm_local,row);CHKERRQ(ierr);
 
   *str = SAME_NONZERO_PATTERN;
   PetscFunctionReturn(0);
@@ -2253,13 +2317,13 @@ extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_MatVAT2Surface3D_local"
+#define __FUNCT__ "VF_BilinearFormVAT23D_local"
 /*
- VF_MatVAT2Surface3D_local
+ VF_BilinearFormVAT23D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_MatVAT2Surface3D_local(PetscReal *Mat_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e,PetscReal Gc)
+extern PetscErrorCode VF_BilinearFormVAT23D_local(PetscReal *Mat_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e,PetscReal Gc)
 {
   PetscInt  g,i1,i2,j1,j2,k1,k2,l;
   PetscReal coef = Gc / vfprop->atCv * .5;
@@ -2280,13 +2344,13 @@ extern PetscErrorCode VF_MatVAT2Surface3D_local(PetscReal *Mat_local,VFMatProp *
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_MatVAT1Surface3D_local"
+#define __FUNCT__ "VF_BilinearFormVAT13D_local"
 /*
- VF_MatVAT1Surface3D_local
+ VF_BilinearFormVAT13D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_MatVAT1Surface3D_local(PetscReal *Mat_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e,PetscReal Gc)
+extern PetscErrorCode VF_BilinearFormVAT13D_local(PetscReal *Mat_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e,PetscReal Gc)
 {
   PetscInt  g,i1,i2,j1,j2,k1,k2,l;
   PetscReal coef = Gc / vfprop->atCv * .5;
@@ -2306,13 +2370,13 @@ extern PetscErrorCode VF_MatVAT1Surface3D_local(PetscReal *Mat_local,VFMatProp *
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_MatVCoupling3D_local"
+#define __FUNCT__ "VF_BilinearFormVCoupling3D_local"
 /*
- VF_MatVCoupling3D_local
+ VF_BilinearFormVCoupling3D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_BilinearFormVCoupling3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
@@ -2340,13 +2404,13 @@ extern PetscErrorCode VF_MatVCoupling3D_local(PetscReal *Mat_local,PetscReal ***
 
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_MatVCouplingShearOnly3D_local"
+#define __FUNCT__ "VF_BilinearFormVCouplingShearOnly3D_local"
 /*
- VF_MatVCouplingShearOnly3D_local
+ VF_BilinearFormVCouplingShearOnly3D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_MatVCouplingShearOnly3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_BilinearFormVCouplingShearOnly3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
@@ -2372,13 +2436,13 @@ extern PetscErrorCode VF_MatVCouplingShearOnly3D_local(PetscReal *Mat_local,Pets
 
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_RHSVPressure3D_local"
+#define __FUNCT__ "VF_ResidualVCrackPressure3D_local"
 /*
- VF_RHSVPressure3D_local
+ VF_ResidualVCrackPressure3D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_RHSVPressure3D_local(PetscReal *residual_local,PetscReal ****u_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_ResidualVCrackPressure3D_local(PetscReal *residual_local,PetscReal ****u_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
@@ -2410,7 +2474,7 @@ extern PetscErrorCode VF_RHSVPressure3D_local(PetscReal *residual_local,PetscRea
   
   /*
    Accumulate the contribution of the current element to the local
-   version of the RHS
+   version of the residual
    */
   for (l= 0,k = 0; k < e->nphiz; k++)
     for (j = 0; j < e->nphiy; j++)
@@ -2429,13 +2493,13 @@ extern PetscErrorCode VF_RHSVPressure3D_local(PetscReal *residual_local,PetscRea
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_RHSVAT2Surface3D_local"
+#define __FUNCT__ "VF_ResidualVAT23D_local"
 /*
- VF_RHSVAT2Surface3D_local
+ VF_ResidualVAT23D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_RHSVAT2Surface3D_local(PetscReal *residual_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e, PetscReal Gc)
+extern PetscErrorCode VF_ResidualVAT23D_local(PetscReal *residual_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e, PetscReal Gc)
 {
   PetscInt  g,i,j,k,l;
   PetscReal coef = Gc / vfprop->atCv / vfprop->epsilon *.5;
@@ -2451,13 +2515,13 @@ extern PetscErrorCode VF_RHSVAT2Surface3D_local(PetscReal *residual_local,VFMatP
 
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_RHSVAT1Surface3D_local"
+#define __FUNCT__ "VF_ResidualVAT13D_local"
 /*
- VF_RHSVAT1Surface3D_local
+ VF_ResidualVAT13D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_RHSVAT1Surface3D_local(PetscReal *residual_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e, PetscReal Gc)
+extern PetscErrorCode VF_ResidualVAT13D_local(PetscReal *residual_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e, PetscReal Gc)
 {
   PetscInt  g,i,j,k,l;
   PetscReal coef = Gc / vfprop->atCv / vfprop->epsilon *.25;
@@ -2888,21 +2952,21 @@ extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
           K_local[l] = 0.;
         switch (ctx->vfprop.atnum ) {
           case 1:
-            ierr = VF_MatVAT1Surface3D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            ierr = VF_BilinearFormVAT13D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
             break;
           case 2:
-            ierr = VF_MatVAT2Surface3D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            ierr = VF_BilinearFormVAT23D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
             break;
         }
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
-            ierr = VF_MatVCoupling3D_local(K_local,U_array,theta_array,thetaRef_array,
+            ierr = VF_BilinearFormVCoupling3D_local(K_local,U_array,theta_array,thetaRef_array,
                                            pressure_array,pressureRef_array,
                                            &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
                                            &ctx->e3D);CHKERRQ(ierr);
             break;
           case UNILATERAL_SHEARONLY:
-            ierr = VF_MatVCouplingShearOnly3D_local(K_local,U_array,theta_array,thetaRef_array,
+            ierr = VF_BilinearFormVCouplingShearOnly3D_local(K_local,U_array,theta_array,thetaRef_array,
                                                     pressure_array,pressureRef_array,
                                                     &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
                                                     &ctx->e3D);CHKERRQ(ierr);
@@ -2924,14 +2988,14 @@ extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
         }
         switch (ctx->vfprop.atnum) {
           case 1:
-            ierr = VF_RHSVAT1Surface3D_local(residual_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            ierr = VF_ResidualVAT13D_local(residual_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
             break;
           case 2:
-            ierr = VF_RHSVAT2Surface3D_local(residual_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            ierr = VF_ResidualVAT23D_local(residual_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
             break;
         }
         if (ctx->hasCrackPressure) {
-          ierr = VF_RHSVPressure3D_local(residual_local,U_array,pressure_array,pressureRef_array,
+          ierr = VF_ResidualVCrackPressure3D_local(residual_local,U_array,pressure_array,pressureRef_array,
                                          &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
                                          &ctx->e3D);CHKERRQ(ierr);
         }
@@ -3090,21 +3154,21 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
           Jac_local[l] = 0.;
         switch (ctx->vfprop.atnum ) {
           case 1:
-            ierr = VF_MatVAT1Surface3D_local(Jac_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            ierr = VF_BilinearFormVAT13D_local(Jac_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
             break;
           case 2:
-            ierr = VF_MatVAT2Surface3D_local(Jac_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
+            ierr = VF_BilinearFormVAT23D_local(Jac_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
             break;
         }
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
-            ierr = VF_MatVCoupling3D_local(Jac_local,U_array,theta_array,thetaRef_array,
+            ierr = VF_BilinearFormVCoupling3D_local(Jac_local,U_array,theta_array,thetaRef_array,
                                            pressure_array,pressureRef_array,
                                            &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
                                            &ctx->e3D);CHKERRQ(ierr);
             break;
           case UNILATERAL_SHEARONLY:
-            ierr = VF_MatVCouplingShearOnly3D_local(Jac_local,U_array,theta_array,thetaRef_array,
+            ierr = VF_BilinearFormVCouplingShearOnly3D_local(Jac_local,U_array,theta_array,thetaRef_array,
                                                     pressure_array,pressureRef_array,
                                                     &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
                                                     &ctx->e3D);CHKERRQ(ierr);
