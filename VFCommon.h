@@ -259,10 +259,6 @@ typedef struct {
 	VFPreset            preset;
 	SNES                snesV;
 	SNES                snesU;
-	//Vec                 UResidual;
-	//Mat                 JacU;
-	Mat                 KU;
-	Vec                 RHSU;
 	/*
 	 Global variables for regular FEM Flow
 	 */
