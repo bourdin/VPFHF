@@ -924,16 +924,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = SNESSetFunction(ctx->snesU,residualU,VF_UResidual,ctx);CHKERRQ(ierr);
   ierr = SNESSetJacobian(ctx->snesU,JacU,JacU,VF_UIJacobian,ctx);CHKERRQ(ierr);
 
-
-
-  /*
-   KU and RHSU will go when we update the residual evaluation
-  */
-  ierr = DMCreateGlobalVector(ctx->daVect,&ctx->RHSU);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) ctx->RHSU,"RHSU");CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daVect,PETSC_NULL,&ctx->KU);CHKERRQ(ierr);
-  ierr = MatSetOption(ctx->KU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-
   ierr = SNESGetKSP(ctx->snesU,&kspU);CHKERRQ(ierr);
   ierr = KSPSetTolerances(kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSetType(kspU,KSPBCGSL);CHKERRQ(ierr);
@@ -1174,10 +1164,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = DMDestroy(&ctx->daScalCell);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daVectCell);CHKERRQ(ierr);
 
-  ierr = MatDestroy(&ctx->KU);CHKERRQ(ierr);
-  ierr = VecDestroy(&ctx->RHSU);CHKERRQ(ierr);
   ierr = SNESDestroy(&ctx->snesU);CHKERRQ(ierr);
-
   ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
 
   ierr = VecDestroy(&ctx->pressure_old);CHKERRQ(ierr);

@@ -165,9 +165,11 @@ int main(int argc,char **argv)
     ierr = FieldsH5Write(&ctx,&fields);
     ierr = FieldsH5Write(&ctx,&fields);
     break;
-
   case FILEFORMAT_BIN:
     ierr = FieldsBinaryWrite(&ctx,&fields);
+    break;
+  case FILEFORMAT_VTK:
+    ierr = FieldsVTKWrite(&ctx,&fields,"runtest6_n.vts","runtest6_c.vts");CHKERRQ(ierr);
     break;
   }
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
