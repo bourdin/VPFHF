@@ -434,13 +434,16 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_loc
     + sigma12_elem[g] * epsilon12_elem[g]
     + sigma23_elem[g] * epsilon23_elem[g]
     + sigma13_elem[g] * epsilon13_elem[g];
-    ElasticEnergyDensityS_local[g] = kappa * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g])
-    * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g]) * .5;
-    if (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g] > 0) {
-      ElasticEnergyDensityD_local[g] = ElasticEnergyDensity_local[g] - ElasticEnergyDensityS_local[g];
+    
+    if (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g] >= 0) {
+      ElasticEnergyDensityS_local[g] = kappa * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g])
+                                        * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g]) * .5;
     } else {
-      ElasticEnergyDensityD_local[g] = 0.;
+//printf("%s Compressive stress: %i %i %i %i\n",__FUNCT__,ei,ej,ek,g);
+      ElasticEnergyDensityS_local[g] = 0.;
     }
+    ElasticEnergyDensityD_local[g] = ElasticEnergyDensity_local[g] - kappa * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g])
+                                        * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g]) * .5;
   }
   ierr = PetscLogFlops(47 * e->ng);CHKERRQ(ierr);
   
@@ -659,7 +662,7 @@ extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local
               for (j2 = 0; j2 < e->nphiy; j2++) {
                 for (i2 = 0; i2 < e->nphix; i2++) {
                   for (c2 = 0; c2 < e->dim; c2++,l++) {
-                    if (tr_epsilon[g] > 0) {
+                    if (tr_epsilon[g] >= 0) {
                       /*
                         Opening crack
                       */
@@ -674,10 +677,11 @@ extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local
                       } else {
                         Mat_local[l] += e->weight[g] * (lambda * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g]
                                                         + mu * e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g])
-                        * (v_elem[g] * v_elem[g] + vfprop->eta);
+                                                     * (v_elem[g] * v_elem[g] + vfprop->eta);
                         ierr = PetscLogFlops(10);CHKERRQ(ierr);
                       }
                     } else {
+//printf("%s Compressive stress: %i %i %i %i\n",__FUNCT__,ei,ej,ek,g);
                       /* 
                         Compressive crack
                       */
@@ -903,7 +907,7 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
       }
     }
   }
-  ierr = PetscLogFlops(6 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  ierr = PetscLogFlops(14 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
   /*
    Accumulate the contribution of the current element to the local
    version of the RHS.
@@ -914,13 +918,14 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
       for (j = 0; j < e->nphiy; j++) {
         for (i = 0; i < e->nphix; i++) {
           for (c = 0; c < dim; c++,l++) {
-            if (tr_epsilon[g] > 0) {
-              residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
-              * (theta_elem[g] * coefalpha + pressure_elem[g] * beta);
-            } else {
+            if (tr_epsilon[g] >= 0) {
               residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
               * (coefalpha * theta_elem[g] + beta * pressure_elem[g])
               * (v_elem[g] * v_elem[g] + vfprop->eta);
+            } else {
+//printf("%s Compressive stress: %i %i %i %i\n",__FUNCT__,ei,ej,ek,g);
+              residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
+              * (theta_elem[g] * coefalpha + pressure_elem[g] * beta);
             }
           }
         }
@@ -2008,6 +2013,12 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                                                     &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                                     ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
             break;
+          case UNILATERAL_NOCOMPRESSION:
+            ierr = VF_ResidualUThermoPoroNoCompression3D_local(residual_local,u_array,v_array,theta_array,thetaRef_array,
+                                                    pressure_array,pressureRef_array,
+                                                    &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
+                                                    ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
+            break;
         }
         if (ctx->hasCrackPressure) {
           ierr = VF_ResidualUCrackPressure3D_local(residual_local,v_array,pressure_array,pressureRef_array,
@@ -2333,7 +2344,7 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
   if (ctx->unilateral == UNILATERAL_NOCOMPRESSION) {
     ierr = DMGetLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
     ierr = DMGlobalToLocalBegin(ctx->daVect,U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
-    ierr = DMGlobalToLocalEnd(ctx->daScal,U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
+    ierr = DMGlobalToLocalEnd(ctx->daVect,U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
     ierr = DMDAVecGetArrayDOF(ctx->daVect,U_localVec,&u_array);CHKERRQ(ierr);
   }
   /*
@@ -2661,7 +2672,7 @@ extern PetscErrorCode VF_BilinearFormVCouplingNoCompression3D_local(PetscReal *M
           for (j2 = 0; j2 < e->nphiy; j2++) {
             for (i2 = 0; i2 < e->nphix; i2++,l++) {
               for (g = 0; g < e->ng; g++) {
-                Mat_local[l] += e->weight[g] * e->phi[k1][j1][i1][g] * e->phi[k2][j2][i2][g] * ElasticEnergyDensityD_local[g] * 2.;
+                Mat_local[l] += e->weight[g] * e->phi[k1][j1][i1][g] * e->phi[k2][j2][i2][g] * (ElasticEnergyDensityS_local[g] + ElasticEnergyDensityD_local[g]) * 2.;
               }
             }
           }
@@ -3412,6 +3423,12 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
             break;
           case UNILATERAL_SHEARONLY:
             ierr = VF_BilinearFormVCouplingShearOnly3D_local(Jac_local,U_array,theta_array,thetaRef_array,
+                                                    pressure_array,pressureRef_array,
+                                                    &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
+                                                    &ctx->e3D);CHKERRQ(ierr);
+            break;
+          case UNILATERAL_NOCOMPRESSION:
+            ierr = VF_BilinearFormVCouplingNoCompression3D_local(Jac_local,U_array,theta_array,thetaRef_array,
                                                     pressure_array,pressureRef_array,
                                                     &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
                                                     &ctx->e3D);CHKERRQ(ierr);
