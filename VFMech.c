@@ -731,7 +731,9 @@ extern PetscErrorCode VF_ResidualUThermoPoro3D_local(PetscReal *residual_local,P
   coefalpha = (3.* matprop->lambda + 2. * matprop->mu) * matprop->alpha;
   beta      = matprop->beta;
   
-  ierr = PetscMalloc3(e->ng,PetscReal,&theta_elem,e->ng,PetscReal,&pressure_elem,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,PetscReal,&theta_elem,
+                      e->ng,PetscReal,&pressure_elem,
+                      e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
   /*
    Initialize pressure_Elem, theta_Elem and v_elem
    */
@@ -743,10 +745,10 @@ extern PetscErrorCode VF_ResidualUThermoPoro3D_local(PetscReal *residual_local,P
   /*
    Compute theta_elem
    */
-  for (k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++) {
-        for (g = 0; g < e->ng; g++) {
+  for (g = 0; g < e->ng; g++) {
+    for (k = 0; k < e->nphiz; k++) {
+      for (j = 0; j < e->nphiy; j++) {
+        for (i = 0; i < e->nphix; i++) {
           theta_elem[g] += e->phi[k][j][i][g]
           * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
           pressure_elem[g] += e->phi[k][j][i][g]
@@ -761,11 +763,11 @@ extern PetscErrorCode VF_ResidualUThermoPoro3D_local(PetscReal *residual_local,P
    Accumulate the contribution of the current element to the local
    version of the RHS
    */
-  for (l= 0,k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++) {
-        for (c = 0; c < dim; c++,l++) {
-          for (g = 0; g < e->ng; g++) {
+  for (g = 0; g < e->ng; g++) {
+    for (l = 0,k = 0; k < e->nphiz; k++) {
+      for (j = 0; j < e->nphiy; j++) {
+        for (i = 0; i < e->nphix; i++) {
+          for (c = 0; c < dim; c++,l++) {
             residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
             * (coefalpha * theta_elem[g] + beta * pressure_elem[g])
             * (v_elem[g] * v_elem[g] + vfprop->eta);
@@ -812,10 +814,10 @@ extern PetscErrorCode VF_ResidualUThermoPoroShearOnly3D_local(PetscReal *residua
   /*
    Compute theta_elem
    */
-  for (k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++) {
-        for (g = 0; g < e->ng; g++) {
+  for (g = 0; g < e->ng; g++) {
+    for (k = 0; k < e->nphiz; k++) {
+      for (j = 0; j < e->nphiy; j++) {
+        for (i = 0; i < e->nphix; i++) {
           theta_elem[g] += e->phi[k][j][i][g]
           * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
           pressure_elem[g] += e->phi[k][j][i][g]
@@ -830,11 +832,85 @@ extern PetscErrorCode VF_ResidualUThermoPoroShearOnly3D_local(PetscReal *residua
    version of the RHS.
    Note that only sperical terms appear in the RHS so there is no V
    */
-  for (l= 0,k = 0; k < e->nphiz; k++) {
+  for (g = 0; g < e->ng; g++) {
+    for (l = 0,k = 0; k < e->nphiz; k++) {
+      for (j = 0; j < e->nphiy; j++) {
+        for (i = 0; i < e->nphix; i++) {
+          for (c = 0; c < dim; c++,l++) {
+            residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
+            * (theta_elem[g] * coefalpha + pressure_elem[g] * beta);
+          }
+        }
+      }
+    }
+  }
+  ierr = PetscLogFlops(6 * dim * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  /*
+   Clean up
+   */
+  ierr = PetscFree2(theta_elem,pressure_elem);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_ResidualUThermoPoroNoCompression3D_local"
+/*
+ VF_ResidualUThermoPoroNoCompression3D_local
+ 
+ (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ */
+extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *residual_local,PetscReal ****u_array,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+{
+  PetscErrorCode ierr;
+  PetscInt       l,i,j,k,g,c;
+  PetscInt       dim=3;
+  PetscReal      *theta_elem,*pressure_elem,*tr_epsilon;
+  PetscReal      coefalpha,beta;
+  
+  PetscFunctionBegin;
+  coefalpha = (3.* matprop->lambda + 2. * matprop->mu) * matprop->alpha;
+  beta      = matprop->beta;
+  ierr      = PetscMalloc3(e->ng,PetscReal,&theta_elem,
+                           e->ng,PetscReal,&pressure_elem,
+                           e->ng,PetscReal,&tr_epsilon);CHKERRQ(ierr);
+  /*
+   Initialize theta_Elem and v_elem
+   */
+  for (g = 0; g < e->ng; g++) {
+    theta_elem[g]    = 0;
+    pressure_elem[g] = 0;
+    tr_epsilon[g]    = 0;
+  }
+  /*
+   Compute theta_elem
+   */
+  for (k = 0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
-        for (c = 0; c < dim; c++,l++) {
-          for (g = 0; g < e->ng; g++) {
+        for (g = 0; g < e->ng; g++) {
+          theta_elem[g] += e->phi[k][j][i][g]
+          * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
+          pressure_elem[g] += e->phi[k][j][i][g]
+          * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i]);
+          tr_epsilon[g] += e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] +
+                           e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] +
+                           e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2];         
+
+        }
+      }
+    }
+  }
+  ierr = PetscLogFlops(6 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  /*
+   Accumulate the contribution of the current element to the local
+   version of the RHS.
+   Note that only sperical terms appear in the RHS so there is no V
+   */
+  for (g = 0; g < e->ng; g++) {
+    for (l= 0,k = 0; k < e->nphiz; k++) {
+      for (j = 0; j < e->nphiy; j++) {
+        for (i = 0; i < e->nphix; i++) {
+          for (c = 0; c < dim; c++,l++) {
             residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
             * (theta_elem[g] * coefalpha + pressure_elem[g] * beta);
           }
@@ -1813,8 +1889,8 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
    get u_array
    */
   ierr = DMGetLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daVect,ctx->fields->U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daVect,ctx->fields->U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daVect,U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daVect,U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx->daVect,U_localVec,&u_array);CHKERRQ(ierr);
   /*
    get theta_array, thetaRef_array
