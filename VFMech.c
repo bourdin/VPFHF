@@ -864,14 +864,15 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
   PetscInt       dim=3;
-  PetscReal      *theta_elem,*pressure_elem,*tr_epsilon;
+  PetscReal      *theta_elem,*pressure_elem,*v_elem,*tr_epsilon;
   PetscReal      coefalpha,beta;
   
   PetscFunctionBegin;
   coefalpha = (3.* matprop->lambda + 2. * matprop->mu) * matprop->alpha;
   beta      = matprop->beta;
-  ierr      = PetscMalloc3(e->ng,PetscReal,&theta_elem,
+  ierr      = PetscMalloc4(e->ng,PetscReal,&theta_elem,
                            e->ng,PetscReal,&pressure_elem,
+                           e->ng,PetscReal,&v_elem,
                            e->ng,PetscReal,&tr_epsilon);CHKERRQ(ierr);
   /*
    Initialize theta_Elem and v_elem
@@ -880,6 +881,7 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
     theta_elem[g]    = 0;
     pressure_elem[g] = 0;
     tr_epsilon[g]    = 0;
+    v_elem[g]        = 0;
   }
   /*
    Compute theta_elem
@@ -892,6 +894,7 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
           * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
           pressure_elem[g] += e->phi[k][j][i][g]
           * (pressure_array[ek+k][ej+j][ei+i] - pressureRef_array[ek+k][ej+j][ei+i]);
+          v_elem[g] += e->phi[k][j][i][g] * v_array[ek+k][ej+j][ei+i];
           tr_epsilon[g] += e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] +
                            e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] +
                            e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2];         
@@ -911,8 +914,14 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
       for (j = 0; j < e->nphiy; j++) {
         for (i = 0; i < e->nphix; i++) {
           for (c = 0; c < dim; c++,l++) {
-            residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
-            * (theta_elem[g] * coefalpha + pressure_elem[g] * beta);
+            if (tr_epsilon[g] > 0) {
+              residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
+              * (theta_elem[g] * coefalpha + pressure_elem[g] * beta);
+            } else {
+              residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
+              * (coefalpha * theta_elem[g] + beta * pressure_elem[g])
+              * (v_elem[g] * v_elem[g] + vfprop->eta);
+            }
           }
         }
       }
@@ -922,7 +931,7 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
   /*
    Clean up
    */
-  ierr = PetscFree2(theta_elem,pressure_elem);CHKERRQ(ierr);
+  ierr = PetscFree4(theta_elem,pressure_elem,v_elem,tr_epsilon);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
