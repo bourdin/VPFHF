@@ -177,6 +177,8 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 
     ctx->maxtimestep  = 1;
     ierr              = PetscOptionsInt("-maxtimestep","\n\tMaximum number of timestep","",ctx->maxtimestep,&ctx->maxtimestep,PETSC_NULL);CHKERRQ(ierr);
+    ctx->mintimevalue = 0.;
+    ierr              = PetscOptionsReal("-mintimevalue","\n\tMinimum timevalue","",ctx->mintimevalue,&ctx->mintimevalue,PETSC_NULL);CHKERRQ(ierr);
     ctx->maxtimevalue = 1.;
     ierr              = PetscOptionsReal("-maxtimevalue","\n\tMaximum timevalue","",ctx->maxtimevalue,&ctx->maxtimevalue,PETSC_NULL);CHKERRQ(ierr);
 
@@ -905,8 +907,10 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   KSP            kspU,kspV;
   PC             pcU,pcV;
   Vec            lbV,ubV;
-  Mat            JacV,JacU;
+  Mat            JacV,JacU,JacPCU;
   Vec            residualV,residualU;
+  SNESLineSearch linesearchU;
+  
   PetscFunctionBegin;
   /*
    U solver initialization
@@ -914,15 +918,24 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesU);CHKERRQ(ierr);
   ierr = SNESSetDM(ctx->snesU,ctx->daVect);CHKERRQ(ierr);
   ierr = SNESSetOptionsPrefix(ctx->snesU,"U_");CHKERRQ(ierr);
-  ierr = SNESSetType(ctx->snesU,SNESKSPONLY);CHKERRQ(ierr);
+  if (ctx->unilateral == UNILATERAL_NONE) {
+    ierr = SNESSetType(ctx->snesU,SNESKSPONLY);CHKERRQ(ierr);
+  } else {
+    ierr = SNESSetType(ctx->snesU,SNESLS);CHKERRQ(ierr);
+    ierr = SNESGetSNESLineSearch(ctx->snesU,&linesearchU);CHKERRQ(ierr);
+    ierr = SNESLineSearchSetType(linesearchU,SNESLINESEARCHCP);CHKERRQ(ierr);
+  }
+  ierr = SNESSetTolerances(ctx->snesU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = SNESSetFromOptions(ctx->snesU);CHKERRQ(ierr);
   
   ierr = DMCreateGlobalVector(ctx->daVect,&residualU);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daVect,PETSC_NULL,&JacU);CHKERRQ(ierr);
   ierr = MatSetOption(JacU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daVect,PETSC_NULL,&JacPCU);CHKERRQ(ierr);
+  ierr = MatSetOption(JacPCU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 
   ierr = SNESSetFunction(ctx->snesU,residualU,VF_UResidual,ctx);CHKERRQ(ierr);
-  ierr = SNESSetJacobian(ctx->snesU,JacU,JacU,VF_UIJacobian,ctx);CHKERRQ(ierr);
+  ierr = SNESSetJacobian(ctx->snesU,JacU,JacPCU,VF_UIJacobian,ctx);CHKERRQ(ierr);
 
   ierr = SNESGetKSP(ctx->snesU,&kspU);CHKERRQ(ierr);
   ierr = KSPSetTolerances(kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
