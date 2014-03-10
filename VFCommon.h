@@ -352,6 +352,7 @@ typedef struct {
 	PetscReal           current_time;
 	PetscReal           dt;
 	PetscInt            timestep;
+	PetscReal           mintimevalue;
 	PetscReal           maxtimevalue;
 	PetscInt            maxtimestep;
 	PetscInt            maxiterations;

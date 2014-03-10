@@ -178,7 +178,7 @@ int main(int argc,char **argv)
     ctx.bcV[0].face[Z1] = ONE;
     break;
   default:
-    SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: mode should be one of {0,1,2,3,4,5,6,7},got %i\n",mode);
+    SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: mode should be one of {0,1,2,3,4,5,6,7}, got %i\n",mode);
     break;
   }
 

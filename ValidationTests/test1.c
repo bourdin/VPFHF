@@ -160,6 +160,7 @@ int main(int argc,char **argv)
   Vec            Vold;
   PetscReal      errV;
   PetscInt       altminit;
+  PetscInt       nCycle = 0;
   
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -183,7 +184,7 @@ int main(int argc,char **argv)
   
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
     if (ctx.maxtimestep > 1) {
-      ctx.timevalue = ctx.maxtimevalue / (PetscReal) (ctx.maxtimestep-1) * (PetscReal) (ctx.timestep);
+      ctx.timevalue = ctx.mintimevalue + (ctx.maxtimevalue - ctx.mintimevalue) / (PetscReal) (ctx.maxtimestep-1) * (PetscReal) (ctx.timestep);
     } else {
       ctx.timevalue = ctx.maxtimevalue;
     }

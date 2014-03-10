@@ -2301,11 +2301,12 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_UIJacobian"
-extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructure *str,void *user)
+extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure *str,void *user)
 {
   VFCtx          *ctx=(VFCtx*)user;
   
   PetscErrorCode ierr;
+  PetscReal      eta,etaPC;
   PetscInt       xs,xm,nx;
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
@@ -2314,7 +2315,7 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
   PetscInt       nrow = dim * ctx->e3D.nphix * ctx->e3D.nphiy * ctx->e3D.nphiz;
   Vec            V_localVec,U_localVec;
   PetscReal      ***v_array,****u_array;
-  PetscReal      *bilinearForm_local;
+  PetscReal      *bilinearForm_local,*bilinearFormPC_local;
   MatStencil     *row;
   PetscReal      hx,hy,hz;
   PetscReal      ****coords_array;
@@ -2346,11 +2347,15 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
     ierr = DMGlobalToLocalBegin(ctx->daVect,U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
     ierr = DMGlobalToLocalEnd(ctx->daVect,U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
     ierr = DMDAVecGetArrayDOF(ctx->daVect,U_localVec,&u_array);CHKERRQ(ierr);
+    ierr = MatZeroEntries(*KPC);CHKERRQ(ierr);
+    eta = ctx->vfprop.eta;
+    etaPC = 1e-1;
   }
   /*
    get local mat
    */
-  ierr = PetscMalloc2(nrow * nrow,PetscReal,&bilinearForm_local,
+  ierr = PetscMalloc3(nrow * nrow,PetscReal,&bilinearForm_local,
+                      nrow * nrow,PetscReal,&bilinearFormPC_local,
                       nrow,MatStencil,&row);CHKERRQ(ierr);
 
   /*
@@ -2370,7 +2375,7 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
             ierr = VF_BilinearFormU3D_local(bilinearForm_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-                                   ek,ej,ei,&ctx->e3D);
+                                   ek,ej,ei,&ctx->e3D);                                   
             break;
           case UNILATERAL_SHEARONLY:
             ierr = VF_BilinearFormUShearOnly3D_local(bilinearForm_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
@@ -2379,6 +2384,10 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                             ek,ej,ei,&ctx->e3D);
+            ctx->vfprop.eta = etaPC;
+            ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
+                                            ek,ej,ei,&ctx->e3D);
+            ctx->vfprop.eta = eta;
             break;
         }
         
@@ -2392,6 +2401,11 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
           }
         }
         ierr = MatSetValuesStencil(*K,nrow,row,nrow,row,bilinearForm_local,ADD_VALUES);CHKERRQ(ierr);
+        if (ctx->unilateral == UNILATERAL_NOCOMPRESSION) {
+          ierr = MatSetValuesStencil(*KPC,nrow,row,nrow,row,bilinearFormPC_local,ADD_VALUES);CHKERRQ(ierr);
+        } else {
+          ierr = MatSetValuesStencil(*KPC,nrow,row,nrow,row,bilinearForm_local,ADD_VALUES);CHKERRQ(ierr);
+        }         
       }
     }
   }
@@ -2402,6 +2416,15 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
   ierr = MatAssemblyBegin(*K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(*K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
+  if (ctx->unilateral == UNILATERAL_NOCOMPRESSION) {
+    ierr = MatAssemblyBegin(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+
+    ierr = MatApplyDirichletBC(*KPC,ctx->daVect,&ctx->bcU[0]);CHKERRQ(ierr);
+    ierr = MatAssemblyBegin(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  }          
+
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx->daScal,V_localVec,&v_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&V_localVec);CHKERRQ(ierr);
@@ -2410,7 +2433,7 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *Jac1,MatStructur
     ierr = DMRestoreLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
   }
 
-  ierr = PetscFree2(bilinearForm_local,row);CHKERRQ(ierr);
+  ierr = PetscFree3(bilinearForm_local,bilinearFormPC_local,row);CHKERRQ(ierr);
 
   *str = SAME_NONZERO_PATTERN;
   PetscFunctionReturn(0);
