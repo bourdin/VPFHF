@@ -2416,14 +2416,12 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
   ierr = MatAssemblyBegin(*K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(*K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
-  if (ctx->unilateral == UNILATERAL_NOCOMPRESSION) {
-    ierr = MatAssemblyBegin(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
-    ierr = MatApplyDirichletBC(*KPC,ctx->daVect,&ctx->bcU[0]);CHKERRQ(ierr);
-    ierr = MatAssemblyBegin(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  }          
+  ierr = MatApplyDirichletBC(*KPC,ctx->daVect,&ctx->bcU[0]);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx->daScal,V_localVec,&v_array);CHKERRQ(ierr);
