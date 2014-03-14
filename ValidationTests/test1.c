@@ -73,7 +73,7 @@ PetscErrorCode boundaryConditionsInitialize(VFCtx *ctx,PetscInt orientation){
 
 #undef __FUNCT__
 #define __FUNCT__ "boundaryDisplacementInitialize"
-PetscErrorCode boundaryDisplacementInitialize(VFCtx *ctx,PetscInt orientation,PetscReal bcMag,Vec BCU) {
+PetscErrorCode boundaryDisplacementInitialize(VFCtx *ctx,PetscInt orientation,PetscReal t,PetscReal *bc,Vec BCU) {
   PetscErrorCode ierr;
   PetscReal      ****bcu_array;
   PetscInt       i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
@@ -89,14 +89,14 @@ PetscErrorCode boundaryDisplacementInitialize(VFCtx *ctx,PetscInt orientation,Pe
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) {
             if (i == 0) {
-              bcu_array[k][j][i][0] = -bcMag;
-              bcu_array[k][j][i][1] = 0.;
-              bcu_array[k][j][i][2] = 0.;
+              bcu_array[k][j][i][0] = -t * bc[0];
+              bcu_array[k][j][i][1] = -t * bc[1];
+              bcu_array[k][j][i][2] = -t * bc[2];
             }
             if (i == nx-1) {
-              bcu_array[k][j][i][0] = bcMag;
-              bcu_array[k][j][i][1] = 0.;
-              bcu_array[k][j][i][2] = 0.;
+              bcu_array[k][j][i][0] = t * bc[0];
+              bcu_array[k][j][i][1] = t * bc[1];
+              bcu_array[k][j][i][2] = t * bc[2];
             }
           }
         }
@@ -109,14 +109,14 @@ PetscErrorCode boundaryDisplacementInitialize(VFCtx *ctx,PetscInt orientation,Pe
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) {
             if (j == 0) {
-              bcu_array[k][j][i][0] = 0.;
-              bcu_array[k][j][i][1] = -bcMag;
-              bcu_array[k][j][i][2] = 0.;
+              bcu_array[k][j][i][0] = -t * bc[0];
+              bcu_array[k][j][i][1] = -t * bc[1];
+              bcu_array[k][j][i][2] = -t * bc[2];
             }
             if (j == ny-1) {
-              bcu_array[k][j][i][0] = 0.;
-              bcu_array[k][j][i][1] = bcMag;
-              bcu_array[k][j][i][2] = 0.;
+              bcu_array[k][j][i][0] = t * bc[0];
+              bcu_array[k][j][i][1] = t * bc[1];
+              bcu_array[k][j][i][2] = t * bc[2];
             }
           }
         }
@@ -128,14 +128,14 @@ PetscErrorCode boundaryDisplacementInitialize(VFCtx *ctx,PetscInt orientation,Pe
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) {
             if (k == 0) {
-              bcu_array[k][j][i][0] = 0.;
-              bcu_array[k][j][i][1] = 0.;
-              bcu_array[k][j][i][2] = -bcMag;
+              bcu_array[k][j][i][0] = -t * bc[0];
+              bcu_array[k][j][i][1] = -t * bc[1];
+              bcu_array[k][j][i][2] = -t * bc[2];
             }
             if (k == nz-1) {
-              bcu_array[k][j][i][2] = 0.;
-              bcu_array[k][j][i][2] = 0.;
-              bcu_array[k][j][i][2] = bcMag;
+              bcu_array[k][j][i][2] = t * bc[0];
+              bcu_array[k][j][i][2] = t * bc[1];
+              bcu_array[k][j][i][2] = t * bc[2];
             }
           }
         }
@@ -161,12 +161,16 @@ int main(int argc,char **argv)
   PetscReal      errV;
   PetscInt       altminit;
   PetscInt       nCycle = 0;
-  
+  PetscReal      boundaryDisplacement[3] = {1,0,0};
+  PetscInt       nopt=3;
+  PetscBool      flg;  
+
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   
   PetscInt  orientation = 2;
-  ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetInt(NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetRealArray(NULL,"-bcu",boundaryDisplacement,&nopt,&flg);CHKERRQ(ierr);
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
   
@@ -189,7 +193,7 @@ int main(int argc,char **argv)
       ctx.timevalue = ctx.maxtimevalue;
     }
     ierr = PetscPrintf(PETSC_COMM_WORLD,"==== time step %i: t = %e\n",ctx.timestep,ctx.timevalue);CHKERRQ(ierr);
-    ierr = boundaryDisplacementInitialize(&ctx,orientation,ctx.timevalue,ctx.fields->BCU);
+    ierr = boundaryDisplacementInitialize(&ctx,orientation,ctx.timevalue,boundaryDisplacement,ctx.fields->BCU);
     ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
     
     altminit = 0;
@@ -203,6 +207,10 @@ int main(int argc,char **argv)
       ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
       ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"      Max. change on V: %e\n",errV);CHKERRQ(ierr);
+      
+      if (altminit%10 == 0) {
+        ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);
+      }
       altminit++;
     } while (errV >= ctx.altmintol && altminit <= ctx.altminmaxit);
     ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
