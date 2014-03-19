@@ -28,8 +28,6 @@
  
  ./test38 -n 201,2,201 -l 100,1,100 -m_inv 1 -E 17 -nu 0.2 -npc 2 -pc0_r 5.0 -pc0_center 45.,0.5,50 -epsilon 3.2 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 1.2 -pc1_r 5.0 -pc1_center 55.,0.5,50 -pc1_theta 0 -pc1_phi 90 -pc1_thickness 1.2 -nfw 2 -fracw0_coords 45,0.5,50 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2 -fracw1_coords 55,0.5,50 -fracw1_constraint Rate -fracw1_type injector -fracw1_Qw 5e-2 -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -Gc 5e-6
  
- ./test38 -n 201,2,201 -l 100,1,100 -m_inv 1 -E 17 -nu 0.2 -npc 2 -pc0_r 5.0 -pc0_center 70.,0.5,50 -epsilon 1.5 -pc0_theta 0 -pc0_phi 60  -atnum 2 -pc0_thickness 1.2 -pc1_r 5.0 -pc1_center 30.,0.5,50 -pc1_theta 0 -pc1_phi 120 -pc1_thickness 1.2 -nfw 1 -fracw0_coords 70,0.5,50 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -Gc 5e-6
- 
  */
 
 #include "petsc.h"
@@ -168,8 +166,6 @@ int main(int argc,char **argv)
 		}
 	}	
 
-  
-  
 //  Mechanical part
   /*      Mechanical model settings       */
 	for (i = 0; i < 6; i++) {
@@ -214,9 +210,6 @@ int main(int argc,char **argv)
   ctx.bcV[0].face[Z0] = ONE;
   ctx.bcV[0].face[Z1] = ONE;
   
-  
-  
-  
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
@@ -230,9 +223,6 @@ int main(int argc,char **argv)
   ctx.flowprop.alphabiot = 	ctx.matprop[0].beta = 0.75;									//biot's constant
   ctx.flowprop.K_dr = ctx.matprop[0].E/(3*(1-2*ctx.matprop[0].nu));   //For 3D
 
-  
-  
-  
   ctx.hasCrackPressure = PETSC_TRUE;
   ctx.FlowDisplCoupling = PETSC_TRUE;
   ctx.ResFlowMechCoupling = FIXEDSTRESS;
@@ -254,31 +244,7 @@ int main(int argc,char **argv)
   ierr = PetscPrintf(PETSC_COMM_WORLD," INITIALIZATION TO COMPUTE INITIAL PRESSURE TO CREATE FRACTURE WITH INITIAL VOLUME ......\n");CHKERRQ(ierr);
   p = 1e-6;
   ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
-  /*
-  do {
-    p_old = p;
-
-    ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-    ierr = VecScale(fields.U,1./p);CHKERRQ(ierr);
-    ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);
-    p = Q_inj*ctx.flowprop.timestepsize/ctx.CrackVolume;
-    ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
-      //			ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr); // VIrrev shouldn't be set while iterating V-P
-    ierr = VecScale(fields.U,p);CHKERRQ(ierr);
-    ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
-    ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
-    
-    ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
-    ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"    Max. change on V: %e\n",errV);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"    Max. change on p: %e\n", PetscAbs(p-p_old));CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"  Time step %i, alt min step %i with pressure = %g, timestepsize = %g, inj. vol = %g, crack vol. = %g\n",ctx.timestep,altminit, p,ctx.flowprop.timestepsize,Q_inj,ctx.CrackVolume);CHKERRQ(ierr);
-    altminit++;
-  } while (PetscAbs((p-p_old)/p) >= tolP);
-  */
-  
   ctx.timestep = 0;
-  
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
@@ -302,7 +268,7 @@ int main(int argc,char **argv)
     ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
     ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
     ierr = FieldsH5Write(&ctx,&fields);
-//    ctx.flowprop.timestepsize = (ctx.CrackVolume-crackvolume_o)/(Q_inj-ctx.LeakOffRate);
+    ctx.flowprop.timestepsize = (ctx.CrackVolume-crackvolume_o)/(Q_inj-ctx.LeakOffRate);
     errP  = 1e+10;
     errV  = 1e+10;
     while (errV >= tolV){
@@ -318,8 +284,8 @@ int main(int argc,char **argv)
       ierr = VF_StepU(&fields,&ctx);
       ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
       ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
-//      ierr = FieldsH5Write(&ctx,&fields);
-//      ctx.flowprop.timestepsize = (ctx.CrackVolume-crackvolume_o)/(Q_inj-ctx.LeakOffRate);
+      ierr = FieldsH5Write(&ctx,&fields);
+      ctx.flowprop.timestepsize = (ctx.CrackVolume-crackvolume_o)/(Q_inj-ctx.LeakOffRate);
       ierr = VecAXPY(Pold,-1.,fields.pressure);CHKERRQ(ierr);
       ierr = VecNorm(Pold,NORM_1,&errP);CHKERRQ(ierr);
       ierr = VecMax(fields.pressure,PETSC_NULL,&pmax);CHKERRQ(ierr);
@@ -330,7 +296,7 @@ int main(int argc,char **argv)
     }
       ctx.timestep++;
       ierr = VF_StepV(&fields,&ctx);
-//      ierr = FieldsH5Write(&ctx,&fields);
+      ierr = FieldsH5Write(&ctx,&fields);
       ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
       ierr = VecNorm(Vold,NORM_1,&errV);CHKERRQ(ierr);
       ierr = VecMax(fields.V,PETSC_NULL,&vmax);CHKERRQ(ierr);
@@ -338,8 +304,8 @@ int main(int argc,char **argv)
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n.........V STEP ERROR = %e\n\n", errV);CHKERRQ(ierr);
     }
     crackvolume_o = ctx.CrackVolume;
-    /*
     ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
+    
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," divergence_volume = %g\n",vol1);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," surface_flux_volume = %g\n",vol2);CHKERRQ(ierr);
@@ -349,7 +315,6 @@ int main(int argc,char **argv)
     ierr = PetscPrintf(PETSC_COMM_WORLD," Volume Balance: RHS = %g \t LHS = %g \n",vol+vol1,vol3+vol4+vol5+Q_inj);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," Reservoir Volume Balance: RHS = %g \t LHS = %g \n",vol+vol2,vol3+vol4+vol5+ctx.LeakOffRate);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," Fracture Volume Balance: RHS = %g \t LHS = %g \n",ctx.LeakOffRate*ctx.flowprop.timestepsize+ctx.CrackVolume,Q_inj*ctx.flowprop.timestepsize);CHKERRQ(ierr);
-    */
     /*This will have to be called "an update function"*/
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
