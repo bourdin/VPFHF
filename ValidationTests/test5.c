@@ -172,16 +172,7 @@ int main(int argc,char **argv)
   /*
     Save fields and write statistics about current run
   */
-  switch (ctx.fileformat) {
-  case FILEFORMAT_HDF5:
-    ierr = FieldsH5Write(&ctx,&fields);
-    ierr = FieldsH5Write(&ctx,&fields);
-    break;
-
-  case FILEFORMAT_BIN:
-    ierr = FieldsBinaryWrite(&ctx,&fields);
-    break;
-  }
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscFinalize();
   return(0);
