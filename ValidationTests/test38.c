@@ -12,6 +12,24 @@
  
  ./test38 -n 101,2,101 -l 50,1,50 -m_inv 20 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25.,0.5,25 -epsilon 2.0 -pc0_theta 0 -pc0_phi 90  -atnum 1 -pc0_thickness 1.6 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-4  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-14 -num 4 -timestepsize .5  -Gc 5e-3 -FlowstSnes_ksp_type gmres
  
+ 
+ 
+ 
+ 
+ ./test38 -n 201,2,201 -l 50,1,50 -m_inv 20 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25.,0.5,25 -epsilon 2.0 -pc0_theta 0 -pc0_phi 90  -atnum 1 -pc0_thickness 1.1 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize .1  -Gc 5e-3
+ 
+ 
+ 
+ ./test38 -n 200,2,201 -l 50,1,50 -m_inv 1 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25.,0.5,25 -epsilon 1.6 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 0.3 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -Gc 5e-3
+
+ scp cchukw1@head.schur.math.lsu.edu:/archive/cchukw1/new5/TEST.xmf TEST.xmf
+ 
+ scp cchukw1@stampede.tacc.utexas.edu:/home1/01968/cchukw1/vf-chevron/new/TEST.xmf TEST.xmf
+ 
+ ./test38 -n 201,2,201 -l 100,1,100 -m_inv 1 -E 17 -nu 0.2 -npc 2 -pc0_r 5.0 -pc0_center 45.,0.5,50 -epsilon 3.2 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 1.2 -pc1_r 5.0 -pc1_center 55.,0.5,50 -pc1_theta 0 -pc1_phi 90 -pc1_thickness 1.2 -nfw 2 -fracw0_coords 45,0.5,50 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2 -fracw1_coords 55,0.5,50 -fracw1_constraint Rate -fracw1_type injector -fracw1_Qw 5e-2 -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -Gc 5e-6
+ 
+ ./test38 -n 201,2,201 -l 100,1,100 -m_inv 1 -E 17 -nu 0.2 -npc 2 -pc0_r 5.0 -pc0_center 70.,0.5,50 -epsilon 1.5 -pc0_theta 0 -pc0_phi 60  -atnum 2 -pc0_thickness 1.2 -pc1_r 5.0 -pc1_center 30.,0.5,50 -pc1_theta 0 -pc1_phi 120 -pc1_thickness 1.2 -nfw 1 -fracw0_coords 70,0.5,50 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -Gc 5e-6
+ 
  */
 
 #include "petsc.h"
@@ -218,13 +236,6 @@ int main(int argc,char **argv)
   ctx.hasCrackPressure = PETSC_TRUE;
   ctx.FlowDisplCoupling = PETSC_TRUE;
   ctx.ResFlowMechCoupling = FIXEDSTRESS;
-  ctx.ResFlowMechCoupling = FIXEDSTRAIN;
-  
-  
-  ctx.FractureFlowCoupling = PETSC_FALSE;
-  ctx.hasFluidSources = PETSC_TRUE;
-	ctx.hasFlowWells = PETSC_FALSE;
-  
   
   ctx.FractureFlowCoupling = PETSC_TRUE;
   ctx.hasFluidSources = PETSC_FALSE;
@@ -301,7 +312,7 @@ int main(int argc,char **argv)
     while (errP >= tolP){
       ierr = VecCopy(fields.pressure,Pold);CHKERRQ(ierr);
       ite++;
-//      ctx.timestep++;
+      ctx.timestep++;
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\nTime step = %d .......Iteration step =  %i \t timevalue = %e \t timestepsize = %e \t errP = %e \t vtkfiletime = %i\n",i,ite, ctx.flowprop.timestepsize,ctx.flowprop.timestepsize, errP, ctx.timestep);CHKERRQ(ierr);
    		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
       ierr = VF_StepU(&fields,&ctx);
@@ -319,7 +330,7 @@ int main(int argc,char **argv)
     }
       ctx.timestep++;
       ierr = VF_StepV(&fields,&ctx);
-      ierr = FieldsH5Write(&ctx,&fields);
+//      ierr = FieldsH5Write(&ctx,&fields);
       ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
       ierr = VecNorm(Vold,NORM_1,&errV);CHKERRQ(ierr);
       ierr = VecMax(fields.V,PETSC_NULL,&vmax);CHKERRQ(ierr);
@@ -327,8 +338,8 @@ int main(int argc,char **argv)
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n.........V STEP ERROR = %e\n\n", errV);CHKERRQ(ierr);
     }
     crackvolume_o = ctx.CrackVolume;
+    /*
     ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
-    
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," divergence_volume = %g\n",vol1);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," surface_flux_volume = %g\n",vol2);CHKERRQ(ierr);
@@ -338,6 +349,7 @@ int main(int argc,char **argv)
     ierr = PetscPrintf(PETSC_COMM_WORLD," Volume Balance: RHS = %g \t LHS = %g \n",vol+vol1,vol3+vol4+vol5+Q_inj);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," Reservoir Volume Balance: RHS = %g \t LHS = %g \n",vol+vol2,vol3+vol4+vol5+ctx.LeakOffRate);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," Fracture Volume Balance: RHS = %g \t LHS = %g \n",ctx.LeakOffRate*ctx.flowprop.timestepsize+ctx.CrackVolume,Q_inj*ctx.flowprop.timestepsize);CHKERRQ(ierr);
+    */
     /*This will have to be called "an update function"*/
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
