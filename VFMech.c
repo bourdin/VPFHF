@@ -460,7 +460,7 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_loc
 /*
  VF_BilinearFormU3D_local
  
- (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2014 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VF_BilinearFormU3D_local(PetscReal *Mat_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
@@ -505,11 +505,13 @@ extern PetscErrorCode VF_BilinearFormU3D_local(PetscReal *Mat_local,PetscReal **
                   for (g = 0; g < e->ng; g++){
                     mat_gauss += matprop->lambda * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
                     mat_gauss += matprop->mu * s_elem[g] * e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g];
+                    /* 8 flops */
                     if (c1 == c2) {
                       mat_gauss += matprop->mu * s_elem[g] * 
                                     (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g] + 
                                      e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g] + 
                                      e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]);
+                      /* 8 flops */
                     }
                   }
                   Mat_local[l] = e->weight[g] * mat_gauss;
@@ -521,7 +523,7 @@ extern PetscErrorCode VF_BilinearFormU3D_local(PetscReal *Mat_local,PetscReal **
       }
     }
   }
-  ierr = PetscLogFlops(e->nphix * e->nphiy * e->nphiz * e->nphix * e->nphiy * e->nphiz * (9 + e->ng * 84));CHKERRQ(ierr);  
+  ierr = PetscLogFlops(e->nphix * e->nphiy * e->nphiz * e->nphix * e->nphiy * e->nphiz * (9 + e->ng * (9*8+3*8)));CHKERRQ(ierr);  
   ierr = PetscFree(s_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -537,57 +539,60 @@ extern PetscErrorCode VF_BilinearFormU3D_local(PetscReal *Mat_local,PetscReal **
 extern PetscErrorCode VF_BilinearFormUShearOnly3D_local(PetscReal *Mat_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,c1,c2,l;
-  PetscReal      lambda,mu,kappa;
-  PetscReal      *v_elem;
+  PetscReal      *s_elem;
+  PetscReal       mat_gauss,kappa;
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
-  ierr   = PetscMalloc(e->ng * sizeof(PetscReal),&v_elem);CHKERRQ(ierr);
-  lambda = matprop->lambda;
-  mu     = matprop->mu;
-  kappa  = lambda + 2. * mu / 3.;
-  
-  for (g = 0; g < e->ng; g++) v_elem[g] = 0.;
+  kappa = matprop->lambda + 2. * matprop->mu / 3.;
+  ierr   = PetscMalloc(e->ng * sizeof(PetscReal),&s_elem);CHKERRQ(ierr);
+
+  /*
+    s_elem is the material's compliance multiplicator (s(v) = v^2+\eta)
+  */
+  for (g = 0; g < e->ng; g++) s_elem[g] = 0.;
   for (k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {
       for (i1 = 0; i1 < e->nphix; i1++) {
         for (g = 0; g < e->ng; g++) {
-          v_elem[g] += v_array[ek+k1][ej+j1][ei+i1] * e->phi[k1][j1][i1][g];
+          s_elem[g] += v_array[ek+k1][ej+j1][ei+i1] * e->phi[k1][j1][i1][g];
         }
       }
     }
   }
-  ierr = PetscLogFlops(2 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  for (g = 0; g < e->ng; g++) {
+    s_elem[g] = s_elem[g] * s_elem[g] + vfprop->eta;
+  }
+  ierr = PetscLogFlops(2 * e->ng * (1. + e->nphix * e->nphiy * e->nphiz));CHKERRQ(ierr);
   
   for (l = 0; l < 9 * e->nphix * e->nphiy * e->nphiz * e->nphix * e->nphiy * e->nphiz; l++) {
   Mat_local[l] = 0;
   }
-  for (g = 0; g < e->ng; g++) {
-    for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
-      for (j1 = 0; j1 < e->nphiy; j1++) {
-        for (i1 = 0; i1 < e->nphix; i1++) {
-          for (c1 = 0; c1 < e->dim; c1++) {
-            for (k2 = 0; k2 < e->nphiz; k2++) {
-              for (j2 = 0; j2 < e->nphiy; j2++) {
-                for (i2 = 0; i2 < e->nphix; i2++) {
-                  for (c2 = 0; c2 < e->dim; c2++,l++) {
+  for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
+    for (j1 = 0; j1 < e->nphiy; j1++) {
+      for (i1 = 0; i1 < e->nphix; i1++) {
+        for (c1 = 0; c1 < e->dim; c1++) {
+          for (k2 = 0; k2 < e->nphiz; k2++) {
+            for (j2 = 0; j2 < e->nphiy; j2++) {
+              for (i2 = 0; i2 < e->nphix; i2++) {
+                for (c2 = 0; c2 < e->dim; c2++,l++) {
+                  mat_gauss = 0.;
+                  for (g = 0; g < e->ng; g++){
+                    /* spherical part */
+                    mat_gauss += kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
+                    /* deviatoric part */
+                    mat_gauss -= 2. * matprop->mu * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.;
+                    mat_gauss += matprop->mu * s_elem[g] * e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g];
+                    /* 13 flops */
                     if (c1 == c2) {
-                      Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
-                                                            + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
-                                                            + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]
-                                                            + e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.)
-                                                      * (v_elem[g] * v_elem[g] + vfprop->eta)
-                                                      + kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g]);
-                      
-                      ierr = PetscLogFlops(17);CHKERRQ(ierr);
-                    } else {
-                      Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g]
-                                                            - 2. * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.)
-                                                      * (v_elem[g] * v_elem[g] + vfprop->eta)
-                                                      + kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g]);
-                      ierr = PetscLogFlops(14);CHKERRQ(ierr);
+                      mat_gauss += matprop->mu * s_elem[g] * 
+                                    (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g] + 
+                                     e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g] + 
+                                     e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]);
+                      /* 8 flops */
                     }
                   }
+                  Mat_local[l] = e->weight[g] * mat_gauss;
                 }
               }
             }
@@ -596,10 +601,10 @@ extern PetscErrorCode VF_BilinearFormUShearOnly3D_local(PetscReal *Mat_local,Pet
       }
     }
   }
-  ierr = PetscFree(v_elem);CHKERRQ(ierr);
+  ierr = PetscLogFlops(e->nphix * e->nphiy * e->nphiz * e->nphix * e->nphiy * e->nphiz * (9 + e->ng * (13*9+8*3)));CHKERRQ(ierr);  
+  ierr = PetscFree(s_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_BilinearFormUNoCompression3D_local"
@@ -611,26 +616,25 @@ extern PetscErrorCode VF_BilinearFormUShearOnly3D_local(PetscReal *Mat_local,Pet
 extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local,PetscReal ****u_array,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,c1,c2,l;
-  PetscReal      lambda,mu,kappa;
-  PetscReal      *v_elem,*tr_epsilon;
+  PetscReal      kappa;
+  PetscReal      *s_elem,*tr_epsilon;
+  PetscReal      mat_gauss;
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
-  ierr   = PetscMalloc2(e->ng,PetscReal,&v_elem,
+  ierr   = PetscMalloc2(e->ng,PetscReal,&s_elem,
                         e->ng,PetscReal,&tr_epsilon);CHKERRQ(ierr);
-  lambda = matprop->lambda;
-  mu     = matprop->mu;
-  kappa  = lambda + 2. * mu / 3.;
+  kappa  = matprop->lambda + 2. * matprop->mu / 3.;
   
   for (g = 0; g < e->ng; g++) {
-    v_elem[g] = 0.;
+    s_elem[g] = 0.;
     tr_epsilon[g] = 0;
   }
   for (k1 = 0; k1 < e->nphiz; k1++) {
     for (j1 = 0; j1 < e->nphiy; j1++) {
       for (i1 = 0; i1 < e->nphix; i1++) {
         for (g = 0; g < e->ng; g++) {
-          v_elem[g]     += v_array[ek+k1][ej+j1][ei+i1] * e->phi[k1][j1][i1][g];
+          s_elem[g]     += v_array[ek+k1][ej+j1][ei+i1] * e->phi[k1][j1][i1][g];
           tr_epsilon[g] += e->dphi[k1][j1][i1][0][g] * u_array[ek+k1][ej+j1][ei+i1][0] +
                            e->dphi[k1][j1][i1][1][g] * u_array[ek+k1][ej+j1][ei+i1][1] +
                            e->dphi[k1][j1][i1][2][g] * u_array[ek+k1][ej+j1][ei+i1][2];         
@@ -638,72 +642,43 @@ extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local
       }
     }
   }
-  ierr = PetscLogFlops(8 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
-  
-  for (k1 = 0; k1 < e->nphiz; k1++) {
-    for (j1 = 0; j1 < e->nphiy; j1++) {
-      for (i1 = 0; i1 < e->nphix; i1++) {
-        for (g = 0; g < e->ng; g++) {
-          v_elem[g] += v_array[ek+k1][ej+j1][ei+i1] * e->phi[k1][j1][i1][g];
-        }
-      }
-    }
+  for (g = 0; g < e->ng; g++) {
+    s_elem[g] = s_elem[g] * s_elem[g] + vfprop->eta;
   }
-  ierr = PetscLogFlops(2 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
-  
+  ierr = PetscLogFlops(e->ng * (2 + 8 * e->nphix * e->nphiy * e->nphiz));CHKERRQ(ierr);
+    
   for (l = 0; l < 9 * e->nphix * e->nphiy * e->nphiz * e->nphix * e->nphiy * e->nphiz; l++) {
   Mat_local[l] = 0;
   }
-  for (g = 0; g < e->ng; g++) {
-    for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
-      for (j1 = 0; j1 < e->nphiy; j1++) {
-        for (i1 = 0; i1 < e->nphix; i1++) {
-          for (c1 = 0; c1 < e->dim; c1++) {
-            for (k2 = 0; k2 < e->nphiz; k2++) {
-              for (j2 = 0; j2 < e->nphiy; j2++) {
-                for (i2 = 0; i2 < e->nphix; i2++) {
-                  for (c2 = 0; c2 < e->dim; c2++,l++) {
-                    if (tr_epsilon[g] >= 0) {
-                      /*
-                        Opening crack
-                      */
-                      if (c1 == c2) {
-                        Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
-                                                              + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
-                                                              + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g])
-                                                        + (lambda + mu) * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g])
-                        * (v_elem[g] * v_elem[g] + vfprop->eta);
-                      
-                        ierr = PetscLogFlops(15);CHKERRQ(ierr);
-                      } else {
-                        Mat_local[l] += e->weight[g] * (lambda * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g]
-                                                        + mu * e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g])
-                                                     * (v_elem[g] * v_elem[g] + vfprop->eta);
-                        ierr = PetscLogFlops(10);CHKERRQ(ierr);
-                      }
+  for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
+    for (j1 = 0; j1 < e->nphiy; j1++) {
+      for (i1 = 0; i1 < e->nphix; i1++) {
+        for (c1 = 0; c1 < e->dim; c1++) {
+          for (k2 = 0; k2 < e->nphiz; k2++) {
+            for (j2 = 0; j2 < e->nphiy; j2++) {
+              for (i2 = 0; i2 < e->nphix; i2++) {
+                for (c2 = 0; c2 < e->dim; c2++,l++) {
+                  mat_gauss = 0.;
+                  for (g = 0; g < e->ng; g++){
+                    /* spherical part */
+                    if (tr_epsilon[g] > 0.) {
+                      mat_gauss += kappa * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
                     } else {
-//printf("%s Compressive stress: %i %i %i %i\n",__FUNCT__,ei,ej,ek,g);
-                      /* 
-                        Compressive crack
-                      */
-                      if (c1 == c2) {
-                        Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
-                                                              + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
-                                                              + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]
-                                                              + e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.)
-                                                        * (v_elem[g] * v_elem[g] + vfprop->eta)
-                                                        + kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g]);
-                      
-                        ierr = PetscLogFlops(17);CHKERRQ(ierr);
-                      } else {
-                        Mat_local[l] += e->weight[g] * (mu * (e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g]
-                                                              - 2. * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.)
-                                                        * (v_elem[g] * v_elem[g] + vfprop->eta)
-                                                        + kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g]);
-                        ierr = PetscLogFlops(14);CHKERRQ(ierr);
-                      }
+                      mat_gauss += kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
+                    }
+                    /* deviatoric part */
+                    mat_gauss -= 2. * matprop->mu * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.;
+                    mat_gauss += matprop->mu * s_elem[g] * e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g];
+                    /* 13 flops */
+                    if (c1 == c2) {
+                      mat_gauss += matprop->mu * s_elem[g] * 
+                                    (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g] + 
+                                     e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g] + 
+                                     e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]);
+                      /* 8 flops */
                     }
                   }
+                  Mat_local[l] = e->weight[g] * mat_gauss;
                 }
               }
             }
@@ -712,7 +687,9 @@ extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local
       }
     }
   }
-  ierr = PetscFree2(v_elem,tr_epsilon);CHKERRQ(ierr);
+  ierr = PetscLogFlops(e->nphix * e->nphiy * e->nphiz * e->nphix * e->nphiy * e->nphiz * (9 + e->ng * (13*9+8*3)));CHKERRQ(ierr);  
+
+  ierr = PetscFree2(s_elem,tr_epsilon);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -2385,10 +2362,12 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                             ek,ej,ei,&ctx->e3D);
-            ctx->vfprop.eta = etaPC;
-            ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-                                            ek,ej,ei,&ctx->e3D);
-            ctx->vfprop.eta = eta;
+            ierr = VF_BilinearFormU3D_local(bilinearFormPC_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
+                                   ek,ej,ei,&ctx->e3D);                                   
+            //ctx->vfprop.eta = etaPC;
+            //ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
+            //                                ek,ej,ei,&ctx->e3D);
+            //ctx->vfprop.eta = eta;
             break;
         }
         
