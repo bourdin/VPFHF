@@ -10,6 +10,8 @@
 #include "VFCommon.h"
 #include "VFMech.h"
 #include "VFFlow.h"
+#include "VFCracks.h"
+#include "VFPermfield.h"
 
 #undef __FUNCT__
 #define __FUNCT__ "boundaryConditionsInitialize"
@@ -79,8 +81,8 @@ PetscErrorCode boundaryDisplacementInitialize(VFCtx *ctx,PetscInt orientation,Pe
   PetscInt       i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
 
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daVect,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx->daVect,BCU,&bcu_array);CHKERRQ(ierr);
   switch (orientation) {
@@ -164,12 +166,17 @@ int main(int argc,char **argv)
   PetscReal      boundaryDisplacement[3] = {1,0,0};
   PetscInt       nopt=3;
   PetscBool      flg;  
+  PetscReal      p = 0.,crackVolume=0;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   
   PetscInt  orientation = 2;
-  ierr = PetscOptionsGetInt(NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetInt(NULL,"-orientation",&orientation,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,"-pressure",&p,NULL);CHKERRQ(ierr);
+  if (p > 0) {
+    ctx.hasCrackPressure = PETSC_TRUE;
+  }
   ierr = PetscOptionsGetRealArray(NULL,"-bcu",boundaryDisplacement,&nopt,&flg);CHKERRQ(ierr);
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
@@ -180,7 +187,7 @@ int main(int argc,char **argv)
   ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressure,0.0);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
   ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
 
@@ -213,6 +220,9 @@ int main(int argc,char **argv)
       }
       altminit++;
     } while (errV >= ctx.altmintol && altminit <= ctx.altminmaxit);
+    
+    ierr = VolumetricCrackOpening(&crackVolume,&ctx,&fields);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Total crack opening: %f\n",crackVolume);CHKERRQ(ierr);
     ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
     
     ctx.SurfaceEnergy = 0.;
