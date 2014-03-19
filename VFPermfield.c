@@ -1987,3 +1987,230 @@ extern PetscErrorCode VolumetricFractureWellRate_local(PetscReal *InjVolume_loca
 	ierr = PetscFree4(dv_elem[0],dv_elem[1],dv_elem[2],regrate_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_IntegrateOnBoundary"
+extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FACE face, VFCtx *ctx)
+{
+  PetscErrorCode  ierr;
+	PetscInt		    ek, ej, ei;
+	PetscInt		    xs,xm,nx;
+	PetscInt		    ys,ym,ny;
+	PetscInt		    zs,zm,nz;
+	PetscReal		    hx,hy,hz;
+	PetscReal       ****coords_array;
+  Vec             node_local;
+  PetscReal       ***node_array;
+  PetscInt        dof;
+	DM              dm;
+  PetscReal       SumnIntegralLocal = 0.,mySumnIntegral = 0.;
+
+  PetscFunctionBegin;
+  ierr = PetscObjectQuery((PetscObject)vec,"DM",(PetscObject*)&dm);CHKERRQ(ierr);
+	if (!dm) SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
+  ierr = DMDAGetInfo(dm,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);  
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  ierr = DMGetLocalVector(dm,&node_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(dm,vec,INSERT_VALUES,node_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(dm,vec,INSERT_VALUES,node_local);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(dm,node_local,&node_array);CHKERRQ(ierr);
+  
+
+	*SumnIntegral = 0.;
+  switch (face) {
+    case X0:
+      ei = 0;
+      for (ek = zs; ek < zs+zm; ek++) {
+        for (ej = ys; ej < ys+ym; ej++) {
+          hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+          hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+          ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+          ierr = VF_IntegrateOnBoundary_local(&SumnIntegralLocal,node_array,ek,ej,ei,face,&ctx->e2D);CHKERRQ(ierr);
+          mySumnIntegral += SumnIntegralLocal;
+        }
+      }
+      break;
+    case X1:
+      ei = nx-1;
+      for (ek = zs; ek < zs+zm; ek++) {
+        for (ej = ys; ej < ys+ym; ej++) {
+          hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+          hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+          ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+          ierr = VF_IntegrateOnBoundary_local(&SumnIntegralLocal,node_array,ek,ej,ei,face,&ctx->e2D);CHKERRQ(ierr);
+          mySumnIntegral += SumnIntegralLocal;
+        }
+      }
+      break;
+    case Y0:
+      ej = 0;
+      for (ek = zs; ek < zs+zm; ek++) {
+        for (ei = xs; ei < xs+xm; ei++) {
+          hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+          hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+          ierr = VF_IntegrateOnBoundary_local(&SumnIntegralLocal,node_array,ek,ej,ei,face,&ctx->e2D);CHKERRQ(ierr);
+          mySumnIntegral += SumnIntegralLocal;
+        }
+      }
+      break;
+    case Y1:
+      ej = ny-1;
+      for (ek = zs; ek < zs+zm; ek++) {
+        for (ei = xs; ei < xs+xm; ei++) {
+          hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+          hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+          ierr = VF_IntegrateOnBoundary_local(&SumnIntegralLocal,node_array,ek,ej,ei,face,&ctx->e2D);CHKERRQ(ierr);
+          mySumnIntegral += SumnIntegralLocal;
+        }
+      }
+      break;
+    case Z0:
+      ek = 0;
+      for (ej = ys; ej < ys+ym; ej++) {
+        for (ei = xs; ei < xs+xm; ei++) {
+          hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+          hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+          ierr = VF_IntegrateOnBoundary_local(&SumnIntegralLocal,node_array,ek,ej,ei,face,&ctx->e2D);CHKERRQ(ierr);
+          mySumnIntegral += SumnIntegralLocal;
+        }
+      }
+      break;
+    case Z1:
+      ek = nz-1;
+      for (ej = ys; ej < ys+ym; ej++) {
+        for (ei = xs; ei < xs+xm; ei++) {
+          hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+          hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+          ierr = VF_IntegrateOnBoundary_local(&SumnIntegralLocal,node_array,ek,ej,ei,face,&ctx->e2D);CHKERRQ(ierr);
+          mySumnIntegral += SumnIntegralLocal;
+        }
+      }
+      break;
+  }
+  ierr = MPI_Allreduce(&mySumnIntegral,SumnIntegral,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(dm, node_local,&node_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(dm,&node_local);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_IntegrateOnBoundary_local"
+extern PetscErrorCode VF_IntegrateOnBoundary_local(PetscReal *SumnIntegral_local,PetscReal ***node_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element2D *e)
+{
+  PetscErrorCode ierr;
+	PetscInt		i, j, k, g;
+  PetscReal		*node_elem;
+
+  PetscFunctionBegin;
+	ierr = PetscMalloc(e->ng*sizeof(PetscReal),&node_elem);CHKERRQ(ierr);
+  for (g = 0; g < e->ng; g++){
+		node_elem[g] = 0.;
+	}
+  *SumnIntegral_local = 0.;
+  switch (face) {
+		case X0:
+			for (k = 0; k < e->nphix; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphiz; i++) {
+						for (g = 0; g < e->ng; g++) {
+							node_elem[g] += e->phi[i][j][k][g]*node_array[ek+k][ej+j][ei+i];
+						}
+					}
+				}
+			}
+			break;
+    case X1:
+			for (k = 0; k < e->nphix; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphiz; i++) {
+						for (g = 0; g < e->ng; g++) {
+							node_elem[g] += e->phi[i][j][k][g]*node_array[ek+k][ej+j][ei+1];
+						}
+					}
+				}
+			}
+      break;
+    case Y0:
+			for (k = 0; k < e->nphiy; k++) {
+				for (j = 0; j < e->nphiz; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+              node_elem[g] += e->phi[j][k][i][g]*node_array[ek+k][ej+j][ei+i];
+						}
+					}
+				}
+			}
+			break;
+    case Y1:
+			for (k = 0; k < e->nphiy; k++) {
+				for (j = 0; j < e->nphiz; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+              node_elem[g] += e->phi[j][k][i][g]*node_array[ek+k][ej+1][ei+i];
+						}
+					}
+				}
+			}
+      break;
+    case Z0:
+			for (k = 0; k < e->nphiz; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+              node_elem[g] += e->phi[k][j][i][g]*node_array[ek+k][ej+i][ei+i];
+						}
+					}
+				}
+			}
+      break;
+    case Z1:
+			for (k = 0; k < e->nphiz; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+              node_elem[g] += e->phi[k][j][i][g]*node_array[ek+1][ej+i][ei+i];
+						}
+					}
+				}
+			}
+    }
+  for(g = 0; g < e->ng; g++){
+    *SumnIntegral_local += node_elem[g]*e->weight[g];
+  }
+  ierr = PetscFree(node_elem);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
