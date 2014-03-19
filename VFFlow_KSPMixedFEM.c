@@ -704,7 +704,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
         ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         /*This computes the local contribution of the global A matrix*/
-        ierr = VF_MatA_local(KS_local,&ctx->e3D,ek,ej,ei,v_array);CHKERRQ(ierr);
+        ierr = VF_MatA_local(KS_local,&ctx->e3D,ek,ej,ei,one_array);CHKERRQ(ierr);
         for (l = 0; l < nrow*nrow; l++) {
           if(ctx->FlowDisplCoupling && ctx->ResFlowMechCoupling == FIXEDSTRESS){
             KS_local[l] = -1.*(M_inv+alphabiot*alphabiot/K_dr)*KS_local[l]/alpha_c;
@@ -819,7 +819,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
           for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
             for (j = 0; j < ctx->e3D.nphiy; j++) {
               for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-/*                RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l]; */
+                RHS_array[ek+k][ej+j][ei+i][3] += RHS_local[l];
               }
             }
           }
