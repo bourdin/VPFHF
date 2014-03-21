@@ -174,9 +174,7 @@ int main(int argc,char **argv)
   PetscInt  orientation = 2;
   ierr = PetscOptionsGetInt(NULL,"-orientation",&orientation,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(NULL,"-pressure",&p,NULL);CHKERRQ(ierr);
-  if (p > 0) {
-    ctx.hasCrackPressure = PETSC_TRUE;
-  }
+  ctx.hasCrackPressure = PETSC_TRUE;
   ierr = PetscOptionsGetRealArray(NULL,"-bcu",boundaryDisplacement,&nopt,&flg);CHKERRQ(ierr);
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
