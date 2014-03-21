@@ -140,8 +140,8 @@ int main(int argc,char **argv)
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
+  ierr = VF_StepU(&fields,&ctx);
 
-  ierr              = VF_StepU(&fields,&ctx);
   ctx.ElasticEnergy = 0;
   ctx.InsituWork    = 0;
   ctx.PressureWork  = 0.;

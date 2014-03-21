@@ -28,7 +28,7 @@ int main(int argc,char **argv)
   PetscReal ***v_array;
   PetscReal BBmin[3],BBmax[3];
   PetscReal InsituWork    = 0;
-  PetscReal p = 1.e-3;
+  PetscReal p = 1.;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -147,18 +147,20 @@ int main(int argc,char **argv)
 
   ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
 
-  ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-  ierr = VF_StepV(&fields,&ctx);
-
   ctx.hasCrackPressure = PETSC_TRUE;
-  ierr                 = VF_StepU(&fields,&ctx);
   ctx.ElasticEnergy    = 0;
   ctx.InsituWork       = 0;
   ctx.PressureWork     = 0.;
-  ierr                 = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
-  ierr                 = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
-  ctx.TotalEnergy      = ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork;
 
+  ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
+  ierr = VF_StepV(&fields,&ctx);
+  ierr = VF_StepU(&fields,&ctx);
+
+  ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
+  ierr = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
+
+  ctx.TotalEnergy = ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork;
+  
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
   if (ctx.hasCrackPressure) {
