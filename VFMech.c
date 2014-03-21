@@ -2365,12 +2365,12 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                             ek,ej,ei,&ctx->e3D);
-            ierr = VF_BilinearFormU3D_local(bilinearFormPC_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-                                   ek,ej,ei,&ctx->e3D);                                   
-            //ctx->vfprop.eta = etaPC;
-            //ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-            //                                ek,ej,ei,&ctx->e3D);
-            //ctx->vfprop.eta = eta;
+            //ierr = VF_BilinearFormU3D_local(bilinearFormPC_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
+            //                       ek,ej,ei,&ctx->e3D);                                   
+            ctx->vfprop.eta = etaPC;
+            ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
+                                            ek,ej,ei,&ctx->e3D);
+            ctx->vfprop.eta = eta;
             break;
         }
         
