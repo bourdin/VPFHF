@@ -501,11 +501,10 @@ extern PetscErrorCode VF_BilinearFormU3D_local(PetscReal *Mat_local,PetscReal **
             for (j2 = 0; j2 < e->nphiy; j2++) {
               for (i2 = 0; i2 < e->nphix; i2++) {
                 for (c2 = 0; c2 < e->dim; c2++,l++) {
-                  mat_gauss = 0.;
                   for (g = 0; g < e->ng; g++){
-                    mat_gauss += matprop->lambda * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
+                    mat_gauss = matprop->lambda * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
                     mat_gauss += matprop->mu * s_elem[g] * e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g];
-                    /* 8 flops */
+                    /* 7 flops */
                     if (c1 == c2) {
                       mat_gauss += matprop->mu * s_elem[g] * 
                                     (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g] + 
@@ -513,8 +512,8 @@ extern PetscErrorCode VF_BilinearFormU3D_local(PetscReal *Mat_local,PetscReal **
                                      e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]);
                       /* 8 flops */
                     }
+                  Mat_local[l] += e->weight[g] * mat_gauss;
                   }
-                  Mat_local[l] = e->weight[g] * mat_gauss;
                 }
               }
             }
@@ -523,11 +522,10 @@ extern PetscErrorCode VF_BilinearFormU3D_local(PetscReal *Mat_local,PetscReal **
       }
     }
   }
-  ierr = PetscLogFlops(e->nphix * e->nphiy * e->nphiz * e->nphix * e->nphiy * e->nphiz * (9 + e->ng * (9*8+3*8)));CHKERRQ(ierr);  
+  ierr = PetscLogFlops(e->nphix * e->nphiy * e->nphiz * e->nphix * e->nphiy * e->nphiz * (9 + e->ng * (9*7+3*8)));CHKERRQ(ierr);  
   ierr = PetscFree(s_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_BilinearFormUShearOnly3D_local"
@@ -995,10 +993,13 @@ extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_loc
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,l,c,g;
-  PetscReal      *f_elem[3];
-  
+  //PetscReal      *f_elem[3];
+  PetscReal *mem = malloc(3*e->ng*sizeof(PetscReal));
+  PetscReal (*f_elem)[e->ng] = (PetscReal (*)[e->ng])mem;
   PetscFunctionBegin;
-  ierr = PetscMalloc3(e->ng,PetscReal,&f_elem[0],e->ng,PetscReal,&f_elem[1],e->ng,PetscReal,&f_elem[2]);CHKERRQ(ierr);
+  //ierr = PetscMalloc3(e->ng,PetscReal,&f_elem[0],
+  //                    e->ng,PetscReal,&f_elem[1],
+  //                    e->ng,PetscReal,&f_elem[2]);CHKERRQ(ierr);
   /*
    Initialize f_Elem
    */
@@ -1107,7 +1108,8 @@ extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_loc
   /*
    Clean up
    */
-  ierr = PetscFree3(f_elem[0],f_elem[1],f_elem[2]);CHKERRQ(ierr);
+  //ierr = PetscFree3(f_elem[0],f_elem[1],f_elem[2]);CHKERRQ(ierr);
+  free(mem);  
   PetscFunctionReturn(0);
 }
 
@@ -1499,6 +1501,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
    */
   if (ctx->hasInsitu) {
     ierr = DMGetLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
+    ierr = VecSet(f_localVec,0.);
     ierr = DMDAVecGetArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr);
   }
   
@@ -1596,7 +1599,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   z = coords_array[ek+k][ej+j][ei+i][2];
                   for (c = 0; c < 3; c++) {
-                    if (ctx->bcU[0].face[face] == NONE) {
+                    if (ctx->bcU[c].face[face] == NONE) {
                       f_array[ek+k][ej+j][ei+i][c] = stressdir[c] *
                       (ctx->insitumin[stresscomp[c]] +
                        (z - BBmin[2]) / (BBmax[2] - BBmin[2])
@@ -1623,7 +1626,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   z = coords_array[ek+k][ej+j][ei+i][2];
                   for (c = 0; c < 3; c++) {
-                    if (ctx->bcU[0].face[face] == NONE) {
+                    if (ctx->bcU[c].face[face] == NONE) {
                       f_array[ek+k][ej+j][ei+i][c] = stressdir[c] *
                       (ctx->insitumin[stresscomp[c]] +
                        (z - BBmin[2]) / (BBmax[2] - BBmin[2])
@@ -1650,7 +1653,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   z = coords_array[ek+k][ej+j][ei+i][2];
                   for (c = 0; c < 3; c++) {
-                    if (ctx->bcU[0].face[face] == NONE) {
+                    if (ctx->bcU[c].face[face] == NONE) {
                       f_array[ek+k][ej+j][ei+i][c] = stressdir[c] *
                       (ctx->insitumin[stresscomp[c]] +
                        (z - BBmin[2]) / (BBmax[2] - BBmin[2])
@@ -1677,7 +1680,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   z = coords_array[ek+k][ej+j][ei+i][2];
                   for (c = 0; c < 3; c++) {
-                    if (ctx->bcU[0].face[face] != FIXED) {
+                    if (ctx->bcU[c].face[face] == NONE) {
                       f_array[ek+k][ej+j][ei+i][c] = stressdir[c] *
                       (ctx->insitumin[stresscomp[c]] +
                        (z - BBmin[2]) / (BBmax[2] - BBmin[2])
@@ -1735,7 +1738,7 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   
   PetscFunctionBegin;
   if (ctx->verbose > 1) {
-    ierr = SNESMonitorSet(ctx->snesVelP,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+    ierr = SNESMonitorSet(ctx->snesU,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   }
   ierr = SNESSolve(ctx->snesU,PETSC_NULL,fields->U);CHKERRQ(ierr);
   if (ctx->verbose > 1) {
@@ -2030,7 +2033,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
             for (c = 0; c < 3; c++) {
               if (ctx->bcU[c].face[face] == NONE) {
                 for (k = 0; k < ctx->e3D.nphiz; k++) {
-                  z         = coords_array[ek+k][ej][ei][2];
+                  z = coords_array[ek+k][ej][ei][2];
                   stressmag = stressdir[c] *
                   (ctx->insitumin[stresscomp[c]] + (z - BBmin[2]) / (BBmax[2] - BBmin[2])
                    * (ctx->insitumax[stresscomp[c]] - ctx->insitumin[stresscomp[c]]));
