@@ -1,8 +1,23 @@
 /*
   test6.c:
-  Validate elasticity solver by applying pure tension boundary condition
+  Validate elasticity solver 
 
-  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2014 Blaise Bourdin bourdin@lsu.edu
+  
+  Try: 
+mpiexec -n 4 ./test6 -n 101,2,101 -l 1,.1,1 -E 1 -nu 0 -U_snes_monitor -orientation 2 \
+             -insitumin -1e5,0,0,0,0,0  -insitumax -1e5,0,0,0,0,0 -npc 1              \
+             -pc0_r .4 -pc0_thickness .02 -pc0_center 0.5,0.01,0.5 -pc0_phi 90        \
+             -epsilon .03 -verbose 0 -eta 0 -bcu 0,0,0  -eta .001 -atnum 1            \
+             -unilateral nocompression -pressure 5e5
+
+mpiexec -n 4 ./test6 -n 101,2,101 -l 1,.1,1 -E 1 -nu 0 -U_snes_monitor -orientation 2 \
+             -insitumin -1e5,0,0,0,0,0  -insitumax -1e5,0,0,0,0,0 -npc 3              \
+             -pc0_r .4 -pc0_thickness .02 -pc0_center 0.5,0.01,0.5 -pc0_phi 45        \
+             -pc1_r .4 -pc1_thickness .02 -pc1_center 0.4,0.01,0.5 -pc1_phi 90        \
+             -pc2_r .4 -pc2_thickness .02 -pc2_center 0.6,0.01,0.5 -pc2_phi 90        \
+             -epsilon .03 -verbose 0 -eta 0 -bcu 0,0,-.2  -eta .001 -atnum 1          \
+             -unilateral nocompression
 */
 
 #include "petsc.h"
@@ -10,6 +25,7 @@
 #include "VFCommon.h"
 #include "VFMech.h"
 #include "VFFlow.h"
+#include "VFPermField.h"
 
 VFCtx    ctx;
 VFFields fields;
@@ -28,11 +44,11 @@ int main(int argc,char **argv)
   PetscReal ****bcu_array;
   PetscReal BBmin[3],BBmax[3];
   PetscReal InsituWork    = 0;
-  PetscReal bc = .5;
   PetscReal boundaryDisplacement[3] = {0.,0.,0.};
   PetscReal p = 0.;
   PetscBool flg;
   PetscInt  nopt=3;
+  PetscReal crackVolume;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -140,6 +156,7 @@ int main(int argc,char **argv)
   case 2:
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Z0 Z1\n");CHKERRQ(ierr);
     ctx.bcU[2].face[Z0] = FIXED;ctx.bcU[2].face[Z1] = FIXED;
+    ctx.bcU[1].face[Y0] = FIXED;ctx.bcU[1].face[Y1] = FIXED;
     for (k = zs; k < zs+zm; k++) {
       for (j = ys; j < ys+ym; j++) {
         for (i = xs; i < xs+xm; i++) {
@@ -183,6 +200,12 @@ int main(int argc,char **argv)
   }
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Total Mechanical energy:  %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 
+  /*
+    Compute and display total crack opening
+  */
+  ierr = VolumetricCrackOpening(&crackVolume,&ctx,&fields);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Total crack opening: %f\n",crackVolume);CHKERRQ(ierr);
+  
   /*
     Save fields and write statistics about current run
   */
