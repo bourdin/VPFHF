@@ -991,15 +991,10 @@ extern PetscErrorCode VF_ResidualUCrackPressure3D_local(PetscReal *residual_loca
  */
 extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_local,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element3D *e)
 {
-  PetscErrorCode ierr;
   PetscInt       i,j,k,l,c,g;
-  //PetscReal      *f_elem[3];
   PetscReal *mem = malloc(3*e->ng*sizeof(PetscReal));
   PetscReal (*f_elem)[e->ng] = (PetscReal (*)[e->ng])mem;
   PetscFunctionBegin;
-  //ierr = PetscMalloc3(e->ng,PetscReal,&f_elem[0],
-  //                    e->ng,PetscReal,&f_elem[1],
-  //                    e->ng,PetscReal,&f_elem[2]);CHKERRQ(ierr);
   /*
    Initialize f_Elem
    */
@@ -1108,7 +1103,6 @@ extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_loc
   /*
    Clean up
    */
-  //ierr = PetscFree3(f_elem[0],f_elem[1],f_elem[2]);CHKERRQ(ierr);
   free(mem);  
   PetscFunctionReturn(0);
 }
