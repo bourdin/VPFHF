@@ -45,7 +45,7 @@ int main(int argc,char **argv)
     ctx.hasCrackPressure = PETSC_TRUE;
   }
 
-  boundaryDisplacement[c] = 1.;
+  boundaryDisplacement[orientation] = .5;
   ierr = PetscOptionsGetRealArray(NULL,"-bcu",boundaryDisplacement,&nopt,&flg);CHKERRQ(ierr);
 
   ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -61,8 +61,8 @@ int main(int argc,char **argv)
   ctx.timevalue = 1.;
 
   ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
+  //ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
+  //ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
   ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
@@ -164,7 +164,7 @@ int main(int argc,char **argv)
   }
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-
+  
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = VF_StepU(&fields,&ctx);
 
