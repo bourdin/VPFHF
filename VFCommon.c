@@ -269,7 +269,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 {
   PetscErrorCode ierr;
-  PetscViewer    viewer,h5viewer;
+  PetscViewer    viewer;
   char           filename[FILENAME_MAX];
   PetscReal      BBmin[3],BBmax[3];
   PetscReal      *X,*Y,*Z;
@@ -422,9 +422,9 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
      Save cordinate in main hdf5 file
      */
     ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.h5",ctx->prefix);CHKERRQ(ierr);
-    ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&h5viewer);CHKERRQ(ierr);
-    ierr = VecView(ctx->coordinates,h5viewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&h5viewer);CHKERRQ(ierr);
+    ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
+    ierr = VecView(ctx->coordinates,viewer);CHKERRQ(ierr);
+    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
 #endif
     break;
   case FILEFORMAT_VTK:

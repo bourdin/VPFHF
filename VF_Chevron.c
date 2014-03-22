@@ -87,6 +87,9 @@ int main(int argc,char **argv)
       Save fields and write statistics about current run
     */    
     switch (ctx.fileformat) {
+      case FILEFORMAT_VTK:       
+        ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);
+      break;
       case FILEFORMAT_HDF5:       
         ierr = FieldsH5Write(&ctx,&fields);
       break;
