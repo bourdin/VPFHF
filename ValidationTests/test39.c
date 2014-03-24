@@ -20,7 +20,7 @@ mpirun -np 1 $VFDIR/ValidationTests/test39 -n 101,101,2 -l 1000,1000,10 -m_inv 3
  */
 
 #include "petsc.h"
-#include "CartFE.h"
+#include "VFCartFE.h"
 #include "VFCommon.h"
 #include "VFMech.h"
 #include "VFFlow.h"

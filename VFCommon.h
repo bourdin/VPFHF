@@ -13,15 +13,15 @@ typedef struct {
 	PetscReal   cf;             /* Fluid compressibility        */
 	PetscReal   M_inv;
 	PetscReal   beta;           /* Conversion constant          */
-	PetscReal   gamma;          /*Conversion parameter          */
-	PetscReal   alpha;          /*Conversion parameter          */
-	PetscReal   theta;          /*Time parameter                */
-	PetscReal   timestepsize;   /*Time step size                */
+	PetscReal   gamma;          /* Conversion parameter         */
+	PetscReal   alpha;          /* Conversion parameter         */
+	PetscReal   theta;          /* Time parameter               */
+	PetscReal   timestepsize;   /* Time step size               */
 	PetscReal   g[3];
-	PetscReal   Cp;			  /* Specific heat capacity */
-	PetscReal   Kw;         /* Modulus of liquid               */
-	PetscReal   alphabiot;         /* Biot's coeficient              */
-	PetscReal   K_dr;         /* Undrained bulk modulus              */
+	PetscReal   Cp;			        /* Specific heat capacity       */
+	PetscReal   Kw;             /* Modulus of liquid            */
+	PetscReal   alphabiot;      /* Biot's coeficient            */
+	PetscReal   K_dr;           /* Undrained bulk modulus       */
 } VFFlowProp;
 
 
@@ -85,7 +85,7 @@ typedef struct {
 	Vec             Ks;         /* Bulk modulus of rock            */
 	Vec             Kw;         /* Modulus of liquid               */
 	Vec             VecGc;
-	PetscReal       Cp;		  /* Specific heat capacity */
+	PetscReal       Cp;		      /* Specific heat capacity          */
 } VFMatProp; //change them to Vec later
 
 typedef struct {

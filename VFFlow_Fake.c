@@ -5,7 +5,7 @@
      (c) 2010-2012 Blaise Bourdin, C. Chukwudozie, LSU. bourdin@lsu.edu
 */
 #include "petsc.h"
-#include "CartFE.h"
+#include "VFCartFE.h"
 #include "VFCommon.h"
 
 #undef __FUNCT__

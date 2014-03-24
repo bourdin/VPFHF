@@ -1,6 +1,6 @@
-#define CARTFE_C
+#define VFCARTFE_C
 #include "petsc.h"
-#include "CartFE.h"
+#include "VFCartFE.h"
 
 static const char *BCTYPE_NAME[] = {
   "NONE",
@@ -43,7 +43,7 @@ PetscLogStage CartFE_ElementInitStage;
 
 
 #undef __FUNCT__
-#define __FUNCT__ "CartFE_Init"
+#define __FUNCT__ "VFCartFE_Init"
 /*
   CartFE_Init
 
@@ -54,15 +54,15 @@ extern PetscErrorCode CartFE_Init()
   //PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  //ierr = PetscClassIdRegister("CartFE_Element",&CartFE_Element);CHKERRQ(ierr);
-  //ierr = PetscLogEventRegister("CartFE_Elem Init",CartFE_Element,&CartFE_ElementInitEvent);CHKERRQ(ierr);
-  //ierr = PetscLogStageRegister("CartFE_Elem Init",&CartFE_ElementInitStage);CHKERRQ(ierr);
+  //ierr = PetscClassIdRegister("VFCartFE_Element",&CartFE_Element);CHKERRQ(ierr);
+  //ierr = PetscLogEventRegister("VFCartFE_Elem Init",CartFE_Element,&CartFE_ElementInitEvent);CHKERRQ(ierr);
+  //ierr = PetscLogStageRegister("VFCartFE_Elem Init",&CartFE_ElementInitStage);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 
 #undef __FUNCT__
-#define __FUNCT__ "CartFE_Element1DCreate"
+#define __FUNCT__ "VFCartFE_Element1DCreate"
 /*
   CartFE_Element1DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
@@ -81,7 +81,7 @@ extern PetscErrorCode CartFE_Element1DCreate(CartFE_Element1D *e)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "CartFE_Element1DInit"
+#define __FUNCT__ "VFCartFE_Element1DInit"
 /*
   CartFE_Element1DInit
 
@@ -119,7 +119,7 @@ extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "CartFE_Element2DCreate"
+#define __FUNCT__ "VFCartFE_Element2DCreate"
 /*
   CartFE_Element2DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
@@ -138,7 +138,7 @@ extern PetscErrorCode CartFE_Element2DCreate(CartFE_Element2D *e)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "CartFE_Element2DInit"
+#define __FUNCT__ "VFCartFE_Element2DInit"
 /*
   CartFE_Element2DInit
 
@@ -195,7 +195,7 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,Pets
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "CartFE_Element3DCreate"
+#define __FUNCT__ "VFCartFE_Element3DCreate"
 /*
   CartFE_Element3DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
@@ -214,7 +214,7 @@ extern PetscErrorCode CartFE_Element3DCreate(CartFE_Element3D *e)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "CartFE_Element3DInit"
+#define __FUNCT__ "VFCartFE_Element3DInit"
 /*
   CartFE_Element3DInit
 
