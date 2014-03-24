@@ -36,9 +36,7 @@ static const char *VERTEX_NAME[] = {
 	"X0Y0Z1","X1Y0Z1","X0Y1Z1","X1Y1Z1",
 	"VERTEX_NAME","",0};
 
-//PetscLogEvent CartFE_ElementInitEvent;
 PetscLogStage CartFE_ElementInitStage;
-//PetscClassId  CartFE_Element;
 
 
 #undef __FUNCT__
@@ -50,12 +48,16 @@ PetscLogStage CartFE_ElementInitStage;
 */
 extern PetscErrorCode CartFE_Init()
 {
-  //PetscErrorCode ierr;
-
+  /*
+  PetscErrorCode ierr;
+  */
+  
   PetscFunctionBegin;
-  //ierr = PetscClassIdRegister("VFCartFE_Element",&CartFE_Element);CHKERRQ(ierr);
-  //ierr = PetscLogEventRegister("VFCartFE_Elem Init",CartFE_Element,&CartFE_ElementInitEvent);CHKERRQ(ierr);
-  //ierr = PetscLogStageRegister("VFCartFE_Elem Init",&CartFE_ElementInitStage);CHKERRQ(ierr);
+  /*
+  ierr = PetscClassIdRegister("VFCartFE_Element",&CartFE_Element);CHKERRQ(ierr);
+  ierr = PetscLogEventRegister("VFCartFE_Elem Init",CartFE_Element,&CartFE_ElementInitEvent);CHKERRQ(ierr);
+  ierr = PetscLogStageRegister("VFCartFE_Elem Init",&CartFE_ElementInitStage);CHKERRQ(ierr);
+  */
   PetscFunctionReturn(0);
 }
 
@@ -91,8 +93,6 @@ extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
-  //ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
-  //ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
   e->lx        = lx;
   e->ly        = 0.;
   e->lz        = 0.;
@@ -112,8 +112,6 @@ extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
   e->dphi[0][0][0][0] = -1. / e->lx; e->dphi[0][0][0][1] = -1. / e->lx; e->dphi[0][0][0][2] = -1. / e->lx; 
   e->dphi[0][0][1][0] =  1. / e->lx; e->dphi[0][0][1][1] =  1. / e->lx; e->dphi[0][0][1][2] =  1. / e->lx;
   ierr = PetscLogFlops(24);CHKERRQ(ierr);
-  //ierr = PetscLogStagePop();CHKERRQ(ierr);
-  //ierr = PetscLogEventEnd(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -151,8 +149,6 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,Pets
   PetscInt           i,j;
   
   PetscFunctionBegin;
-  //ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
-  //ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ex);CHKERRQ(ierr);
   ierr = CartFE_Element1DInit(&ex,lx);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ey);CHKERRQ(ierr);
@@ -188,8 +184,6 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,Pets
     }
   }
   ierr = PetscLogFlops(1 + e->ng + 3 * e->ng * e->nphiy * e->nphix);CHKERRQ(ierr);
-  //ierr = PetscLogStagePop();CHKERRQ(ierr);
-  //ierr = PetscLogEventEnd(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -227,8 +221,6 @@ extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,Pets
   PetscInt           i,j,k;
   
   PetscFunctionBegin;
-  //ierr = PetscLogEventBegin(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
-  //ierr = PetscLogStagePush(CartFE_ElementInitStage);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ex);CHKERRQ(ierr);
   ierr = CartFE_Element1DInit(&ex,lx);CHKERRQ(ierr);
   ierr = CartFE_Element1DCreate(&ey);CHKERRQ(ierr);
@@ -273,8 +265,6 @@ extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,Pets
     }
   }
   ierr = PetscLogFlops(2 + 2 * e->ng + 8 * e->ng * e->nphiz * e->nphiy * e->nphix);CHKERRQ(ierr);
-  //ierr = PetscLogStagePop();CHKERRQ(ierr);
-  //ierr = PetscLogEventEnd(CartFE_ElementInitEvent,0,0,0,0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -1354,7 +1344,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,BC *BC,PetscReal *
         x == 0
       */
       i = 0;
-      if (BC[c].face[X0] == VALUE) {
+      if (BC[c].face[X0] == FIXED) {
         for (k = zs; k < zs + zm; k++) {
           for (j = ys; j < ys + ym; j++) {
             RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
@@ -1367,7 +1357,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,BC *BC,PetscReal *
         x == nx-1
       */
       i = nx-1;
-      if (BC[c].face[X1] == VALUE) {
+      if (BC[c].face[X1] == FIXED) {
         for (k = zs; k < zs + zm; k++) {
           for (j = ys; j < ys + ym; j++) {
             RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
@@ -1380,7 +1370,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,BC *BC,PetscReal *
         y == 0
       */
       j = 0;
-      if (BC[c].face[Y0] == VALUE) {
+      if (BC[c].face[Y0] == FIXED) {
         for (k = zs; k < zs + zm; k++) {
           for (i = xs; i < xs + xm; i++) {
             RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
@@ -1393,7 +1383,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,BC *BC,PetscReal *
         y == ny-1
       */
       j = ny-1;
-      if (BC[c].face[Y1] == VALUE) {
+      if (BC[c].face[Y1] == FIXED) {
         for (k = zs; k < zs + zm; k++) {
           for (i = xs; i < xs + xm; i++) {
             RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
@@ -1407,7 +1397,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,BC *BC,PetscReal *
           z == 0
         */
         k = 0;
-        if (BC[c].face[Z0] == VALUE) {
+        if (BC[c].face[Z0] == FIXED) {
           for (j = ys; j < ys + ym; j++) {
             for (i = xs; i < xs + xm; i++) {
               RHS_array[k][j][i][c] = BCF_array[k][j][i][c];
@@ -1420,7 +1410,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,BC *BC,PetscReal *
           z == nz-1
         */
         k = nz-1;
-        if (BC[c].face[Z1] == VALUE) {
+        if (BC[c].face[Z1] == FIXED) {
           for (j = ys; j < ys + ym; j++) {
             for (i = xs; i < xs + xm; i++) {
               RHS_array[k][j][i][c] = BCF_array[k][j][i][c];

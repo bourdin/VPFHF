@@ -3,12 +3,87 @@
  Compute the total crack opening displacement (crack volume) by integrating u.\nabla v
  over the entire domain
  
- (c) 2012	Chukwudozie, LSU
+ (c) 2012 - 2014 	Chukwudozie, LSU, B. Bourdin, LSU
  */
 #include "petsc.h"
 #include "VFCartFE.h"
 #include "VFCommon.h"
 #include "VFPermfield.h"
+
+#undef __FUNCT__
+#define __FUNCT__ "VolumetricCrackOpening3D_local"
+extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal *CrackVolume_local, PetscReal ***volcrackopening_array, PetscReal ****displ_array, PetscReal ***vfield_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+{
+	PetscErrorCode ierr;
+	PetscInt		i, j, k;
+	PetscInt		eg;
+	PetscReal		*dx_vfield_loc;
+	PetscReal		*dy_vfield_loc;
+	PetscReal		*dz_vfield_loc;
+	PetscReal		*udispl_loc;
+	PetscReal		*vdispl_loc;
+	PetscReal		*wdispl_loc;
+	PetscReal		element_vol = 0;
+  
+	PetscFunctionBegin;
+	ierr = PetscMalloc3(e->ng,PetscReal,&dx_vfield_loc,e->ng,PetscReal,&dy_vfield_loc,e->ng,PetscReal,&dz_vfield_loc);CHKERRQ(ierr);
+	ierr = PetscMalloc3(e->ng,PetscReal,&udispl_loc,e->ng,PetscReal,&vdispl_loc,e->ng,PetscReal,&wdispl_loc);CHKERRQ(ierr);
+  
+	for (eg = 0; eg < e->ng; eg++){
+		udispl_loc[eg] = 0.;
+		vdispl_loc[eg] = 0.;
+		wdispl_loc[eg] = 0.;
+		dx_vfield_loc[eg] = 0.;
+		dy_vfield_loc[eg] = 0.;
+		dz_vfield_loc[eg] = 0.;
+	}
+	for (eg = 0; eg < e->ng; eg++) {
+		for (k = 0; k < e->nphiz; k++) {
+			for (j = 0; j < e->nphiy; j++) {
+				for (i = 0; i < e->nphix; i++) {
+					udispl_loc[eg] += displ_array[ek+k][ej+j][ei+i][0] * e->phi[k][j][i][eg];
+					vdispl_loc[eg] += displ_array[ek+k][ej+j][ei+i][1] * e->phi[k][j][i][eg];
+					wdispl_loc[eg] += displ_array[ek+k][ej+j][ei+i][2] * e->phi[k][j][i][eg];
+					dx_vfield_loc[eg] += vfield_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][0][eg];
+					dy_vfield_loc[eg] += vfield_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][1][eg];
+					dz_vfield_loc[eg] += vfield_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][2][eg];
+				}
+			}
+		}
+	}
+  PetscReal sum = 0, sum1 = 0, sum2 = 0;
+
+	volcrackopening_array[ek][ej][ei] = 0.;
+	*CrackVolume_local = 0.;
+	for(eg = 0; eg < e->ng; eg++){
+    sum2 += wdispl_loc[eg]*dz_vfield_loc[eg]*e->weight[eg];
+    sum1 += vdispl_loc[eg]*dy_vfield_loc[eg]*e->weight[eg];
+    sum += udispl_loc[eg]*dx_vfield_loc[eg]*e->weight[eg];
+		volcrackopening_array[ek][ej][ei] += (udispl_loc[eg]*dx_vfield_loc[eg] + vdispl_loc[eg]*dy_vfield_loc[eg] + wdispl_loc[eg]*dz_vfield_loc[eg])*e->weight[eg];
+		element_vol += e->weight[eg];
+		*CrackVolume_local += (udispl_loc[eg]*dx_vfield_loc[eg] + vdispl_loc[eg]*dy_vfield_loc[eg] + wdispl_loc[eg]*dz_vfield_loc[eg])*e->weight[eg];
+	}  
+  volcrackopening_array[ek][ej][ei] = volcrackopening_array[ek][ej][ei]/element_vol;
+
+  /* 
+      NEVER EVER change the behavior of a function without checking that it does not break the validation tests (it did!)
+  */
+  /*
+  if(volcrackopening_array[ek][ej][ei] < 0){
+    volcrackopening_array[ek][ej][ei] = 0.;
+  }
+  */
+/*  The if statement below was added to remove negative contributions to crack volume. Was not there in SPE paper. Thus if discrepancies arise, remove these lines to cross-check */
+  /*
+  if(*CrackVolume_local < 0){
+    *CrackVolume_local = 0.;
+  }
+  */
+	ierr = PetscFree3(dx_vfield_loc,dy_vfield_loc,dz_vfield_loc);CHKERRQ(ierr);
+	ierr = PetscFree3(udispl_loc,vdispl_loc,wdispl_loc);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
 
 #undef __FUNCT__
 #define __FUNCT__ "VolumetricCrackOpening"
@@ -96,76 +171,47 @@ extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VolumetricCrackOpening3D_local"
-extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal *CrackVolume_local, PetscReal ***volcrackopening_array, PetscReal ****displ_array, PetscReal ***vfield_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+#define __FUNCT__ "VolumetricStrainVolume_local"
+extern PetscErrorCode VolumetricStrainVolume_local(PetscReal *VolStrainVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e, VFFlowProp flowpropty, PetscReal ****u_diff_array, PetscReal ***v_array)
 {
+  
 	PetscErrorCode ierr;
-	PetscInt		i, j, k;
+	PetscInt		i, j, k, c;
 	PetscInt		eg;
-	PetscReal		*dx_vfield_loc;
-	PetscReal		*dy_vfield_loc;
-	PetscReal		*dz_vfield_loc;
-	PetscReal		*udispl_loc;
-	PetscReal		*vdispl_loc;
-	PetscReal		*wdispl_loc;
-	PetscReal		element_vol = 0;
+	PetscReal    *v_elem,*du_elem[3],alphabiot,timestepsize;
   
 	PetscFunctionBegin;
-	ierr = PetscMalloc3(e->ng,PetscReal,&dx_vfield_loc,e->ng,PetscReal,&dy_vfield_loc,e->ng,PetscReal,&dz_vfield_loc);CHKERRQ(ierr);
-	ierr = PetscMalloc3(e->ng,PetscReal,&udispl_loc,e->ng,PetscReal,&vdispl_loc,e->ng,PetscReal,&wdispl_loc);CHKERRQ(ierr);
-  
-	for (eg = 0; eg < e->ng; eg++){
-		udispl_loc[eg] = 0.;
-		vdispl_loc[eg] = 0.;
-		wdispl_loc[eg] = 0.;
-		dx_vfield_loc[eg] = 0.;
-		dy_vfield_loc[eg] = 0.;
-		dz_vfield_loc[eg] = 0.;
-	}
-	for (eg = 0; eg < e->ng; eg++) {
-		for (k = 0; k < e->nphiz; k++) {
-			for (j = 0; j < e->nphiy; j++) {
-				for (i = 0; i < e->nphix; i++) {
-					udispl_loc[eg] += displ_array[ek+k][ej+j][ei+i][0] * e->phi[k][j][i][eg];
-					vdispl_loc[eg] += displ_array[ek+k][ej+j][ei+i][1] * e->phi[k][j][i][eg];
-					wdispl_loc[eg] += displ_array[ek+k][ej+j][ei+i][2] * e->phi[k][j][i][eg];
-					dx_vfield_loc[eg] += vfield_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][0][eg];
-					dy_vfield_loc[eg] += vfield_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][1][eg];
-					dz_vfield_loc[eg] += vfield_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][2][eg];
-				}
-			}
-		}
-	}
-  PetscReal sum = 0, sum1 = 0, sum2 = 0;
-
-	volcrackopening_array[ek][ej][ei] = 0.;
-	*CrackVolume_local = 0.;
+  ierr = PetscMalloc4(e->ng,PetscReal,&v_elem,
+                      e->ng,PetscReal,&du_elem[0],
+                      e->ng,PetscReal,&du_elem[1],
+                      e->ng,PetscReal,&du_elem[2]);CHKERRQ(ierr);
+  timestepsize     = flowpropty.timestepsize;
+  alphabiot  = flowpropty.alphabiot;
+  for (eg = 0; eg < e->ng; eg++){
+    v_elem[eg] = 0.;
+    for (c = 0; c < 3; c++){
+      du_elem[c][eg] = 0.;
+    }
+  }
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        for (eg = 0; eg < e->ng; eg++) {
+          v_elem[eg] += v_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
+          for (c = 0; c < 3; c++){
+            du_elem[c][eg] += u_diff_array[ek+k][ej+j][ei+i][c]*e->dphi[k][j][i][c][eg];
+          }
+        }
+      }
+    }
+  }
+	*VolStrainVolume_local = 0.;
 	for(eg = 0; eg < e->ng; eg++){
-    sum2 += wdispl_loc[eg]*dz_vfield_loc[eg]*e->weight[eg];
-    sum1 += vdispl_loc[eg]*dy_vfield_loc[eg]*e->weight[eg];
-    sum += udispl_loc[eg]*dx_vfield_loc[eg]*e->weight[eg];
-		volcrackopening_array[ek][ej][ei] += (udispl_loc[eg]*dx_vfield_loc[eg] + vdispl_loc[eg]*dy_vfield_loc[eg] + wdispl_loc[eg]*dz_vfield_loc[eg])*e->weight[eg];
-		element_vol += e->weight[eg];
-		*CrackVolume_local += (udispl_loc[eg]*dx_vfield_loc[eg] + vdispl_loc[eg]*dy_vfield_loc[eg] + wdispl_loc[eg]*dz_vfield_loc[eg])*e->weight[eg];
-	}  
-  volcrackopening_array[ek][ej][ei] = volcrackopening_array[ek][ej][ei]/element_vol;
-
-  /* 
-      NEVER EVER change the behavior of a function without checking that it does not break the validation tests (it did!)
-  */
-  /*
-  if(volcrackopening_array[ek][ej][ei] < 0){
-    volcrackopening_array[ek][ej][ei] = 0.;
-  }
-  */
-/*  The if statement below was added to remove negative contributions to crack volume. Was not there in SPE paper. Thus if discrepancies arise, remove these lines to cross-check */
-  /*
-  if(*CrackVolume_local < 0){
-    *CrackVolume_local = 0.;
-  }
-  */
-	ierr = PetscFree3(dx_vfield_loc,dy_vfield_loc,dz_vfield_loc);CHKERRQ(ierr);
-	ierr = PetscFree3(udispl_loc,vdispl_loc,wdispl_loc);CHKERRQ(ierr);
+    for(c = 0; c < 3; c++){
+      *VolStrainVolume_local += -1*alphabiot*(pow(v_elem[eg],2))*du_elem[c][eg]*e->weight[eg]/timestepsize;
+    }
+	}
+	ierr = PetscFree4(du_elem[0],du_elem[1],du_elem[2],v_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -333,53 +379,6 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
   
   PetscFunctionReturn(0);
 }
-
-#undef __FUNCT__
-#define __FUNCT__ "VolumetricStrainVolume_local"
-extern PetscErrorCode VolumetricStrainVolume_local(PetscReal *VolStrainVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e, VFFlowProp flowpropty, PetscReal ****u_diff_array, PetscReal ***v_array)
-{
-  
-	PetscErrorCode ierr;
-	PetscInt		i, j, k, c;
-	PetscInt		eg;
-	PetscReal    *v_elem,*du_elem[3],alphabiot,timestepsize;
-  
-	PetscFunctionBegin;
-  ierr = PetscMalloc4(e->ng,PetscReal,&v_elem,
-                      e->ng,PetscReal,&du_elem[0],
-                      e->ng,PetscReal,&du_elem[1],
-                      e->ng,PetscReal,&du_elem[2]);CHKERRQ(ierr);
-  timestepsize     = flowpropty.timestepsize;
-  alphabiot  = flowpropty.alphabiot;
-  for (eg = 0; eg < e->ng; eg++){
-    v_elem[eg] = 0.;
-    for (c = 0; c < 3; c++){
-      du_elem[c][eg] = 0.;
-    }
-  }
-  for (k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++) {
-        for (eg = 0; eg < e->ng; eg++) {
-          v_elem[eg] += v_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
-          for (c = 0; c < 3; c++){
-            du_elem[c][eg] += u_diff_array[ek+k][ej+j][ei+i][c]*e->dphi[k][j][i][c][eg];
-          }
-        }
-      }
-    }
-  }
-	*VolStrainVolume_local = 0.;
-	for(eg = 0; eg < e->ng; eg++){
-    for(c = 0; c < 3; c++){
-      *VolStrainVolume_local += -1*alphabiot*(pow(v_elem[eg],2))*du_elem[c][eg]*e->weight[eg]/timestepsize;
-    }
-	}
-	ierr = PetscFree4(du_elem[0],du_elem[1],du_elem[2],v_elem);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-
 
 #undef __FUNCT__
 #define __FUNCT__ "ModulusVolume_local"
@@ -1505,7 +1504,6 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 			}
 		}
 	}
-	PetscReal	vmult = 0;
 	PetscReal  maxperm = 10;
 	PetscReal  minperm = 0.01;
   ierr = PetscOptionsGetReal(PETSC_NULL,"-perm",&minperm,PETSC_NULL);CHKERRQ(ierr);
@@ -1886,7 +1884,44 @@ extern PetscErrorCode TrialFunctionCompute(PetscReal *FunctionValue, VFCtx *ctx,
 
 
 
+#undef __FUNCT__
+#define __FUNCT__ "VolumetricFractureWellRate_local"
+extern PetscErrorCode VolumetricFractureWellRate_local(PetscReal *InjVolume_local, PetscReal ***regrate_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+{
+	PetscErrorCode ierr;
+	PetscInt		i, j, k,c;
+	PetscInt		eg;
+  PetscReal    *dv_elem[3],*regrate_elem;
+  
+	PetscFunctionBegin;
+	ierr = PetscMalloc4(e->ng,PetscReal,&dv_elem[0],e->ng,PetscReal,&dv_elem[1],e->ng,PetscReal,&dv_elem[2],e->ng,PetscReal,&regrate_elem);CHKERRQ(ierr);
+  
+	for (eg = 0; eg < e->ng; eg++){
+    for(c = 0; c < 3; c++){
+      dv_elem[c][eg] = 0;
+    }
+		regrate_elem[eg] = 0.;
+	}
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        for (eg = 0; eg < e->ng; eg++) {
+          for (c = 0; c < 3; c++){
+            dv_elem[c][eg] += v_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][c][eg];
+          }
+          regrate_elem[eg] += regrate_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
+        }
+      }
+    }
+  }
+  *InjVolume_local = 0.;
 
+  for(eg = 0; eg < e->ng; eg++){
+    *InjVolume_local += regrate_elem[eg]*(sqrt((pow(dv_elem[0][eg],2))+(pow(dv_elem[1][eg],2))+(pow(dv_elem[2][eg],2))))*e->weight[eg];
+  }
+	ierr = PetscFree4(dv_elem[0],dv_elem[1],dv_elem[2],regrate_elem);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "VolumetricFractureWellRate"
@@ -1905,7 +1940,6 @@ extern PetscErrorCode VolumetricFractureWellRate(PetscReal *InjectedVolume, VFCt
 	Vec             v_local;
 	PetscReal       myInjVolumeRateLocal = 0.,myInjVolumeRate = 0.;
   
-	
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -1948,71 +1982,93 @@ extern PetscErrorCode VolumetricFractureWellRate(PetscReal *InjectedVolume, VFCt
 }
 
 
-
 #undef __FUNCT__
-#define __FUNCT__ "VolumetricFractureWellRate_local"
-extern PetscErrorCode VolumetricFractureWellRate_local(PetscReal *InjVolume_local, PetscReal ***regrate_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+#define __FUNCT__ "VF_IntegrateOnBoundary_local"
+extern PetscErrorCode VF_IntegrateOnBoundary_local(PetscReal *SumnIntegral_local,PetscReal ***node_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element2D *e)
 {
-	PetscErrorCode ierr;
-	PetscInt		i, j, k,c;
-	PetscInt		eg;
-  PetscReal    *dv_elem[3],*regrate_elem;
-  
-	PetscFunctionBegin;
-	ierr = PetscMalloc4(e->ng,PetscReal,&dv_elem[0],e->ng,PetscReal,&dv_elem[1],e->ng,PetscReal,&dv_elem[2],e->ng,PetscReal,&regrate_elem);CHKERRQ(ierr);
-  
-	for (eg = 0; eg < e->ng; eg++){
-    for(c = 0; c < 3; c++){
-      dv_elem[c][eg] = 0;
-    }
-		regrate_elem[eg] = 0.;
-	}
-  for (k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++) {
-        for (eg = 0; eg < e->ng; eg++) {
-          for (c = 0; c < 3; c++){
-            dv_elem[c][eg] += v_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][c][eg];
-          }
-          regrate_elem[eg] += regrate_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
-        }
-      }
-    }
-  }
-  *InjVolume_local = 0.;
+  PetscErrorCode ierr;
+	PetscInt		i, j, k, g;
+  PetscReal		*node_elem;
 
-  for(eg = 0; eg < e->ng; eg++){
-    *InjVolume_local += regrate_elem[eg]*(sqrt((pow(dv_elem[0][eg],2))+(pow(dv_elem[1][eg],2))+(pow(dv_elem[2][eg],2))))*e->weight[eg];
+  PetscFunctionBegin;
+	ierr = PetscMalloc(e->ng*sizeof(PetscReal),&node_elem);CHKERRQ(ierr);
+  for (g = 0; g < e->ng; g++){
+		node_elem[g] = 0.;
+	}
+  *SumnIntegral_local = 0.;
+  switch (face) {
+		case X0:
+			for (k = 0; k < e->nphix; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphiz; i++) {
+						for (g = 0; g < e->ng; g++) {
+							node_elem[g] += e->phi[i][j][k][g]*node_array[ek+k][ej+j][ei+i];
+						}
+					}
+				}
+			}
+			break;
+    case X1:
+			for (k = 0; k < e->nphix; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphiz; i++) {
+						for (g = 0; g < e->ng; g++) {
+							node_elem[g] += e->phi[i][j][k][g]*node_array[ek+k][ej+j][ei+1];
+						}
+					}
+				}
+			}
+      break;
+    case Y0:
+			for (k = 0; k < e->nphiy; k++) {
+				for (j = 0; j < e->nphiz; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+              node_elem[g] += e->phi[j][k][i][g]*node_array[ek+k][ej+j][ei+i];
+						}
+					}
+				}
+			}
+			break;
+    case Y1:
+			for (k = 0; k < e->nphiy; k++) {
+				for (j = 0; j < e->nphiz; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+              node_elem[g] += e->phi[j][k][i][g]*node_array[ek+k][ej+1][ei+i];
+						}
+					}
+				}
+			}
+      break;
+    case Z0:
+			for (k = 0; k < e->nphiz; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+              node_elem[g] += e->phi[k][j][i][g]*node_array[ek+k][ej+i][ei+i];
+						}
+					}
+				}
+			}
+      break;
+    case Z1:
+			for (k = 0; k < e->nphiz; k++) {
+				for (j = 0; j < e->nphiy; j++) {
+					for (i = 0; i < e->nphix; i++) {
+						for (g = 0; g < e->ng; g++) {
+              node_elem[g] += e->phi[k][j][i][g]*node_array[ek+1][ej+i][ei+i];
+						}
+					}
+				}
+			}
+    }
+  for(g = 0; g < e->ng; g++){
+    *SumnIntegral_local += node_elem[g]*e->weight[g];
   }
-	ierr = PetscFree4(dv_elem[0],dv_elem[1],dv_elem[2],regrate_elem);CHKERRQ(ierr);
+  ierr = PetscFree(node_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_IntegrateOnBoundary"
@@ -2127,90 +2183,3 @@ extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FA
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "VF_IntegrateOnBoundary_local"
-extern PetscErrorCode VF_IntegrateOnBoundary_local(PetscReal *SumnIntegral_local,PetscReal ***node_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element2D *e)
-{
-  PetscErrorCode ierr;
-	PetscInt		i, j, k, g;
-  PetscReal		*node_elem;
-
-  PetscFunctionBegin;
-	ierr = PetscMalloc(e->ng*sizeof(PetscReal),&node_elem);CHKERRQ(ierr);
-  for (g = 0; g < e->ng; g++){
-		node_elem[g] = 0.;
-	}
-  *SumnIntegral_local = 0.;
-  switch (face) {
-		case X0:
-			for (k = 0; k < e->nphix; k++) {
-				for (j = 0; j < e->nphiy; j++) {
-					for (i = 0; i < e->nphiz; i++) {
-						for (g = 0; g < e->ng; g++) {
-							node_elem[g] += e->phi[i][j][k][g]*node_array[ek+k][ej+j][ei+i];
-						}
-					}
-				}
-			}
-			break;
-    case X1:
-			for (k = 0; k < e->nphix; k++) {
-				for (j = 0; j < e->nphiy; j++) {
-					for (i = 0; i < e->nphiz; i++) {
-						for (g = 0; g < e->ng; g++) {
-							node_elem[g] += e->phi[i][j][k][g]*node_array[ek+k][ej+j][ei+1];
-						}
-					}
-				}
-			}
-      break;
-    case Y0:
-			for (k = 0; k < e->nphiy; k++) {
-				for (j = 0; j < e->nphiz; j++) {
-					for (i = 0; i < e->nphix; i++) {
-						for (g = 0; g < e->ng; g++) {
-              node_elem[g] += e->phi[j][k][i][g]*node_array[ek+k][ej+j][ei+i];
-						}
-					}
-				}
-			}
-			break;
-    case Y1:
-			for (k = 0; k < e->nphiy; k++) {
-				for (j = 0; j < e->nphiz; j++) {
-					for (i = 0; i < e->nphix; i++) {
-						for (g = 0; g < e->ng; g++) {
-              node_elem[g] += e->phi[j][k][i][g]*node_array[ek+k][ej+1][ei+i];
-						}
-					}
-				}
-			}
-      break;
-    case Z0:
-			for (k = 0; k < e->nphiz; k++) {
-				for (j = 0; j < e->nphiy; j++) {
-					for (i = 0; i < e->nphix; i++) {
-						for (g = 0; g < e->ng; g++) {
-              node_elem[g] += e->phi[k][j][i][g]*node_array[ek+k][ej+i][ei+i];
-						}
-					}
-				}
-			}
-      break;
-    case Z1:
-			for (k = 0; k < e->nphiz; k++) {
-				for (j = 0; j < e->nphiy; j++) {
-					for (i = 0; i < e->nphix; i++) {
-						for (g = 0; g < e->ng; g++) {
-              node_elem[g] += e->phi[k][j][i][g]*node_array[ek+1][ej+i][ei+i];
-						}
-					}
-				}
-			}
-    }
-  for(g = 0; g < e->ng; g++){
-    *SumnIntegral_local += node_elem[g]*e->weight[g];
-  }
-  ierr = PetscFree(node_elem);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}

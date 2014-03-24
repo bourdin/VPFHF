@@ -2278,7 +2278,6 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
   VFCtx          *ctx=(VFCtx*)user;
   
   PetscErrorCode ierr;
-  PetscReal      eta,PCeta=1e-1;
   PetscInt       xs,xm,nx;
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
@@ -2357,15 +2356,17 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
             ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                                          ek,ej,ei,&ctx->e3D);
             /* 
-              Set eta = .1 and nu = 0 for the preconditioner
+              Set eta = etaPC for the preconditioner
             */
             ierr = PetscMemcpy(&PCvfprop,&ctx->vfprop,sizeof(VFProp));CHKERRQ(ierr);
             PCvfprop.eta = PCvfprop.PCeta;
             ierr = PetscMemcpy(&PCmatprop,&ctx->matprop[ctx->layer[ek]],sizeof(VFProp));CHKERRQ(ierr);
+
+            /*
             PCmatprop.nu = 0.;
             PCmatprop.lambda = 0.;
             PCmatprop.mu = ctx->matprop[ctx->layer[ek]].E * .5;
-          
+            */            
             ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&PCmatprop,&PCvfprop,ek,ej,ei,&ctx->e3D);
             break;
         }
@@ -2477,8 +2478,6 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
  */
 extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset)
 {
-  PetscErrorCode ierr;
-  
   PetscFunctionBegin;
   switch (preset) {
       /*

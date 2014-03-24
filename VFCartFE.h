@@ -79,7 +79,6 @@ typedef enum {
   ZERO,
   ONE,
   FIXED,
-  VALUE
 } BCTYPE;
 
 typedef enum {
