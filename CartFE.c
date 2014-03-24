@@ -1195,7 +1195,7 @@ extern PetscErrorCode BCInit(BC *bc,PetscInt dof)
 #define __FUNCT__ "BCGet"
 /*
   BCGet: Get boundary condition flag for each face, edge, vertex of the domain.
-  The option names are -<prefix>_<name> where name is the nema of a geometric entity
+  The option names are -<prefix>_<name> where name is the name of a geometric entity
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
@@ -1205,7 +1205,8 @@ extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof)
   PetscInt       i,c,t,nbc;
   char           optstr[256];
   PetscInt       tmpbc[3];
-  BCTYPE         bctype[5] = {NONE,ZERO,ONE,FIXED};
+  PetscInt       numBCTYPE = 4;
+  BCTYPE         bctype[4] = {NONE,ZERO,ONE,FIXED};
   
 
   PetscFunctionBegin;
@@ -1221,7 +1222,7 @@ extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof)
     ierr = PetscOptionsGetIntArray(PETSC_NULL,optstr,&tmpbc[0],&nbc,PETSC_NULL);CHKERRQ(ierr);
     for (c = 0; c < nbc; c++) {
       bc[c].face[i] = NONE;
-      for (t = 0; t < 3; t++) {
+      for (t = 0; t < numBCTYPE; t++) {
         if (tmpbc[c] == bctype[t]) {
           bc[c].face[i] = bctype[t];
         }
@@ -1240,7 +1241,7 @@ extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof)
     ierr = PetscOptionsGetIntArray(PETSC_NULL,optstr,&tmpbc[0],&nbc,PETSC_NULL);CHKERRQ(ierr);
     for (c = 0; c < nbc; c++) {
       bc[c].edge[i] = NONE;
-      for (t = 0; t < 3; t++) {
+      for (t = 0; t < numBCTYPE; t++) {
         if (tmpbc[c] == bctype[t]) bc[c].edge[i] = bctype[t];
       }
     }
@@ -1257,7 +1258,7 @@ extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof)
     ierr = PetscOptionsGetIntArray(PETSC_NULL,optstr,&tmpbc[0],&nbc,PETSC_NULL);CHKERRQ(ierr);
     for (c = 0; c < nbc; c++) {
       bc[c].vertex[i] = NONE;
-      for (t = 0; t < 3; t++) {
+      for (t = 0; t < numBCTYPE; t++) {
         if (tmpbc[c] == bctype[t]) bc[c].vertex[i] = bctype[t];
       }
     }
