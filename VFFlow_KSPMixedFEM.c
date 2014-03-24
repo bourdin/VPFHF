@@ -1956,7 +1956,7 @@ extern PetscErrorCode VF_RHSFlowMechUCoupling_local(PetscReal *K_local,CartFE_El
 extern PetscErrorCode VF_RHSFlowMechUCouplingFIXSTRESS_local(PetscReal *K_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,VFMatProp *matprop,PetscReal ***pressure_diff_array,PetscReal ***v_array)
 {
   PetscErrorCode    ierr;
-  PetscInt          i,j,k,l,c;
+  PetscInt          i,j,k,l;
   PetscInt          eg;
   PetscReal         *v_elem;
   PetscReal         *p_diff_elem,alphabiot,K_dr,nu,E;
@@ -2159,7 +2159,7 @@ extern PetscErrorCode VF_MatAFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE
 extern PetscErrorCode VF_MatLeakOff_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
-  PetscInt                i,j,k,l,c;
+  PetscInt                i,j,k,l;
   PetscInt                ii,jj,kk;
   PetscReal               *dv_elem;
   PetscInt                eg;

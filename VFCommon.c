@@ -608,14 +608,14 @@ extern PetscErrorCode VFResPropGet(VFResProp *resprop)
   {
     resprop->perm      = 1.e-1;                    /* Multiply by 1e12 because pressure unit in MPa, viscosity unit in cp, and density is specific density */
     resprop->por       = 0.2;                      /* fraction */
-    resprop->Pinit     = 1.;                      /* MPa */
+    resprop->Pinit     = 1.;                       /* MPa */
     resprop->Tinit     = 200.;                     /* Celsius */
     resprop->relk      = 1.0;                      /* fraction */
     resprop->visc      = 1.0;                      /* cp */
     resprop->fdens     = 1.0;                      /* specific density */
-    resprop->rock_comp = 0.5e-4;                          /* Rock Compressibility */
-    resprop->wat_comp  =5e-4;                         /* Water Compressibility */
-    resprop->TCond_X   = 0.6;                       /* Water thermal conductivity in W/m-K */
+    resprop->rock_comp = 0.5e-4;                   /* Rock Compressibility */
+    resprop->wat_comp  =5e-4;                      /* Water Compressibility */
+    resprop->TCond_X   = 0.6;                      /* Water thermal conductivity in W/m-K */
     resprop->TCond_Y   = resprop->TCond_X;
     resprop->TCond_Z   = resprop->TCond_X;
   }
@@ -912,6 +912,11 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   Mat            JacV,JacU,JacPCU;
   Vec            residualV,residualU;
   SNESLineSearch linesearchU;
+  /*
+  Removed for now
+  Vec            coord;
+  MatNullSpace   matnull;  
+  */
   
   PetscFunctionBegin;
   /*
@@ -936,6 +941,24 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = DMCreateMatrix(ctx->daVect,PETSC_NULL,&JacPCU);CHKERRQ(ierr);
   ierr = MatSetOption(JacPCU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 
+
+  /* 
+    Compute null space associated with rigid motions
+  */
+  /*
+    For some reason, it does not seem to work. (ksp still diverges without proper BC)
+    Removing for now
+  */
+  /*
+  ierr = DMDAGetCoordinates(ctx->daVect,&coord);CHKERRQ(ierr);
+  ierr = MatNullSpaceCreateRigidBody(coord,&matnull);CHKERRQ(ierr);
+  ierr = MatSetNearNullSpace(JacU,matnull);CHKERRQ(ierr);
+  ierr = MatSetNearNullSpace(JacPCU,matnull);CHKERRQ(ierr);
+  ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
+  ierr = MatSetFromOptions(JacU);
+  ierr = MatSetFromOptions(JacPCU);
+  */
+  
   ierr = SNESSetFunction(ctx->snesU,residualU,VF_UResidual,ctx);CHKERRQ(ierr);
   ierr = SNESSetJacobian(ctx->snesU,JacU,JacPCU,VF_UIJacobian,ctx);CHKERRQ(ierr);
 
