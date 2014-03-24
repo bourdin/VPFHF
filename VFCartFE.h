@@ -1,5 +1,5 @@
-#ifndef CARTFE_H
-#define CARTFE_H
+#ifndef VFCARTFE_H
+#define VFCARTFE_H
 /*
   Implement a simple P1 Lagrange element on a rectangle aligned with axis directions.
   (c) 2010-2012 B. Bourdin, bourdin@lsu.edu

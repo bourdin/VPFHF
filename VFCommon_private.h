@@ -1,7 +1,7 @@
 /*
  VFCommon_private.h
  This has to be the stupidest name in the world...
- We'll have to dela with it until the project is completely reorganized
+ We'll have to deal with it until the project is completely reorganized
 
  (c) 2010-2013 Blaise Bourdin bourdin@lsu.edu
 */
@@ -99,7 +99,4 @@ static const char *VFFileFormatName[] = {
 	"",
 	0
 };
-
-
-
 #endif

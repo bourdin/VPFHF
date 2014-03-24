@@ -2,7 +2,7 @@
   VFWell.h
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-#include "CartFE.h"
+#include "VFCartFE.h"
 #include "VFCommon.h"
 
 #ifndef VFWELL_H

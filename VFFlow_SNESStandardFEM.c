@@ -5,7 +5,7 @@
  */
 
 #include "petsc.h"
-#include "CartFE.h"
+#include "VFCartFE.h"
 #include "VFCommon.h"
 #include "VFWell.h"
 #include "VFHeat_SNESFEM.h"

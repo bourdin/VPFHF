@@ -13,7 +13,7 @@
  */
 
 #include "petsc.h"
-#include "CartFE.h"
+#include "VFCartFE.h"
 #include "VFCommon.h"
 #include "VFMech.h"
 #include "VFFlow.h"

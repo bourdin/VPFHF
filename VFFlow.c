@@ -6,7 +6,7 @@
                     Keita Yoshioka, Chevron ETC
 */
 #include "petsc.h"
-#include "CartFE.h"
+#include "VFCartFE.h"
 #include "VFCommon.h"
 #include "VFFlow.h"
 #include "VFFlow_FEM.h"

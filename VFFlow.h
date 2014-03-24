@@ -11,9 +11,9 @@
 
 
 typedef struct {
-  PetscReal       mu;   /* Fluid viscosity          */
-  PetscReal       rho;  /* Fluid density            */
-  PetscReal       cf;   /* Fluid compressibility    */
+  PetscReal   mu;       /* Fluid viscosity          */
+  PetscReal   rho;      /* Fluid density            */
+  PetscReal   cf;       /* Fluid compressibility    */
   PetscReal   betac;    /* Conversion constant      */
   PetscReal   gammac;   /*Conversion parameter      */
   PetscReal   alphac;   /*Conversion parameter      */
