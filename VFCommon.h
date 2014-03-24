@@ -91,6 +91,7 @@ typedef struct {
 typedef struct {
 	PetscReal        epsilon;
 	PetscReal        eta;
+	PetscReal        PCeta;
   PetscInt         atnum;
 	PetscReal        atCv;
 	PetscReal        irrevtol;

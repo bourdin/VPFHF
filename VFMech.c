@@ -14,7 +14,8 @@
 
 extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
 {
-  PetscInt c,loc;
+  PetscErrorCode  ierr;
+  PetscInt        c,loc;
   
   PetscFunctionBegin;
   for (loc = 0; loc < 6; loc++)
@@ -65,7 +66,7 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       BC[2].face[Z1]       = ZERO;
       break;
     case TEST_MANUAL:
-      
+      ierr = BCGet(BC,"U",3);
       break;
     default:
       SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
@@ -439,7 +440,6 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_loc
       ElasticEnergyDensityS_local[g] = kappa * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g])
                                         * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g]) * .5;
     } else {
-//printf("%s Compressive stress: %i %i %i %i\n",__FUNCT__,ei,ej,ek,g);
       ElasticEnergyDensityS_local[g] = 0.;
     }
     ElasticEnergyDensityD_local[g] = ElasticEnergyDensity_local[g] - kappa * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g])
@@ -574,10 +574,9 @@ extern PetscErrorCode VF_BilinearFormUShearOnly3D_local(PetscReal *Mat_local,Pet
             for (j2 = 0; j2 < e->nphiy; j2++) {
               for (i2 = 0; i2 < e->nphix; i2++) {
                 for (c2 = 0; c2 < e->dim; c2++,l++) {
-                  mat_gauss = 0.;
                   for (g = 0; g < e->ng; g++){
                     /* spherical part */
-                    mat_gauss += kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
+                    mat_gauss = kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
                     /* deviatoric part */
                     mat_gauss -= 2. * matprop->mu * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.;
                     mat_gauss += matprop->mu * s_elem[g] * e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g];
@@ -589,8 +588,8 @@ extern PetscErrorCode VF_BilinearFormUShearOnly3D_local(PetscReal *Mat_local,Pet
                                      e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]);
                       /* 8 flops */
                     }
+                  Mat_local[l] += e->weight[g] * mat_gauss;
                   }
-                  Mat_local[l] = e->weight[g] * mat_gauss;
                 }
               }
             }
@@ -656,13 +655,12 @@ extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local
             for (j2 = 0; j2 < e->nphiy; j2++) {
               for (i2 = 0; i2 < e->nphix; i2++) {
                 for (c2 = 0; c2 < e->dim; c2++,l++) {
-                  mat_gauss = 0.;
                   for (g = 0; g < e->ng; g++){
                     /* spherical part */
                     if (tr_epsilon[g] > 0.) {
-                      mat_gauss += kappa * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
+                      mat_gauss = kappa * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
                     } else {
-                      mat_gauss += kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
+                      mat_gauss = kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
                     }
                     /* deviatoric part */
                     mat_gauss -= 2. * matprop->mu * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.;
@@ -675,8 +673,8 @@ extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local
                                      e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]);
                       /* 8 flops */
                     }
+                  Mat_local[l] += e->weight[g] * mat_gauss;
                   }
-                  Mat_local[l] = e->weight[g] * mat_gauss;
                 }
               }
             }
@@ -899,7 +897,6 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
               * (coefalpha * theta_elem[g] + beta * pressure_elem[g])
               * (v_elem[g] * v_elem[g] + vfprop->eta);
             } else {
-//printf("%s Compressive stress: %i %i %i %i\n",__FUNCT__,ei,ej,ek,g);
               residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
               * (theta_elem[g] * coefalpha + pressure_elem[g] * beta);
             }
@@ -993,13 +990,9 @@ extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_loc
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,l,c,g;
-  //PetscReal      *f_elem[3];
   PetscReal *mem = malloc(3*e->ng*sizeof(PetscReal));
   PetscReal (*f_elem)[e->ng] = (PetscReal (*)[e->ng])mem;
   PetscFunctionBegin;
-  //ierr = PetscMalloc3(e->ng,PetscReal,&f_elem[0],
-  //                    e->ng,PetscReal,&f_elem[1],
-  //                    e->ng,PetscReal,&f_elem[2]);CHKERRQ(ierr);
   /*
    Initialize f_Elem
    */
@@ -1108,7 +1101,6 @@ extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_loc
   /*
    Clean up
    */
-  //ierr = PetscFree3(f_elem[0],f_elem[1],f_elem[2]);CHKERRQ(ierr);
   free(mem);  
   PetscFunctionReturn(0);
 }
@@ -2287,7 +2279,7 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
   VFCtx          *ctx=(VFCtx*)user;
   
   PetscErrorCode ierr;
-  PetscReal      eta,etaPC;
+  PetscReal      eta,PCeta=1e-1;
   PetscInt       xs,xm,nx;
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
@@ -2300,6 +2292,8 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
   MatStencil     *row;
   PetscReal      hx,hy,hz;
   PetscReal      ****coords_array;
+  VFProp         PCvfprop;
+  VFMatProp      PCmatprop;
   
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -2329,8 +2323,6 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
     ierr = DMGlobalToLocalEnd(ctx->daVect,U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
     ierr = DMDAVecGetArrayDOF(ctx->daVect,U_localVec,&u_array);CHKERRQ(ierr);
     ierr = MatZeroEntries(*KPC);CHKERRQ(ierr);
-    eta = ctx->vfprop.eta;
-    etaPC = 1e-1;
   }
   /*
    get local mat
@@ -2356,21 +2348,26 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
             ierr = VF_BilinearFormU3D_local(bilinearForm_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-                                   ek,ej,ei,&ctx->e3D);                                   
+                                            ek,ej,ei,&ctx->e3D);                                   
             break;
           case UNILATERAL_SHEARONLY:
             ierr = VF_BilinearFormUShearOnly3D_local(bilinearForm_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-                                            ek,ej,ei,&ctx->e3D);
+                                                     ek,ej,ei,&ctx->e3D);
             break;
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-                                            ek,ej,ei,&ctx->e3D);
-            ierr = VF_BilinearFormU3D_local(bilinearFormPC_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-                                   ek,ej,ei,&ctx->e3D);                                   
-            //ctx->vfprop.eta = etaPC;
-            //ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-            //                                ek,ej,ei,&ctx->e3D);
-            //ctx->vfprop.eta = eta;
+                                                         ek,ej,ei,&ctx->e3D);
+            /* 
+              Set eta = .1 and nu = 0 for the preconditioner
+            */
+            ierr = PetscMemcpy(&PCvfprop,&ctx->vfprop,sizeof(VFProp));CHKERRQ(ierr);
+            PCvfprop.eta = PCvfprop.PCeta;
+            ierr = PetscMemcpy(&PCmatprop,&ctx->matprop[ctx->layer[ek]],sizeof(VFProp));CHKERRQ(ierr);
+            PCmatprop.nu = 0.;
+            PCmatprop.lambda = 0.;
+            PCmatprop.mu = ctx->matprop[ctx->layer[ek]].E * .5;
+          
+            ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&PCmatprop,&PCvfprop,ek,ej,ei,&ctx->e3D);
             break;
         }
         
@@ -2481,6 +2478,8 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
  */
 extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset)
 {
+  PetscErrorCode ierr;
+  
   PetscFunctionBegin;
   switch (preset) {
       /*

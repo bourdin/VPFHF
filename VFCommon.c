@@ -469,9 +469,11 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
   {
     vfprop->epsilon  = 2.e-1;
     vfprop->eta      = 1.e-5;
+    vfprop->PCeta    = 1.e-1;
     vfprop->irrevtol = 5e-2;
     ierr             = PetscOptionsReal("-epsilon","\n\tVariational fracture regularization length (start from 4x cell size)","",vfprop->epsilon,&vfprop->epsilon,PETSC_NULL);CHKERRQ(ierr);
     ierr             = PetscOptionsReal("-eta","\n\tArtificial stiffness of cracks ","",vfprop->eta,&vfprop->eta,PETSC_NULL);CHKERRQ(ierr);
+    ierr             = PetscOptionsReal("-PCeta","\n\tArtificial stiffness of cracks in preconditioner","",vfprop->PCeta,&vfprop->PCeta,PETSC_NULL);CHKERRQ(ierr);
     ierr             = PetscOptionsReal("-irrevtol","\n\tThreshold on v below which fracture irreversibility is enforced","",vfprop->irrevtol,&vfprop->irrevtol,PETSC_NULL);CHKERRQ(ierr);
     vfprop->permmax  = 5.;
     ierr             = PetscOptionsReal("-permmax","\n\tPermeability multiplier of cracks (achieved at  v=0.)","",vfprop->permmax,&vfprop->permmax,PETSC_NULL);CHKERRQ(ierr);
