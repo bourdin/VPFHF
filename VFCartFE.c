@@ -1134,12 +1134,12 @@ extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,BC *BC)
 */
 extern PetscErrorCode DAReadCoordinatesHDF5(DM da,const char filename[])
 {
+#ifdef PETSC_HAVE_HDF5
   PetscErrorCode ierr;
   Vec            Coords;
   PetscViewer    HDF5Viewer;
   
   PetscFunctionBegin;
-#ifdef PETSC_HAVE_HDF5
   ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_READ,&HDF5Viewer);
   ierr = DMGetGlobalVector(da,&Coords);CHKERRQ(ierr);
   ierr = VecLoad(Coords,HDF5Viewer);CHKERRQ(ierr);

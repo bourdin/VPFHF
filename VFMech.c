@@ -988,7 +988,6 @@ extern PetscErrorCode VF_ResidualUCrackPressure3D_local(PetscReal *residual_loca
  */
 extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_local,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element3D *e)
 {
-  PetscErrorCode ierr;
   PetscInt       i,j,k,l,c,g;
   PetscReal *mem = malloc(3*e->ng*sizeof(PetscReal));
   PetscReal (*f_elem)[e->ng] = (PetscReal (*)[e->ng])mem;
