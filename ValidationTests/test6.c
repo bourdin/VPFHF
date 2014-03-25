@@ -31,7 +31,7 @@ mpiexec -n 4 ./test6 -n 101,2,101 -l 1,.1,1 -E 1 -nu 0 -U_snes_monitor -orientat
 #include "VFCommon.h"
 #include "VFMech.h"
 #include "VFFlow.h"
-#include "VFPermField.h"
+#include "VFPermfield.h"
 
 
 #undef __FUNCT__
