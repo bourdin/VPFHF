@@ -48,32 +48,33 @@ VFFields            fields;
 int main(int argc,char **argv)
 {	
 	PetscErrorCode  ierr;
-	PetscViewer		viewer;
+	PetscViewer     viewer;
 	PetscViewer     logviewer;
-	char			filename[FILENAME_MAX];
-	PetscInt		i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm,ite;
-	PetscReal		BBmin[3],BBmax[3];
-	PetscReal		****velbc_array;
-	PetscReal		***src_array;
-	PetscReal		****coords_array;
-	PetscReal		hx,hy,hz;
-	PetscReal		lx,ly,lz;
-  PetscReal		***presbc_array;
-  PetscReal    perm = 1;
-  PetscReal   ****perm_array;
-  PetscInt    xs1,xm1,ys1,ym1,zs1,zm1;
-  PetscReal  tolP = 7e-2,tolV = 7e-2;
-  PetscInt    num = 10;
-  PetscReal      errP=1e+10,errV=1e+10;
-  Vec         Pold, Vold;
-  PetscReal  pmax,vmax;
-  PetscReal   InjVolrate, Q_inj;
-  PetscReal  TotalLeakOff_o = 0;
-  PetscReal  timevalue_o = 0;
-  PetscReal  crackvolume_o = 0;
-  PetscReal   vol,vol1,vol2,vol3,vol4,vol5;
-  PetscReal   p = 1e-6,p_old;
-  PetscInt    altminit = 0;
+	char            filename[FILENAME_MAX];
+  PetscInt        mode=0;
+	PetscInt        i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm,ite;
+	PetscReal       BBmin[3],BBmax[3];
+	PetscReal       ****velbc_array;
+	PetscReal       ***src_array;
+	PetscReal       ****coords_array;
+	PetscReal       hx,hy,hz;
+	PetscReal       lx,ly,lz;
+  PetscReal       ***presbc_array;
+  PetscReal       perm = 1;
+  PetscReal       ****perm_array;
+  PetscInt        xs1,xm1,ys1,ym1,zs1,zm1;
+  PetscReal       tolP = 1e-5,tolV = 1e-5;
+  PetscInt        num = 10;
+  PetscReal       errP=1e+10,errV=1e+10;
+  Vec             Pold, Vold;
+  PetscReal       pmax,vmax;
+  PetscReal       InjVolrate, Q_inj;
+  PetscReal       TotalLeakOff_o = 0;
+  PetscReal       timevalue_o = 0;
+  PetscReal       crackvolume_o = 0;
+  PetscReal       vol,vol1,vol2,vol3,vol4,vol5;
+  PetscReal       p = 1e-6,p_old;
+  PetscInt        altminit = 0;
 
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -96,7 +97,7 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);
-  
+  ierr = PetscOptionsGetInt(PETSC_NULL,"-mode",&mode,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-perm",&perm,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-miu",&ctx.flowprop.mu,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
@@ -190,25 +191,36 @@ int main(int argc,char **argv)
 			ctx.bcU[j].vertex[i] = NONE;
 		}
 	}
-  ctx.bcU[0].face[X0]= ZERO;
-  ctx.bcU[1].face[X0]= ZERO;
-  ctx.bcU[2].face[X0]= ZERO;
   
-  ctx.bcU[0].face[X1]= ZERO;
-  ctx.bcU[1].face[X1]= ZERO;
-  ctx.bcU[2].face[X1]= ZERO;
-  
-  ctx.bcU[0].face[Z0]= ZERO;
-  ctx.bcU[1].face[Z0]= ZERO;
-  ctx.bcU[2].face[Z0]= ZERO;
-  
-  ctx.bcU[0].face[Z1]= ZERO;
-  ctx.bcU[1].face[Z1]= ZERO;
-  ctx.bcU[2].face[Z1]= ZERO;
-  
-  ctx.bcU[1].face[Y0]= ZERO;
-  ctx.bcU[1].face[Y1]= ZERO;
-  
+  switch (mode) {
+    case 0:
+      ctx.bcU[0].face[X0]= ZERO;
+      ctx.bcU[1].face[X0]= ZERO;
+      ctx.bcU[2].face[X0]= ZERO;
+      
+      ctx.bcU[0].face[X1]= ZERO;
+      ctx.bcU[1].face[X1]= ZERO;
+      ctx.bcU[2].face[X1]= ZERO;
+      
+      ctx.bcU[0].face[Z0]= ZERO;
+      ctx.bcU[1].face[Z0]= ZERO;
+      ctx.bcU[2].face[Z0]= ZERO;
+      
+      ctx.bcU[0].face[Z1]= ZERO;
+      ctx.bcU[1].face[Z1]= ZERO;
+      ctx.bcU[2].face[Z1]= ZERO;
+      
+      ctx.bcU[1].face[Y0]= ZERO;
+      ctx.bcU[1].face[Y1]= ZERO;
+      break;
+    case 1:
+      ctx.bcU[1].face[Y0]= ZERO;
+      ctx.bcU[1].face[Y1]= ZERO;
+      break;
+    default:
+      SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: mode should be one of {0,1}, got %i\n",mode);
+      break;
+  }
   ctx.bcV[0].face[X0] = ONE;
   ctx.bcV[0].face[X1] = ONE;
   ctx.bcV[0].face[Z0] = ONE;
@@ -295,7 +307,7 @@ int main(int argc,char **argv)
   ctx.timestep = 0;
   for(i = 1; i < num; i++){
     ite = 0;
-    ctx.timestep++;
+    ctx.timestep = i;
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nPROCESSING STEP %i. \t\t Iteration = %i \t vtkfiletime = %i\n",i, ite,ctx.timestep);CHKERRQ(ierr);
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
     ierr = VF_StepU(&fields,&ctx);
@@ -321,9 +333,12 @@ int main(int argc,char **argv)
 //      ierr = FieldsH5Write(&ctx,&fields);
 //      ctx.flowprop.timestepsize = (ctx.CrackVolume-crackvolume_o)/(Q_inj-ctx.LeakOffRate);
       ierr = VecAXPY(Pold,-1.,fields.pressure);CHKERRQ(ierr);
-      ierr = VecNorm(Pold,NORM_1,&errP);CHKERRQ(ierr);
+      ierr = VecNorm(Pold,NORM_INFINITY,&errP);CHKERRQ(ierr);
+
       ierr = VecMax(fields.pressure,PETSC_NULL,&pmax);CHKERRQ(ierr);
-      errP = errP/pmax;
+      ierr = PetscPrintf(PETSC_COMM_WORLD," Pressure norm = %e, max pressure = %e\n", errP,pmax);CHKERRQ(ierr);
+
+//      errP = errP/(nx*ny*nz*pmax);
       ierr = PetscPrintf(PETSC_COMM_WORLD," crack volume =  %e \n vol. leak-off rate =  %e \n errP = %e \n InjVol = %e\n",ctx.CrackVolume,ctx.LeakOffRate, errP,Q_inj);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD," Pressure errP = %e\n", errP);CHKERRQ(ierr);
 
@@ -332,9 +347,9 @@ int main(int argc,char **argv)
       ierr = VF_StepV(&fields,&ctx);
 //      ierr = FieldsH5Write(&ctx,&fields);
       ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
-      ierr = VecNorm(Vold,NORM_1,&errV);CHKERRQ(ierr);
+      ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
       ierr = VecMax(fields.V,PETSC_NULL,&vmax);CHKERRQ(ierr);
-      errV = errV/vmax;
+//      errV = errV/(nx*ny*nz*vmax);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n.........V STEP ERROR = %e\n\n", errV);CHKERRQ(ierr);
     }
     crackvolume_o = ctx.CrackVolume;
