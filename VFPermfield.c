@@ -74,6 +74,9 @@ extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx,
         
         
         ierr = VF_ComputeAverageVField_local(v_c_array, v_array, ek, ej, ei, &ctx->e3D);
+        if(v_c_array[ek][ej][ei] < 0.1){
+          v_c_array[ek][ej][ei] = 0;
+        }
 				ierr = VolumetricCrackOpening3D_local(&myCrackVolumeLocal, volcrackopening_array, u_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
         myCrackVolume += myCrackVolumeLocal;
 			}
@@ -115,14 +118,50 @@ extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx,
 	ierr = DMDAVecGetArray(ctx->daScalCell,pmult_local,&pmult_array);CHKERRQ(ierr);
   
   PetscInt    num_int_cell = 15;
+  PetscReal   v_value;
   for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
         pmult_array[ek][ej][ei] = 0;
         sumx = sumy = sumz = 0;
-        if(v_c_array[ek][ej][ei] < 0.1){
-          for(k = (-1*num_int_cell); k < num_int_cell+1; k++){
-            if(ek+k >= 0 && ek+k <= nz-1 && nz > 1){
+        if(v_c_array[ek][ej][ei] == 0.){
+          
+          
+          hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+          hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+          hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+          ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+          ierr = VF_ComputeAverageGradient(&gradz,2,v_array,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
+          sumz += volcrackopening_array[ek][ej][ei]*gradz;
+          ierr = VF_ComputeAverageGradient(&grady,1,v_array,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
+          sumy += volcrackopening_array[ek][ej][ei]*grady;
+          ierr = VF_ComputeAverageGradient(&gradx,0,v_array,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
+          sumx += volcrackopening_array[ek][ej][ei]*gradx;
+          
+          
+          
+          v_value = v_c_array[ek][ej][ei];
+          
+          for(k = 1; k < num_int_cell+1; k++){
+            if(ek+k <= nz-1 && nz > 1){
+/*              if(v_c_array[ek+k][ej][ei] < v_value){
+                break;
+              }
+              else{*/
+                gradz = 0;
+                hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+                hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+                hz = coords_array[ek+k+1][ej][ei][2]-coords_array[ek+k][ej][ei][2];
+                ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+                ierr = VF_ComputeAverageGradient(&gradz,2,v_array,ek+k,ej,ei,&ctx->e3D);CHKERRQ(ierr);
+                sumz += volcrackopening_array[ek+k][ej][ei]*gradz;
+//              }
+            }
+            v_value = v_c_array[ek+k][ej][ei];
+          }
+          v_value = v_c_array[ek][ej][ei];
+          for(k = -1; k > -1*(num_int_cell+1); k--){
+            if(ek+k >= 0 && nz > 1){
               gradz = 0;
               hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
               hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
@@ -132,8 +171,9 @@ extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx,
               sumz += volcrackopening_array[ek+k][ej][ei]*gradz;
             }
           }
-          for(j = (-1*num_int_cell); j < num_int_cell+1; j++){
-            if(ej+j >= 0 && ej+j <= ny-1 && ny > 1){
+          v_value = v_c_array[ek][ej][ei];
+          for(j = 1; j < num_int_cell+1; j++){
+            if(ej+j <= ny-1 && ny > 1){
               grady = 0;
               hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
               hy = coords_array[ek][ej+j+1][ei][1]-coords_array[ek][ej+j][ei][1];
@@ -143,16 +183,53 @@ extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx,
               sumy += volcrackopening_array[ek][ej+j][ei]*grady;
             }
           }
-          for(i = (-1*num_int_cell); i < num_int_cell+1; i++){
-            if(ei+i >= 0 && ei+i <= nx-1 && nx > 1){
-              gradx = 0;
-              hx = coords_array[ek][ej][ei+i+1][0]-coords_array[ek][ej][ei+i][0];
-              hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+          v_value = v_c_array[ek][ej][ei];
+          for(j = -1; j > -1*(num_int_cell+1); j--){
+            if(ej+j >= 0 && ny > 1){
+              grady = 0;
+              hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+              hy = coords_array[ek][ej+j+1][ei][1]-coords_array[ek][ej+j][ei][1];
               hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
               ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-              ierr = VF_ComputeAverageGradient(&gradx,0,v_array,ek,ej,ei+i,&ctx->e3D);CHKERRQ(ierr);
-              sumx += volcrackopening_array[ek][ej][ei+i]*gradx;
+              ierr = VF_ComputeAverageGradient(&grady,1,v_array,ek,ej+j,ei,&ctx->e3D);CHKERRQ(ierr);
+              sumy += volcrackopening_array[ek][ej+j][ei]*grady;
             }
+          }
+          v_value = v_c_array[ek][ej][ei];
+          for(i = 1; i < num_int_cell+1; i++){
+            if(ei+i <= nx-1 && nx > 1){
+              if(v_c_array[ek][ej][ei+i] < v_value){
+                break;
+               }
+              else{
+                gradx = 0;
+                hx = coords_array[ek][ej][ei+i+1][0]-coords_array[ek][ej][ei+i][0];
+                hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+                hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+                ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+                ierr = VF_ComputeAverageGradient(&gradx,0,v_array,ek,ej,ei+i,&ctx->e3D);CHKERRQ(ierr);
+                sumx += volcrackopening_array[ek][ej][ei+i]*gradx;
+              }
+            }
+            v_value = v_c_array[ek][ej][ei+i];
+          }
+          v_value = v_c_array[ek][ej][ei];
+          for(i = -1; i > -1*(num_int_cell+1); i--){
+            if(ei+i >= 0 && nx > 1){
+              if(v_c_array[ek][ej][ei+i] < v_value){
+                break;
+              }
+              else{
+                gradx = 0;
+                hx = coords_array[ek][ej][ei+i+1][0]-coords_array[ek][ej][ei+i][0];
+                hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+                hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+                ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+                ierr = VF_ComputeAverageGradient(&gradx,0,v_array,ek,ej,ei+i,&ctx->e3D);CHKERRQ(ierr);
+                sumx += volcrackopening_array[ek][ej][ei+i]*gradx;
+              }
+            }
+            v_value = v_c_array[ek][ej][ei+i];
           }
         }
         if((sumz >= sumx) && (sumz >= sumy)){
@@ -186,7 +263,10 @@ extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx,
 	ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);  
   ierr = VecSet(fields->VolCrackOpening,0.);CHKERRQ(ierr);
 	ierr = CellToNodeInterpolation(fields->VolCrackOpening,CellVolCrackOpening,ctx); CHKERRQ(ierr);
+//  ierr = VecCopy(CellVolCrackOpening,fields->pmult);CHKERRQ(ierr);
   ierr = VecDestroy(&CellVolCrackOpening);CHKERRQ(ierr);
+
+  
 
 	PetscFunctionReturn(0);
 }
@@ -318,9 +398,7 @@ extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal *CrackVolume_loca
 #define __FUNCT__ "VF_ComputeAverageVField_local"
 extern PetscErrorCode VF_ComputeAverageVField_local(PetscReal ***v_c_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
 {
-	PetscErrorCode ierr;
 	PetscInt		i, j, k;
-	PetscInt		eg;
   
 	PetscFunctionBegin;
   v_c_array[ek][ej][ei] = 0;
@@ -2112,8 +2190,6 @@ extern PetscErrorCode VolumetricFractureWellRate(PetscReal *InjectedVolume, VFCt
 
 	PetscFunctionReturn(0);
 }
-
-
 
 #undef __FUNCT__
 #define __FUNCT__ "VolumetricFractureWellRate_local"
