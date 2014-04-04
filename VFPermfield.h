@@ -26,7 +26,10 @@ extern PetscErrorCode DivergenceVolume_local(PetscReal *DivVolume_local,PetscInt
 extern PetscErrorCode SurfaceFluxVolume_local(PetscReal *mysurfVolumeLocal,PetscInt ek, PetscInt ej, PetscInt ei, FACE face, CartFE_Element2D *e, PetscReal ****vel_array, PetscReal ***v_array);
 
 extern PetscErrorCode ModulusVolume_local(PetscReal *ModVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e, VFFlowProp flowpropty, PetscReal ***press_diff_array, PetscReal ***v_array);
-
-
+extern PetscErrorCode VF_ComputeAverageGradient(PetscReal *grad_array, PetscInt dof, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e);
+extern PetscErrorCode VF_ComputeAverageVField_local(PetscReal ***v_c_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e);
+extern PetscErrorCode VolumetricStrainVolume_local(PetscReal *VolStrainVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e, VFFlowProp flowpropty, PetscReal ****u_diff_array, PetscReal ***v_array);
+extern PetscErrorCode VolumetricFractureWellRate_local(PetscReal *InjVolume_local, PetscReal ***regrate_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e);
+extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FACE face, VFCtx *ctx);
 
 #endif 

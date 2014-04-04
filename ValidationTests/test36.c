@@ -6,6 +6,8 @@
  
  
  ./test36 -n 51,2,51 -l 1,0.01,1 -m_inv 0 -E 17 -0 -nu 0.2 -npc 1 -pc0_r 0.1 -pc0_center 0.5,0.005,0.5 -epsilon 0.02 -pc0_theta 0 -pc0_phi 30 -pc0_thickness 0.04 -atnum 2 -flowsolver FLOWSOLVER_snesmixeDFEM -perm 1e-14 -miu 1e-13 -num 2 -timestepsize 0.1  -Gc 5e6 -permmax 1e-12
+ 
+ ./test36 -n 101,2,101 -l 1,0.01,1 -m_inv 0 -E 17 -0 -nu 0.2 -npc 1 -pc0_r 0.1 -pc0_center 0.5,0.005,0.5 -epsilon 0.04 -pc0_theta 0 -pc0_phi 0 -pc0_thickness 0.02 -atnum 2 -flowsolver FLOWSOLVER_snesmixeDFEM -perm 1e-14 -miu 1e-13 -num 2 -timestepsize 0.1  -Gc 5e6 -permmax 1e-12
  */
 
 #include "petsc.h"
@@ -51,7 +53,6 @@ int main(int argc,char **argv)
   PetscReal   p = 1e-6,p_old;
   PetscInt    altminit = 0;
 
-		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
 	ctx.flowsolver = FLOWSOLVER_KSPMIXEDFEM;
@@ -68,7 +69,10 @@ int main(int argc,char **argv)
   ierr = VecDuplicate(fields.pressure,&Pold);CHKERRQ(ierr);
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
 
-	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
+  
+//  ctx.fileformat = FILEFORMAT_VTK;
+
+	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);
@@ -222,18 +226,17 @@ int main(int argc,char **argv)
   ierr = VecSet(ctx.pressure_old,0.);CHKERRQ(ierr);
   ierr = VecSet(ctx.RHSPpre,0.);CHKERRQ(ierr);
   
-
   ctx.timestep = 0;
   
   ierr = VecSet(fields.pressure,5e-2);CHKERRQ(ierr);
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
   ierr = FieldsH5Write(&ctx,&fields);
 
-
   ctx.timestep++;
 //  ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
   ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsH5Write(&ctx,&fields);
+//  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);
 
   
   
@@ -254,7 +257,7 @@ int main(int argc,char **argv)
   ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
   ctx.timestep++;
   ierr = FieldsH5Write(&ctx,&fields);
-
+//  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);
   
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
