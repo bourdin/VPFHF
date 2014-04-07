@@ -12,7 +12,7 @@
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
 
-extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
+extern PetscErrorCode BCUInit(VFBC *BC,VFPreset preset)
 {
   PetscErrorCode  ierr;
   PetscInt        c,loc;
@@ -28,7 +28,7 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
     for (c= 0; c < 3; c++)
       BC[c].vertex[loc] = NONE;
   switch (preset) {
-    case SYMXY:
+    case VFPRESET_SYMXY:
       /*
        blocking vertical displacement on the plane z=z_min,
        + symmetry with respect to the x= 0 and y= 0 planes
@@ -37,7 +37,7 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       BC[1].face[Y0] = ZERO;
       BC[2].face[Z1] = ZERO;
       break;
-    case SYMX:
+    case VFPRESET_SYMX:
       /*
        blocking vertical displacement on the plane z=z_max,
        + symmetry with respect to the x= 0 plane
@@ -46,7 +46,7 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       BC[1].vertex[X0Y0Z1] = ZERO;
       BC[2].face[Z1]       = ZERO;
       break;
-    case SYMY:
+    case VFPRESET_SYMY:
       /*
        blocking vertical displacement on the plane z=z_max,
        + symmetry with respect to the y= 0 plane
@@ -55,7 +55,7 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       BC[1].face[Y0]       = ZERO;
       BC[2].face[Z1]       = ZERO;
       break;
-    case NOSYM:
+    case VFPRESET_NOSYM:
       /*
        blocking vertical displacement on the plane z=z_max,
        + rigid motions
@@ -65,8 +65,8 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
       BC[1].vertex[X1Y0Z1] = ZERO;
       BC[2].face[Z1]       = ZERO;
       break;
-    case TEST_MANUAL:
-      ierr = BCGet(BC,"U",3);
+    case VFPRESET_NONE:
+      ierr = VFBCSetFromOptions(BC,"U",3);
       break;
     default:
       SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
@@ -84,13 +84,13 @@ extern PetscErrorCode BCUInit(BC *BC,VFPreset preset)
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
+extern PetscErrorCode BCUUpdate(VFBC *BC,VFPreset preset)
 {
   PetscInt c;
   
   PetscFunctionBegin;
   switch (preset) {
-    case SYMXY:
+    case VFPRESET_SYMXY:
       /*
        symmetry with respect to the x= 0 and y= 0 planes, all other faces from data dile
        */
@@ -101,7 +101,7 @@ extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
       BC[0].face[Z0] = FIXED;   BC[1].face[Z0] = FIXED;   BC[2].face[Z0] = FIXED;
       BC[0].face[Z1] = FIXED;   BC[1].face[Z1] = FIXED;   BC[2].face[Z1] = FIXED;
       break;
-    case SYMX:
+    case VFPRESET_SYMX:
       /*
        symmetry with respect to the x= 0 plane, all other faces from data dile
        */
@@ -112,7 +112,7 @@ extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
       BC[0].face[Z0] = FIXED;   BC[1].face[Z0] = FIXED;   BC[2].face[Z0] = FIXED;
       BC[0].face[Z1] = FIXED;   BC[1].face[Z1] = FIXED;   BC[2].face[Z1] = FIXED;
       break;
-    case SYMY:
+    case VFPRESET_SYMY:
       /*
        symmetry with respect to the x= 0 plane, all other faces from data dile
        */
@@ -123,7 +123,7 @@ extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
       BC[0].face[Z0] = FIXED;   BC[1].face[Z0] = FIXED;   BC[2].face[Z0] = FIXED;
       BC[0].face[Z1] = FIXED;   BC[1].face[Z1] = FIXED;   BC[2].face[Z1] = FIXED;
       break;
-    case NOSYM:
+    case VFPRESET_NOSYM:
       /*
        Reading all boundary displacements from file
        */
@@ -136,7 +136,7 @@ extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
         BC[c].face[Z1] = FIXED;
       }
       break;
-    case TEST_MANUAL:
+    case VFPRESET_NONE:
       break;
     default:
       SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
@@ -165,7 +165,7 @@ extern PetscErrorCode BCUUpdate(BC *BC,VFPreset preset)
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensity_local,PetscReal ****u_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensity_local,PetscReal ****u_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscReal      *epsilon11_elem,*epsilon22_elem,*epsilon33_elem,*epsilon12_elem,*epsilon23_elem,*epsilon13_elem;
@@ -258,7 +258,7 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
  Compute the spherical and deviatoric parts of the elastic energy density in an element
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal *ElasticEnergyDensityS_local,PetscReal *ElasticEnergyDensityD_local,PetscReal ****u_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal *ElasticEnergyDensityS_local,PetscReal *ElasticEnergyDensityD_local,PetscReal ****u_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscReal      *epsilon11_elem,*epsilon22_elem,*epsilon33_elem,*epsilon12_elem,*epsilon23_elem,*epsilon13_elem;
@@ -357,7 +357,7 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal 
  Compute the spherical and positive deviatoric parts of the elastic energy density in an element
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_local(PetscReal *ElasticEnergyDensityS_local,PetscReal *ElasticEnergyDensityD_local,PetscReal ****u_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_local(PetscReal *ElasticEnergyDensityS_local,PetscReal *ElasticEnergyDensityD_local,PetscReal ****u_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscReal      *epsilon11_elem,*epsilon22_elem,*epsilon33_elem,*epsilon12_elem,*epsilon23_elem,*epsilon13_elem;
@@ -462,7 +462,7 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_loc
  
  (c) 2010-2014 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_BilinearFormU3D_local(PetscReal *Mat_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_BilinearFormU3D_local(PetscReal *Mat_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,c1,c2,l;
   PetscReal      *s_elem;
@@ -534,7 +534,7 @@ extern PetscErrorCode VF_BilinearFormU3D_local(PetscReal *Mat_local,PetscReal **
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_BilinearFormUShearOnly3D_local(PetscReal *Mat_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_BilinearFormUShearOnly3D_local(PetscReal *Mat_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,c1,c2,l;
   PetscReal      *s_elem;
@@ -610,7 +610,7 @@ extern PetscErrorCode VF_BilinearFormUShearOnly3D_local(PetscReal *Mat_local,Pet
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local,PetscReal ****u_array,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local,PetscReal ****u_array,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,c1,c2,l;
   PetscReal      kappa;
@@ -697,7 +697,7 @@ extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ResidualUThermoPoro3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_ResidualUThermoPoro3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
@@ -770,7 +770,7 @@ extern PetscErrorCode VF_ResidualUThermoPoro3D_local(PetscReal *residual_local,P
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ResidualUThermoPoroShearOnly3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_ResidualUThermoPoroShearOnly3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
@@ -837,7 +837,7 @@ extern PetscErrorCode VF_ResidualUThermoPoroShearOnly3D_local(PetscReal *residua
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *residual_local,PetscReal ****u_array,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *residual_local,PetscReal ****u_array,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
@@ -920,7 +920,7 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ResidualUCrackPressure3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_ResidualUCrackPressure3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
@@ -986,7 +986,7 @@ extern PetscErrorCode VF_ResidualUCrackPressure3D_local(PetscReal *residual_loca
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_local,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element3D *e)
+extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_local,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,VFCartFEElement3D *e)
 {
   PetscInt       i,j,k,l,c,g;
   PetscReal *mem = malloc(3*e->ng*sizeof(PetscReal));
@@ -1112,7 +1112,7 @@ extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_loc
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,PetscReal ****u_array,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,PetscReal ****u_array,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscInt       g,i,j,k;
   PetscReal      *epsilon11_elem,*epsilon22_elem,*epsilon33_elem,*epsilon12_elem,*epsilon23_elem,*epsilon13_elem;
@@ -1213,7 +1213,7 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,PetscReal ****u_array,PetscReal ***v_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,PetscReal ****u_array,PetscReal ***v_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,g,c;
@@ -1277,7 +1277,7 @@ extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,Pets
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscReal ****u_array,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element3D *e)
+extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscReal ****u_array,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,c,g;
@@ -1505,7 +1505,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         /*
          Elastic Energy is trivial
          */
@@ -1805,14 +1805,14 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
   ierr           = BCUUpdate(&ctx->bcU[0],ctx->preset);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCU: after update\n");CHKERRQ(ierr);
-    ierr = BCView(&ctx->bcU[0],PETSC_VIEWER_STDOUT_WORLD,3);CHKERRQ(ierr);
+    ierr = VFBCView(&ctx->bcU[0],PETSC_VIEWER_STDOUT_WORLD,3);CHKERRQ(ierr);
   }
   
   
   ierr = BCVUpdate(&ctx->bcV[0],ctx->preset);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCV: after update\n");CHKERRQ(ierr);
-    ierr = BCView(&ctx->bcV[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
+    ierr = VFBCView(&ctx->bcV[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -1928,7 +1928,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         /*
           Compute and accumulate the local contribution of the bilinear form
         */
@@ -2338,7 +2338,7 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         /*
          Compute and accumulate the contribution of the local stiffness matrix to the global stiffness matrix
          */
@@ -2355,19 +2355,12 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                                          ek,ej,ei,&ctx->e3D);
-            /* 
-              Set eta = etaPC for the preconditioner
-            */
-            ierr = PetscMemcpy(&PCvfprop,&ctx->vfprop,sizeof(VFProp));CHKERRQ(ierr);
-            PCvfprop.eta = PCvfprop.PCeta;
-            ierr = PetscMemcpy(&PCmatprop,&ctx->matprop[ctx->layer[ek]],sizeof(VFProp));CHKERRQ(ierr);
-
-            /*
-            PCmatprop.nu = 0.;
-            PCmatprop.lambda = 0.;
-            PCmatprop.mu = ctx->matprop[ctx->layer[ek]].E * .5;
-            */            
-            ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&PCmatprop,&PCvfprop,ek,ej,ei,&ctx->e3D);
+            if ( PCvfprop.eta != PCvfprop.PCeta) {
+              PCvfprop.eta = PCvfprop.PCeta;
+              ierr = PetscMemcpy(&PCvfprop,&ctx->vfprop,sizeof(VFProp));CHKERRQ(ierr);
+              ierr = PetscMemcpy(&PCmatprop,&ctx->matprop[ctx->layer[ek]],sizeof(VFProp));CHKERRQ(ierr);
+              ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&PCmatprop,&PCvfprop,ek,ej,ei,&ctx->e3D);
+            }
             break;
         }
         
@@ -2381,8 +2374,8 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
           }
         }
         ierr = MatSetValuesStencil(*K,nrow,row,nrow,row,bilinearForm_local,ADD_VALUES);CHKERRQ(ierr);
-        if (ctx->unilateral == UNILATERAL_NOCOMPRESSION) {
-          ierr = MatSetValuesStencil(*KPC,nrow,row,nrow,row,bilinearFormPC_local,ADD_VALUES);CHKERRQ(ierr);
+        if (ctx->unilateral == UNILATERAL_NOCOMPRESSION && PCvfprop.eta != PCvfprop.PCeta) {
+            ierr = MatSetValuesStencil(*KPC,nrow,row,nrow,row,bilinearFormPC_local,ADD_VALUES);CHKERRQ(ierr);          
         } else {
           ierr = MatSetValuesStencil(*KPC,nrow,row,nrow,row,bilinearForm_local,ADD_VALUES);CHKERRQ(ierr);
         }         
@@ -2443,24 +2436,24 @@ extern PetscErrorCode VF_USNESMonitor(SNES snes,PetscInt U_its,PetscReal fnorm,v
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
+extern PetscErrorCode BCVInit(VFBC *BC,VFPreset preset)
 {
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
-  ierr = BCInit(BC,1);CHKERRQ(ierr);
+  ierr = VFBCCreate(BC,1);CHKERRQ(ierr);
   switch (preset) {
       /*
        Preventing fracture through the lower, upper, and non-symmetry planes, when BC are imposed
        */
-    case SYMXY:
-    case SYMX:
-    case SYMY:
-    case NOSYM:
+    case VFPRESET_SYMXY:
+    case VFPRESET_SYMX:
+    case VFPRESET_SYMY:
+    case VFPRESET_NOSYM:
       BC[0].face[Z1] = ONE;
       break;
-    case TEST_MANUAL:
-      ierr = BCGet(BC,"V",1);
+    case VFPRESET_NONE:
+      ierr = VFBCSetFromOptions(BC,"V",1);
       break;
     default:
       SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
@@ -2476,33 +2469,33 @@ extern PetscErrorCode BCVInit(BC *BC,VFPreset preset)
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset)
+extern PetscErrorCode BCVUpdate(VFBC *BC,VFPreset preset)
 {
   PetscFunctionBegin;
   switch (preset) {
       /*
        Preventing fracture through the lower, upper, and non-symmetry planes, when BC are imposed
        */
-    case SYMXY:
+    case VFPRESET_SYMXY:
       BC[0].face[X1] = ONE;
       BC[0].face[Y1] = ONE;
       BC[0].face[Z0] = ONE;
       BC[0].face[Z1] = ONE;
       break;
-    case SYMX:
+    case VFPRESET_SYMX:
       BC[0].face[X1] = ONE;
       BC[0].face[Y0] = ONE;
       BC[0].face[Y1] = ONE;
       BC[0].face[Z0] = ONE;
       BC[0].face[Z1] = ONE;
       break;
-    case SYMY:
+    case VFPRESET_SYMY:
       BC[0].face[X0] = ONE;
       BC[0].face[Y0] = ONE;
       BC[0].face[Z0] = ONE;
       BC[0].face[Z1] = ONE;
       break;
-    case NOSYM:
+    case VFPRESET_NOSYM:
       BC[0].face[X0] = ONE;
       BC[0].face[X1] = ONE;
       BC[0].face[Y0] = ONE;
@@ -2510,7 +2503,7 @@ extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset)
       BC[0].face[Z0] = ONE;
       BC[0].face[Z1] = ONE;
       break;
-    case TEST_MANUAL:
+    case VFPRESET_NONE:
       break;
     default:
       SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
@@ -2526,7 +2519,7 @@ extern PetscErrorCode BCVUpdate(BC *BC,VFPreset preset)
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_BilinearFormVAT23D_local(PetscReal *Mat_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e,PetscReal Gc)
+extern PetscErrorCode VF_BilinearFormVAT23D_local(PetscReal *Mat_local,VFMatProp *matprop,VFProp *vfprop,VFCartFEElement3D *e,PetscReal Gc)
 {
   PetscInt  g,i1,i2,j1,j2,k1,k2,l;
   PetscReal coef = Gc / vfprop->atCv * .5;
@@ -2553,7 +2546,7 @@ extern PetscErrorCode VF_BilinearFormVAT23D_local(PetscReal *Mat_local,VFMatProp
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_BilinearFormVAT13D_local(PetscReal *Mat_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e,PetscReal Gc)
+extern PetscErrorCode VF_BilinearFormVAT13D_local(PetscReal *Mat_local,VFMatProp *matprop,VFProp *vfprop,VFCartFEElement3D *e,PetscReal Gc)
 {
   PetscInt  g,i1,i2,j1,j2,k1,k2,l;
   PetscReal coef = Gc / vfprop->atCv * .5;
@@ -2579,7 +2572,7 @@ extern PetscErrorCode VF_BilinearFormVAT13D_local(PetscReal *Mat_local,VFMatProp
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_BilinearFormVCoupling3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_BilinearFormVCoupling3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
@@ -2613,7 +2606,7 @@ extern PetscErrorCode VF_BilinearFormVCoupling3D_local(PetscReal *Mat_local,Pets
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_BilinearFormVCouplingShearOnly3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_BilinearFormVCouplingShearOnly3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
@@ -2653,7 +2646,7 @@ extern PetscErrorCode VF_BilinearFormVCouplingShearOnly3D_local(PetscReal *Mat_l
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_BilinearFormVCouplingNoCompression3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_BilinearFormVCouplingNoCompression3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
@@ -2693,7 +2686,7 @@ extern PetscErrorCode VF_BilinearFormVCouplingNoCompression3D_local(PetscReal *M
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ResidualVCrackPressure3D_local(PetscReal *residual_local,PetscReal ****u_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VF_ResidualVCrackPressure3D_local(PetscReal *residual_local,PetscReal ****u_array,PetscReal ***pressure_array,PetscReal ***pressureRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
@@ -2750,7 +2743,7 @@ extern PetscErrorCode VF_ResidualVCrackPressure3D_local(PetscReal *residual_loca
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ResidualVAT23D_local(PetscReal *residual_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e, PetscReal Gc)
+extern PetscErrorCode VF_ResidualVAT23D_local(PetscReal *residual_local,VFMatProp *matprop,VFProp *vfprop,VFCartFEElement3D *e, PetscReal Gc)
 {
   PetscInt  g,i,j,k,l;
   PetscReal coef = Gc / vfprop->atCv / vfprop->epsilon *.5;
@@ -2772,7 +2765,7 @@ extern PetscErrorCode VF_ResidualVAT23D_local(PetscReal *residual_local,VFMatPro
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ResidualVAT13D_local(PetscReal *residual_local,VFMatProp *matprop,VFProp *vfprop,CartFE_Element3D *e, PetscReal Gc)
+extern PetscErrorCode VF_ResidualVAT13D_local(PetscReal *residual_local,VFMatProp *matprop,VFProp *vfprop,VFCartFEElement3D *e, PetscReal Gc)
 {
   PetscInt  g,i,j,k,l;
   PetscReal coef = Gc / vfprop->atCv / vfprop->epsilon *.25;
@@ -2794,7 +2787,7 @@ extern PetscErrorCode VF_ResidualVAT13D_local(PetscReal *residual_local,VFMatPro
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_AT2SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e,PetscReal Gc)
+extern PetscErrorCode VF_AT2SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e,PetscReal Gc)
 {
   PetscInt       g,i,j,k;
   PetscReal      *v_elem,*gradv_elem[3];
@@ -2834,7 +2827,7 @@ extern PetscErrorCode VF_AT2SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_AT1SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e,PetscReal Gc)
+extern PetscErrorCode VF_AT1SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e,PetscReal Gc)
 {
   PetscInt       g,i,j,k;
   PetscReal      *v_elem,*gradv_elem[3];
@@ -2914,7 +2907,7 @@ extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFC
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         switch (ctx->vfprop.atnum ) {
           case 1:
             ierr = VF_AT1SurfaceEnergy3D_local(&mySurfaceEnergy,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
@@ -3195,7 +3188,7 @@ extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         /*
          Accumulate stiffness matrix
          */
@@ -3401,7 +3394,7 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         /*
          Accumulate stiffness matrix
          */

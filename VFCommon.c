@@ -53,6 +53,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   if (ctx->printhelp) PetscFunctionReturn(0);
 
   ierr = VFFieldsInitialize(ctx,fields);CHKERRQ(ierr);
+  ierr = VFBCCreate(ctx->bcU,3);CHKERRQ(ierr);
   ierr = VFBCInitialize(ctx);CHKERRQ(ierr);
   ierr = VFSolversInitialize(ctx);CHKERRQ(ierr);
 
@@ -168,7 +169,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr            = PetscOptionsReal("-altmintol","\n\tTolerance for alternate minimizations algorithm","",ctx->altmintol,&ctx->altmintol,PETSC_NULL);CHKERRQ(ierr);
     ctx->altminmaxit= 10000;
     ierr            = PetscOptionsInt("-altminmaxit","\n\tMaximum number of alternate minimizations iterations","",ctx->altminmaxit,&ctx->altminmaxit,PETSC_NULL);CHKERRQ(ierr);
-    ctx->preset     = SYMXY;
+    ctx->preset     = VFPRESET_NONE;
     ierr            = PetscOptionsEnum("-preset","\n\tPreset simulation type","",VFPresetName,(PetscEnum)ctx->preset,(PetscEnum*)&ctx->preset,PETSC_NULL);CHKERRQ(ierr);
     ctx->unilateral = UNILATERAL_NONE;
     ierr            = PetscOptionsEnum("-unilateral","\n\tType of unilateral conditions","",VFUnilateralName,(PetscEnum)ctx->unilateral,(PetscEnum*)&ctx->unilateral,PETSC_NULL);CHKERRQ(ierr);
@@ -361,8 +362,8 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
    */
 
 
-  ierr = CartFE_Init();CHKERRQ(ierr);
-  ierr = CartFE_Element3DCreate(&ctx->e3D);CHKERRQ(ierr);
+  ierr = VFCartFEInit();CHKERRQ(ierr);
+  ierr = VFCartFEElement3DCreate(&ctx->e3D);CHKERRQ(ierr);
   /*
    Constructs coordinates Vec
   */
@@ -469,7 +470,7 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
   {
     vfprop->epsilon  = 2.e-1;
     vfprop->eta      = 1.e-5;
-    vfprop->PCeta    = 1.e-1;
+    vfprop->PCeta    = vfprop->eta;
     vfprop->irrevtol = 5e-2;
     ierr             = PetscOptionsReal("-epsilon","\n\tVariational fracture regularization length (start from 4x cell size)","",vfprop->epsilon,&vfprop->epsilon,PETSC_NULL);CHKERRQ(ierr);
     ierr             = PetscOptionsReal("-eta","\n\tArtificial stiffness of cracks ","",vfprop->eta,&vfprop->eta,PETSC_NULL);CHKERRQ(ierr);
@@ -644,7 +645,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr              = VecSet(fields->U,0.0);CHKERRQ(ierr);
 
   ierr = DMCreateGlobalVector(ctx->daVect,&fields->BCU);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) fields->BCU,"Displacement");CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->BCU,"Boundary Displacement");CHKERRQ(ierr);
   ierr = VecSet(fields->BCU,0.0);CHKERRQ(ierr);
 
   ierr = DMCreateGlobalVector(ctx->daScal,&fields->V);CHKERRQ(ierr);
@@ -859,38 +860,40 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
 
   PetscFunctionBegin;
   ierr = BCUInit(&ctx->bcU[0],ctx->preset);CHKERRQ(ierr);
+  ierr = VecSetFromBC(ctx->fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
+
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCU:\n");CHKERRQ(ierr);
-    ierr = BCView(&ctx->bcU[0],PETSC_VIEWER_STDOUT_WORLD,3);CHKERRQ(ierr);
+    ierr = VFBCView(&ctx->bcU[0],PETSC_VIEWER_STDOUT_WORLD,3);CHKERRQ(ierr);
   }
   ierr = BCVInit(&ctx->bcV[0],ctx->preset);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCV:\n");CHKERRQ(ierr);
-    ierr = BCView(&ctx->bcV[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
+    ierr = VFBCView(&ctx->bcV[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
 
   ierr = BCPInit(&ctx->bcP[0],ctx);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCP:\n");CHKERRQ(ierr);
-    ierr = BCView(&ctx->bcP[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
+    ierr = VFBCView(&ctx->bcP[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
 
   ierr = BCQInit(&ctx->bcQ[0],ctx);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCQ:\n");CHKERRQ(ierr);
-    ierr = BCView(&ctx->bcQ[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
+    ierr = VFBCView(&ctx->bcQ[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
 
   ierr = BCTInit(&ctx->bcT[0],ctx);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCT:\n");CHKERRQ(ierr);
-    ierr = BCView(&ctx->bcT[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
+    ierr = VFBCView(&ctx->bcT[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
 
   ierr = BCTInit(&ctx->bcQT[0],ctx);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCQT:\n");CHKERRQ(ierr);
-    ierr = BCView(&ctx->bcQT[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
+    ierr = VFBCView(&ctx->bcQT[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -950,21 +953,25 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
     Removing for now
   */
   /*
+  Vec coord;
+  MatNullSpace matnull;
   ierr = DMDAGetCoordinates(ctx->daVect,&coord);CHKERRQ(ierr);
   ierr = MatNullSpaceCreateRigidBody(coord,&matnull);CHKERRQ(ierr);
-  ierr = MatSetNearNullSpace(JacU,matnull);CHKERRQ(ierr);
-  ierr = MatSetNearNullSpace(JacPCU,matnull);CHKERRQ(ierr);
+  //ierr = MatSetNearNullSpace(JacU,matnull);CHKERRQ(ierr);
+  //ierr = MatSetNearNullSpace(JacPCU,matnull);CHKERRQ(ierr);
+  ierr = MatSetNullSpace(JacU,matnull);CHKERRQ(ierr);
+  ierr = MatSetNullSpace(JacPCU,matnull);CHKERRQ(ierr);
   ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
   ierr = MatSetFromOptions(JacU);
   ierr = MatSetFromOptions(JacPCU);
   */
-  
   ierr = SNESSetFunction(ctx->snesU,residualU,VF_UResidual,ctx);CHKERRQ(ierr);
   ierr = SNESSetJacobian(ctx->snesU,JacU,JacPCU,VF_UIJacobian,ctx);CHKERRQ(ierr);
 
   ierr = SNESGetKSP(ctx->snesU,&kspU);CHKERRQ(ierr);
   ierr = KSPSetTolerances(kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSetType(kspU,KSPCG);CHKERRQ(ierr);
+  //ierr = KSPGetInitialGuessNonzero(kspU,PETSC_TRUE);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(kspU);CHKERRQ(ierr);
   ierr = KSPGetPC(kspU,&pcU);CHKERRQ(ierr);
   ierr = PCSetType(pcU,PCBJACOBI);CHKERRQ(ierr);

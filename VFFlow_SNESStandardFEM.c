@@ -154,7 +154,7 @@ extern PetscErrorCode FlowVelocityCompute(VFCtx *ctx, VFFields *fields)
 				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         ierr = FlowVelocityCompute_local(cellVelocity_array, press_array, perm_array, ctx->flowprop, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
 
 			}
@@ -177,7 +177,7 @@ extern PetscErrorCode FlowVelocityCompute(VFCtx *ctx, VFFields *fields)
 
 #undef __FUNCT__
 #define __FUNCT__ "FlowVelocityCompute_local"
-extern PetscErrorCode FlowVelocityCompute_local(PetscReal ****cellvelocityrate_array, PetscReal ***press_array ,PetscReal ****perm_array, VFFlowProp flowpropty, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+extern PetscErrorCode FlowVelocityCompute_local(PetscReal ****cellvelocityrate_array, PetscReal ***press_array ,PetscReal ****perm_array, VFFlowProp flowpropty, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
 	PetscErrorCode ierr;
 	PetscInt		i, j, k, c;
@@ -377,7 +377,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -475,7 +475,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
         if (ei == 0) {
 /*            					 Face X0  */
 					face = X0;
-					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+					ierr = VFCartFEElement2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
           if (ctx->bcQ[0].face[face] == FIXED) {
 						ierr = VecApplyFluxBC(RHS1_local,fluxbc_array,ek,ej,ei,face,&ctx->e2D,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
@@ -490,7 +490,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 				if (ei == nx-1) {
 /*            					 Face X1  */
 					face = X1;
-					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+					ierr = VFCartFEElement2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
 					if (ctx->bcQ[0].face[face] == FIXED) {
 						ierr = VecApplyFluxBC(RHS1_local,fluxbc_array,ek,ej,ei,face,&ctx->e2D,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
@@ -505,7 +505,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 				if (ej == 0) {
 /*            					 Face Y0  */
 					face = Y0;
-					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+					ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
 					if (ctx->bcQ[1].face[face] == FIXED) {
 						ierr = VecApplyFluxBC(RHS1_local,fluxbc_array,ek,ej,ei,face,&ctx->e2D,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
@@ -520,7 +520,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 				if (ej == ny-1) {
 /*            					 Face Y1  */
 					face = Y1;
-					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+					ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
 					if (ctx->bcQ[1].face[face] == FIXED) {
 						ierr = VecApplyFluxBC(RHS1_local,fluxbc_array,ek,ej,ei,face,&ctx->e2D,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
@@ -535,7 +535,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 				if (ek == 0) {
 /*            					 Face Z0  */
 					face = Z0;
-					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+					ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
 					if (ctx->bcQ[2].face[face] == FIXED) {
 						ierr = VecApplyFluxBC(RHS1_local,fluxbc_array,ek,ej,ei,face,&ctx->e2D,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
@@ -550,7 +550,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 				if (ek == nz-1) {
 /*            					 Face Z1  */
 					face = Z1;
-					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+					ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
 					if (ctx->bcQ[2].face[face] == FIXED) {
 						ierr = VecApplyFluxBC(RHS1_local,fluxbc_array,ek,ej,ei,face,&ctx->e2D,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
@@ -582,7 +582,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
               hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
               hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
               hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-              ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+              ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
               hwx = (ctx->well[w_no].coords[0]-coords_array[ek][ej][ei][0])/hx;
               hwy = (ctx->well[w_no].coords[1]-coords_array[ek][ej][ei][1])/hy;
               hwz = (ctx->well[w_no].coords[2]-coords_array[ek][ej][ei][2])/hz;
@@ -628,7 +628,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
               hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
               hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
               hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-              ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+              ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
               hwx = (ctx->fracwell[w_no].coords[0]-coords_array[ek][ej][ei][0])/hx;
               hwy = (ctx->fracwell[w_no].coords[1]-coords_array[ek][ej][ei][1])/hy;
               hwz = (ctx->fracwell[w_no].coords[2]-coords_array[ek][ej][ei][2])/hz;

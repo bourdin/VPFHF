@@ -22,23 +22,23 @@ typedef struct {
 
 extern PetscErrorCode FlowSolverFinalize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode BCQInit(BC *BCQ,VFCtx *ctx);
-extern PetscErrorCode BCFracQInit(BC *BCFracQ,VFCtx *ctx);
-extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx);
+extern PetscErrorCode BCQInit(VFBC *BCQ,VFCtx *ctx);
+extern PetscErrorCode BCFracQInit(VFBC *BCFracQ,VFCtx *ctx);
+extern PetscErrorCode BCPInit(VFBC *BCP,VFCtx *ctx);
 extern PetscErrorCode SETBoundaryTerms_P(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,BC *BC);
-extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,BC *bcP);
-extern PetscErrorCode VFFlow_FEM_MatKPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscReal ****perm_array, PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e);
-extern PetscErrorCode VFFlow_FEM_MatMPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e);
-extern PetscErrorCode Flow_Vecg_FEM(PetscReal *Kg_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****perm_array);
-extern PetscErrorCode VecApplySourceTerms_FEM(PetscReal *Ks_local,PetscReal ***source_array,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFCtx *ctx);
+extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,VFBC *BC);
+extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,VFBC *bcP);
+extern PetscErrorCode VFFlow_FEM_MatKPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscReal ****perm_array, PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e);
+extern PetscErrorCode VFFlow_FEM_MatMPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e);
+extern PetscErrorCode Flow_Vecg_FEM(PetscReal *Kg_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****perm_array);
+extern PetscErrorCode VecApplySourceTerms_FEM(PetscReal *Ks_local,PetscReal ***source_array,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFCtx *ctx);
 extern PetscErrorCode VecApplyWellFlowRate_FEM(PetscReal *RHS_local,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz);
 extern PetscErrorCode FEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr);
 extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFUnit flowunit,VFResProp resprop);
-extern PetscErrorCode ResetFlowBC(BC *bcP,BC *bcQ, VFFlowCases flowcase);
+extern PetscErrorCode ResetFlowBC(VFBC *bcP,VFBC *bcQ, VFFlowCases flowcase);
 extern PetscErrorCode ResetBoundaryTerms(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode ResetSourceTerms(Vec Src,VFFlowProp flowpropty);
-extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,BC *BC);
+extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,VFBC *BC);
 #endif /* VFFLOW_H */
 

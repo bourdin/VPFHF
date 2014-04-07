@@ -59,21 +59,8 @@ typedef struct {
 
 /*
 All static const are moved into the files where they are used in order to avoid annoying warnings
-
-static const char *VFFieldNames[] = {
-	"V",
-	"VIrrev",
-	"Displacement",
-	"BCU",
-	"theta",
-	"thetaref",
-	"pressure",
-	"pressureRef",
-	"pmult",
-	"",
-	0
-};
 */
+
 typedef struct {
 	PetscReal       E,nu;       /* Young modulus and poisson ratio */
 	PetscReal       lambda,mu;  /* Lame coefficients               */
@@ -84,7 +71,7 @@ typedef struct {
 	Vec             phi;        /* porosity                        */
 	Vec             Ks;         /* Bulk modulus of rock            */
 	Vec             Kw;         /* Modulus of liquid               */
-	Vec             VecGc;
+	Vec             VecGc;      /* Fracture toughness              */
 	PetscReal       Cp;		      /* Specific heat capacity          */
 } VFMatProp; //change them to Vec later
 
@@ -131,11 +118,11 @@ typedef enum {
 } VFFlowCases;
 
 typedef enum {
-	SYMXY,
-	SYMX,
-	SYMY,
-	NOSYM,
-	TEST_MANUAL
+	VFPRESET_SYMXY,
+	VFPRESET_SYMX,
+	VFPRESET_SYMY,
+	VFPRESET_NOSYM,
+	VFPRESET_NONE
 } VFPreset;
 
 typedef enum {
@@ -247,14 +234,14 @@ typedef struct {
 	PetscInt            nlayer;
 	PetscReal          *layersep;
 	PetscInt           *layer;         /* dim=nz+1. gives the layer number of a cell  */
-	BC                  bcU[3];
-	BC                  bcV[1];
-	BC                  bcP[1];
-	BC                  bcT[1];
+	VFBC                bcU[3];
+	VFBC                bcV[1];
+	VFBC                bcP[1];
+	VFBC                bcT[1];
 	DM                  daVect;
 	DM                  daScal;
-	CartFE_Element3D    e3D;
-	CartFE_Element2D    e2D;
+	VFCartFEElement3D    e3D;
+	VFCartFEElement2D    e2D;
 	char                prefix[PETSC_MAX_PATH_LEN];
 	Vec                 coordinates;
 	PetscInt            verbose;
@@ -301,7 +288,7 @@ typedef struct {
 	Vec                 PreFlowFields;
 	Vec                 Perm;
 	Vec                 FlowBC;
-	BC                  bcQ[3];
+	VFBC                bcQ[3];
 	PetscBool           hasFlowWells;
 	PetscBool           hasFluidSources;
 	Vec                 VelBCArray;
@@ -320,7 +307,7 @@ typedef struct {
 	Vec                 RHST;
 	Vec                 HeatFunct;
 	Vec                 RHSTpre;
-//	BC                  bcq[3];
+//	VFBC                bcq[3];
 	SNES                snesT;
 	Vec                 HeatBC;
 	VFUnit              Hunits;
@@ -373,7 +360,7 @@ typedef struct {
 	PetscBool           hasHeatSources;
 	Vec                 prevT;
 	Vec                 Cond;           /*thermal conductivity in ctx*/
-	BC                  bcQT[3];        /*heat flux in heat equation*/
+	VFBC                bcQT[3];        /*heat flux in heat equation*/
 	Vec					        TBCArray;
 	Mat                 KFracVelP;
 	Mat                 JacFracVelP;
@@ -386,7 +373,7 @@ typedef struct {
 	Vec                 PreFracFlowFields;
 	VFFields            *fields;
   Vec                 FracVelBCArray;
-  BC                  bcFracQ[3];
+  VFBC                bcFracQ[3];
   Vec                 V;
   Vec                 U_old;
   Vec                 U;
@@ -403,8 +390,9 @@ typedef struct {
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
 extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx);
-extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFBCInitialize(VFCtx *ctx);
+
+extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFSolversInitialize(VFCtx *ctx);
 extern PetscErrorCode VFTimeStepPrepare(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VFElasticityTimeStep(VFCtx *ctx,VFFields *fields);

@@ -1,4 +1,4 @@
-#define VFCARTFE_C
+#define VFCartFEC
 #include "petsc.h"
 #include "VFCartFE.h"
 
@@ -24,29 +24,28 @@ static const char *FACE_NAME[] = {
 	"FACE_NAME","",0
 };
 
+/*
 static const char *EDGE_NAME[] = {
 	"X0Z0","X1Z0","Y0Z0","Y1Z0",
 	"X0Z1","X1Z1","Y0Z1","Y1Z1",
 	"X0Y0","X0Y1","X1Y0","X1Y1",
 	"EDGE_NAME","",0
 };
-
+*/
 static const char *VERTEX_NAME[] = {
 	"X0Y0Z0","X1Y0Z0","X0Y1Z0","X1Y1Z0",
 	"X0Y0Z1","X1Y0Z1","X0Y1Z1","X1Y1Z1",
 	"VERTEX_NAME","",0};
 
-PetscLogStage CartFE_ElementInitStage;
-
 
 #undef __FUNCT__
-#define __FUNCT__ "VFCartFE_Init"
+#define __FUNCT__ "VFCartFEInit"
 /*
-  CartFE_Init
+  VFCartFEInit
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode CartFE_Init()
+extern PetscErrorCode VFCartFEInit()
 {
   /*
   PetscErrorCode ierr;
@@ -54,23 +53,23 @@ extern PetscErrorCode CartFE_Init()
   
   PetscFunctionBegin;
   /*
-  ierr = PetscClassIdRegister("VFCartFE_Element",&CartFE_Element);CHKERRQ(ierr);
-  ierr = PetscLogEventRegister("VFCartFE_Elem Init",CartFE_Element,&CartFE_ElementInitEvent);CHKERRQ(ierr);
-  ierr = PetscLogStageRegister("VFCartFE_Elem Init",&CartFE_ElementInitStage);CHKERRQ(ierr);
+  ierr = PetscClassIdRegister("VFCartFEElement",&VFCartFEElement);CHKERRQ(ierr);
+  ierr = PetscLogEventRegister("VFCartFEElem Init",VFCartFEElement,&VFCartFEElementInitEvent);CHKERRQ(ierr);
+  ierr = PetscLogStageRegister("VFCartFEElem Init",&VFCartFEElementInitStage);CHKERRQ(ierr);
   */
   PetscFunctionReturn(0);
 }
 
 
 #undef __FUNCT__
-#define __FUNCT__ "VFCartFE_Element1DCreate"
+#define __FUNCT__ "VFCartFEElement1DCreate"
 /*
-  CartFE_Element1DCreate: Current element structures are static, so it does not really allocates, but instead 
+  VFCartFEElement1DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode CartFE_Element1DCreate(CartFE_Element1D *e)
+extern PetscErrorCode VFCartFEElement1DCreate(VFCartFEElement1D *e)
 {
   PetscFunctionBegin;
   e->dim       = 1;
@@ -82,13 +81,13 @@ extern PetscErrorCode CartFE_Element1DCreate(CartFE_Element1D *e)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VFCartFE_Element1DInit"
+#define __FUNCT__ "VFCartFEElement1DInit"
 /*
-  CartFE_Element1DInit
+  VFCartFEElement1DInit
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
+extern PetscErrorCode VFCartFEElement1DInit(VFCartFEElement1D *e,PetscReal lx)
 {
   PetscErrorCode ierr;
   
@@ -116,14 +115,14 @@ extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VFCartFE_Element2DCreate"
+#define __FUNCT__ "VFCartFEElement2DCreate"
 /*
-  CartFE_Element2DCreate: Current element structures are static, so it does not really allocates, but instead 
+  VFCartFEElement2DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode CartFE_Element2DCreate(CartFE_Element2D *e)
+extern PetscErrorCode VFCartFEElement2DCreate(VFCartFEElement2D *e)
 {
   PetscFunctionBegin;
   e->dim       = 2;
@@ -135,26 +134,26 @@ extern PetscErrorCode CartFE_Element2DCreate(CartFE_Element2D *e)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VFCartFE_Element2DInit"
+#define __FUNCT__ "VFCartFEElement2DInit"
 /*
-  CartFE_Element2DInit
+  VFCartFEElement2DInit
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,PetscReal ly)
+extern PetscErrorCode VFCartFEElement2DInit(VFCartFEElement2D *e,PetscReal lx,PetscReal ly)
 {
   PetscErrorCode     ierr;
-  CartFE_Element1D   ex,ey;
+  VFCartFEElement1D   ex,ey;
   PetscInt           gi,gj,g;   /* local and lexicographic indices of the integration points */
   PetscInt           i,j;
   
   PetscFunctionBegin;
-  ierr = CartFE_Element1DCreate(&ex);CHKERRQ(ierr);
-  ierr = CartFE_Element1DInit(&ex,lx);CHKERRQ(ierr);
-  ierr = CartFE_Element1DCreate(&ey);CHKERRQ(ierr);
-  ierr = CartFE_Element1DInit(&ey,ly);CHKERRQ(ierr);
+  ierr = VFCartFEElement1DCreate(&ex);CHKERRQ(ierr);
+  ierr = VFCartFEElement1DInit(&ex,lx);CHKERRQ(ierr);
+  ierr = VFCartFEElement1DCreate(&ey);CHKERRQ(ierr);
+  ierr = VFCartFEElement1DInit(&ey,ly);CHKERRQ(ierr);
   
-  ierr = CartFE_Element2DCreate(e);CHKERRQ(ierr);
+  ierr = VFCartFEElement2DCreate(e);CHKERRQ(ierr);
   e->lx    = lx; 
   e->ly    = ly;
   e->lz    = 0;
@@ -188,14 +187,14 @@ extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,Pets
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VFCartFE_Element3DCreate"
+#define __FUNCT__ "VFCartFEElement3DCreate"
 /*
-  CartFE_Element3DCreate: Current element structures are static, so it does not really allocates, but instead 
+  VFCartFEElement3DCreate: Current element structures are static, so it does not really allocates, but instead 
   initializes the sizes
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode CartFE_Element3DCreate(CartFE_Element3D *e)
+extern PetscErrorCode VFCartFEElement3DCreate(VFCartFEElement3D *e)
 {
   PetscFunctionBegin;
   e->dim       = 3;
@@ -207,28 +206,28 @@ extern PetscErrorCode CartFE_Element3DCreate(CartFE_Element3D *e)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VFCartFE_Element3DInit"
+#define __FUNCT__ "VFCartFEElement3DInit"
 /*
-  CartFE_Element3DInit
+  VFCartFEElement3DInit
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,PetscReal ly,PetscReal lz)
+extern PetscErrorCode VFCartFEElement3DInit(VFCartFEElement3D *e,PetscReal lx,PetscReal ly,PetscReal lz)
 {
   PetscErrorCode     ierr;
-  CartFE_Element1D   ex,ey,ez;
+  VFCartFEElement1D   ex,ey,ez;
   PetscInt           gi,gj,gk,g;   /* local and lexicographic indices of the integration points */
   PetscInt           i,j,k;
   
   PetscFunctionBegin;
-  ierr = CartFE_Element1DCreate(&ex);CHKERRQ(ierr);
-  ierr = CartFE_Element1DInit(&ex,lx);CHKERRQ(ierr);
-  ierr = CartFE_Element1DCreate(&ey);CHKERRQ(ierr);
-  ierr = CartFE_Element1DInit(&ey,ly);CHKERRQ(ierr);
-  ierr = CartFE_Element1DCreate(&ez);CHKERRQ(ierr);
-  ierr = CartFE_Element1DInit(&ez,lz);CHKERRQ(ierr);
+  ierr = VFCartFEElement1DCreate(&ex);CHKERRQ(ierr);
+  ierr = VFCartFEElement1DInit(&ex,lx);CHKERRQ(ierr);
+  ierr = VFCartFEElement1DCreate(&ey);CHKERRQ(ierr);
+  ierr = VFCartFEElement1DInit(&ey,ly);CHKERRQ(ierr);
+  ierr = VFCartFEElement1DCreate(&ez);CHKERRQ(ierr);
+  ierr = VFCartFEElement1DInit(&ez,lz);CHKERRQ(ierr);
   
-  ierr = CartFE_Element3DCreate(e);CHKERRQ(ierr);
+  ierr = VFCartFEElement3DCreate(e);CHKERRQ(ierr);
   e->lx    = lx; 
   e->ly    = ly;
   e->lz    = lz;
@@ -269,13 +268,228 @@ extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,Pets
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "VecSetFromBC"
+/*
+  
+  VecSetFromBC:
+  
+  (c) 2014 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VecSetFromBC(Vec BCVec,VFBC *BC)
+{
+  PetscErrorCode ierr;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       i,j,k,c;
+  DM             da;
+  PetscReal  ****BC_array,BCValue;
+  PetscInt       dof;
+  
+  PetscFunctionBegin;
+  ierr = PetscObjectQuery((PetscObject) BCVec,"DM",(PetscObject *) &da); CHKERRQ(ierr);
+  if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
+  
+  ierr = DMDAGetInfo(da,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                    &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  
+  ierr = DMDAVecGetArrayDOF(da,BCVec,&BC_array);CHKERRQ(ierr);
+  
+  for (c = 0;c < dof;c++) {
+    /* 
+      Faces
+    */
+    if (xs == 0 && BC[c].face[X0] != NONE) {
+      /*
+        x == 0
+      */
+      switch(BC[c].face[X0]) {
+        case ZERO:
+          BCValue = 0.;
+          break;
+        case ONE:
+          BCValue = 1.;
+        case FIXED:
+          BCValue = BC[c].faceValue[X0];
+        case NONE:
+          break;
+      }      
+      for (k = zs; k < zs + zm; k++) {
+        for (j = ys; j < ys + ym; j++) {
+          BC_array[k][j][0][c] = BCValue;
+        }
+      }
+    }
+
+    if (xs + xm == nx && BC[c].face[X1] != NONE) {
+      /*
+        x == nx-1
+      */
+      switch(BC[c].face[X1]) {
+        case ZERO:
+          BCValue = 0.;
+          break;
+        case ONE:
+          BCValue = 1.;
+          break;
+        case FIXED:
+          BCValue = BC[c].faceValue[X1];
+          break;
+        case NONE:
+          break;
+      }      
+      for (k = zs; k < zs + zm; k++) {
+        for (j = ys; j < ys + ym; j++) {
+          BC_array[k][j][nx-1][c] = BCValue;
+        }
+      }
+    }
+
+    if (ys == 0 && BC[c].face[Y0] != NONE) {
+      /*
+        y == 0
+      */
+      switch(BC[c].face[Y0]) {
+        case ZERO:
+          BCValue = 0.;
+          break;
+        case ONE:
+          BCValue = 1.;
+          break;
+        case FIXED:
+          BCValue = BC[c].faceValue[Y0];
+          break;
+        case NONE:
+          break;
+      }      
+      for (k = zs; k < zs + zm; k++) {
+        for (i = xs; i < xs + xm; i++) {
+          BC_array[k][0][i][c] = BCValue;
+        }
+      }
+    }
+    if (ys + ym == ny && BC[c].face[Y1] != NONE) {
+      /*
+        y == ny-1
+      */
+      switch(BC[c].face[Y1]) {
+        case ZERO:
+          BCValue = 0.;
+          break;
+        case ONE:
+          BCValue = 1.;
+          break;
+        case FIXED:
+          BCValue = BC[c].faceValue[Y0];
+          break;
+        case NONE:
+          break;
+      }      
+      for (k = zs; k < zs + zm; k++) {
+        for (i = xs; i < xs + xm; i++) {
+          BC_array[k][ny-1][i][c] = BCValue;
+        }
+      }
+    }
+    if (zs == 0 && BC[c].face[Z0] != NONE) {
+        /*
+          z == 0
+        */
+      switch(BC[c].face[Z0]) {
+        case ZERO:
+          BCValue = 0.;
+          break;
+        case ONE:
+          BCValue = 1.;
+          break;
+        case FIXED:
+          BCValue = BC[c].faceValue[Y0];
+          break;
+        case NONE:
+          break;
+      }      
+      for (j = ys; j < ys + ym; j++) {
+        for (i = xs; i < xs + xm; i++) {
+          BC_array[0][j][i][c] = BCValue;
+        }
+      }
+    }
+    if (zs + zm == nz && BC[c].face[Z1] != NONE) {
+      /*
+        z == nz-1
+      */
+      switch(BC[c].face[Z0]) {
+        case ZERO:
+          BCValue = 0.;
+          break;
+        case ONE:
+          BCValue = 1.;
+          break;
+        case FIXED:
+          BCValue = BC[c].faceValue[Y0];
+          break;
+        case NONE:
+          break;
+      }      
+      for (j = ys; j < ys + ym; j++) {
+        for (i = xs; i < xs + xm; i++) {
+          BC_array[nz-1][j][i][c] = BCValue;
+        }
+      }
+    }
+    /*
+      edges
+    */
+    /* 
+      vertices
+    */
+    if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == FIXED) BC_array[0][0][0][c]          = BC[c].vertexValue[X0Y0Z0];
+    if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == ONE)   BC_array[0][0][0][c]          = 1.;
+    if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] == ZERO)  BC_array[0][0][0][c]          = 0.;
+
+    if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == FIXED) BC_array[nz-1][0][0][c]       = BC[c].vertexValue[X0Y0Z1];
+    if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == ONE)   BC_array[nz-1][0][0][c]       = 1.;
+    if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == ZERO)  BC_array[nz-1][0][0][c]       = 0.;
+
+    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == FIXED) BC_array[0][ny-1][0][c]       = BC[c].vertexValue[X0Y1Z0];
+    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == ONE)   BC_array[0][ny-1][0][c]       = 1.;
+    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == ZERO)  BC_array[0][ny-1][0][c]       = 0.;
+
+    if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == FIXED) BC_array[nz-1][ny-1][0][c]    = BC[c].vertexValue[X0Y1Z1];
+    if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == ONE)   BC_array[nz-1][ny-1][0][c]    = 1.;
+    if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == ZERO)  BC_array[nz-1][ny-1][0][c]    = 0.;
+
+    if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == FIXED) BC_array[0][0][nx-1][c]       = BC[c].vertexValue[X1Y0Z0];
+    if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == ONE)   BC_array[0][0][nx-1][c]       = 1.;
+    if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] == ZERO)  BC_array[0][0][nx-1][c]       = 0.;
+
+    if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == FIXED) BC_array[nz-1][0][nx-1][c]    = BC[c].vertexValue[X1Y0Z1];
+    if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == ONE)   BC_array[nz-1][0][nx-1][c]    = 1.;
+    if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] == ZERO)  BC_array[nz-1][0][nx-1][c]    = 0.;
+
+    if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == FIXED) BC_array[0][ny-1][nx-1][c]    = BC[c].vertexValue[X1Y1Z0];
+    if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == ONE)   BC_array[0][ny-1][nx-1][c]    = 1.;
+    if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] == ZERO)  BC_array[0][ny-1][nx-1][c]    = 0.;
+
+    if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == FIXED) BC_array[nz-1][ny-1][nx-1][c] = BC[c].vertexValue[X1Y1Z1];
+    if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == ONE)   BC_array[nz-1][ny-1][nx-1][c] = 1.;
+    if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] == ZERO)  BC_array[nz-1][ny-1][nx-1][c] = 0.;
+  }
+  
+  ierr = DMDAVecRestoreArrayDOF(da,BCVec,&BC_array);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+  
+
+#undef __FUNCT__
 #define __FUNCT__ "VecApplyDirichletBC"
 /*
   VecApplyDirichletBC
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
+extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,VFBC *BC)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -291,8 +505,8 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
   ierr = PetscObjectQuery((PetscObject) RHS,"DM",(PetscObject *) &da); CHKERRQ(ierr);
     if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
   
-  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                    &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
+                    &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   
   if (dim == 2) {
@@ -531,7 +745,7 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC)
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode ResidualApplyDirichletBC(Vec residual,Vec U,Vec BCU,BC *BC)
+extern PetscErrorCode ResidualApplyDirichletBC(Vec residual,Vec U,Vec BCU,VFBC *BC)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -547,8 +761,8 @@ extern PetscErrorCode ResidualApplyDirichletBC(Vec residual,Vec U,Vec BCU,BC *BC
   ierr = PetscObjectQuery((PetscObject) residual,"DM",(PetscObject *) &da); CHKERRQ(ierr);
     if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
   
-  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                    &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
+                    &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   
   if (dim == 2) {
@@ -794,7 +1008,7 @@ extern PetscErrorCode ResidualApplyDirichletBC(Vec residual,Vec U,Vec BCU,BC *BC
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC)
+extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,VFBC *BC)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -815,8 +1029,8 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC)
     ierr = PetscObjectQuery((PetscObject) K,"DM",(PetscObject *) &da); CHKERRQ(ierr);
     if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
   */
-  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                    &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
+                    &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
   /*
@@ -946,7 +1160,7 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC)
     }
     
   }
-  ierr = MatZeroRowsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = MatZeroRowsStencil(K,numBC,row,one,NULL,NULL);CHKERRQ(ierr);
   ierr = PetscFree(row);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -958,7 +1172,7 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC)
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,BC *BC)
+extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,VFBC *BC)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -979,8 +1193,8 @@ extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,BC *BC)
     ierr = PetscObjectQuery((PetscObject) K,"DM",(PetscObject *) &da); CHKERRQ(ierr);
     if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
   */
-  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                    &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
+                    &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
   /*
@@ -1110,7 +1324,7 @@ extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,BC *BC)
     }
     
   }
-  ierr = MatZeroRowsColumnsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = MatZeroRowsColumnsStencil(K,numBC,row,one,NULL,NULL);CHKERRQ(ierr);
   ierr = PetscFree(row);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -1141,13 +1355,13 @@ extern PetscErrorCode DAReadCoordinatesHDF5(DM da,const char filename[])
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "BCInit"
+#define __FUNCT__ "VFBCCreate"
 /*
-  BCInit: Set all boundary conditions to FREE
+  VFBCCreate: Create an array of BC and set all boundary conditions to FREE
 
-  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2014 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode BCInit(BC *bc,PetscInt dof)
+extern PetscErrorCode VFBCCreate(VFBC *bc,PetscInt dof)
 {
   PetscInt       i,c;
 
@@ -1158,6 +1372,7 @@ extern PetscErrorCode BCInit(BC *bc,PetscInt dof)
   for (i = 0; i < 6; i++) {
     for (c = 0; c < dof; c++) {
       bc[c].face[i] = NONE;
+      bc[c].faceValue[i] = 0.;
     }
   }
   /*
@@ -1166,6 +1381,7 @@ extern PetscErrorCode BCInit(BC *bc,PetscInt dof)
   for (i = 0; i < 12; i++) {
     for (c = 0; c < dof; c++) {
       bc[c].edge[i] = NONE;
+      bc[c].edgeValue[i] = 0.;
     }
   }
   /*
@@ -1174,95 +1390,98 @@ extern PetscErrorCode BCInit(BC *bc,PetscInt dof)
   for (i = 0; i < 8; i++) {
     for (c = 0; c < dof; c++) {
       bc[c].vertex[i] = NONE;
+      bc[c].vertexValue[i] = 0.;
     }
   }
   PetscFunctionReturn(0);
 }
 
-
 #undef __FUNCT__
-#define __FUNCT__ "BCGet"
+#define __FUNCT__ "VFBCSetFromOptions"
 /*
-  BCGet: Get boundary condition flag for each face, edge, vertex of the domain.
+  VFBCSetFromOptions: Get boundary condition flag for each face, edge, vertex of the domain.
   The option names are -<prefix>_<name> where name is the name of a geometric entity
 
-  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2014 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof)
+extern PetscErrorCode VFBCSetFromOptions(VFBC *bc,const char prefix[],PetscInt dof)
 {
   PetscErrorCode ierr;
-  PetscInt       i,c,t,nbc;
-  char           optstr[256];
-  PetscInt       tmpbc[3];
-  PetscInt       numBCTYPE = 4;
-  BCTYPE         bctype[4] = {NONE,ZERO,ONE,FIXED};
-  
+  PetscInt       i,c;
+  char           optstr[256],optstr2[256],helpstr[256],helpstr2[256];
 
   PetscFunctionBegin;
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,NULL,"\n\nVFCartFE: Boundary Conditions:",__FILE__);CHKERRQ(ierr);
   /*
     faces 
   */
   for (i = 0; i < 6; i++) {
-    ierr = PetscStrcpy(optstr,"-");CHKERRQ(ierr);
-    ierr = PetscStrcat(optstr,prefix);CHKERRQ(ierr);
-    ierr = PetscStrcat(optstr,"_");CHKERRQ(ierr);
-    ierr = PetscStrcat(optstr,FACE_NAME[i]);CHKERRQ(ierr);
-    nbc = 3;
-    ierr = PetscOptionsGetIntArray(PETSC_NULL,optstr,&tmpbc[0],&nbc,PETSC_NULL);CHKERRQ(ierr);
-    for (c = 0; c < nbc; c++) {
-      bc[c].face[i] = NONE;
-      for (t = 0; t < numBCTYPE; t++) {
-        if (tmpbc[c] == bctype[t]) {
-          bc[c].face[i] = bctype[t];
-        }
+    for (c = 0; c < dof; c++) {
+      if (dof == 1) {
+        ierr = PetscSNPrintf(optstr,256,"-%s_%s_BC",prefix,FACE_NAME[i]);
+        ierr = PetscSNPrintf(helpstr,256,"\t%s face %s boundary condition type",prefix,FACE_NAME[i]);
+        ierr = PetscSNPrintf(optstr2,256,"-%s_%s",prefix,FACE_NAME[i]);
+        ierr = PetscSNPrintf(helpstr2,256,"\t%s face %s boundary value",prefix,FACE_NAME[i]);
+      } else {
+        ierr = PetscSNPrintf(optstr,256,"-%s_%s_BC_%i",prefix,FACE_NAME[i],c);
+        ierr = PetscSNPrintf(helpstr,256,"\t%s face %s component %i boundary condition type ",prefix,FACE_NAME[i],c);
+        ierr = PetscSNPrintf(optstr2,256,"-%s_%s_%i",prefix,FACE_NAME[i],c);
+        ierr = PetscSNPrintf(helpstr2,256,"\t%s face %s component %i boundary value ",prefix,FACE_NAME[i],c);
       }
+      ierr = PetscOptionsEnum(optstr,helpstr,"",BCTYPE_NAME,(PetscEnum)bc[c].face[i],(PetscEnum*)&bc[c].face[i],NULL);CHKERRQ(ierr);
+      ierr = PetscOptionsReal(optstr2,helpstr2,"",bc[c].faceValue[i],&bc[c].faceValue[i],NULL);CHKERRQ(ierr);
     }
   }
   /*
     edges
   */
+  /* 
+    Edge BC handling is incomplete, so I am removing the parsing for now
+  
   for (i = 0; i < 12; i++) {
-    ierr = PetscStrcpy(optstr,"-");CHKERRQ(ierr);
-    ierr = PetscStrcat(optstr,prefix);CHKERRQ(ierr);
-    ierr = PetscStrcat(optstr,"_");CHKERRQ(ierr);
-    ierr = PetscStrcat(optstr,EDGE_NAME[i]);CHKERRQ(ierr);
-    nbc = 3;
-    ierr = PetscOptionsGetIntArray(PETSC_NULL,optstr,&tmpbc[0],&nbc,PETSC_NULL);CHKERRQ(ierr);
-    for (c = 0; c < nbc; c++) {
-      bc[c].edge[i] = NONE;
-      for (t = 0; t < numBCTYPE; t++) {
-        if (tmpbc[c] == bctype[t]) bc[c].edge[i] = bctype[t];
+    for (c = 0; c < dof; c++) {
+      if (dof == 1) {
+        ierr = PetscSNPrintf(optstr,256,"-%s_%s_BC",prefix,EDGE_NAME[i]);
+        ierr = PetscSNPrintf(helpstr,256,"\tedge %s boundary condition type",EDGE_NAME[i]);
+      } else {
+        ierr = PetscSNPrintf(optstr,256,"-%s_%s_BC_%i",prefix,EDGE_NAME[i],c);
+        ierr = PetscSNPrintf(helpstr,256,"\tedge %s component %i boundary condition type ",EDGE_NAME[i],c);
       }
+      ierr = PetscOptionsEnum(optstr,helpstr,"",BCTYPE_NAME,(PetscEnum)bc[c].edge[i],(PetscEnum*)&bc[c].edge[i],NULL);CHKERRQ(ierr);
     }
   }
+  */
   /*
     vertex
   */
   for (i = 0; i < 8; i++) {
-    ierr = PetscStrcpy(optstr,"-");CHKERRQ(ierr);
-    ierr = PetscStrcat(optstr,prefix);CHKERRQ(ierr);
-    ierr = PetscStrcat(optstr,"_");CHKERRQ(ierr);
-    ierr = PetscStrcat(optstr,VERTEX_NAME[i]);CHKERRQ(ierr);
-    nbc = 3;
-    ierr = PetscOptionsGetIntArray(PETSC_NULL,optstr,&tmpbc[0],&nbc,PETSC_NULL);CHKERRQ(ierr);
-    for (c = 0; c < nbc; c++) {
-      bc[c].vertex[i] = NONE;
-      for (t = 0; t < numBCTYPE; t++) {
-        if (tmpbc[c] == bctype[t]) bc[c].vertex[i] = bctype[t];
+    for (c = 0; c < dof; c++) {
+      if (dof == 1) {
+        ierr = PetscSNPrintf(optstr,256,"-%s_%s_BC",prefix,VERTEX_NAME[i]);
+        ierr = PetscSNPrintf(helpstr,256,"\t%s vertex %s boundary condition type",prefix,VERTEX_NAME[i]);
+        ierr = PetscSNPrintf(optstr2,256,"-%s_%s",prefix,VERTEX_NAME[i]);
+        ierr = PetscSNPrintf(helpstr2,256,"\t%s vertex %s boundary value",prefix,VERTEX_NAME[i]);
+      } else {
+        ierr = PetscSNPrintf(optstr,256,"-%s_%s_BC_%i",prefix,VERTEX_NAME[i],c);
+        ierr = PetscSNPrintf(helpstr,256,"\t%s vertex %s component %i boundary condition type ",prefix,VERTEX_NAME[i],c);
+        ierr = PetscSNPrintf(optstr2,256,"-%s_%s_%i",prefix,VERTEX_NAME[i],c);
+        ierr = PetscSNPrintf(helpstr2,256,"\t%s vertex %s component %i boundary value",prefix,VERTEX_NAME[i],c);
       }
+      ierr = PetscOptionsEnum(optstr,helpstr,"",BCTYPE_NAME,(PetscEnum)bc[c].vertex[i],(PetscEnum*)&bc[c].vertex[i],NULL);CHKERRQ(ierr);
     }
   }
+  ierr = PetscOptionsEnd();
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "BCView"
+#define __FUNCT__ "VFBCView"
 /*
-  BCView
+  VFBCView
 
-  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+  (c) 2010-2014 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof)
+extern PetscErrorCode VFBCView(VFBC *bc,PetscViewer viewer,PetscInt dof)
 {
   PetscErrorCode ierr;
   PetscInt       i,c;
@@ -1271,27 +1490,32 @@ extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof)
   /*
     faces 
   */
+  ierr = PetscViewerASCIIPrintf(viewer,"faces:\n");CHKERRQ(ierr);
   for (i = 0; i < 6; i++) {
     for (c = 0; c < dof; c++) {
-      ierr = PetscViewerASCIIPrintf(viewer,"    %s[%i]=%s ",FACE_NAME[i],c,BCTYPE_NAME[ bc[c].face[i] ]);CHKERRQ(ierr);
+      ierr = PetscViewerASCIIPrintf(viewer,"    %s[%i]=%s:%f ",FACE_NAME[i],c,BCTYPE_NAME[bc[c].face[i]],bc[c].faceValue[i]);CHKERRQ(ierr);
     }
     ierr = PetscViewerASCIIPrintf(viewer,"\n");CHKERRQ(ierr);
   }
   /*
     edges 
   */
+  /*
+  ierr = PetscViewerASCIIPrintf(viewer,"edges:\n");CHKERRQ(ierr);
   for (i = 0; i < 12; i++) {
     for (c = 0; c < dof; c++) {
       ierr = PetscViewerASCIIPrintf(viewer,"  %s[%i]=%s ",EDGE_NAME[i],c,BCTYPE_NAME[ bc[c].edge[i] ]);CHKERRQ(ierr);
     }
     ierr = PetscViewerASCIIPrintf(viewer,"\n");CHKERRQ(ierr);
   }
+  */
   /*
     vertices 
   */
+  ierr = PetscViewerASCIIPrintf(viewer,"vertices:\n");CHKERRQ(ierr);
   for (i = 0; i < 8; i++) {
     for (c = 0; c < dof; c++) {
-      ierr = PetscViewerASCIIPrintf(viewer,"%s[%i]=%s ",VERTEX_NAME[i],c,BCTYPE_NAME[ bc[c].vertex[i]] );CHKERRQ(ierr);
+      ierr = PetscViewerASCIIPrintf(viewer,"%s[%i]=%s:%f ",VERTEX_NAME[i],c,BCTYPE_NAME[bc[c].vertex[i]],bc[c].vertexValue[i]);CHKERRQ(ierr);
     }
     ierr = PetscViewerASCIIPrintf(viewer,"\n");CHKERRQ(ierr);
   }
@@ -1305,7 +1529,7 @@ extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof)
   VecApplyDirichletBC
   (c) 2011 K. Yoshioka, CHEVRON ETC
 */
-extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,BC *BC,PetscReal *BCflow)
+extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,VFBC *BC,PetscReal *BCflow)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -1321,8 +1545,8 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,BC *BC,PetscReal *
   ierr = PetscObjectQuery((PetscObject) RHS,"DM",(PetscObject *) &da); CHKERRQ(ierr);
     if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
   
-  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                    &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
+                    &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   
   if (dim == 2) {

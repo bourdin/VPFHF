@@ -1,5 +1,5 @@
-#ifndef VFCARTFE_H
-#define VFCARTFE_H
+#ifndef VFVFCartFEH
+#define VFVFCartFEH
 /*
   Implement a simple P1 Lagrange element on a rectangle aligned with axis directions.
   (c) 2010-2012 B. Bourdin, bourdin@lsu.edu
@@ -22,7 +22,7 @@ typedef struct {
   PetscReal    weight[3];            /* integration weight */
   PetscReal    phi[1][1][2][3];      /* phi[i][g] = value of i^th basis function at g^th integration point */
   PetscReal    dphi[1][1][2][3];     /* dphi[i][g] = value of the derivative of the i^th basis function at g^th integration point */
-} CartFE_Element1D;
+} VFCartFEElement1D;
 
 typedef struct {
   PetscInt     dim;                  /* dimension of the space */
@@ -37,7 +37,7 @@ typedef struct {
   PetscReal    weight[9];            /* integration weight */
   PetscReal    phi[1][2][2][9];      /* phi[j][i][g] = value of (i,j)^th basis function at g^th integration point */
   PetscReal    dphi[1][2][2][2][9];  /* phi[j][i][l][g] = value of the derivative w.r.t. x_l of the (i,j)^th basis function at g^th integration point */
-} CartFE_Element2D;
+} VFCartFEElement2D;
 
 typedef struct {
   PetscInt     dim;                  /* dimension of the space */
@@ -52,7 +52,7 @@ typedef struct {
   PetscReal    weight[27];           /* integration weight */
   PetscReal    phi[2][2][2][27];     /* phi[k][j][i][g] = value of (i,j,k)^th basis function at g^th integration point */
   PetscReal    dphi[2][2][2][3][27]; /* phi[k][j][i][l][g] = value of the derivative w.r.t. x_l of the (i,j,k)^th basis function at g^th integration point */
-} CartFE_Element3D;
+} VFCartFEElement3D;
 
 typedef struct {
   PetscInt     dim;                  /* dimension of the space */
@@ -117,30 +117,36 @@ typedef enum {
 } VERTEX;
 
 typedef struct {
-  BCTYPE     face[6];
-  BCTYPE     edge[12];
-  BCTYPE     vertex[8];   
-} BC;
+  BCTYPE        face[6];
+  PetscReal     faceValue[6];
+  BCTYPE        edge[12];
+  PetscReal     edgeValue[12];
+  BCTYPE        vertex[8];   
+  PetscReal     vertexValue[8];   
+} VFBC;
 
-#ifndef CARTFE_C
-extern PetscErrorCode CartFE_Init();
-extern PetscErrorCode CartFE_Element1DCreate1D(CartFE_Element1D *e);
-extern PetscErrorCode CartFE_Element1DInit(CartFE_Element1D *e,PetscReal lx);
-extern PetscErrorCode CartFE_Element2DCreate(CartFE_Element2D *e);
-extern PetscErrorCode CartFE_Element2DInit(CartFE_Element2D *e,PetscReal lx,PetscReal ly);
-extern PetscErrorCode CartFE_Element3DCreate(CartFE_Element3D *e);
-extern PetscErrorCode CartFE_Element3DInit(CartFE_Element3D *e,PetscReal lx,PetscReal ly,PetscReal lz);
+#ifndef VFCartFEC
+extern PetscErrorCode VFCartFEInit();
+extern PetscErrorCode VFCartFEElement1DCreate1D(VFCartFEElement1D *e);
+extern PetscErrorCode VFCartFEElement1DInit(VFCartFEElement1D *e,PetscReal lx);
+extern PetscErrorCode VFCartFEElement2DCreate(VFCartFEElement2D *e);
+extern PetscErrorCode VFCartFEElement2DInit(VFCartFEElement2D *e,PetscReal lx,PetscReal ly);
+extern PetscErrorCode VFCartFEElement3DCreate(VFCartFEElement3D *e);
+extern PetscErrorCode VFCartFEElement3DInit(VFCartFEElement3D *e,PetscReal lx,PetscReal ly,PetscReal lz);
 
 extern PetscErrorCode DAReadCoordinatesHDF5(DM da,const char filename[]);
-extern PetscErrorCode BCInit(BC *bc,PetscInt dof);
-extern PetscErrorCode BCGet(BC *bc,const char prefix[],PetscInt dof);
-extern PetscErrorCode BCView(BC *bc,PetscViewer viewer,PetscInt dof);
 
-extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,BC *BC);
-extern PetscErrorCode ResidualApplyDirichletBC(Vec Residual,Vec U,Vec BCU,BC *BC);
-extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,BC *BC);
-extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,BC *BC);
-extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,BC *BC,PetscReal *BCpres);
+extern PetscErrorCode VFBCCreate(VFBC *bc,PetscInt dof);
+extern PetscErrorCode VFBCSetFromOptions(VFBC *bc,const char prefix[],PetscInt dof);
+extern PetscErrorCode VFBCView(VFBC *bc,PetscViewer viewer,PetscInt dof);
+extern PetscErrorCode VecSetFromBC(Vec BCVec,VFBC *BC);
+
+extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,VFBC *BC);
+extern PetscErrorCode ResidualApplyDirichletBC(Vec Residual,Vec U,Vec BCU,VFBC *BC);
+extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,VFBC *BC);
+extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,VFBC *BC);
+extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,VFBC *BC,PetscReal *BCpres);
+
 #endif
-#endif /* CARTFE_H */
+#endif /* VFCartFEH */
 

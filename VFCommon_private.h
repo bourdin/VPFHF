@@ -26,10 +26,10 @@ static const char *VFFlowBC_Case[] = {
 };
 
 static const char *VFPresetName[] = {"SYMXY",
-  "SYMX",
-  "SYMY",
+  "SYMX ",
+  "SYMY ",
   "NOSYM",
-	"TEST_MANUAL",
+	"NONE ",
 	"VFPresetName",
 	"",
 	0};

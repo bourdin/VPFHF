@@ -197,7 +197,7 @@ extern PetscErrorCode MixedFEMKSPMonitor(KSP ksp,PetscInt its,PetscReal fnorm,vo
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyFractureWellSource"
-extern PetscErrorCode VecApplyFractureWellSource(PetscReal *Ks_local,PetscReal ***source_array,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFCtx *ctx,PetscReal ***v_array)
+extern PetscErrorCode VecApplyFractureWellSource(PetscReal *Ks_local,PetscReal ***source_array,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFCtx *ctx,PetscReal ***v_array)
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,l,c;
@@ -251,7 +251,7 @@ extern PetscErrorCode VecApplyFractureWellSource(PetscReal *Ks_local,PetscReal *
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplySourceTerms"
-extern PetscErrorCode VecApplySourceTerms(PetscReal *Ks_local,PetscReal ***source_array,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFCtx *ctx,PetscReal ***v_array)
+extern PetscErrorCode VecApplySourceTerms(PetscReal *Ks_local,PetscReal ***source_array,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFCtx *ctx,PetscReal ***v_array)
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,l;
@@ -294,7 +294,7 @@ extern PetscErrorCode VecApplySourceTerms(PetscReal *Ks_local,PetscReal ***sourc
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyVelocityBC"
-extern PetscErrorCode VecApplyVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx)
+extern PetscErrorCode VecApplyVelocityBC(Vec RHS,Vec BCV, VFBC *bcQ,VFCtx *ctx)
 {
 	PetscErrorCode ierr;
 	PetscInt       xs,xm,nx;
@@ -702,7 +702,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         /*This computes the local contribution of the global A matrix*/
         ierr = VF_MatA_local(KS_local,&ctx->e3D,ek,ej,ei,one_array);CHKERRQ(ierr);
         for (l = 0; l < nrow*nrow; l++) {
@@ -877,7 +877,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
         if (ei == 0) {
           /*                                       Face X0                        */
           face = X0;
-          ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
           if (ctx->bcP[0].face[face] == FIXED) {
             ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
             for (l=0,k = 0; k < ctx->e2D.nphix; k++){
@@ -892,7 +892,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
         if (ei == nx-1) {
           /*                                       Face X1                */
           face = X1;
-          ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
           if (ctx->bcP[0].face[face] == FIXED) {
             ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
             for (l=0,k = 0; k < ctx->e2D.nphix; k++){
@@ -907,7 +907,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
         if (ej == 0) {
           /*                                       Face Y0                */
           face = Y0;
-          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
           if (ctx->bcP[0].face[face] == FIXED) {
             ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
             for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
@@ -922,7 +922,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
         if (ej == ny-1) {
           /*                                       Face Y1                */
           face = Y1;
-          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
           if (ctx->bcP[0].face[face] == FIXED) {
             ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
             for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
@@ -937,7 +937,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
         if (ek == 0) {
           /*                                       Face Z0                */
           face = Z0;
-          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
           if (ctx->bcP[0].face[face] == FIXED) {
             ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
             for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
@@ -952,7 +952,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
         if (ek == nz-1) {
           /*                                       Face Z1                */
           face = Z1;
-          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
           if (ctx->bcP[0].face[face] == FIXED) {
             ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
             for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
@@ -983,7 +983,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
               hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
               hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
               hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-              ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+              ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
               hwx = (ctx->well[w_no].coords[0]-coords_array[ek][ej][ei][0])/hx;
               hwy = (ctx->well[w_no].coords[1]-coords_array[ek][ej][ei][1])/hy;
               hwz = (ctx->well[w_no].coords[2]-coords_array[ek][ej][ei][2])/hz;
@@ -1028,7 +1028,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
               hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
               hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
               hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-              ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+              ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
               hwx = (ctx->fracwell[w_no].coords[0]-coords_array[ek][ej][ei][0])/hx;
               hwy = (ctx->fracwell[w_no].coords[1]-coords_array[ek][ej][ei][1])/hy;
               hwz = (ctx->fracwell[w_no].coords[2]-coords_array[ek][ej][ei][2])/hz;
@@ -1119,7 +1119,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyWellFlowRate"
-extern PetscErrorCode VecApplyWellFlowRate(PetscReal *RHS_local,CartFE_Element3D *e,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array)
+extern PetscErrorCode VecApplyWellFlowRate(PetscReal *RHS_local,VFCartFEElement3D *e,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array)
 {
   PetscReal       phi[2][2][2];
   PetscInt        i,j,k,l;
@@ -1154,7 +1154,7 @@ extern PetscErrorCode VecApplyWellFlowRate(PetscReal *RHS_local,CartFE_Element3D
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyFractureWellFlowRate"
-extern PetscErrorCode VecApplyFractureWellFlowRate(PetscReal *RHS_local,CartFE_Element3D *e,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array)
+extern PetscErrorCode VecApplyFractureWellFlowRate(PetscReal *RHS_local,VFCartFEElement3D *e,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array)
 {
   PetscReal       phi[2][2][2];
   PetscInt        i,j,k,l;
@@ -1189,7 +1189,7 @@ extern PetscErrorCode VecApplyFractureWellFlowRate(PetscReal *RHS_local,CartFE_E
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyRegularizedFractureWellFlowRate"
-extern PetscErrorCode VecApplyRegularizedFractureWellFlowRate(PetscReal *RHS_local,CartFE_Element3D *e,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array)
+extern PetscErrorCode VecApplyRegularizedFractureWellFlowRate(PetscReal *RHS_local,VFCartFEElement3D *e,PetscReal Q,PetscReal hwx,PetscReal hwy,PetscReal hwz,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array)
 {
   PetscReal       phi[2][2][2];
   PetscInt        i,j,k,l;
@@ -1226,7 +1226,7 @@ extern PetscErrorCode VecApplyRegularizedFractureWellFlowRate(PetscReal *RHS_loc
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyPressureBC"
-extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element2D *e,VFFlowProp flowpropty,PetscReal ****perm_array,PetscReal ***v_array)
+extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,VFCartFEElement2D *e,VFFlowProp flowpropty,PetscReal ****perm_array,PetscReal ***v_array)
 {
   PetscErrorCode ierr;
   PetscInt       i,j,k,l,g;
@@ -1392,7 +1392,7 @@ extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_a
 
 #undef __FUNCT__
 #define __FUNCT__ "MatApplyKSPVelocityBC"
-extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,BC *bcQ)
+extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,VFBC *bcQ)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -1546,7 +1546,7 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,BC *bcQ)
 
 #undef __FUNCT__
 #define __FUNCT__ "Flow_Vecg"
-extern PetscErrorCode Flow_Vecg(PetscReal *Kg_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****perm_array,PetscReal ***v_array)
+extern PetscErrorCode Flow_Vecg(PetscReal *Kg_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****perm_array,PetscReal ***v_array)
 {
   PetscErrorCode    ierr;
   PetscInt          i,j,k,l;
@@ -1600,7 +1600,7 @@ extern PetscErrorCode Flow_Vecg(PetscReal *Kg_local,CartFE_Element3D *e,PetscInt
 
 #undef __FUNCT__
 #define __FUNCT__ "Flow_Vecf"
-extern PetscErrorCode Flow_Vecf(PetscReal *Kf_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt c,VFFlowProp flowpropty,PetscReal ***v_array)
+extern PetscErrorCode Flow_Vecf(PetscReal *Kf_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt c,VFFlowProp flowpropty,PetscReal ***v_array)
 {
   PetscErrorCode    ierr;
   PetscInt          i,j,k,l;
@@ -1641,7 +1641,7 @@ extern PetscErrorCode Flow_Vecf(PetscReal *Kf_ele,CartFE_Element3D *e,PetscInt e
 }
 #undef __FUNCT__
 #define __FUNCT__ "Flow_MatD"
-extern PetscErrorCode Flow_MatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****perm_array,PetscReal ***v_array)
+extern PetscErrorCode Flow_MatD(PetscReal *Kd_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****perm_array,PetscReal ***v_array)
 {
   PetscErrorCode    ierr;
   PetscInt          i,j,k,l;
@@ -1697,7 +1697,7 @@ extern PetscErrorCode Flow_MatD(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt e
 }
 #undef __FUNCT__
 #define __FUNCT__ "Flow_MatBTranspose"
-extern PetscErrorCode Flow_MatBTranspose(PetscReal *KB_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt c,PetscReal ***v_array)
+extern PetscErrorCode Flow_MatBTranspose(PetscReal *KB_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt c,PetscReal ***v_array)
 {
   PetscErrorCode    ierr;
   PetscInt          i,j,k,l;
@@ -1741,7 +1741,7 @@ extern PetscErrorCode Flow_MatBTranspose(PetscReal *KB_ele,CartFE_Element3D *e,P
 }
 #undef __FUNCT__
 #define __FUNCT__ "Flow_MatB"
-extern PetscErrorCode Flow_MatB(PetscReal *KB_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt c,PetscReal ***v_array)
+extern PetscErrorCode Flow_MatB(PetscReal *KB_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt c,PetscReal ***v_array)
 {
   PetscErrorCode    ierr;
   PetscInt          i,j,k,l;
@@ -1785,7 +1785,7 @@ extern PetscErrorCode Flow_MatB(PetscReal *KB_ele,CartFE_Element3D *e,PetscInt e
 }
 #undef __FUNCT__
 #define __FUNCT__ "Flow_MatA"
-extern PetscErrorCode Flow_MatA(PetscReal *A_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt c,VFFlowProp flowpropty,PetscReal ****perm_array,PetscReal ***v_array)
+extern PetscErrorCode Flow_MatA(PetscReal *A_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt c,VFFlowProp flowpropty,PetscReal ****perm_array,PetscReal ***v_array)
 {
   PetscErrorCode    ierr;
   PetscInt          i,j,k,l;
@@ -1838,7 +1838,7 @@ extern PetscErrorCode Flow_MatA(PetscReal *A_local,CartFE_Element3D *e,PetscInt 
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatA_local"
-extern PetscErrorCode VF_MatA_local(PetscReal *A_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array)
+extern PetscErrorCode VF_MatA_local(PetscReal *A_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array)
 {
   PetscErrorCode    ierr;
   PetscInt          i,j,k,l;
@@ -1900,7 +1900,7 @@ extern PetscErrorCode VF_MatA_local(PetscReal *A_local,CartFE_Element3D *e,Petsc
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_RHSFlowMechUCoupling_local"
-extern PetscErrorCode VF_RHSFlowMechUCoupling_local(PetscReal *K_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****u_diff_array,PetscReal ***v_array)
+extern PetscErrorCode VF_RHSFlowMechUCoupling_local(PetscReal *K_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****u_diff_array,PetscReal ***v_array)
 {
   PetscErrorCode    ierr;
   PetscInt          i,j,k,l,c;
@@ -1953,7 +1953,7 @@ extern PetscErrorCode VF_RHSFlowMechUCoupling_local(PetscReal *K_local,CartFE_El
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_RHSFlowMechUCouplingFIXSTRESS_local"
-extern PetscErrorCode VF_RHSFlowMechUCouplingFIXSTRESS_local(PetscReal *K_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,VFMatProp *matprop,PetscReal ***pressure_diff_array,PetscReal ***v_array)
+extern PetscErrorCode VF_RHSFlowMechUCouplingFIXSTRESS_local(PetscReal *K_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,VFMatProp *matprop,PetscReal ***pressure_diff_array,PetscReal ***v_array)
 {
   PetscErrorCode    ierr;
   PetscInt          i,j,k,l;
@@ -1998,7 +1998,7 @@ extern PetscErrorCode VF_RHSFlowMechUCouplingFIXSTRESS_local(PetscReal *K_local,
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_RHSFractureFlowCoupling_local"
-extern PetscErrorCode VF_RHSFractureFlowCoupling_local(PetscReal *K_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array,PetscReal ****u_old_array,PetscReal ***v_old_array)
+extern PetscErrorCode VF_RHSFractureFlowCoupling_local(PetscReal *K_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array,PetscReal ****u_old_array,PetscReal ***v_old_array)
 {
   PetscErrorCode    ierr;
   PetscInt          i,j,k,l,c;
@@ -2104,7 +2104,7 @@ extern PetscErrorCode VF_RHSFractureFlowCoupling_local(PetscReal *K_local,CartFE
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatAFractureFlowCoupling_local"
-extern PetscErrorCode VF_MatAFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array)
+extern PetscErrorCode VF_MatAFractureFlowCoupling_local(PetscReal *Kd_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
   PetscInt                i,j,k,l,c;
@@ -2156,7 +2156,7 @@ extern PetscErrorCode VF_MatAFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatLeakOff_local"
-extern PetscErrorCode VF_MatLeakOff_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ***v_array)
+extern PetscErrorCode VF_MatLeakOff_local(PetscReal *Kd_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
   PetscInt                i,j,k,l;
@@ -2200,7 +2200,7 @@ extern PetscErrorCode VF_MatLeakOff_local(PetscReal *Kd_ele,CartFE_Element3D *e,
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatBTFractureFlowCoupling_local"
-extern PetscErrorCode VF_MatBTFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ****u_array,PetscReal ***v_array)
+extern PetscErrorCode VF_MatBTFractureFlowCoupling_local(PetscReal *Kd_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ****u_array,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
   PetscInt                i,j,k,l,c;
@@ -2282,7 +2282,7 @@ extern PetscErrorCode VF_MatBTFractureFlowCoupling_local(PetscReal *Kd_ele,CartF
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatBFractureFlowCoupling_local"
-extern PetscErrorCode VF_MatBFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ****u_array,PetscReal ***v_array)
+extern PetscErrorCode VF_MatBFractureFlowCoupling_local(PetscReal *Kd_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ****u_array,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
   PetscInt                i,j,k,l,c;
@@ -2365,7 +2365,7 @@ extern PetscErrorCode VF_MatBFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatDFractureFlowCoupling_local"
-extern PetscErrorCode VF_MatDFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array)
+extern PetscErrorCode VF_MatDFractureFlowCoupling_local(PetscReal *Kd_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
   PetscInt                i,j,k,l,c;
@@ -2462,7 +2462,7 @@ extern PetscErrorCode VF_MatDFractureFlowCoupling_local(PetscReal *Kd_ele,CartFE
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatFluidCompreStiffMatrix_local"
-extern PetscErrorCode VF_MatFluidCompreStiffMatrix_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array)
+extern PetscErrorCode VF_MatFluidCompreStiffMatrix_local(PetscReal *Kd_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ****u_array,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
   PetscInt                i,j,k,l,c;
@@ -2514,7 +2514,7 @@ extern PetscErrorCode VF_MatFluidCompreStiffMatrix_local(PetscReal *Kd_ele,CartF
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_FlowStiffnessMatrixEps_local"
-extern PetscErrorCode VF_FlowStiffnessMatrixEps_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array)
+extern PetscErrorCode VF_FlowStiffnessMatrixEps_local(PetscReal *Kd_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array)
 {
   PetscErrorCode  ierr;
 	PetscInt        i,j,k,l;
