@@ -187,7 +187,7 @@ extern PetscErrorCode FormIJacobian(TS ts,PetscReal t,Vec VelnPress,Vec VelnPres
 
 #undef __FUNCT__
 #define __FUNCT__ "MatApplyTSVelocityBC"
-extern PetscErrorCode MatApplyTSVelocityBC(Mat K,Mat Klhs,BC *bcQ)
+extern PetscErrorCode MatApplyTSVelocityBC(Mat K,Mat Klhs,VFBC *bcQ)
 {
 	PetscErrorCode ierr;
 	PetscInt       xs,xm,nx;
@@ -418,7 +418,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
 				hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				/*	This computes the local contribution of the global A matrix	*/
         ierr = VF_MatA_local(Klhs_local,&ctx->e3D,ek,ej,ei,v_array);CHKERRQ(ierr);
 				for (l = 0; l < nrow*nrow; l++) {
@@ -476,7 +476,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				if (ei == 0) {
 					/*					 Face X0			*/
 					face = X0;	
-					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+					ierr = VFCartFEElement2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == FIXED) {
 						ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
@@ -491,7 +491,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				if (ei == nx-1) {
 					/*					 Face X1		*/
 					face = X1;
-					ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+					ierr = VFCartFEElement2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == FIXED) {
 						ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
@@ -506,7 +506,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				if (ej == 0) {
 					/*					 Face Y0		*/
 					face = Y0;
-					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+					ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == FIXED) {
 						ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
@@ -521,7 +521,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				if (ej == ny-1) {
 					/*					 Face Y1		*/
 					face = Y1;
-					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+					ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == FIXED) {
 						ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
@@ -536,7 +536,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				if (ek == 0) {
 					/*					 Face Z0		*/
 					face = Z0;
-					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+					ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == FIXED) {
 						ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
@@ -551,7 +551,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				if (ek == nz-1) {
 					/*					 Face Z1		*/
 					face = Z1;
-					ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+					ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
 					if (ctx->bcP[0].face[face] == FIXED) {
 						ierr = VecApplyPressureBC(RHS_local,prebc_array,ek,ej,ei,face,&ctx->e2D,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
 						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
@@ -580,7 +580,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
               hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
               hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
               hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-              ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+              ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 							hwx = (ctx->well[ii].coords[0]-coords_array[ek][ej][ei][0])/hx;
 							hwy = (ctx->well[ii].coords[1]-coords_array[ek][ej][ei][1])/hy;
 							hwz = (ctx->well[ii].coords[2]-coords_array[ek][ej][ei][2])/hz;
@@ -642,7 +642,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyTSVelocityBC"
-extern PetscErrorCode VecApplyTSVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx)
+extern PetscErrorCode VecApplyTSVelocityBC(Vec RHS,Vec BCV, VFBC *bcQ,VFCtx *ctx)
 {
 	PetscErrorCode ierr;
 	PetscInt       xs,xm,nx;
@@ -873,7 +873,7 @@ extern PetscErrorCode VecApplyTSVelocityBC(Vec RHS,Vec BCV, BC *bcQ,VFCtx *ctx)
 
 #undef __FUNCT__
 #define __FUNCT__ "FormInitialSolution"
-extern PetscErrorCode FormInitialSolution(Vec VelnPress,Vec VelnPressBV, BC *bcP,BC *bcQ, VFCtx *ctx)
+extern PetscErrorCode FormInitialSolution(Vec VelnPress,Vec VelnPressBV, VFBC *bcP,VFBC *bcQ, VFCtx *ctx)
 {
 	PetscErrorCode ierr;
 	PetscInt       xs,xm,nx;

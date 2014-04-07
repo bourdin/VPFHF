@@ -24,6 +24,37 @@ mpiexec -n 4 ./test6 -n 101,2,101 -l 1,.1,1 -E 1 -nu 0 -U_snes_monitor -orientat
              -pc0_r .4 -pc0_thickness .02 -pc0_center 0.5,0.01,0.5 -pc0_phi 90        \
              -epsilon .03 -verbose 0 -eta 0 -bcu 0,0,0  -eta .001 -atnum 1            \
              -unilateral nocompression -U_pc_type hypre
+
+mpiexec -n 4 ./test6 -n 101,2,101 -l 1,.1,1 -E 1 -nu 0 -U_snes_monitor                \
+             -options_file ../BCfiles/2DXZRigidMotion.txt                             \
+             -insitumin -1,0,0,0,0,0  -insitumax -1,0,0,0,0,0 -npc 1                  \
+             -pc0_r .4 -pc0_thickness .02 -pc0_center 0.5,0.01,0.5 -pc0_phi 90        \
+             -epsilon .03 -verbose 0 -eta .001 -atnum 1                               \
+             -unilateral nocompression -U_pc_type hypre
+
+mpiexec -n 4 ./test6 -n 101,2,101 -l 1,.1,1 -E 1 -nu 0 -U_snes_monitor                \
+             -options_file ../BCfiles/2DXZRigidMotion.txt                             \
+             -insitumin -1,0,0,0,0,0  -insitumax -1,0,0,0,0,0 -npc 1                  \
+             -pc0_r .25 -pc0_thickness .02 -pc0_center 0.5,0.01,0.5 -pc0_phi 45       \
+             -epsilon .03 -verbose 0 -eta 1e-8 -atnum 1                               \
+             -unilateral nocompression -U_pc_type hypre -pressure .8
+
+mpiexec -n 4 ./test6 -n 101,2,101 -l 1,.1,1 -E 1 -nu 0 -U_snes_monitor                \
+             -options_file ../BCfiles/2DXZRigidMotion.txt                             \
+             -insitumin -1,0,-1,0,0,0  -insitumax -1,0,-1,0,0,0 -npc 3                \
+             -pc0_r .3 -pc0_thickness .02 -pc0_center 0.5,0.01,0.5 -pc0_phi 00        \
+             -pc1_r .2 -pc1_thickness .02 -pc1_center 0.65,0.01,0.5 -pc1_phi 90       \
+             -pc2_r .2 -pc2_thickness .02 -pc2_center 0.35,0.01,0.5 -pc2_phi 90       \
+             -epsilon .03 -verbose 0 -eta 1e-8 -atnum 1                               \
+             -unilateral nocompression -U_pc_type hypre -pressure .8
+
+mpiexec -n 4 ./test6 -n 101,2,101 -l 1,.1,1 -E 1 -nu 0 -U_snes_monitor                \
+             -options_file ../BCfiles/2DXZRigidMotion.txt                             \
+             -insitumin -1,0,-1.5,0,0,0  -insitumax -1,0,-1.5,0,0,0 -npc 2            \
+             -pc0_r .3 -pc0_thickness .02 -pc0_center 0.5,0.01,0.5 -pc0_phi 00        \
+             -pc1_r .3 -pc1_thickness .02 -pc1_center 0.5,0.01,0.5 -pc1_phi 90        \
+             -epsilon .03 -verbose 0 -eta 1e-4 -atnum 1                               \
+             -unilateral nocompression -U_pc_type hypre -pressure 1.25
 */
 
 #include "petsc.h"
@@ -42,22 +73,14 @@ int main(int argc,char **argv)
   VFFields       fields;
   PetscErrorCode ierr;
 
-  PetscInt  orientation = 0;
-  PetscInt  i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-  PetscReal ****coords_array;
-  PetscReal ****bcu_array;
-  PetscReal BBmin[3],BBmax[3];
   PetscReal InsituWork    = 0;
-  PetscReal boundaryDisplacement[3] = {0.,0.,0.};
   PetscReal p = 0.;
   PetscBool flg;
-  PetscInt  nopt=3;
   PetscReal crackVolume;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 
-  ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
 
 
   ierr = PetscOptionsGetReal(NULL,"-pressure",&p,&flg);CHKERRQ(ierr);
@@ -65,127 +88,22 @@ int main(int argc,char **argv)
     ctx.hasCrackPressure = PETSC_TRUE;
   }
 
-  boundaryDisplacement[orientation] = .5;
-  ierr = PetscOptionsGetRealArray(NULL,"-bcu",boundaryDisplacement,&nopt,&flg);CHKERRQ(ierr);
-
-  ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-
-
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
 
   ctx.timestep  = 1;
   ctx.timevalue = 1.;
 
-  ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-  //ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
-  //ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
   ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
   ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 
-  ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
-  ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
-
   /*
-    Reset all BC for U and V
+    VF BC for U and V are now setup in VFCommon.c
   */
-  for (i = 0; i < 6; i++) {
-    ctx.bcV[0].face[i] = NONE;
-    for (j = 0; j < 3; j++) {
-      ctx.bcU[j].face[i] = NONE;
-    }
-  }
-  for (i = 0; i < 12; i++) {
-    ctx.bcV[0].edge[i] = NONE;
-    for (j = 0; j < 3; j++) {
-      ctx.bcU[j].edge[i] = NONE;
-    }
-  }
-  for (i = 0; i < 8; i++) {
-    ctx.bcV[0].vertex[i] = NONE;
-    for (j = 0; j < 3; j++) {
-      ctx.bcU[j].vertex[i] = NONE;
-    }
-  }
-  switch (orientation) {
-  case 0:
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces X0 X1\n");CHKERRQ(ierr);
-    ctx.bcU[0].face[X0] = FIXED;ctx.bcU[0].face[X1] = FIXED;
-    for (k = zs; k < zs+zm; k++) {
-      for (j = ys; j < ys+ym; j++) {
-        for (i = xs; i < xs+xm; i++) {
-          if (i == 0) {
-            for (c = 0; c < 3; c++) {
-              bcu_array[k][j][i][c] = -boundaryDisplacement[c];
-            }
-          }
-          if (i == nx-1) {
-            for (c = 0; c < 3; c++) {
-              bcu_array[k][j][i][c] = boundaryDisplacement[c];
-            }
-          }
-        }
-      }
-    }
 
-    break;
-
-  case 1:
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Y0 Y1\n");CHKERRQ(ierr);
-    ctx.bcU[1].face[Y0] = FIXED;ctx.bcU[1].face[Y1] = FIXED;
-    for (k = zs; k < zs+zm; k++) {
-      for (j = ys; j < ys+ym; j++) {
-        for (i = xs; i < xs+xm; i++) {
-          if (j == 0) {
-            for (c = 0; c < 3; c++) {
-              bcu_array[k][j][i][c] = -boundaryDisplacement[c];
-            }
-          }
-          if (j == ny-1) {
-            for (c = 0; c < 3; c++) {
-              bcu_array[k][j][i][c] = boundaryDisplacement[c];
-            }
-          }
-        }
-      }
-    }
-    break;
-
-  case 2:
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Applying traction Dirichlet conditions on faces Z0 Z1\n");CHKERRQ(ierr);
-    ctx.bcU[2].face[Z0] = FIXED;ctx.bcU[2].face[Z1] = FIXED;
-    ctx.bcU[1].face[Y0] = FIXED;ctx.bcU[1].face[Y1] = FIXED;
-    ctx.bcU[0].vertex[X0Y0Z0] = ZERO;
-    for (k = zs; k < zs+zm; k++) {
-      for (j = ys; j < ys+ym; j++) {
-        for (i = xs; i < xs+xm; i++) {
-          if (k == 0) {
-            for (c = 0; c < 3; c++) {
-              bcu_array[k][j][i][c] = -boundaryDisplacement[c];
-            }
-          }
-          if (k == nz-1) {
-            for (c = 0; c < 3; c++) {
-              bcu_array[k][j][i][c] = boundaryDisplacement[c];
-            }
-          }
-        }
-      }
-    }
-    break;
-
-  default:
-    SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be between 0 and 2, got %i\n",orientation);
-    break;
-  }
-  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
   
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = VF_StepU(&fields,&ctx);

@@ -12,7 +12,7 @@
 
 #undef __FUNCT__
 #define __FUNCT__ "VolumetricCrackOpening3D_local"
-extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal *CrackVolume_local, PetscReal ***volcrackopening_array, PetscReal ****displ_array, PetscReal ***vfield_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal *CrackVolume_local, PetscReal ***volcrackopening_array, PetscReal ****displ_array, PetscReal ***vfield_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
 	PetscErrorCode ierr;
 	PetscInt		i, j, k;
@@ -137,7 +137,7 @@ extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx,
 				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				ierr = VolumetricCrackOpening3D_local(&myCrackVolumeLocal, volcrackopening_array, u_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
         myCrackVolume += myCrackVolumeLocal;
 			}
@@ -172,7 +172,7 @@ extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx,
 
 #undef __FUNCT__
 #define __FUNCT__ "VolumetricStrainVolume_local"
-extern PetscErrorCode VolumetricStrainVolume_local(PetscReal *VolStrainVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e, VFFlowProp flowpropty, PetscReal ****u_diff_array, PetscReal ***v_array)
+extern PetscErrorCode VolumetricStrainVolume_local(PetscReal *VolStrainVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e, VFFlowProp flowpropty, PetscReal ****u_diff_array, PetscReal ***v_array)
 {
   
 	PetscErrorCode ierr;
@@ -297,7 +297,7 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
 				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				ierr = ModulusVolume_local(&mymodVolumeLocal, ek, ej, ei, &ctx->e3D,ctx->flowprop,press_diff_array,v_array);CHKERRQ(ierr);
 				ierr = DivergenceVolume_local(&mydivVolumeLocal, ek, ej, ei, &ctx->e3D,vel_array, v_array);CHKERRQ(ierr);
         if(ctx->hasFluidSources){
@@ -312,37 +312,37 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
         mystrainVolume += mystrainVolumeLocal;
         if(ei == 0){
           face = X0;
-          ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
           ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,ek,ej,ei,face,&ctx->e2D,vel_array,v_array);
           mysurfVolume += mysurfVolumeLocal;
         }
         if(ei == nx-1){
           face = X1;
-          ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
           ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,ek,ej,ei,face,&ctx->e2D,vel_array,v_array);
           mysurfVolume += mysurfVolumeLocal;
         }
         if(ej == 0){
           face = Y0;
-          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
           ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,ek,ej,ei,face,&ctx->e2D,vel_array,v_array);
           mysurfVolume += mysurfVolumeLocal;
         }
         if(ej == ny-1){
           face = Y1;
-          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
           ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,ek,ej,ei,face,&ctx->e2D,vel_array,v_array);
           mysurfVolume += mysurfVolumeLocal;
         }
         if(ek == 0){
           face = Z0;
-          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
           ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,ek,ej,ei,face,&ctx->e2D,vel_array,v_array);
           mysurfVolume += mysurfVolumeLocal;
         }
         if(ek == nz-1){
           face = Z1;
-          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
           ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,ek,ej,ei,face,&ctx->e2D,vel_array,v_array);
           mysurfVolume += mysurfVolumeLocal;
         }
@@ -382,7 +382,7 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
 
 #undef __FUNCT__
 #define __FUNCT__ "ModulusVolume_local"
-extern PetscErrorCode ModulusVolume_local(PetscReal *ModVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e, VFFlowProp flowpropty, PetscReal ***press_diff_array,PetscReal ***v_array)
+extern PetscErrorCode ModulusVolume_local(PetscReal *ModVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e, VFFlowProp flowpropty, PetscReal ***press_diff_array,PetscReal ***v_array)
 {
   
 	PetscErrorCode ierr;
@@ -424,7 +424,7 @@ extern PetscErrorCode ModulusVolume_local(PetscReal *ModVolume_local,PetscInt ek
 
 #undef __FUNCT__
 #define __FUNCT__ "SurfaceFluxVolume_local"
-extern PetscErrorCode SurfaceFluxVolume_local(PetscReal *mysurfVolumeLocal,PetscInt ek, PetscInt ej, PetscInt ei, FACE face, CartFE_Element2D *e, PetscReal ****vel_array, PetscReal ***v_array)
+extern PetscErrorCode SurfaceFluxVolume_local(PetscReal *mysurfVolumeLocal,PetscInt ek, PetscInt ej, PetscInt ei, FACE face, VFCartFEElement2D *e, PetscReal ****vel_array, PetscReal ***v_array)
 {
   
 	PetscErrorCode ierr;
@@ -521,7 +521,7 @@ extern PetscErrorCode SurfaceFluxVolume_local(PetscReal *mysurfVolumeLocal,Petsc
 
 #undef __FUNCT__
 #define __FUNCT__ "DivergenceVolume_local"
-extern PetscErrorCode DivergenceVolume_local(PetscReal *DivVolume_local, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e, PetscReal ****vel_array,PetscReal ***v_array)
+extern PetscErrorCode DivergenceVolume_local(PetscReal *DivVolume_local, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e, PetscReal ****vel_array,PetscReal ***v_array)
 {
   
 	PetscErrorCode ierr;
@@ -560,7 +560,7 @@ extern PetscErrorCode DivergenceVolume_local(PetscReal *DivVolume_local, PetscIn
 
 #undef __FUNCT__
 #define __FUNCT__ "SourceVolume_local"
-extern PetscErrorCode SourceVolume_local(PetscReal *SrcVolume_local, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e,PetscReal ***src_array, PetscReal ***v_array)
+extern PetscErrorCode SourceVolume_local(PetscReal *SrcVolume_local, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e,PetscReal ***src_array, PetscReal ***v_array)
 {
   
 	PetscErrorCode ierr;
@@ -821,7 +821,7 @@ extern PetscErrorCode VolumetricLeakOffRate(PetscReal *LeakOffRate, VFCtx *ctx, 
 				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				ierr = VolumetricCrackOpening3D_local(&myLeakOffRateLocal, volleakoffrate_array, q_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
         myLeakOffRate += myLeakOffRateLocal;
 			}
@@ -847,7 +847,7 @@ extern PetscErrorCode VolumetricLeakOffRate(PetscReal *LeakOffRate, VFCtx *ctx, 
 
 #undef __FUNCT__
 #define __FUNCT__ "VolumetricLeakOffRate_local"
-extern PetscErrorCode VolumetricLeakOffRate_local(PetscReal *LeakoffRate_local, PetscReal ***volleakoffrate_array, PetscReal ****q_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+extern PetscErrorCode VolumetricLeakOffRate_local(PetscReal *LeakoffRate_local, PetscReal ***volleakoffrate_array, PetscReal ****q_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
 	PetscErrorCode ierr;
 	PetscInt		i, j, k;
@@ -900,7 +900,7 @@ extern PetscErrorCode VolumetricLeakOffRate_local(PetscReal *LeakoffRate_local, 
 
 #undef __FUNCT__
 #define __FUNCT__ "Permeabilityfield"
-extern PetscErrorCode Permeabilityfield(PetscReal *COD_local, PetscReal ***volcrackopening_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element2D *e, FACE face)
+extern PetscErrorCode Permeabilityfield(PetscReal *COD_local, PetscReal ***volcrackopening_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement2D *e, FACE face)
 {
 	PetscErrorCode ierr;
 	PetscInt       i,j,k,g;
@@ -1029,7 +1029,7 @@ extern PetscErrorCode PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				ierr = VolumetricCrackOpening3D_local(&myCOD, cod_array, u_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
 			}
 		}
@@ -1246,7 +1246,7 @@ extern PetscErrorCode TrialFunctionCompute1(PetscReal *FunctionValue, VFCtx *ctx
 				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				ierr = VolumetricCrackOpening3D_local(&myCOD, cod_array, u_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
 			}
 		}
@@ -1365,7 +1365,7 @@ extern PetscErrorCode TrialFunctionCompute(PetscReal *FunctionValue, VFCtx *ctx,
 				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				ierr = VolumetricFunction_local(&myFunctionLocal, PETSC_NULL, u_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
         myFunction += myFunctionLocal;    
 			}
@@ -1382,7 +1382,7 @@ extern PetscErrorCode TrialFunctionCompute(PetscReal *FunctionValue, VFCtx *ctx,
 
 #undef __FUNCT__
 #define __FUNCT__ "VolumetricFunction_local"
-extern PetscErrorCode VolumetricFunction_local(PetscReal *Function_local, PetscReal ***value_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+extern PetscErrorCode VolumetricFunction_local(PetscReal *Function_local, PetscReal ***value_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
 	PetscErrorCode ierr;
 	PetscInt        i, j, k,c;
@@ -1499,7 +1499,7 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				ierr = VolumetricCrackOpening3D_local(&myCOD, cod_array, u_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
 			}
 		}
@@ -1580,7 +1580,7 @@ extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
 /*
 #undef __FUNCT__
 #define __FUNCT__ "VF_UdotVAverage_local"
-extern PetscErrorCode VF_UdotVAverage_local(PetscReal *myu_dot_v, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, PetscReal hz, PetscReal hy, PetscReal hx, CartFE_Element3D *e)
+extern PetscErrorCode VF_UdotVAverage_local(PetscReal *myu_dot_v, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, PetscReal hz, PetscReal hy, PetscReal hx, VFCartFEElement3D *e)
 {
 	PetscErrorCode  ierr;
 	PetscInt        k,j,i,c,eg;
@@ -1651,7 +1651,7 @@ extern PetscErrorCode VF_UdotVAverage_local(PetscReal *myu_dot_v, PetscReal ****
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_AverageCellNormal_local"
-extern PetscErrorCode VF_AverageCellNormal_local(PetscReal *dv_ave, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+extern PetscErrorCode VF_AverageCellNormal_local(PetscReal *dv_ave, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
 	PetscErrorCode  ierr;
 	PetscInt        k,j,i,c,eg;
@@ -1762,7 +1762,7 @@ extern PetscErrorCode TrialFunctionCompute(PetscReal *FunctionValue, VFCtx *ctx,
             hz = coords_array[ek+c+1][ej][ei][2]-coords_array[ek+c][ej][ei][2];
             hy = coords_array[ek+c][ej+1][ei][1]-coords_array[ek+c][ej][ei][1];
             hx = coords_array[ek+c][ej][ei+1][0]-coords_array[ek+c][ej][ei][0];
-            ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+            ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
             ierr = VF_UdotVAverage_local(&myu_dot_v,u_array,v_array,ek+c,ej,ei,hz,hy,hx,&ctx->e3D);
             valuez += myu_dot_v/2.;
           }
@@ -1770,7 +1770,7 @@ extern PetscErrorCode TrialFunctionCompute(PetscReal *FunctionValue, VFCtx *ctx,
             hz = coords_array[ek+1][ej+c][ei][2]-coords_array[ek][ej+c][ei][2];
             hy = coords_array[ek][ej+c+1][ei][1]-coords_array[ek][ej+c][ei][1];
             hx = coords_array[ek][ej+c][ei+1][0]-coords_array[ek][ej+c][ei][0];
-            ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+            ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
             ierr = VF_UdotVAverage_local(&myu_dot_v,u_array,v_array,ek,ej+c,ei,hz,hy,hx,&ctx->e3D);
             valuey += myu_dot_v/2.;
           }
@@ -1778,7 +1778,7 @@ extern PetscErrorCode TrialFunctionCompute(PetscReal *FunctionValue, VFCtx *ctx,
             hz = coords_array[ek+1][ej][ei+c][2]-coords_array[ek][ej][ei+c][2];
             hy = coords_array[ek][ej+1][ei+c][1]-coords_array[ek][ej][ei+c][1];
             hx = coords_array[ek][ej][ei+c+1][0]-coords_array[ek][ej][ei+c][0];
-            ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+            ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
             ierr = VF_UdotVAverage_local(&myu_dot_v,u_array,v_array,ek,ej,ei+c,hz,hy,hx,&ctx->e3D);
             valuex += myu_dot_v/2.;
             if((ek == 12) && ei == 26){
@@ -1789,7 +1789,7 @@ extern PetscErrorCode TrialFunctionCompute(PetscReal *FunctionValue, VFCtx *ctx,
         hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
         hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         ierr = VF_AverageCellNormal_local(n_ave,v_array,ek,ej,ei,&ctx->e3D);
         udotv_ave_array[ek][ej][ei] = -1.*(valuex*PetscAbs(n_ave[0])+valuey*PetscAbs(n_ave[1])+valuez*PetscAbs(n_ave[2]));
         
@@ -1852,7 +1852,7 @@ extern PetscErrorCode TrialFunctionCompute(PetscReal *FunctionValue, VFCtx *ctx,
 				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				ierr = VolumetricFunction_local(&myFunctionLocal, u_array, v_array, u_dotv_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
         myFunction += myFunctionLocal;
 			}
@@ -1886,7 +1886,7 @@ extern PetscErrorCode TrialFunctionCompute(PetscReal *FunctionValue, VFCtx *ctx,
 
 #undef __FUNCT__
 #define __FUNCT__ "VolumetricFractureWellRate_local"
-extern PetscErrorCode VolumetricFractureWellRate_local(PetscReal *InjVolume_local, PetscReal ***regrate_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e)
+extern PetscErrorCode VolumetricFractureWellRate_local(PetscReal *InjVolume_local, PetscReal ***regrate_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
 	PetscErrorCode ierr;
 	PetscInt		i, j, k,c;
@@ -1963,7 +1963,7 @@ extern PetscErrorCode VolumetricFractureWellRate(PetscReal *InjectedVolume, VFCt
 				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				ierr = VolumetricFractureWellRate_local(&myInjVolumeRateLocal, regrate_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
         myInjVolumeRate += myInjVolumeRateLocal;
 			}
@@ -1984,7 +1984,7 @@ extern PetscErrorCode VolumetricFractureWellRate(PetscReal *InjectedVolume, VFCt
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_IntegrateOnBoundary_local"
-extern PetscErrorCode VF_IntegrateOnBoundary_local(PetscReal *SumnIntegral_local,PetscReal ***node_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,CartFE_Element2D *e)
+extern PetscErrorCode VF_IntegrateOnBoundary_local(PetscReal *SumnIntegral_local,PetscReal ***node_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,VFCartFEElement2D *e)
 {
   PetscErrorCode ierr;
 	PetscInt		i, j, k, g;
@@ -2110,7 +2110,7 @@ extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FA
         for (ej = ys; ej < ys+ym; ej++) {
           hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
           hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-          ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
           ierr = VF_IntegrateOnBoundary_local(&SumnIntegralLocal,node_array,ek,ej,ei,face,&ctx->e2D);CHKERRQ(ierr);
           mySumnIntegral += SumnIntegralLocal;
         }
@@ -2122,7 +2122,7 @@ extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FA
         for (ej = ys; ej < ys+ym; ej++) {
           hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
           hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-          ierr = CartFE_Element2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
           ierr = VF_IntegrateOnBoundary_local(&SumnIntegralLocal,node_array,ek,ej,ei,face,&ctx->e2D);CHKERRQ(ierr);
           mySumnIntegral += SumnIntegralLocal;
         }
@@ -2134,7 +2134,7 @@ extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FA
         for (ei = xs; ei < xs+xm; ei++) {
           hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
           hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
           ierr = VF_IntegrateOnBoundary_local(&SumnIntegralLocal,node_array,ek,ej,ei,face,&ctx->e2D);CHKERRQ(ierr);
           mySumnIntegral += SumnIntegralLocal;
         }
@@ -2146,7 +2146,7 @@ extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FA
         for (ei = xs; ei < xs+xm; ei++) {
           hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
           hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
           ierr = VF_IntegrateOnBoundary_local(&SumnIntegralLocal,node_array,ek,ej,ei,face,&ctx->e2D);CHKERRQ(ierr);
           mySumnIntegral += SumnIntegralLocal;
         }
@@ -2158,7 +2158,7 @@ extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FA
         for (ei = xs; ei < xs+xm; ei++) {
           hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
           hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
-          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
           ierr = VF_IntegrateOnBoundary_local(&SumnIntegralLocal,node_array,ek,ej,ei,face,&ctx->e2D);CHKERRQ(ierr);
           mySumnIntegral += SumnIntegralLocal;
         }
@@ -2170,7 +2170,7 @@ extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FA
         for (ei = xs; ei < xs+xm; ei++) {
           hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
           hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
-          ierr = CartFE_Element2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
+          ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
           ierr = VF_IntegrateOnBoundary_local(&SumnIntegralLocal,node_array,ek,ej,ei,face,&ctx->e2D);CHKERRQ(ierr);
           mySumnIntegral += SumnIntegralLocal;
         }

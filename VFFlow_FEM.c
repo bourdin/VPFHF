@@ -15,7 +15,7 @@
    VFFlow_FEM_MatPAssembly3D_local
 */
 
-extern PetscErrorCode VFFlow_FEM_MatPAssembly3D_local(PetscReal *Mat_local,VFResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VFFlow_FEM_MatPAssembly3D_local(PetscReal *Mat_local,VFResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
   PetscReal      fdens,relk,visc;
@@ -72,7 +72,7 @@ extern PetscErrorCode VFFlow_FEM_MatPAssembly3D_local(PetscReal *Mat_local,VFRes
    VFFlow_FEM_MassMatPAssembly3D_local
 */
 
-extern PetscErrorCode VFFlow_FEM_MassMatPAssembly3D_local(PetscReal *Mat_local,VFResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VFFlow_FEM_MassMatPAssembly3D_local(PetscReal *Mat_local,VFResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
   PetscReal      fdens,por,wat_comp,rock_comp;
@@ -167,7 +167,7 @@ extern PetscErrorCode VFFlow_FEM_MatPAssembly3D(Mat K,Vec RHS,VFFields *fields,V
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         /*
           Accumulate stiffness matrix
         */
@@ -243,7 +243,7 @@ extern PetscErrorCode VFFlow_FEM_MatPAssembly3D(Mat K,Vec RHS,VFFields *fields,V
 
   Keita Yoshioak yoshk@chevron.com
 */
-extern PetscErrorCode VFFlow_FEM_MatTAssembly3D_local(PetscReal *Mat_local,VFResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VFFlow_FEM_MatTAssembly3D_local(PetscReal *Mat_local,VFResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
   PetscReal      TCond_X,TCond_Y,TCond_Z;
@@ -339,7 +339,7 @@ extern PetscErrorCode VFFlow_FEM_MatTAssembly3D(Mat K,Vec RHS,VFFields *fields,V
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 
         for (l = 0; l < nrow*nrow; l++) K_local[l] = 0.;
         ierr = VFFlow_FEM_MatTAssembly3D_local(K_local,&ctx->resprop,ek,ej,ei,&ctx->e3D);
@@ -619,7 +619,7 @@ extern PetscErrorCode VFFormFunction_Flow(SNES snes,Vec pressure_Vec,Vec F,void 
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 
 /*    func_array[ek][ej][ei] = pressure_array[ek][ej][ei]*pressure_array[ek][ej][ei]; */
 /*    pressure_array[ek][ej][ei] = 0.99; */
@@ -722,7 +722,7 @@ extern PetscErrorCode VFFormJacobian_Flow(SNES snes,Vec pressure_Vec,Mat *J,Mat 
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         /*
           Accumulate Jacobian matrix
         */
@@ -950,7 +950,7 @@ extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         for (g = 0; g < ctx->e3D.ng; g++) {
           for (k1 = 0; k1 < ctx->e3D.nphiz; k1++) {
             for (j1 = 0; j1 < ctx->e3D.nphiy; j1++) {
@@ -1013,7 +1013,7 @@ extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
    VFFlow_FEM_IJacobPAssembly3D_local
 */
 
-extern PetscErrorCode VFFlow_FEM_IJacobPAssembly3D_local(PetscReal a, PetscReal *Mat_local,VFResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VFFlow_FEM_IJacobPAssembly3D_local(PetscReal a, PetscReal *Mat_local,VFResProp *resprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscInt       g,i1,i2,j1,j2,k1,k2,l;
   PetscReal      fdens,por,wat_comp,rock_comp,relk,visc;
@@ -1105,7 +1105,7 @@ extern PetscErrorCode VFFormIJacobian_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
         hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
         hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
         hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         /*
           Accumulate Jacobian matrix
         */

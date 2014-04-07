@@ -15,23 +15,23 @@
 
 #undef __FUNCT__
 #define __FUNCT__ "BCTInit"
-extern PetscErrorCode BCTInit(BC *BCT,VFCtx *ctx)
+extern PetscErrorCode BCTInit(VFBC *BCT,VFCtx *ctx)
 {
 	PetscErrorCode ierr;
 	
 	PetscFunctionBegin;
-	ierr = BCInit(BCT,1);CHKERRQ(ierr);	
+	ierr = VFBCCreate(BCT,1);CHKERRQ(ierr);	
 	PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "BCQTInit"
-extern PetscErrorCode BCQTInit(BC *BCQT,VFCtx *ctx)
+extern PetscErrorCode BCQTInit(VFBC *BCQT,VFCtx *ctx)
 {
 	PetscErrorCode ierr;
 	
 	PetscFunctionBegin;
-	ierr = BCInit(BCQT,3);CHKERRQ(ierr);
+	ierr = VFBCCreate(BCQT,3);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 

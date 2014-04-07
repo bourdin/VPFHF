@@ -184,8 +184,6 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 #define __FUNCT__ "VFFlowTimeStep"
 extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
 {
-  char           filename[FILENAME_MAX];
-  PetscViewer    viewer;
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
@@ -217,21 +215,8 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
       ierr = VFFlow_Fake(ctx,fields);CHKERRQ(ierr);
       break;
     case FLOWSOLVER_READFROMFILES:
-      switch (ctx->fileformat) {
-        case FILEFORMAT_HDF5:
-#if defined(PETSC_HAVE_HDF5)
-          ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-          /*
-           ierr = VecLoad(viewer,fields->theta);CHKERRQ(ierr);
-           */
-          ierr = VecLoad(fields->pressure,viewer);CHKERRQ(ierr);
-          ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-#endif
-          break;
-        case FILEFORMAT_BIN:
-          SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"Reading from binary files not implemented yet");
-          break;
-      }
+      SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_SUP,"Reading from files not implemented yet, %s",__FUNCT__);
+      break;
     default:
       break;
   }
@@ -240,34 +225,34 @@ extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
 
 #undef __FUNCT__
 #define __FUNCT__ "BCQInit"
-extern PetscErrorCode BCQInit(BC *BCQ,VFCtx *ctx)
+extern PetscErrorCode BCQInit(VFBC *BCQ,VFCtx *ctx)
 {
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = BCInit(BCQ,3);CHKERRQ(ierr);
+  ierr = VFBCCreate(BCQ,3);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "BCFracQInit"
-extern PetscErrorCode BCFracQInit(BC *BCFracQ,VFCtx *ctx)
+extern PetscErrorCode BCFracQInit(VFBC *BCFracQ,VFCtx *ctx)
 {
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = BCInit(BCFracQ,3);CHKERRQ(ierr);
+  ierr = VFBCCreate(BCFracQ,3);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "BCPInit"
-extern PetscErrorCode BCPInit(BC *BCP,VFCtx *ctx)
+extern PetscErrorCode BCPInit(VFBC *BCP,VFCtx *ctx)
 {
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = BCInit(BCP,1);CHKERRQ(ierr);
+  ierr = VFBCCreate(BCP,1);CHKERRQ(ierr);
 
 
 /*
@@ -339,7 +324,7 @@ extern PetscErrorCode SETBoundaryTerms_P(VFCtx *ctx, VFFields *fields)
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyPressureBC_SNES"
-extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,BC *BC)
+extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,VFBC *BC)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -432,7 +417,7 @@ extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,BC 
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplyPressureBC_FEM"
-extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,BC *BC)
+extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,VFBC *BC)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -538,7 +523,7 @@ extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,BC *BC)
 
 #undef __FUNCT__
 #define __FUNCT__ "MatApplyPressureBC_FEM"
-extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,BC *bcP)
+extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,VFBC *bcP)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -643,7 +628,7 @@ extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,BC *bcP)
    VFFlow_FEM_MatPAssembly3D_local
 */
 
-extern PetscErrorCode VFFlow_FEM_MatKPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscReal ****perm_array, PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VFFlow_FEM_MatKPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscReal ****perm_array, PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscInt  g,i1,i2,j1,j2,k1,k2,l;
   PetscReal rho,mu;
@@ -694,7 +679,7 @@ extern PetscErrorCode VFFlow_FEM_MatKPAssembly3D_local(PetscReal *Mat_local,VFFl
    VFFlow_FEM_MassMatPAssembly3D_local
 */
 
-extern PetscErrorCode VFFlow_FEM_MatMPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscInt ek,PetscInt ej,PetscInt ei,CartFE_Element3D *e)
+extern PetscErrorCode VFFlow_FEM_MatMPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscInt  g,i1,i2,j1,j2,k1,k2,l;
   PetscReal ACoef_P;
@@ -723,7 +708,7 @@ extern PetscErrorCode VFFlow_FEM_MatMPAssembly3D_local(PetscReal *Mat_local,VFFl
 }
 #undef __FUNCT__
 #define __FUNCT__ "Flow_Vecg_FEM"
-extern PetscErrorCode Flow_Vecg_FEM(PetscReal *Kg_local,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****perm_array)
+extern PetscErrorCode Flow_Vecg_FEM(PetscReal *Kg_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp flowpropty,PetscReal ****perm_array)
 {
         PetscInt  i,j,k,l;
         PetscInt  eg;
@@ -764,7 +749,7 @@ extern PetscErrorCode Flow_Vecg_FEM(PetscReal *Kg_local,CartFE_Element3D *e,Pets
 
 #undef __FUNCT__
 #define __FUNCT__ "VecApplySourceTerms_FEM"
-extern PetscErrorCode VecApplySourceTerms_FEM(PetscReal *Ks_local,PetscReal ***source_array,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFCtx *ctx)
+extern PetscErrorCode VecApplySourceTerms_FEM(PetscReal *Ks_local,PetscReal ***source_array,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFCtx *ctx)
 {
         PetscErrorCode ierr;
         PetscInt       i,j,k,l;
@@ -908,7 +893,7 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFUnit flowunit,VFResProp
 
 #undef __FUNCT__
 #define __FUNCT__ "ResetFlowBC"
-extern PetscErrorCode ResetFlowBC(BC *bcP,BC *bcQ, VFFlowCases flowcase)
+extern PetscErrorCode ResetFlowBC(VFBC *bcP,VFBC *bcQ, VFFlowCases flowcase)
 {
   PetscInt i,c;
 

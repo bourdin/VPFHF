@@ -199,7 +199,7 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				hx   = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
 				hy   = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = CartFE_Element3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				
 				ierr = VFFlow_FEM_MatMPAssembly3D_local(Klhs_local,&ctx->flowprop,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);			
                 ierr = VFFlow_FEM_MatKPAssembly3D_local(K_local,&ctx->flowprop,perm_array,ek,ej,ei,&ctx->e3D);					
