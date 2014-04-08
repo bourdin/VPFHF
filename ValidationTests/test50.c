@@ -189,7 +189,6 @@ int main(int argc,char **argv)
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,pre);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
   ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
 
   ctx.flowprop.alphabiot = 	ctx.matprop[0].beta = 0;									//biot's constant

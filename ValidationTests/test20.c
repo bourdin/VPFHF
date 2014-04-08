@@ -178,7 +178,6 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
-	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 	for ( i=0; i < ctx.nlayer; i++) {
       ctx.matprop[i].alpha = 0.;
 	  ctx.matprop[i].beta = 0.;

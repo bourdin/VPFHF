@@ -68,7 +68,6 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressure,0.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,fields.VIrrev,&v_array);CHKERRQ(ierr);
 	for (i = 0; i < 6; i++) {
 		ctx.bcV[0].face[i] = NONE;

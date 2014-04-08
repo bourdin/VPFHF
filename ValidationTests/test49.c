@@ -185,7 +185,6 @@ int main(int argc,char **argv)
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
   ctx.flowprop.alphabiot = 	ctx.matprop[0].beta = .0;									//biot's constant
   ctx.hasCrackPressure = PETSC_TRUE;
   ctx.FlowDisplCoupling = PETSC_FALSE;

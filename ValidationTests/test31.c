@@ -158,7 +158,6 @@ int main(int argc,char **argv)
 	ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 	ierr = VecSet(fields.pressure,0.0);CHKERRQ(ierr);
-	ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
   ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
   /*End of mechanical part of code*/

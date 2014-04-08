@@ -668,10 +668,6 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) fields->pressure,"Pressure");CHKERRQ(ierr);
   ierr = VecSet(fields->pressure,ctx->resprop.Pinit);CHKERRQ(ierr);
 
-  ierr = DMCreateGlobalVector(ctx->daScal,&fields->pressureRef);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) fields->pressureRef,"Reference Pressure");CHKERRQ(ierr);
-  ierr = VecSet(fields->pressureRef,ctx->resprop.Pinit);CHKERRQ(ierr);
-
   ierr = DMCreateGlobalVector(ctx->daScalCell,&fields->pmult);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->pmult,"PermeabilityMultiplier");CHKERRQ(ierr);
   ierr = VecSet(fields->pmult,0.0);CHKERRQ(ierr);
@@ -1237,7 +1233,6 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&fields->thetaRef);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->pressure);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->velocity);CHKERRQ(ierr);
-  ierr = VecDestroy(&fields->pressureRef);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->pmult);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&ctx->energyviewer);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->U_old);CHKERRQ(ierr);
