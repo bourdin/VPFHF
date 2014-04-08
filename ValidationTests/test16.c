@@ -2,6 +2,16 @@
  test16.c: Solves for the displacement and v-field in a volume loaded line crack in 2d (Sneddon 2D)
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  test16 -options_file test16.opts is a small but relevant example
+
+mpiexec -n 8 ./test16 -n 100,100,2 -l 1,1,.1 -E 1 -nu 0 -U_snes_monitor -p runtest16                  \
+             -options_file ../BCfiles/2DXYRigidMotion.txt                                             \
+             -V_X0_BC ONE -V_X1_BC ONE -V_Y0_BC ONE -V_Y1_BC ONE                                      \
+             -insitumin -1,0,0,0,0,0  -insitumax -1,0,0,0,0,0 -npc 1                                    \
+             -minvol 0 -maxvol .1 -maxtimestep 11                                                     \
+             -pc0_r .2 -pc0_thickness .015 -pc0_center 0.5,0.5,0.01 -pc0_phi 90  -pc0_theta 00        \
+             -U_pc_type hypre  -u_pc_hypre_type boomeramg -u_pc_hypre_boomeramg_strong_threshold 0.7  \
+             -epsilon .03 -verbose 0 -eta 1e-8 -atnum 1 -unilateral none
+
  */
 
 #include "petsc.h"
@@ -51,7 +61,6 @@ int main(int argc,char **argv)
 
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 
-  ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);CHKERRQ(ierr);  
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
   ierr = VecDuplicate(fields.U,&U_s);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) U_s,"U_s");CHKERRQ(ierr);
