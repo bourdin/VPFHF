@@ -73,7 +73,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.ener",ctx->prefix);CHKERRQ(ierr);
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->energyviewer);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIPrintf(ctx->energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Pressure Work,Total Energy\n");CHKERRQ(ierr);
+  //ierr = PetscViewerASCIIPrintf(ctx->energyviewer,"#i,Elastic Energy,InsituWork,Surface Energy,Pressure Work,Total Energy\n");CHKERRQ(ierr);
   ierr = PetscViewerFlush(ctx->energyviewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -931,6 +931,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
     ierr = SNESGetSNESLineSearch(ctx->snesU,&linesearchU);CHKERRQ(ierr);
     ierr = SNESLineSearchSetType(linesearchU,SNESLINESEARCHL2);CHKERRQ(ierr);
   }
+  ierr = SNESSetComputeInitialGuess(ctx->snesU,VF_UInitialGuess,ctx);CHKERRQ(ierr);
   ierr = SNESSetTolerances(ctx->snesU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = SNESSetFromOptions(ctx->snesU);CHKERRQ(ierr);
   
