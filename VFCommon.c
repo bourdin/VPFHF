@@ -933,7 +933,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   } else {
     ierr = SNESSetType(ctx->snesU,SNESLS);CHKERRQ(ierr);
     ierr = SNESGetSNESLineSearch(ctx->snesU,&linesearchU);CHKERRQ(ierr);
-    ierr = SNESLineSearchSetType(linesearchU,SNESLINESEARCHCP);CHKERRQ(ierr);
+    ierr = SNESLineSearchSetType(linesearchU,SNESLINESEARCHL2);CHKERRQ(ierr);
   }
   ierr = SNESSetTolerances(ctx->snesU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = SNESSetFromOptions(ctx->snesU);CHKERRQ(ierr);
@@ -971,7 +971,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = SNESGetKSP(ctx->snesU,&kspU);CHKERRQ(ierr);
   ierr = KSPSetTolerances(kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSetType(kspU,KSPCG);CHKERRQ(ierr);
-  //ierr = KSPGetInitialGuessNonzero(kspU,PETSC_TRUE);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(kspU);CHKERRQ(ierr);
   ierr = KSPGetPC(kspU,&pcU);CHKERRQ(ierr);
   ierr = PCSetType(pcU,PCBJACOBI);CHKERRQ(ierr);

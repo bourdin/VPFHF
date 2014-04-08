@@ -960,9 +960,9 @@ extern PetscErrorCode ResidualApplyDirichletBC(Vec residual,Vec U,Vec BCU,VFBC *
     if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == ONE)   residual_array[nz-1][0][0][c]       = U_array[nz-1][0][0][c]-1.;
     if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] == ZERO)  residual_array[nz-1][0][0][c]       = U_array[nz-1][0][0][c];
 
-    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == FIXED) residual_array[0][ny-1][0][c]       = U_array[nz-1][0][0][c]-BCU_array[nz-1][0][0][c];
-    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == ONE)   residual_array[0][ny-1][0][c]       = U_array[nz-1][0][0][c]-1.;
-    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == ZERO)  residual_array[0][ny-1][0][c]       = U_array[nz-1][0][0][c];
+    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == FIXED) residual_array[0][ny-1][0][c]       = U_array[0][ny-1][0][c]-BCU_array[0][ny-1][0][c];
+    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == ONE)   residual_array[0][ny-1][0][c]       = U_array[0][ny-1][0][c]-1.;
+    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] == ZERO)  residual_array[0][ny-1][0][c]       = U_array[0][ny-1][0][c];
 
     if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == FIXED) residual_array[nz-1][ny-1][0][c]    = U_array[nz-1][ny-1][0][c]-BCU_array[nz-1][ny-1][0][c];
     if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] == ONE)   residual_array[nz-1][ny-1][0][c]    = U_array[nz-1][ny-1][0][c]-1.;
