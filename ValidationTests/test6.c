@@ -92,6 +92,7 @@ int main(int argc,char **argv)
   PetscReal p = 0.;
   PetscBool flg;
   PetscReal crackVolume;
+  PetscInt  step;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -106,47 +107,48 @@ int main(int argc,char **argv)
   ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
 
-  ctx.timestep  = 1;
-  ctx.timevalue = 1.;
 
   ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
 
   /*
     VF BC for U and V are now setup in VFCommon.c
   */
 
+  for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++) {
+    ctx.timevalue = ctx.timestep * p;
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Solving for p = %g\n",ctx.timevalue);CHKERRQ(ierr);
+    ierr = VecSet(fields.pressure,ctx.timevalue);CHKERRQ(ierr);
+    ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepU(&fields,&ctx);
+
+    ctx.ElasticEnergy = 0;
+    ctx.InsituWork    = 0;
+    ctx.PressureWork  = 0.;
+    ierr              = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
+    ctx.TotalEnergy   = ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork;
+
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
+    if (ctx.hasCrackPressure) {
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:   %e\n",ctx.PressureWork);CHKERRQ(ierr);
+    }
+    if (ctx.hasInsitu) {
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
+    }
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Total Mechanical energy:  %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
+
+    /*
+      Compute and display total crack opening
+    */
+    ierr = VolumetricCrackOpening(&crackVolume,&ctx,&fields);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Total crack opening: %f\n",crackVolume);CHKERRQ(ierr);
   
-  ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-  ierr = VF_StepU(&fields,&ctx);
-
-  ctx.ElasticEnergy = 0;
-  ctx.InsituWork    = 0;
-  ctx.PressureWork  = 0.;
-  ierr              = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
-  ctx.TotalEnergy   = ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork;
-
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
-  if (ctx.hasCrackPressure) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:   %e\n",ctx.PressureWork);CHKERRQ(ierr);
+    /*
+      Save fields and write statistics about current run
+    */
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   }
-  if (ctx.hasInsitu) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
-  }
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"Total Mechanical energy:  %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
-
-  /*
-    Compute and display total crack opening
-  */
-  ierr = VolumetricCrackOpening(&crackVolume,&ctx,&fields);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"Total crack opening: %f\n",crackVolume);CHKERRQ(ierr);
-  
-  /*
-    Save fields and write statistics about current run
-  */
-  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscFinalize();
   return(0);
