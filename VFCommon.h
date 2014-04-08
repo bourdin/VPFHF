@@ -37,7 +37,6 @@ typedef struct {
 	Vec theta;
 	Vec thetaRef;
 	Vec pressure;
-	Vec pressureRef;
 	Vec pmult;
 	Vec VelnPress;
 	Vec vfperm;

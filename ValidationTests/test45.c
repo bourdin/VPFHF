@@ -209,10 +209,6 @@ int main(int argc,char **argv)
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
 
-  ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
-    
-
-  
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){  
 
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i. \n",ctx.timestep);CHKERRQ(ierr);

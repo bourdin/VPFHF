@@ -220,7 +220,6 @@ int main(int argc,char **argv)
   ierr  = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr  = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
   ierr  = VecSet(fields.pressure,p);CHKERRQ(ierr);
-  ierr  = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
   ierr  = VecSet(fields.U,0.0);CHKERRQ(ierr);
   ierr  = VecSet(U_s,0.0);CHKERRQ(ierr);
   ierr  = VecSet(U_1,0.0);CHKERRQ(ierr);
