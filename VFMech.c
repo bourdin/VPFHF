@@ -2355,9 +2355,9 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                                          ek,ej,ei,&ctx->e3D);
-            if ( PCvfprop.eta != PCvfprop.PCeta) {
-              PCvfprop.eta = PCvfprop.PCeta;
+            if (ctx->vfprop.eta != ctx->vfprop.PCeta) {
               ierr = PetscMemcpy(&PCvfprop,&ctx->vfprop,sizeof(VFProp));CHKERRQ(ierr);
+              PCvfprop.eta = PCvfprop.PCeta;
               ierr = PetscMemcpy(&PCmatprop,&ctx->matprop[ctx->layer[ek]],sizeof(VFProp));CHKERRQ(ierr);
               ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&PCmatprop,&PCvfprop,ek,ej,ei,&ctx->e3D);
             }
@@ -2374,7 +2374,7 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
           }
         }
         ierr = MatSetValuesStencil(*K,nrow,row,nrow,row,bilinearForm_local,ADD_VALUES);CHKERRQ(ierr);
-        if (ctx->unilateral == UNILATERAL_NOCOMPRESSION && PCvfprop.eta != PCvfprop.PCeta) {
+        if (ctx->unilateral == UNILATERAL_NOCOMPRESSION && ctx->vfprop.eta != ctx->vfprop.PCeta) {
             ierr = MatSetValuesStencil(*KPC,nrow,row,nrow,row,bilinearFormPC_local,ADD_VALUES);CHKERRQ(ierr);          
         } else {
           ierr = MatSetValuesStencil(*KPC,nrow,row,nrow,row,bilinearForm_local,ADD_VALUES);CHKERRQ(ierr);
