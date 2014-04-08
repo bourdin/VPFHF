@@ -34,8 +34,8 @@ extern PetscErrorCode BCVUpdate(VFBC *BC,VFPreset preset);
 extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFCtx *ctx);
 extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx);
 /*
- These functions are not meant to be called outside of VFV,
- but since snesV is initialized outside of VFV, I have no other choice
+ These functions are not meant to be called outside of VFMech,
+ but since snesU and snesV are initialized outside of VFMech, I have no other choice
  */
 extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStructure *str,void *user);
 extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec Func,void *user);
@@ -43,4 +43,5 @@ extern PetscErrorCode VF_VSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,voi
 
 extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *Jac,Mat *Jac1,MatStructure *str,void *user);
 extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec Func,void *user);
+extern PetscErrorCode VF_UInitialGuess(SNES snesU, Vec x, void *user);
 #endif

@@ -21,7 +21,6 @@ int main(int argc,char **argv)
   PetscErrorCode ierr,ierrStepV;
   PetscViewer    viewer;
   PetscViewer    logviewer;
-  PetscInt       mode=1;
   PetscInt       i,j;
   PetscInt       c;
   char           filename[FILENAME_MAX];
@@ -39,7 +38,6 @@ int main(int argc,char **argv)
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ierr = PetscOptionsGetInt(PETSC_NULL,"-mode",&mode,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-maxvol",&maxvol,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-minvol",&minvol,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-prestol",&prestol,PETSC_NULL);CHKERRQ(ierr);
@@ -51,155 +49,6 @@ int main(int argc,char **argv)
   ierr            = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
   flowrate        = (maxvol - minvol) / (ctx.maxtimestep-1);
 
-  /*
-   Reset all BC for U and V
-   */
-  for (i = 0; i < 6; i++) {
-    ctx.bcV[0].face[i] =NONE;
-    for (j = 0; j < 3; j++) ctx.bcU[j].face[i] = NONE;
-  }
-  for (i = 0; i < 12; i++) {
-    ctx.bcV[0].edge[i] =NONE;
-    for (j = 0; j < 3; j++) ctx.bcU[j].edge[i] = NONE;
-  }
-  for (i = 0; i < 8; i++) {
-    ctx.bcV[0].vertex[i] =NONE;
-    for (j = 0; j < 3; j++) ctx.bcU[j].vertex[i] = NONE;
-  }
-  switch (mode) {
-  case 0:
-    ierr                = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D computation with null-displacement on all faces\n");CHKERRQ(ierr);
-    ctx.bcU[0].face[X0] = ZERO; ctx.bcU[1].face[X0] = ZERO; ctx.bcU[2].face[X0] = ZERO; ctx.bcV[0].face[X0] = ONE;
-    ctx.bcU[0].face[X1] = ZERO; ctx.bcU[1].face[X1] = ZERO; ctx.bcU[2].face[X1] = ZERO; ctx.bcV[0].face[X1] = ONE;
-    ctx.bcU[0].face[Y0] = ZERO; ctx.bcU[1].face[Y0] = ZERO; ctx.bcU[2].face[Y0] = ZERO; ctx.bcV[0].face[Y0] = ONE;
-    ctx.bcU[0].face[Y1] = ZERO; ctx.bcU[1].face[Y1] = ZERO; ctx.bcU[2].face[Y1] = ZERO; ctx.bcV[0].face[Y1] = ONE;
-    ctx.bcU[0].face[Z0] = ZERO; ctx.bcU[1].face[Z0] = ZERO; ctx.bcU[2].face[Z0] = ZERO; ctx.bcV[0].face[Z0] = ONE;
-    ctx.bcU[0].face[Z1] = ZERO; ctx.bcU[1].face[Z1] = ZERO; ctx.bcU[2].face[Z1] = ZERO; ctx.bcV[0].face[Z1] = ONE;
-    break;
-  case 1:
-    ierr                = PetscPrintf(PETSC_COMM_WORLD,"Doing a 2D computation with null-displacement on all faces\n");CHKERRQ(ierr);
-    ctx.bcU[0].face[X0] = ZERO; ctx.bcU[1].face[X0] = ZERO; ctx.bcU[2].face[X0] = ZERO; ctx.bcV[0].face[X0] = ONE;
-    ctx.bcU[0].face[X1] = ZERO; ctx.bcU[1].face[X1] = ZERO; ctx.bcU[2].face[X1] = ZERO; ctx.bcV[0].face[X1] = ONE;
-    ctx.bcU[1].face[Y0] = ZERO;
-    ctx.bcU[1].face[Y1] = ZERO;
-    ctx.bcU[0].face[Z0] = ZERO; ctx.bcU[1].face[Z0] = ZERO; ctx.bcU[2].face[Z0] = ZERO; ctx.bcV[0].face[Z0] = ONE;
-    ctx.bcU[0].face[Z1] = ZERO; ctx.bcU[1].face[Z1] = ZERO; ctx.bcU[2].face[Z1] = ZERO; ctx.bcV[0].face[Z1] = ONE;
-    break;
-  case 2:
-    ierr                      = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D computation blocking only rigid motions (may be instable)\n");CHKERRQ(ierr);
-    ctx.bcU[0].vertex[X0Y0Z0] = ZERO; ctx.bcU[1].vertex[X0Y0Z0] = ZERO; ctx.bcU[2].vertex[X0Y0Z0] = ZERO;
-    ctx.bcU[2].vertex[X1Y0Z0] = ZERO;
-    ctx.bcU[0].vertex[X0Y1Z0] = ZERO;
-    ctx.bcU[1].vertex[X0Y0Z1] = ZERO;
-    ctx.bcV[0].face[X0]       = ONE;
-    ctx.bcV[0].face[X1]       = ONE;
-    ctx.bcV[0].face[Y0]       = ONE;
-    ctx.bcV[0].face[Y1]       = ONE;
-    ctx.bcV[0].face[Z0]       = ONE;
-    ctx.bcV[0].face[Z1]       = ONE;
-    break;
-  case 3:
-    ierr                      = PetscPrintf(PETSC_COMM_WORLD,"Doing a 2D computation blocking only rigid motions (may be instable)\n");CHKERRQ(ierr);
-    ctx.bcU[0].vertex[X0Y0Z0] = ZERO; ctx.bcU[2].vertex[X0Y0Z0] = ZERO;
-    ctx.bcU[2].vertex[X1Y0Z0] = ZERO;
-    ctx.bcU[1].face[Y0]       = ZERO;
-    ctx.bcU[1].face[Y1]       = ZERO;
-    ctx.bcV[0].face[X0]       = ONE;
-    ctx.bcV[0].face[X1]       = ONE;
-    ctx.bcV[0].face[Z0]       = ONE;
-    ctx.bcV[0].face[Z1]       = ONE;
-    break;
-  case 4:
-    ierr                = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D computation blocking normal displacement on 3 planes (may lead to asymmetric solutions)\n");CHKERRQ(ierr);
-    ctx.bcU[0].face[X0] = ZERO; ctx.bcU[1].face[Y0] = ZERO; ctx.bcU[2].face[Z0] = ZERO;
-    ctx.bcV[0].face[X0] = ONE;
-    ctx.bcV[0].face[X1] = ONE;
-    ctx.bcV[0].face[Y0] = ONE;
-    ctx.bcV[0].face[Y1] = ONE;
-    ctx.bcV[0].face[Z0] = ONE;
-    ctx.bcV[0].face[Z1] = ONE;
-    break;
-  case 5:
-    ierr                = PetscPrintf(PETSC_COMM_WORLD,"Doing a 2D computation blocking normal displacement on 2 planes (may lead to asymmetric solutions)\n");CHKERRQ(ierr);
-    ctx.bcU[0].face[X0] = ZERO;
-    ctx.bcU[2].face[Z0] = ZERO;
-    ctx.bcU[1].face[Y0] = ZERO;
-    ctx.bcU[1].face[Y1] = ZERO;
-    ctx.bcV[0].face[X0] = ONE;
-    ctx.bcV[0].face[X1] = ONE;
-    ctx.bcV[0].face[Z0] = ONE;
-    ctx.bcV[0].face[Z1] = ONE;
-    break;
-  case 6:
-    ierr                = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D computation blocking normal displacement on all planes but Z1\n");CHKERRQ(ierr);
-    ctx.bcU[0].face[X0] = ZERO; ctx.bcV[0].face[X0] = ONE;
-    ctx.bcU[0].face[X1] = ZERO; ctx.bcV[0].face[X1] = ONE;
-    ctx.bcU[1].face[Y0] = ZERO; ctx.bcV[0].face[Y0] = ONE;
-    ctx.bcU[1].face[Y1] = ZERO; ctx.bcV[0].face[Y1] = ONE;
-    ctx.bcU[2].face[Z0] = ZERO; ctx.bcV[0].face[Z0] = ONE;
-    ctx.bcV[0].face[Z1] = ONE;
-    break;
-  case 7:
-    ierr                = PetscPrintf(PETSC_COMM_WORLD,"Doing a 2D computation blocking normal displacement on all planes but Z1\n");CHKERRQ(ierr);
-    ctx.bcU[0].face[X0] = ZERO; ctx.bcV[0].face[X0] = ONE;
-    ctx.bcU[0].face[X1] = ZERO; ctx.bcV[0].face[X1] = ONE;
-    ctx.bcU[1].face[Y0] = ZERO;
-    ctx.bcU[1].face[Y1] = ZERO;
-    ctx.bcU[2].face[Z0] = ZERO; ctx.bcV[0].face[Z0] = ONE;
-    ctx.bcV[0].face[Z1] = ONE;
-    break;
-  case 8:
-    ierr                = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D computation with symmetry on x,y,z \n");CHKERRQ(ierr);
-    ctx.bcU[0].face[X0] = ZERO; ctx.bcU[1].face[Y0] = ZERO; ctx.bcU[2].face[Z0] = ZERO;
-    /*
-      ctx.bcV[0].face[X0] = ONE;
-    */
-    ctx.bcV[0].face[X1] = ONE;
-    /*
-      ctx.bcV[0].face[Y0] = ONE;
-    */
-    ctx.bcV[0].face[Y1] = ONE;
-    /*
-      ctx.bcV[0].face[Z0] = ONE;
-    */
-    ctx.bcV[0].face[Z1] = ONE;
-    break;
-  case 9:
-    ierr                = PetscPrintf(PETSC_COMM_WORLD,"Doing a 3D computation with symmetry on z \n");CHKERRQ(ierr);
-    ctx.bcU[0].face[X0] = ZERO; ctx.bcU[1].face[Y0] = ZERO; ctx.bcU[2].face[Z0] = ZERO;
-    ctx.bcU[0].face[X1] = ZERO; ctx.bcU[1].face[Y1] = ZERO; ctx.bcU[2].face[Z1] = ZERO;
-    ctx.bcV[0].face[X0] = ONE;
-    ctx.bcV[0].face[X1] = ONE;
-    ctx.bcV[0].face[Y0] = ONE;
-    ctx.bcV[0].face[Y1] = ONE;
-    /*
-      ctx.bcV[0].face[Z0] = ONE;
-    */
-    ctx.bcV[0].face[Z1] = ONE;
-    break;
-  default:
-    SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: mode should be one of {0,1,2,3,4,5,6,7}, got %i\n",mode);
-    break;
-  }
-
-  /*
-  for (c = 0; c < ctx.numPennyCracks; c++) {
-    ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-    ierr = VFPennyCrackBuildVAT2(fields.VIrrev,&ctx.pennycrack[c],&ctx);CHKERRQ(ierr);
-    ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
-  }
-  for (c = 0; c < ctx.numRectangularCracks; c++) {
-    ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-    ierr = VFRectangularCrackBuildVAT2(fields.VIrrev,&ctx.rectangularcrack[c],&ctx);CHKERRQ(ierr);
-    ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
-  }
-  for (c = 0; c < ctx.numWells; c++) {
-    ierr = VecSet(fields.VIrrev,1.0);CHKERRQ(ierr);
-    ierr = VFWellBuildVAT2(fields.VIrrev,&ctx.well[c],&ctx);CHKERRQ(ierr);
-    ierr = VecPointwiseMin(fields.V,fields.VIrrev,fields.V);CHKERRQ(ierr);
-  }
-  ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
-  */
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
 
   ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);CHKERRQ(ierr);  
@@ -224,15 +73,17 @@ int main(int argc,char **argv)
   ierr  = VecSet(U_s,0.0);CHKERRQ(ierr);
   ierr  = VecSet(U_1,0.0);CHKERRQ(ierr);
 
-  ctx.matprop[0].beta = 0.;
-  ctx.timevalue       = 0;
+  ctx.matprop[0].beta  = 0.;
+  ctx.matprop[0].alpha = 0.;
+  ctx.timevalue        = 0;
 
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++) {
-    ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
     targetVol = minvol + flowrate * ctx.timestep;
-    ierr      = PetscPrintf(PETSC_COMM_WORLD,"Time step %i. Targeting injected volume of %g\n",ctx.timestep,targetVol);CHKERRQ(ierr);
-    ierr      = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
     altminit  = 0.;
+
+    ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i. Targeting injected volume of %g\n",ctx.timestep,targetVol);CHKERRQ(ierr);
+    ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
     if (StepVFailed) break;
     do {
       p_old = p;

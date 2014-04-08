@@ -1793,6 +1793,23 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "VF_UInitialGuess"
+/*
+  
+  VF_UInitialGuess:
+  
+  (c) 2014 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VF_UInitialGuess(SNES snesU, Vec x, void *user)
+{
+  PetscErrorCode ierr;
+  VFCtx          *ctx=(VFCtx*)user;
+  
+  PetscFunctionBegin;
+  ierr = VecCopy(ctx->fields->U,x);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+#undef __FUNCT__
 #define __FUNCT__ "VF_UResidual"
 extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
 {
