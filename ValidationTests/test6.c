@@ -69,7 +69,8 @@ mpiexec -n 4 ./test6 -n 100,100,2 -l 1,1,.1 -E 1 -nu 0 -U_snes_monitor          
              -insitumin -1,0,0,0,0,0  -insitumax -1,0,0,0,0,0 -npc 1                                  \
              -pc0_r .3 -pc0_thickness .015 -pc0_center 0.5,0.5,0.01 -pc0_phi 90  -pc0_theta 00        \
              -U_pc_type hypre  -u_pc_hypre_type boomeramg -u_pc_hypre_boomeramg_strong_threshold 0.7  \
-             -epsilon .03 -verbose 0 -eta 1e-8 -atnum 1 -unilateral nocompression  -pressure 1.5
+             -epsilon .03 -verbose 0 -eta 1e-8 -atnum 1 -unilateral nocompression  -pressure 1.5      \
+             -maxtimestep 2 
 */
 
 #include "petsc.h"
@@ -116,7 +117,11 @@ int main(int argc,char **argv)
 
   ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"#p,volume,Elastic Energy,InsituWork,Pressure Work,Total Energy\n");CHKERRQ(ierr);
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++) {
-    ctx.timevalue = (PetscReal) ctx.timestep / (ctx.maxtimestep - 1.) * p;
+    if (ctx.maxtimestep > 1) {
+      ctx.timevalue = (PetscReal) ctx.timestep / (ctx.maxtimestep - 1.) * p;
+    } else {
+      ctx.timevalue = p;
+    }
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Solving for p = %g\n",ctx.timevalue);CHKERRQ(ierr);
     ierr = VecSet(fields.pressure,ctx.timevalue);CHKERRQ(ierr);
     ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
