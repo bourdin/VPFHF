@@ -355,6 +355,7 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_loc
 {
   PetscErrorCode ierr;
   PetscReal      *epsilon11_elem,*epsilon22_elem,*epsilon33_elem,*epsilon12_elem,*epsilon23_elem,*epsilon13_elem;
+  PetscReal      *e0_11_elem,*e0_22_elem,*e0_33_elem;
   PetscReal      *sigma11_elem,*sigma22_elem,*sigma33_elem,*sigma12_elem,*sigma23_elem,*sigma13_elem;
   PetscInt       i,j,k,g;
   PetscReal      lambda,mu,alpha,kappa,coefbeta;
@@ -371,15 +372,21 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_loc
   ierr = PetscMalloc3(e->ng,PetscReal,&sigma12_elem,e->ng,PetscReal,&sigma23_elem,e->ng,PetscReal,&sigma13_elem);CHKERRQ(ierr);
   ierr = PetscMalloc3(e->ng,PetscReal,&epsilon11_elem,e->ng,PetscReal,&epsilon22_elem,e->ng,PetscReal,&epsilon33_elem);CHKERRQ(ierr);
   ierr = PetscMalloc3(e->ng,PetscReal,&epsilon12_elem,e->ng,PetscReal,&epsilon23_elem,e->ng,PetscReal,&epsilon13_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,PetscReal,&e0_11_elem,e->ng,PetscReal,&e0_22_elem,e->ng,PetscReal,&e0_33_elem);CHKERRQ(ierr);
   
   ierr = PetscMalloc(e->ng * sizeof(PetscReal),&ElasticEnergyDensity_local);CHKERRQ(ierr);
   for (g = 0; g < e->ng; g++) {
-    epsilon11_elem[g]              = 0;
-    epsilon22_elem[g]              = 0;
-    epsilon33_elem[g]              = 0;
-    epsilon12_elem[g]              = 0;
-    epsilon23_elem[g]              = 0;
-    epsilon13_elem[g]              = 0;
+    epsilon11_elem[g] = 0;
+    epsilon22_elem[g] = 0;
+    epsilon33_elem[g] = 0;
+    epsilon12_elem[g] = 0;
+    epsilon23_elem[g] = 0;
+    epsilon13_elem[g] = 0;
+    
+    e0_11_elem[g] = 0;
+    e0_22_elem[g] = 0;
+    e0_33_elem[g] = 0;
+    
     ElasticEnergyDensity_local[g]  = 0.;
     ElasticEnergyDensityS_local[g] = 0.;
     ElasticEnergyDensityD_local[g] = 0.;
@@ -388,44 +395,50 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_loc
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
         for (g = 0; g < e->ng; g++) {
-          epsilon11_elem[g] +=  e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0]
-          - alpha * e->phi[k][j][i][g]
-          * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i])
-          - coefbeta * e->phi[k][j][i][g] * pressure_array[ek+k][ej+j][ei+i];
-          epsilon22_elem[g] +=  e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1]
-          - alpha * e->phi[k][j][i][g]
-          * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i])
-          - coefbeta * e->phi[k][j][i][g] * pressure_array[ek+k][ej+j][ei+i];
-          epsilon33_elem[g] +=  e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2]
-          - alpha * e->phi[k][j][i][g]
-          * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i])
-          - coefbeta * e->phi[k][j][i][g] * pressure_array[ek+k][ej+j][ei+i];
-          
+          /* strain at Gauss points */
+          epsilon11_elem[g] += e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0];
+          epsilon22_elem[g] += e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1];
+          epsilon33_elem[g] += e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2];
           epsilon12_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][1]
                                 + e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
           epsilon23_elem[g] += (e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][2]
                                 + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][1]) * .5;
           epsilon13_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][2]
                                 + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
+
+          /* inelastic strain at Gauss points */
+          e0_11_elem[g]     += alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i])
+                             + coefbeta * e->phi[k][j][i][g] * pressure_array[ek+k][ej+j][ei+i];
+          e0_22_elem[g]     += alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i])
+                             + coefbeta * e->phi[k][j][i][g] * pressure_array[ek+k][ej+j][ei+i];
+          e0_33_elem[g]     += alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i])
+                             + coefbeta * e->phi[k][j][i][g] * pressure_array[ek+k][ej+j][ei+i];
+          
         }
       }
     }
   }
-  ierr = PetscLogFlops(30 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  ierr = PetscLogFlops(42 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
   
   for (g = 0; g < e->ng; g++) {
-    sigma11_elem[g]               = (lambda + 2.*mu) * epsilon11_elem[g] + lambda * epsilon22_elem[g] + lambda * epsilon33_elem[g];
-    sigma22_elem[g]               = lambda * epsilon11_elem[g] + (lambda + 2.*mu) * epsilon22_elem[g] + lambda * epsilon33_elem[g];
-    sigma33_elem[g]               = lambda * epsilon11_elem[g] + lambda * epsilon22_elem[g] + (lambda + 2.*mu) * epsilon33_elem[g];
+    sigma11_elem[g]               = (lambda + 2.*mu) * (epsilon11_elem[g] - e0_11_elem[g]) 
+                                  + lambda * (epsilon22_elem[g] - e0_22_elem[g]) 
+                                  + lambda * (epsilon33_elem[g] - e0_33_elem[g]);
+    sigma22_elem[g]               = lambda * (epsilon11_elem[g] - e0_11_elem[g]) 
+                                  + (lambda + 2.*mu) * (epsilon22_elem[g] - e0_22_elem[g]) 
+                                  + lambda * (epsilon33_elem[g] - e0_33_elem[g]);
+    sigma33_elem[g]               = lambda * (epsilon11_elem[g] - e0_11_elem[g]) 
+                                  + lambda * (epsilon22_elem[g] - e0_22_elem[g]) 
+                                  + (lambda + 2.*mu) * (epsilon33_elem[g] - e0_33_elem[g]);
     sigma12_elem[g]               = 2.*mu * epsilon12_elem[g];
     sigma23_elem[g]               = 2.*mu * epsilon23_elem[g];
     sigma13_elem[g]               = 2.*mu * epsilon13_elem[g];
     ElasticEnergyDensity_local[g] = (sigma11_elem[g] * epsilon11_elem[g]
-                                     + sigma22_elem[g] * epsilon22_elem[g]
-                                     + sigma33_elem[g] * epsilon33_elem[g]) * .5
-    + sigma12_elem[g] * epsilon12_elem[g]
-    + sigma23_elem[g] * epsilon23_elem[g]
-    + sigma13_elem[g] * epsilon13_elem[g];
+                                   + sigma22_elem[g] * epsilon22_elem[g]
+                                   + sigma33_elem[g] * epsilon33_elem[g]) * .5
+                                   + sigma12_elem[g] * epsilon12_elem[g]
+                                   + sigma23_elem[g] * epsilon23_elem[g]
+                                   + sigma13_elem[g] * epsilon13_elem[g];
     
     if (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g] >= 0) {
       ElasticEnergyDensityS_local[g] = kappa * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g])
@@ -442,6 +455,7 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_loc
   ierr = PetscFree3(sigma12_elem,sigma23_elem,sigma13_elem);CHKERRQ(ierr);
   ierr = PetscFree3(epsilon11_elem,epsilon22_elem,epsilon33_elem);CHKERRQ(ierr);
   ierr = PetscFree3(epsilon12_elem,epsilon23_elem,epsilon13_elem);CHKERRQ(ierr);
+  ierr = PetscFree3(e0_11_elem,e0_22_elem,e0_33_elem);CHKERRQ(ierr);
   ierr = PetscFree(ElasticEnergyDensity_local);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -857,8 +871,7 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
         for (g = 0; g < e->ng; g++) {
-          theta_elem[g] += e->phi[k][j][i][g]
-          * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
+          theta_elem[g] += e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
           pressure_elem[g] += e->phi[k][j][i][g] * pressure_array[ek+k][ej+j][ei+i];
           v_elem[g] += e->phi[k][j][i][g] * v_array[ek+k][ej+j][ei+i];
           tr_epsilon[g] += e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] +
@@ -871,9 +884,7 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
   }
   ierr = PetscLogFlops(14 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
   /*
-   Accumulate the contribution of the current element to the local
-   version of the RHS.
-   Note that only sperical terms appear in the RHS so there is no V
+   Accumulate the contribution of the current element to the local version of the RHS.
    */
   for (g = 0; g < e->ng; g++) {
     for (l= 0,k = 0; k < e->nphiz; k++) {
