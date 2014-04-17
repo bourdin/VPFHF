@@ -103,7 +103,6 @@ int main(int argc,char **argv)
     ctx.hasCrackPressure = PETSC_TRUE;
   }
 
-  ctx.matprop[0].beta  = 0.;
   ctx.matprop[0].alpha = 0.;
 
 
