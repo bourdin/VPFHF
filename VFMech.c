@@ -3,7 +3,6 @@
 #include "VFCommon.h"
 #include "VFMech.h"
 
-
 #undef __FUNCT__
 #define __FUNCT__ "BCUInit"
 /*
@@ -360,6 +359,7 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_loc
   PetscInt       i,j,k,g;
   PetscReal      lambda,mu,alpha,kappa,coefbeta;
   PetscReal      *ElasticEnergyDensity_local;
+  PetscReal      tr_epsilon;
   
   PetscFunctionBegin;
   lambda   = matprop->lambda;
@@ -439,15 +439,14 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_loc
                                    + sigma12_elem[g] * epsilon12_elem[g]
                                    + sigma23_elem[g] * epsilon23_elem[g]
                                    + sigma13_elem[g] * epsilon13_elem[g];
+    tr_epsilon = epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g];
     
-    if (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g] >= 0) {
-      ElasticEnergyDensityS_local[g] = kappa * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g])
-                                        * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g]) * .5;
+    if (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g] > 0) {
+      ElasticEnergyDensityS_local[g] = kappa * tr_epsilon * tr_epsilon * .5;
     } else {
       ElasticEnergyDensityS_local[g] = 0.;
     }
-    ElasticEnergyDensityD_local[g] = ElasticEnergyDensity_local[g] - kappa * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g])
-                                        * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g]) * .5;
+    ElasticEnergyDensityD_local[g] = ElasticEnergyDensity_local[g] - kappa * tr_epsilon * tr_epsilon * .5;
   }
   ierr = PetscLogFlops(47 * e->ng);CHKERRQ(ierr);
   
@@ -891,7 +890,7 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
       for (j = 0; j < e->nphiy; j++) {
         for (i = 0; i < e->nphix; i++) {
           for (c = 0; c < dim; c++,l++) {
-            if (tr_epsilon[g] >= 0) {
+            if (tr_epsilon[g] > 0) {
               residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
               * (coefalpha * theta_elem[g] + beta * pressure_elem[g])
               * (v_elem[g] * v_elem[g] + vfprop->eta);
