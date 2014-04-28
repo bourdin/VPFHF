@@ -93,7 +93,6 @@ int main(int argc,char **argv)
   PetscReal p = 0.;
   PetscBool flg;
   PetscReal crackVolume;
-  PetscInt  step;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
