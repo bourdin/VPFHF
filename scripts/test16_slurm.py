@@ -13,7 +13,7 @@ def parseCommandLine(debug=False):
     vfArgs.add_argument('--atnum',type=int,default=1,choices=[1,2],help='AT variant')
     vfArgs.add_argument('--epsilon',type=float,default=None,help='AT regularization length')
     vfArgs.add_argument('--eta',type=float,default=None,help='AT residual stiffness')
-    vfArgs.add_argument('--format',default='vtk',choices=['bin','hdf5','vtk'],help='file format')
+    vfArgs.add_argument('--format',default='vtk',choices=['bin','vtk'],help='file format')
 
     vfArgs.add_argument('--E',type=float,default=1.,help='Young modulus')
     vfArgs.add_argument('--nu',type=float,default=0.,help='Poisson ratio')
@@ -24,6 +24,7 @@ def parseCommandLine(debug=False):
     vfArgs.add_argument('--insitumin',type=float,nargs=6,default=[0,0,0,0,0,0],help='Insitu stresses in the plane Z0')
     vfArgs.add_argument('--insitumax',type=float,nargs=6,default=None,help='Insitu stresses in the plane Z1')
     vfArgs.add_argument('--gamg',default=False,action='store_true',help='Use PETSc GAMG solvers')
+    vfArgs.add_argument('--hypre',default=False,action='store_true',help='Use hypre solvers')
     
     misc = parser.add_argument_group('misc')
     misc.add_argument('--mpiexec',help='mpi exec command',default='srun')
@@ -32,8 +33,9 @@ def parseCommandLine(debug=False):
     test16.add_argument('--minvol',type=float,default=0.,help='Initial injected volume')
     test16.add_argument('--maxvol',type=float,default=.1,help='Final injected volume')
     test16.add_argument('--maxtimestep',type=int,default=25,help='Number of time steps')    
-    test16.add_argument('--mode',type=int,default=3,help='BC type')
-    
+    #test16.add_argument('--mode',type=int,default=3,help='BC type')
+    #test16.add_argument('--bcfile',nargs='*',type=argparse.FileType('r'),help='BC files')
+    test16.add_argument('--bcfile',nargs='*',help='BC files')
     
     pc = parser.add_argument_group('penny-shaped cracks')
     pc.add_argument('--npc',type=int,default=1,help='Number of penny shaped cracks')
@@ -110,21 +112,28 @@ def main():
   os.chdir(args['workdir'])
 
   # Save all parameters in json file
-  jsonfile = open(os.path.join(args['workdir'],'00_INFO.json'),'w')      
-  json.dump(args,jsonfile, sort_keys = True, indent = 4)
-  jsonfile.close()    
+  #jsonfile = open(os.path.join(args['workdir'],'00_INFO.json'),'w')      
+  #json.dump(args,jsonfile, sort_keys = True, indent = 4)
+  #jsonfile.close()    
   
   # build job startup command
   test16bin = os.path.join(os.getenv('VFDIR'),'ValidationTests','test16')
-  print test16bin
   cmd = '%s %s -p %s '%(args['mpiexec'],test16bin,args['prefix'])
+
   for k in sorted(args.keys()):
-    if k not in ['gceff','mpiexec','workdir','prefix','gamg','extraopts']:
+    if k not in ['gceff','mpiexec','workdir','prefix','gamg','hypre','bcfile']:
       val = ('%s'%args[k]).strip('[ ]').replace(' ','')
       cmd += '-%s %s '%(k,val)
+  for f in args['bcfile']:
+    if os.path.isfile(f):
+        cmd += '-options_file %s '%f
+    else:
+        print "Option file %s does not exist... did you use absolute path?"%f
   if args['gamg']:
     cmd += '-U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg '
     #cmd += '-V_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -V_mg_levels_ksp_type chebyshev -V_mg_levels_pc_type sor -V_pc_gamg_agg_nsmooths 1 -V_pc_gamg_threshold 0 -V_pc_gamg_type agg -V_pc_type gamg '
+  if args['hypre']:
+    cmd += '-U_pc_type hypre  -u_pc_hypre_type boomeramg -u_pc_hypre_boomeramg_strong_threshold 0.7'
   cmd += args['extraopts']  
       
   print "Now running %s"%cmd
