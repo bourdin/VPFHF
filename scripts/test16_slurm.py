@@ -19,7 +19,7 @@ def parseCommandLine(debug=False):
     vfArgs.add_argument('--nu',type=float,default=0.,help='Poisson ratio')
     vfArgs.add_argument('--gc',type=float,default=1.,help='Fracture toughness')
     vfArgs.add_argument('--gceff',default=False,action='store_true',help='Modify Gc to account for effective toughness')
-    vfArgs.add_argument('--prefix',help='Name files after prefix + geometry instead of job ID',default=None)
+    vfArgs.add_argument('--prefix',help='Name files after prefix + geometry instead of job ID',default='0000')
 
     vfArgs.add_argument('--insitumin',type=float,nargs=6,default=[0,0,0,0,0,0],help='Insitu stresses in the plane Z0')
     vfArgs.add_argument('--insitumax',type=float,nargs=6,default=None,help='Insitu stresses in the plane Z1')
@@ -112,9 +112,9 @@ def main():
   os.chdir(args['workdir'])
 
   # Save all parameters in json file
-  #jsonfile = open(os.path.join(args['workdir'],'00_INFO.json'),'w')      
-  #json.dump(args,jsonfile, sort_keys = True, indent = 4)
-  #jsonfile.close()    
+  jsonfile = open(os.path.join(args['workdir'],'00_INFO.json'),'w')      
+  json.dump(args,jsonfile, sort_keys = True, indent = 4)
+  jsonfile.close()    
   
   # build job startup command
   test16bin = os.path.join(os.getenv('VFDIR'),'ValidationTests','test16')
@@ -131,7 +131,6 @@ def main():
         print "Option file %s does not exist... did you use absolute path?"%f
   if args['gamg']:
     cmd += '-U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg '
-    #cmd += '-V_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -V_mg_levels_ksp_type chebyshev -V_mg_levels_pc_type sor -V_pc_gamg_agg_nsmooths 1 -V_pc_gamg_threshold 0 -V_pc_gamg_type agg -V_pc_type gamg '
   if args['hypre']:
     cmd += '-U_pc_type hypre  -u_pc_hypre_type boomeramg -u_pc_hypre_boomeramg_strong_threshold 0.7'
   cmd += args['extraopts']  
