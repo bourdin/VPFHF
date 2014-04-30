@@ -191,6 +191,58 @@ extern PetscErrorCode VFDistanceToWell(PetscReal *d,PetscReal *x,VFWell *well)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "VFWellBuildVAT1"
+/*
+ VFWellBuildVAT1:  Build the V-field associated with an array of wells
+ 
+ (c) 2010-2014 Blaise Bourdin bourdin@lsu.edu
+ */
+extern PetscErrorCode VFWellBuildVAT1(Vec V,VFWell *well,VFCtx *ctx)
+{
+  PetscErrorCode      ierr;
+  PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+  PetscReal       ****coords_array;
+  PetscReal        ***v_array;
+  PetscReal           x[3];
+  PetscReal           dist;
+  
+  PetscFunctionBegin;
+  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  
+	ierr = VecSet(V,1.0);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  for (k = zs; k < zs+zm; k++) {
+    for (j = ys; j < ys+ym; j++) {
+      for (i = xs; i < xs+xm; i++) {
+        x[2] = coords_array[k][j][i][2];
+        x[1] = coords_array[k][j][i][1];
+        x[0] = coords_array[k][j][i][0];
+        if (well->rw <= 0.) {
+          v_array[k][j][i] = 1.;
+        } else {
+          ierr = VFDistanceToWell(&dist,x,well);CHKERRQ(ierr);
+          dist -= well->rw;
+          if (dist <= 0) {
+            v_array[k][j][i] = 0.;
+          } else if (dist < 2. * ctx->vfprop.epsilon) {
+            v_array[k][j][i] = dist/ctx->vfprop.epsilon * (1.- .25*dist/ctx->vfprop.epsilon);
+          } else {
+            v_array[k][j][i] = 1.;
+          }
+        }
+      }
+    }
+  }
+	ierr = DMDAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "VFWellBuildVAT2"
 /*
  VFWellBuildVAT2:  Build the V-field associated with an array of wells

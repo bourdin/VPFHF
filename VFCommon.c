@@ -446,8 +446,10 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
      */
     ierr = DMDAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Reservoir bounding box: (%g,%g) x (%g,%g) x (%g,%g)\n",BBmin[0],BBmax[0],BBmin[1],BBmax[1],BBmin[2],BBmax[2]);CHKERRQ(ierr);
-    ierr = DMView(ctx->daVect,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-    ierr = DMView(ctx->daScal,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+    /*
+      ierr = DMView(ctx->daVect,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+      ierr = DMView(ctx->daScal,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+    */
   }
   ierr = VFLayerInit(ctx);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -833,9 +835,12 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
    Create optional wells
    */
   for (c = 0; c < ctx->numWells; c++) {
-    /*    ierr = VFWellBuildVAT2(fields->V,&(ctx->well[c]),ctx);CHKERRQ(ierr);
-     ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
-     */
+    if (ctx->vfprop.atnum == 1) {
+        ierr = VFWellBuildVAT1(fields->V,&(ctx->well[c]),ctx);CHKERRQ(ierr);
+    } else {
+        ierr = VFWellBuildVAT2(fields->V,&(ctx->well[c]),ctx);CHKERRQ(ierr);
+    }
+    ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
   }
   
   ierr        = VecCopy(fields->VIrrev,fields->V);CHKERRQ(ierr);
@@ -1049,16 +1054,6 @@ extern PetscErrorCode VFLayerInit(VFCtx *ctx)
   for (ek = zs; ek < zs+zm; ek++)
     for (l = 0; l < ctx->nlayer; l++)
       if (coords_array[ek][ys][xs][2] > ctx->layersep[l]) ctx->layer[ek] = l;
-  if (ctx->verbose > 0)
-    for (ek = 0; ek < nz; ek++) {
-      if (ek >= zs && ek < zs+zm) {
-        ierr = PetscSynchronizedPrintf(PETSC_COMM_WORLD,"ctx->layer[%i]=%i (depth=%g)\n",ek,ctx->layer[ek],coords_array[ek][ys][xs][2]);CHKERRQ(ierr);
-      } else {
-        ierr = PetscSynchronizedPrintf(PETSC_COMM_WORLD,"layer %i inactive\n",ek);CHKERRQ(ierr);
-      }
-      ierr = PetscSynchronizedFlush(PETSC_COMM_WORLD);CHKERRQ(ierr);
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"\n");CHKERRQ(ierr);
-    }
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
