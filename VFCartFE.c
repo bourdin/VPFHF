@@ -381,7 +381,7 @@ extern PetscErrorCode VecSetFromBC(Vec BCVec,VFBC *BC)
           BCValue = 1.;
           break;
         case FIXED:
-          BCValue = BC[c].faceValue[Y0];
+          BCValue = BC[c].faceValue[Y1];
           break;
         case NONE:
           break;
@@ -404,7 +404,7 @@ extern PetscErrorCode VecSetFromBC(Vec BCVec,VFBC *BC)
           BCValue = 1.;
           break;
         case FIXED:
-          BCValue = BC[c].faceValue[Y0];
+          BCValue = BC[c].faceValue[Z0];
           break;
         case NONE:
           break;
@@ -419,7 +419,7 @@ extern PetscErrorCode VecSetFromBC(Vec BCVec,VFBC *BC)
       /*
         z == nz-1
       */
-      switch(BC[c].face[Z0]) {
+      switch(BC[c].face[Z1]) {
         case ZERO:
           BCValue = 0.;
           break;
@@ -427,7 +427,7 @@ extern PetscErrorCode VecSetFromBC(Vec BCVec,VFBC *BC)
           BCValue = 1.;
           break;
         case FIXED:
-          BCValue = BC[c].faceValue[Y0];
+          BCValue = BC[c].faceValue[Z1];
           break;
         case NONE:
           break;
