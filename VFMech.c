@@ -1517,12 +1517,12 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
           if (ek == 0) {
             /*
              Face Z0
-             sigma.(0,0,1) = (s_13,s_23,s_33) = (S4,S3,S2)
+             sigma.(0,0,-1) = (-s_13,-s_23,-s_33) = (-S4,-S3,-S2)
              */
             face          = Z0;
-            stresscomp[0] = 4; stressdir[0] = 1.;
-            stresscomp[1] = 3; stressdir[1] = 1.;
-            stresscomp[2] = 2; stressdir[2] = 1.;
+            stresscomp[0] = 4; stressdir[0] = -1.;
+            stresscomp[1] = 3; stressdir[1] = -1.;
+            stresscomp[2] = 2; stressdir[2] = -1.;
             for (c = 0; c < 3; c++) {
               if (ctx->bcU[c].face[face] == NONE) {
                 for (k = 0; k < ctx->e3D.nphiz; k++) {
@@ -1542,12 +1542,12 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
           if (ek == nz-2) {
             /*
              Face Z1
-             sigma.(0,0,-1) = (s_13,s_23,-s_33) = (S4,S3,-S2)
+             sigma.(0,0,1) = (s_13,s_23,s_33) = (S4,S3,S2)
              */
             face          = Z1;
             stresscomp[0] = 4; stressdir[0] = 1.;
             stresscomp[1] = 3; stressdir[1] = 1.;
-            stresscomp[2] = 2; stressdir[2] = -1.;
+            stresscomp[2] = 2; stressdir[2] = 1.;
             for (c = 0; c < 3; c++) {
               if (ctx->bcU[c].face[face] == NONE) {
                 for (k = 0; k < ctx->e3D.nphiz; k++) {
@@ -1567,12 +1567,12 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
           if (ej == 0) {
             /*
              Face Y0
-             sigma.(0,1,0) = (s_12,s_22,s_23) = (S5,S1,S3)
+             sigma.(0,-1,0) = (-s_12,-s_22,-s_23) = (-S5,-S1,-S3)
              */
             face          = Y0;
-            stresscomp[0] = 5; stressdir[0] = 1.;
-            stresscomp[1] = 1; stressdir[1] = 1.;
-            stresscomp[2] = 3; stressdir[2] = 1.;
+            stresscomp[0] = 5; stressdir[0] = -1.;
+            stresscomp[1] = 1; stressdir[1] = -1.;
+            stresscomp[2] = 3; stressdir[2] = -1.;
             for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1594,12 +1594,12 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
           if (ej == ny-2) {
             /*
              Face Y1
-             sigma.(0,-1,0) = (s_12,-s_22,s_23) = (S5,-S1,S3)
+             sigma.(0,1,0) = (s_12,s_22,s_23) = (S5,S1,S3)
              */
             face          = Y1;
-            stresscomp[0] = 5; stressdir[0] =  1.;
-            stresscomp[1] = 1; stressdir[1] = -1.;
-            stresscomp[2] = 3; stressdir[2] =  1.;
+            stresscomp[0] = 5; stressdir[0] = 1.;
+            stresscomp[1] = 1; stressdir[1] = 1.;
+            stresscomp[2] = 3; stressdir[2] = 1.;
             for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1621,12 +1621,12 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
           if (ei == 0) {
             /*
              Face X0
-             sigma.(1,0,0) = (s_11,s_12,s_13) = (S0,S5,S4)
+             sigma.(-1,0,0) = (-s_11,-s_12,-s_13) = (-S0,-S5,-S4)
              */
             face          = X0;
-            stresscomp[0] = 0; stressdir[0] = 1.;
-            stresscomp[1] = 5; stressdir[1] = 1.;
-            stresscomp[2] = 4; stressdir[2] = 1.;
+            stresscomp[0] = 0; stressdir[0] = -1.;
+            stresscomp[1] = 5; stressdir[1] = -1.;
+            stresscomp[2] = 4; stressdir[2] = -1.;
             for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -1648,12 +1648,12 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
           if (ei == nx-2) {
             /*
              Face X1
-             sigma.(-1,0,0) = (-s_11,s_12,s_13) = (-S0,S5,S4)
+             sigma.(1,0,0) = (s_11,s_12,s_13) = (S0,S5,S4)
              */
             face          = X1;
-            stresscomp[0] = 0; stressdir[0] = -1.;
-            stresscomp[1] = 5; stressdir[1] =  1.;
-            stresscomp[2] = 4; stressdir[2] =  1.;
+            stresscomp[0] = 0; stressdir[0] = 1.;
+            stresscomp[1] = 5; stressdir[1] = 1.;
+            stresscomp[2] = 4; stressdir[2] = 1.;
             for (k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
