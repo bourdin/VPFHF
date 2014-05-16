@@ -89,7 +89,6 @@ int main(int argc,char **argv)
   VFFields       fields;
   PetscErrorCode ierr;
 
-  PetscReal InsituWork    = 0;
   PetscReal p = 0.;
   PetscBool flg;
   PetscReal crackVolume;
@@ -138,13 +137,13 @@ int main(int argc,char **argv)
     if (ctx.hasInsitu) {
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
     }
-    ierr = PetscPrintf(PETSC_COMM_WORLD,  "Total Mechanical energy:   %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,  "Total Mechanical energy:   %e\n",ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 
     /*
       Compute and display total crack opening
     */
     ierr = VolumetricCrackOpening(&crackVolume,&ctx,&fields);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,   "Total crack opening:      %e\n",crackVolume);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,  "Total crack opening:       %e\n",crackVolume);CHKERRQ(ierr);
   
     /*
       Save fields and write statistics about current run
