@@ -130,26 +130,26 @@ int main(int argc,char **argv)
     ierr              = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
     ctx.TotalEnergy   = ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork;
 
-    ierr = PetscPrintf(PETSC_COMM_WORLD,  "Elastic Energy:            %e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,  "Elastic Energy:          \t%e\n",ctx.ElasticEnergy);CHKERRQ(ierr);
     if (ctx.hasCrackPressure) {
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces:   %e\n",ctx.PressureWork);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of pressure forces: \t%e\n",ctx.PressureWork);CHKERRQ(ierr);
     }
     if (ctx.hasInsitu) {
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:    %e\n",ctx.InsituWork);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:  \t%e\n",ctx.InsituWork);CHKERRQ(ierr);
     }
-    ierr = PetscPrintf(PETSC_COMM_WORLD,  "Total Mechanical energy:   %e\n",ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,  "Total Mechanical energy: \t%e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 
     /*
       Compute and display total crack opening
     */
     ierr = VolumetricCrackOpening(&crackVolume,&ctx,&fields);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,  "Total crack opening:       %e\n",crackVolume);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,   "Total crack opening:    \t%e\n",crackVolume);CHKERRQ(ierr);
   
     /*
       Save fields and write statistics about current run
     */
     ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-    ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%g %g %g %g %g %g\n",ctx.timevalue,crackVolume,ctx.ElasticEnergy,ctx.InsituWork,ctx.PressureWork,ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork);CHKERRQ(ierr);
+    ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%e \t%e \t%e \t%e \t%e \t%e\n",ctx.timevalue,crackVolume,ctx.ElasticEnergy,ctx.InsituWork,ctx.PressureWork,ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork);CHKERRQ(ierr);
   }
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscFinalize();
