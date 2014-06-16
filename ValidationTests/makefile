@@ -24,6 +24,9 @@ test4: test4.o ${VFOBJ} chkopts
 test5: test5.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
+test6a: test6a.o ${VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
+
 test6: test6.o ${VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${VFOBJ} ${PETSC_LIB}
 
