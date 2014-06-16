@@ -100,9 +100,6 @@ int main(int argc,char **argv)
 
   ierr = PetscOptionsGetReal(NULL,"-pressure",&p,&flg);CHKERRQ(ierr);
   
-  if (ctx.numPennyCracks != 1) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"test6a is designed to work only for npc=1\n");CHKERRQ(ierr);
-  }
   ierr = PetscOptionsGetReal(NULL,"-rmin",&rmin,&flg);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(NULL,"-rmax",&rmax,&flg);CHKERRQ(ierr);
   if (flg) {
