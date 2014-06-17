@@ -33,7 +33,7 @@ int main(int argc,char **argv)
   PetscViewer    logviewer;
   PetscInt       i,j;
   PetscInt       c;
-  char           filename[FILENAME_MAX];
+  char           filename[FILENAME_MAX],filenameC[FILENAME_MAX];
   PetscReal      p;
   PetscReal      p_old;
   PetscReal      prestol = 1.e-2;
@@ -44,6 +44,7 @@ int main(int argc,char **argv)
   PetscReal      flowrate,maxvol = .03,minvol = 0.;
   PetscReal      targetVol;
   PetscBool      debug=PETSC_FALSE,StepVFailed=PETSC_FALSE;
+  PetscBool      saveall=PETSC_FALSE;
   PetscInt       currentstep,savestep=0;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -52,6 +53,7 @@ int main(int argc,char **argv)
   ierr = PetscOptionsGetReal(PETSC_NULL,"-minvol",&minvol,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetReal(PETSC_NULL,"-prestol",&prestol,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetBool(PETSC_NULL,"-debug",&debug,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(PETSC_NULL,"-saveall",&saveall,PETSC_NULL);CHKERRQ(ierr);
   /*
     Overwrite ctx.maxtimestep with something more reasonable
   */
@@ -147,7 +149,7 @@ int main(int argc,char **argv)
       ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"      Max. change on V: %e\n",errV);CHKERRQ(ierr);
 
-      if (debug) {
+      if (debug || saveall) {
         currentstep = ctx.timestep;
         savestep++;
         ctx.timestep = savestep;
@@ -159,7 +161,9 @@ int main(int argc,char **argv)
           ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
           break;
         case FILEFORMAT_VTK:
-          ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+          ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s_nodal.%.5i-%.5i.vts",ctx.prefix,ctx.timestep,altminit);CHKERRQ(ierr);
+          ierr = PetscSNPrintf(filenameC,FILENAME_MAX,"%s_cell.%.5i-%.5i.vts",ctx.prefix,ctx.timestep,altminit);CHKERRQ(ierr);
+          ierr = FieldsVTKWrite(&ctx,&fields,filename,filenameC);CHKERRQ(ierr);
           break;
         }
         ctx.ElasticEnergy = 0;
