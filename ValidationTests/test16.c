@@ -45,7 +45,6 @@ int main(int argc,char **argv)
   PetscReal      targetVol;
   PetscBool      debug=PETSC_FALSE,StepVFailed=PETSC_FALSE;
   PetscBool      saveall=PETSC_FALSE;
-  PetscInt       currentstep,savestep=0;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -150,9 +149,6 @@ int main(int argc,char **argv)
       ierr = PetscPrintf(PETSC_COMM_WORLD,"      Max. change on V: %e\n",errV);CHKERRQ(ierr);
 
       if (debug || saveall) {
-        currentstep = ctx.timestep;
-        savestep++;
-        ctx.timestep = savestep;
         switch (ctx.fileformat) {
         case FILEFORMAT_HDF5:
           ierr = FieldsH5Write(&ctx,&fields);CHKERRQ(ierr);
@@ -180,8 +176,6 @@ int main(int argc,char **argv)
         ierr = PetscViewerASCIIPrintf(viewer,"%d \t\t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,ctx.CrackVolume,p,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
         ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ctx.ElasticEnergy,
                                       ctx.InsituWork,ctx.SurfaceEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
-
-        ctx.timestep = currentstep;
       }
       if (ierrStepV  < 0) {
         StepVFailed = PETSC_TRUE;
