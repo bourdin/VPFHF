@@ -227,7 +227,7 @@ int main(int argc,char **argv)
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n Final Crack volume\t = %g, Pressure\t= %g\n\n", ctx.CrackVolume, p);CHKERRQ(ierr);	
 
 	
-	ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
+//	ierr = PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
 
 	ierr = FieldsH5Write(&ctx,&fields);
 	ierr = VecDestroy(&Vold);CHKERRQ(ierr);
