@@ -35,7 +35,7 @@ int main(int argc,char **argv)
 	PetscReal           SurfaceEnergy = 0;
 	char                filename[FILENAME_MAX];
 	PetscReal            lx,ly,lz;
-	PetscReal           p = 1e-3;
+	PetscReal           p = 1e-2;
 	PetscReal           errV=1e+10,errP;
 	Vec                 Vold;
 	PetscReal           p_epsilon = 1.e-4;

@@ -46,7 +46,6 @@ int main(int argc,char **argv)
   
   
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-  ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
 	ctx.flowsolver = FLOWSOLVER_KSPMIXEDFEM;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -214,7 +213,7 @@ int main(int argc,char **argv)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"   Iteration Step: %d\n",displ_iter);CHKERRQ(ierr);
     ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
     displ = lz*(1.+ctx.matprop[0].nu)*((1.-ctx.matprop[0].nu)*stress*lx*ly+ctx.flowprop.alphabiot*SumnIntegral*(1.-2*ctx.matprop[0].nu))/(lx*ly*ctx.matprop[0].E);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"   Update displacement: %g \n",displ);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"   Update displacement: %g \t Displ_error = %g\n",displ,norm_inf);CHKERRQ(ierr);
     for (k = zs; k < zs+zm; k++) {
       for (j = ys; j < ys+ym; j++) {
         for (i = xs; i < xs+xm; i++) {
@@ -301,17 +300,11 @@ int main(int argc,char **argv)
       displ = lz*(1.+ctx.matprop[0].nu)*((1.-ctx.matprop[0].nu)*stress*lx*ly+ctx.flowprop.alphabiot*SumnIntegral*(1.-2*ctx.matprop[0].nu))/(lx*ly*ctx.matprop[0].E);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"   Initial guess displacement: %g\n",displ);CHKERRQ(ierr);
       ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
-      for (k = zs; k < zs+zm; k++) {
         for (j = ys; j < ys+ym; j++) {
           for (i = xs; i < xs+xm; i++) {
-            if(k == zm-1){
-              bcu_array[k][j][i][0] = 0;
-              bcu_array[k][j][i][1] = 0.;
-              bcu_array[k][j][i][2] = displ;
-            }
+              bcu_array[zm-1][j][i][2] = displ;
           }
         }
-      }
       ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
       ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
       displ_iter++;
