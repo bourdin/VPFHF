@@ -54,6 +54,10 @@ typedef struct {
   Vec theta_old;
   Vec VelnPress_old;
   Vec velocity_old;
+  Vec Uc;
+  Vec Uv;
+  Vec Ud;
+  Vec Ue;
 } VFFields;
 
 /*
@@ -150,8 +154,10 @@ typedef enum {
 } VFFlowSolverType;
 
 typedef enum {
-	FRACTUREFLOWSOLVER_SNESMIXEDFEM,
-	FRACTUREFLOWSOLVER_NONE
+	MIXEDFEM,
+	MIXEDFEM_AVECOD,
+	STANDARDFEM,
+	STANDARDFEM_AVECOD
 } VFFractureFlowSolverType;
 
 typedef enum {

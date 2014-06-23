@@ -10,6 +10,7 @@
  ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 10 -resflowmechcoupling fixedstrain
  
  ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 2 -resflowmechcoupling fixedstress
+ ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesstandarDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 2 -resflowmechcoupling fixedstress
  */
 
 #include "petsc.h"
@@ -50,7 +51,6 @@ int main(int argc,char **argv)
 
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-  ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
 	ctx.flowsolver = FLOWSOLVER_KSPMIXEDFEM;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,

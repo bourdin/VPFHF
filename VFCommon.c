@@ -114,7 +114,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->ResFlowMechCoupling = FIXEDSTRESS;
     ierr          = PetscOptionsEnum("-resflowmechcoupling","\n\tRes flow mech coupling","",ResFlowMechCouplingName,(PetscEnum)ctx->ResFlowMechCoupling,(PetscEnum*)&ctx->ResFlowMechCoupling,PETSC_NULL);CHKERRQ(ierr);
 
-    ctx->fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
+    ctx->fractureflowsolver = MIXEDFEM;
     ierr                    = PetscOptionsEnum("-fractureflowsolver","\n\tFracture Flow solver","",VFFractureFlowSolverName,(PetscEnum)ctx->fractureflowsolver,(PetscEnum*)&ctx->fractureflowsolver,PETSC_NULL);CHKERRQ(ierr);
 
     ctx->heatsolver = HEATSOLVER_SNESFEM;
@@ -731,7 +731,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VecSet(ctx->TBCArray,0.0);CHKERRQ(ierr);
 
   ierr = DMCreateGlobalVector(ctx->daVect,&fields->fracvelocity);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) fields->fracvelocity,"Fracture Fluid Velocity");CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->fracvelocity,"FracFluid Velocity");CHKERRQ(ierr);
   ierr = VecSet(fields->fracvelocity,0.0);CHKERRQ(ierr);
 
   ierr = DMCreateGlobalVector(ctx->daFlow,&fields->fracVelnPress);CHKERRQ(ierr);
@@ -799,6 +799,23 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daScal,&fields->pressure_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->pressure_old,"Previous Pressure");CHKERRQ(ierr);
   ierr = VecSet(fields->pressure_old,0.);CHKERRQ(ierr);
+  
+  ierr = DMCreateGlobalVector(ctx->daVectCell,&fields->Uc);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->Uc,"Cell Fracture Displacement");CHKERRQ(ierr);
+  ierr = VecSet(fields->Uc,0.0);CHKERRQ(ierr);
+
+  
+  ierr = DMCreateGlobalVector(ctx->daVectCell,&fields->Uv);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->Uv,"View Displacement");CHKERRQ(ierr);
+  ierr = VecSet(fields->Uv,0.0);CHKERRQ(ierr);
+  
+  ierr = DMCreateGlobalVector(ctx->daVect,&fields->Ud);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->Ud,"Displacement Diff");CHKERRQ(ierr);
+  ierr = VecSet(fields->Ud,0.0);CHKERRQ(ierr);
+  
+  ierr = DMCreateGlobalVector(ctx->daVect,&fields->Ue);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->Ue,"Displacement Diff1");CHKERRQ(ierr);
+  ierr = VecSet(fields->Ue,0.0);CHKERRQ(ierr);
   
   /*
    Create optional penny-shaped and rectangular cracks
@@ -1251,6 +1268,11 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&fields->fracVelnPress);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->FracVelBCArray);CHKERRQ(ierr);
 
+  ierr = VecDestroy(&fields->Uc);CHKERRQ(ierr);
+  ierr = VecDestroy(&fields->Uv);CHKERRQ(ierr);
+  ierr = VecDestroy(&fields->Ud);CHKERRQ(ierr);
+  ierr = VecDestroy(&fields->Ue);CHKERRQ(ierr);
+  
   ierr = PetscFree(ctx->fracwell);CHKERRQ(ierr);
   ierr = PetscFree(ctx->well);CHKERRQ(ierr);
 
@@ -1307,7 +1329,12 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
   ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,H5filename,FILE_MODE_WRITE,&H5Viewer);
   ierr = VecView(fields->U,H5Viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->Uc,H5Viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->Uv,H5Viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->Ud,H5Viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->Ue,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->velocity,H5Viewer);CHKERRQ(ierr);
+  ierr = VecView(fields->fracvelocity,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->vfperm,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->V,H5Viewer);CHKERRQ(ierr);
   ierr = VecView(fields->pmult,H5Viewer);CHKERRQ(ierr);
@@ -1328,7 +1355,12 @@ extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
   ierr = XDMFuniformgridInitialize(XDMFViewer,ctx->timevalue,H5filename);CHKERRQ(ierr);
   ierr = XDMFtopologyAdd (XDMFViewer,nx,ny,nz,H5coordfilename,"Coordinates");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Displacement");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,3,"Vector","Cell",H5filename,"Cell Fracture Displacement");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,3,"Vector","Cell",H5filename,"View Displacement");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","node",H5filename,"Displacement Diff");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","node",H5filename,"Displacement Diff1");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Fluid Velocity");CHKERRQ(ierr);
+  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"FracFluid Velocity");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,6,"Tensor6","Cell",H5filename,"Permeability_V-field");CHKERRQ(ierr);       /*Cell*/
   ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Fracture");CHKERRQ(ierr);
   ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,1,"Scalar","Cell",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
