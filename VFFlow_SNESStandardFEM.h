@@ -18,5 +18,5 @@ extern PetscErrorCode VF_FormFlowStandardFEMIJacobian(SNES snes,Vec Pressure,Mat
 extern PetscErrorCode VF_FlowRateCompute(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode VF_FlowRateCompute_local(PetscReal ****cellflowrate_array, PetscReal ***press_array ,PetscReal ****perm_array, PetscReal ***v_array, VFFlowProp flowpropty, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
 extern PetscErrorCode FlowVelocityCompute(VFCtx *ctx, VFFields *fields);
-extern PetscErrorCode FlowVelocityCompute_local(PetscReal ****cellvelocityrate_array, PetscReal ***press_array, PetscReal ****perm_array, PetscReal ***v_array, VFFlowProp flowpropty, PetscInt ek, PetscInt ej, PetscInt ei, CartFE_Element3D *e);
+extern PetscErrorCode FlowVelocityCompute_local(PetscReal ****cellvelocityrate_array, PetscReal ***press_array, PetscReal ****perm_array, PetscReal ***v_array, VFFlowProp flowpropty, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
 #endif 

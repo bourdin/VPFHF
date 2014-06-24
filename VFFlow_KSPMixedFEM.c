@@ -2513,7 +2513,7 @@ extern PetscErrorCode VF_FlowStiffnessMatrixEps_local(PetscReal *Kd_ele,VFCartFE
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatDFractureFlowCouplingAveCOD_local"
-extern PetscErrorCode VF_MatDFractureFlowCouplingAveCOD_local(PetscReal *Kd_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***pmult_array,PetscReal ***v_array)
+extern PetscErrorCode VF_MatDFractureFlowCouplingAveCOD_local(PetscReal *Kd_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***pmult_array,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
   PetscInt                i,j,k,l,c;
@@ -2613,7 +2613,7 @@ extern PetscErrorCode VF_MatDFractureFlowCouplingAveCOD_local(PetscReal *Kd_ele,
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_MatApplyFracturePressureBC_local"
-extern PetscErrorCode VF_MatApplyFracturePressureBC_local(PetscReal *K_ele,CartFE_Element3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ***v_array)
+extern PetscErrorCode VF_MatApplyFracturePressureBC_local(PetscReal *K_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
   PetscInt                i,j,k,l,c;
