@@ -16,7 +16,7 @@
  */
 
 #include "petsc.h"
-#include "CartFE.h"
+#include "VFCartFE.h"
 #include "VFCommon.h"
 #include "VFMech.h"
 #include "VFFlow.h"
@@ -116,7 +116,6 @@ int main(int argc,char **argv)
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressureRef,0.0);CHKERRQ(ierr);
   ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
 
   
@@ -125,7 +124,7 @@ int main(int argc,char **argv)
   ctx.timestep = 0;
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
   ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
-  ierr = FieldsH5Write(&ctx,&fields);
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 
   
   

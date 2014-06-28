@@ -1468,12 +1468,14 @@ extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char noda
     ierr = PetscViewerFileSetName(viewer,nodalName);CHKERRQ(ierr);
   }
   ierr = VecViewVTKDof(ctx->daScal,fields->U,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->Ud,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->Ue,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->velocity,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->fracvelocity,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->V,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->theta,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->pressure,viewer);CHKERRQ(ierr);
-  ierr = VecViewVTKDof(ctx->daScal,fields->fracpressure,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,ctx->RegFracWellFlowRate,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->VolCrackOpening,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->VolLeakOffRate,viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
@@ -1489,6 +1491,8 @@ extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char noda
   } else {
     ierr = PetscViewerFileSetName(viewer,cellName);CHKERRQ(ierr);
   }
+  ierr = VecViewVTKDof(ctx->daScalCell,fields->Uc,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScalCell,fields->Uv,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScalCell,fields->vfperm,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScalCell,fields->pmult,viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);

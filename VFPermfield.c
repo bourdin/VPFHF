@@ -211,11 +211,11 @@ extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx,
   ierr = VecSet(fields->velocity,0.);CHKERRQ(ierr);
 	ierr = CellToNodeInterpolation(fields->theta,fields->pmult,ctx); CHKERRQ(ierr);
   
-  
+  /*
   ierr = VecSet(fields->pressure,0.);CHKERRQ(ierr);
   ierr = VecCopy(fields->theta,fields->pressure);CHKERRQ(ierr);
   ierr = VecAYPX(fields->pressure,-1,fields->VolCrackOpening);
-  
+  */
   ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
   ierr = VecDestroy(&CellVolCrackOpening);CHKERRQ(ierr);

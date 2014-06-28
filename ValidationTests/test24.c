@@ -3,6 +3,7 @@
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
  ./test24 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESMIXEDFEM
+ ./test24 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESstandarDFEM
  ./test24 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_tSMIXEDFEM
  
  */
@@ -38,14 +39,13 @@ int main(int argc,char **argv)
 
   
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-//  ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
 	ctx.flowsolver = FLOWSOLVER_SNESSTANDARDFEM;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-  ctx.FlowDisplCoupling = PETSC_TRUE;
+  ctx.FlowDisplCoupling = PETSC_FALSE;
   ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
 	ierr = VecSet(ctx.VelBCArray,0.);CHKERRQ(ierr);
 	ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
@@ -139,8 +139,9 @@ int main(int argc,char **argv)
       ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
       ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-      ierr = FieldsH5Write(&ctx,&fields);
-      
+//      ierr = FieldsH5Write(&ctx,&fields);
+      ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+
       
       
       ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);

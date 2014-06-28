@@ -301,8 +301,9 @@ int main(int argc,char **argv)
   ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
   ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD," Initial fracture pressure =  %e  Initial fracture volume = %e \n ",p,ctx.CrackVolume);CHKERRQ(ierr);
-  ierr = FieldsH5Write(&ctx,&fields);
-  
+//  ierr = FieldsH5Write(&ctx,&fields);
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+
   
   ctx.timestep = 0;
   for(i = 1; i < num; i++){
@@ -363,7 +364,9 @@ int main(int argc,char **argv)
     ierr = VecMax(fields.pressure,PETSC_NULL,&pmax);CHKERRQ(ierr);
     ierr = PetscViewerASCIIPrintf(viewer,"%d \t %e \t %e \t %e \t %e \t %e \t %e \n",i,ctx.flowprop.timestepsize,ctx.timevalue,pmax,TotalVolInj,ctx.CrackVolume,TotalLeakOff);CHKERRQ(ierr);
     ctx.timestep = i;
-    ierr = FieldsH5Write(&ctx,&fields);
+//    ierr = FieldsH5Write(&ctx,&fields);
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+
 	}
   ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);

@@ -34,6 +34,8 @@ int main(int argc,char **argv)
 	PetscReal		lx,ly,lz;
 	PetscReal		gamma, beta, rho, mu;
 	PetscReal		pi;
+  PetscReal   vol,vol1,vol2,vol3,vol4,vol5;
+
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ctx.flowsolver = FLOWSOLVER_KSPMIXEDFEM;
@@ -117,7 +119,8 @@ int main(int argc,char **argv)
     ctx.maxtimevalue = 60.;
     ctx.timevalue = 1.;
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-    ierr = FieldsH5Write(&ctx,&fields);
+//    ierr = FieldsH5Write(&ctx,&fields);
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   }
   else{
     /*Initialization Set initial flow field values. This case is zero. This will have to be called an initialization function*/
@@ -130,7 +133,8 @@ int main(int argc,char **argv)
       ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
       ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-      ierr = FieldsH5Write(&ctx,&fields);
+//      ierr = FieldsH5Write(&ctx,&fields);
+      ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
       /*This will have to be called "an update function"*/
       ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
       ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
@@ -146,13 +150,15 @@ int main(int argc,char **argv)
     ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1_NORM = %f \n 2_norm = %f \n inf_norm = %f \n",norm_1, norm_2,norm_inf);CHKERRQ(ierr);
   }
-  PetscReal vol1,vol2,vol3,vol4;
-  ierr = VFCheckVolumeBalance(&vol1,&vol2,&vol3,&vol4,&ctx,&fields);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n divergence_volume = %g\n",vol1);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n surface_flux_volume = %g\n",vol2);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n well_volume = %g\n",vol3);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n source_volume = %g\n",vol4);CHKERRQ(ierr);
-
+  ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," divergence_volume = %g\n",vol1);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," surface_flux_volume = %g\n",vol2);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," well_volume = %g\n",vol3);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," source_volume = %g\n",vol4);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," vol.strain_volume = %g\n",vol5);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," Volume Balance: RHS = %g \t LHS = %g \n",vol+vol1,vol3+vol4+vol5);CHKERRQ(ierr);
+  
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
