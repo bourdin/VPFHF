@@ -41,7 +41,6 @@ int main(int argc,char **argv)
 
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-//  ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
 	ctx.flowsolver = FLOWSOLVER_KSPMIXEDFEM;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -152,7 +151,8 @@ int main(int argc,char **argv)
     ctx.maxtimevalue = 100.;
     ctx.timevalue = 0.1;
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-    ierr = FieldsH5Write(&ctx,&fields);
+//    ierr = FieldsH5Write(&ctx,&fields);
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 }
   else{
   /*Initialization Set initial flow field values. This case is zero. This will have to be called an initialization function*/
@@ -165,8 +165,8 @@ int main(int argc,char **argv)
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
 		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-		ierr = FieldsH5Write(&ctx,&fields);
-    
+//		ierr = FieldsH5Write(&ctx,&fields);
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
     ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," divergence_volume = %g\n",vol1);CHKERRQ(ierr);

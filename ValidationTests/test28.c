@@ -6,6 +6,7 @@
  ./test28 -n 101,101,2 -l 1,1,0.01 -m_inv 10 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -npc 1 -pc0_r 0.15 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.04 -epsilon 0.02 -pc0_theta 0 -pc0_phi 90 
  ./test28 -n 101,101,2 -l 1,1,0.01 -m_inv 10 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -npc 1 -pc0_r 0.15 -pc0_center 0.5,0.5,0.005 -pc0_thickness 0.04 -epsilon 0.02 -pc0_theta 0 -pc0_phi 90
  ./test28 -n 51,11,2 -l 1,1,0.01 -m_inv 10 -maxtimestep 20 -flowsolver FLOWSOLVER_snesMIXEDFEM
+ ./test28 -n 51,11,2 -l 1,1,0.01 -m_inv 10 -maxtimestep 20 -flowsolver FLOWSOLVER_snesstandarDFEM
  
  ./test28 -n 51,51,2 -l 1,1,0.01 -m_inv 10 -ts_dt 1 -ts_max_steps 20 -flowsolver FLOWSOLVER_tsMIXEDFEM
  */
@@ -24,7 +25,7 @@ VFFields            fields;
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
-{	
+{
 	PetscErrorCode  ierr;
 	PetscViewer		viewer;
 	PetscViewer     logviewer;
@@ -46,7 +47,6 @@ int main(int argc,char **argv)
 
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-//  ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
 	ctx.flowsolver = FLOWSOLVER_KSPMIXEDFEM;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -149,7 +149,8 @@ int main(int argc,char **argv)
     ctx.maxtimevalue = 100.;
     ctx.timevalue = 0.1;
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-    ierr = FieldsH5Write(&ctx,&fields);
+//    ierr = FieldsH5Write(&ctx,&fields);
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 }
   else{
   /*Initialization Set initial flow field values. This case is zero. This will have to be called an initialization function*/
@@ -162,7 +163,8 @@ int main(int argc,char **argv)
 		ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
 		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-		ierr = FieldsH5Write(&ctx,&fields);
+//		ierr = FieldsH5Write(&ctx,&fields);
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
     /*This will have to be called "an update function"*/
     
     

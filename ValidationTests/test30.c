@@ -222,8 +222,9 @@ int main(int argc,char **argv)
       ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n inf_norm = %f \n",norm_inf);CHKERRQ(ierr);
     }
-    ierr = FieldsH5Write(&ctx,&fields);
-  
+//    ierr = FieldsH5Write(&ctx,&fields);
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+
   
 
   ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
@@ -302,7 +303,9 @@ int main(int argc,char **argv)
     ierr = PetscPrintf(PETSC_COMM_WORLD," vol.strain_volume = %g\n",vol5);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," Volume Balance ::: RHS = %g \t LHS = %g \n",vol+vol1,vol3+vol4+vol5);CHKERRQ(ierr);
 
-    ierr = FieldsH5Write(&ctx,&fields);
+//    ierr = FieldsH5Write(&ctx,&fields);
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
     ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);

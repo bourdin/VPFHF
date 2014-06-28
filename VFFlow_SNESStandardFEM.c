@@ -458,9 +458,11 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   alphabiot  = ctx->flowprop.alphabiot;
   K_dr  = ctx->flowprop.K_dr;
   M_inv     = ctx->flowprop.M_inv;
+  
   if(ctx->FlowDisplCoupling && ctx->ResFlowMechCoupling == FIXEDSTRESS){
     M_inv = M_inv+alphabiot*alphabiot/K_dr;
   }
+  
   beta_c = ctx->flowprop.beta;
   alpha_c = ctx->flowprop.alpha;
   theta = ctx->flowprop.theta;
@@ -545,19 +547,10 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = DMGlobalToLocalEnd(ctx->daScal,Ones,INSERT_VALUES,one_local);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,one_local,&one_array);CHKERRQ(ierr);
 
-  
-  
-  
-  
-  
   ierr = DMGetLocalVector(ctx->daScalCell,&pmult_local);CHKERRQ(ierr);
   ierr = DMGlobalToLocalBegin(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
   ierr = DMGlobalToLocalEnd(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScalCell,pmult_local,&pmult_array);CHKERRQ(ierr);
-  
-  
-  
-  
   ierr = PetscMalloc7(nrow*nrow,PetscReal,&K1_local,
                       nrow*nrow,PetscReal,&K2_local,
                       nrow*nrow,PetscReal,&KS_local,
@@ -582,7 +575,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 						}
 					}
 				}
-        ierr = VF_MatA_local(KS_local,&ctx->e3D,ek,ej,ei,one_array);CHKERRQ(ierr);
+        ierr = VF_MatA_local(KS_local,&ctx->e3D,ek,ej,ei,one_array);CHKERRQ(ierr); 
         ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KS_local,ADD_VALUES);CHKERRQ(ierr);
         ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,KS_local,ADD_VALUES);CHKERRQ(ierr);
         ierr = VF_HeatMatK_local(KD_local,&ctx->e3D,ek,ej,ei,perm_array,one_array);CHKERRQ(ierr);
@@ -860,7 +853,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = VecDestroy(&Pressure_diff);CHKERRQ(ierr);
   ierr = VecDestroy(&Ones);CHKERRQ(ierr);
   
- 
+ /*
   PetscViewer viewer;
   ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Matrixf.txt",&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
@@ -887,7 +880,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHS1.txt",&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
   ierr = VecView(rhsc1,viewer);CHKERRQ(ierr);
- 
+ */
   
   PetscFunctionReturn(0);
 }
