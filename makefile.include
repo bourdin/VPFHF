@@ -1,17 +1,16 @@
-VFOBJ = ${VFDIR}/VFCommon.o                \
-        ${VFDIR}/VFCracks.o                \
-        ${VFDIR}/VFMech.o                  \
-        ${VFDIR}/VFWell.o                  \
-        ${VFDIR}/VFFlow.o                  \
-        ${VFDIR}/VFHeat.o                  \
-        ${VFDIR}/VFFlow_Fake.o             \
-        ${VFDIR}/VFFlow_SNESFEM.o          \
-        ${VFDIR}/VFFlow_TSFEM.o            \
-        ${VFDIR}/VFFlow_KSPMixedFEM.o      \
-        ${VFDIR}/VFFlow_SNESMixedFEM.o     \
-        ${VFDIR}/VFFlow_SNESStandardFEM.o  \
-        ${VFDIR}/VFFlow_TSMixedFEM.o       \
-        ${VFDIR}/VFHeat_SNESFEM.o          \
-        ${VFDIR}/VFPermfield.o             \
-        ${VFDIR}/VFCartFE.o                \
-        ${VFDIR}/xdmf.o
+VFOBJ = VFCommon.o                \
+        VFCracks.o                \
+        VFMech.o                  \
+        VFWell.o                  \
+        VFFlow.o                  \
+        VFHeat.o                  \
+        VFFlow_Fake.o             \
+        VFFlow_SNESFEM.o          \
+        VFFlow_TSFEM.o            \
+        VFFlow_KSPMixedFEM.o      \
+        VFFlow_SNESMixedFEM.o     \
+        VFFlow_SNESStandardFEM.o  \
+        VFFlow_TSMixedFEM.o       \
+        VFHeat_SNESFEM.o          \
+        VFPermfield.o             \
+        VFCartFE.o

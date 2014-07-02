@@ -311,14 +311,14 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 
   if (ctx->printhelp) PetscFunctionReturn(0);
 
-  ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
+  ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,
                       PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVect);CHKERRQ(ierr);
-  ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
+  ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,
                       PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daScal);CHKERRQ(ierr);
   ierr = DMDASetFieldName(ctx->daScal,0,"");CHKERRQ(ierr);
-  ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
+  ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,4,1,
                       PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daFlow);CHKERRQ(ierr);
   
@@ -342,21 +342,21 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   /*
    Finite elements should never use ghost cells, so the stencil for the cell DA is 0
    */
-  ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
+  ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,0,
                       olx,oly,olz,&ctx->daScalCell);CHKERRQ(ierr);
   ierr = DMDASetFieldName(ctx->daScalCell,0,"");CHKERRQ(ierr);
 
-  ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
+  ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,3,0,
                       olx,oly,olz,&ctx->daVectCell);CHKERRQ(ierr);
   
-  ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
+  ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,6,0,
                       olx,oly,olz,&ctx->daVFperm);CHKERRQ(ierr);
 
   /*
-   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
+   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
    DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,6,1,
    PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVFperm);CHKERRQ(ierr);
    */
@@ -375,7 +375,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   */
   ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = PetscMalloc3(nx,PetscReal,&X,ny,PetscReal,&Y,nz,PetscReal,&Z);CHKERRQ(ierr);
+  ierr = PetscMalloc3(nx,&X,ny,&Y,nz,&Z);CHKERRQ(ierr);
   Z[0] = 0.;
   Y[0] = 0.;
   X[0] = 0.;
@@ -394,39 +394,21 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   ierr = PetscFree3(X,Y,Z);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 
-  ierr = DMDASetCoordinates(ctx->daVect,ctx->coordinates);CHKERRQ(ierr);
-  ierr = DMDASetCoordinates(ctx->daScal,ctx->coordinates);CHKERRQ(ierr);
+  ierr = DMSetCoordinates(ctx->daVect,ctx->coordinates);CHKERRQ(ierr);
+  ierr = DMSetCoordinates(ctx->daScal,ctx->coordinates);CHKERRQ(ierr);
   switch (ctx->fileformat) {
   case FILEFORMAT_BIN:
     /*
      As of version 3.1, there is a bug in petsc preventing to save 2 DA with different number of degrees of freedoms
      per node in a single file.
      Even coordinates are part of the DA and do not need to be saved separately, it looks like the coordinate vector
-     obtained from DMDAGetCoordinates cannot be saved properly in an hdf5 file, so we save the coordinate vector anyway
+     obtained from DMDAGetCoordinates cannot be saved properly in a file, so we save the coordinate vector anyway
      */
     ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.bin",ctx->prefix);CHKERRQ(ierr);
     ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
     ierr = DMView(ctx->daScal,viewer);CHKERRQ(ierr);
     ierr = VecView(ctx->coordinates,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-    break;
-  case FILEFORMAT_HDF5:
-#if defined(PETSC_HAVE_HDF5)
-    /*
-     Write headers in multistep XDMF file
-     */
-    ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.xmf",ctx->prefix);CHKERRQ(ierr);
-    ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->XDMFviewer);
-    ierr = XDMFmultistepInitialize(ctx->XDMFviewer);CHKERRQ(ierr);
-
-    /*
-     Save cordinate in main hdf5 file
-     */
-    ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.h5",ctx->prefix);CHKERRQ(ierr);
-    ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
-    ierr = VecView(ctx->coordinates,viewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-#endif
     break;
   case FILEFORMAT_VTK:
     break;
@@ -437,7 +419,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
    so that we can query coordinates of ghost points
    */
   ierr = VecDestroy(&ctx->coordinates);CHKERRQ(ierr);
-  ierr = DMDAGetGhostedCoordinates(ctx->daScal,&ctx->coordinates);CHKERRQ(ierr);
+  ierr = DMGetCoordinatesLocal(ctx->daScal,&ctx->coordinates);CHKERRQ(ierr);
 
 
   if (ctx->verbose > 0) {
@@ -949,8 +931,8 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   if (ctx->unilateral == UNILATERAL_NONE) {
     ierr = SNESSetType(ctx->snesU,SNESKSPONLY);CHKERRQ(ierr);
   } else {
-    ierr = SNESSetType(ctx->snesU,SNESLS);CHKERRQ(ierr);
-    ierr = SNESGetSNESLineSearch(ctx->snesU,&linesearchU);CHKERRQ(ierr);
+    ierr = SNESSetType(ctx->snesU,SNESNEWTONLS);CHKERRQ(ierr);
+    ierr = SNESGetLineSearch(ctx->snesU,&linesearchU);CHKERRQ(ierr);
     ierr = SNESLineSearchSetType(linesearchU,SNESLINESEARCHL2);CHKERRQ(ierr);
   }
   ierr = SNESSetComputeInitialGuess(ctx->snesU,VF_UInitialGuess,ctx);CHKERRQ(ierr);
@@ -958,9 +940,9 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = SNESSetFromOptions(ctx->snesU);CHKERRQ(ierr);
   
   ierr = DMCreateGlobalVector(ctx->daVect,&residualU);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daVect,PETSC_NULL,&JacU);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daVect,&JacU);CHKERRQ(ierr);
   ierr = MatSetOption(JacU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daVect,PETSC_NULL,&JacPCU);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daVect,&JacPCU);CHKERRQ(ierr);
   ierr = MatSetOption(JacPCU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 
 
@@ -1028,7 +1010,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = SNESSetFromOptions(ctx->snesV);CHKERRQ(ierr);
 
   ierr = DMCreateGlobalVector(ctx->daScal,&residualV);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daScal,PETSC_NULL,&JacV);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,&JacV);CHKERRQ(ierr);
   ierr = MatSetOption(JacV,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = SNESSetFunction(ctx->snesV,residualV,VF_VResidual,ctx);CHKERRQ(ierr);
   ierr = SNESSetJacobian(ctx->snesV,JacV,JacV,VF_VIJacobian,ctx);CHKERRQ(ierr);
@@ -1282,19 +1264,9 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   /*
    Close the xdmf multi-step file
    */
-#if defined(PETSC_HAVE_HDF5)
-  if (ctx->fileformat == FILEFORMAT_HDF5) {
-    ierr = XDMFuniformgridFinalize(ctx->XDMFviewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&ctx->XDMFviewer);CHKERRQ(ierr);
-  }
-#endif
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx->prefix);CHKERRQ(ierr);
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&optionsviewer);CHKERRQ(ierr);
   ierr = PetscLogView(optionsviewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&optionsviewer);CHKERRQ(ierr);
-  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.py",ctx->prefix);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&optionsviewer);CHKERRQ(ierr);
-  ierr = PetscLogViewPython(optionsviewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&optionsviewer);CHKERRQ(ierr);
   ierr = PetscOptionsAllUsed(&nopts);CHKERRQ(ierr);
   if (nopts > 0) {
@@ -1304,80 +1276,6 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   PetscFunctionReturn(0);
 }
 
-
-#undef __FUNCT__
-#define __FUNCT__ "FieldsH5Write"
-/*
- FieldsH5Write: Export all fields in HDF5 format using PETSc HDF5 viewer. Also write an XDMF container
-
- (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
- */
-extern PetscErrorCode FieldsH5Write(VFCtx *ctx,VFFields *fields)
-{
-#if defined(PETSC_HAVE_HDF5)
-  PetscErrorCode ierr;
-  char           H5filename[FILENAME_MAX],H5coordfilename[FILENAME_MAX],XDMFfilename[FILENAME_MAX];
-  PetscViewer    H5Viewer,XDMFViewer;
-  PetscInt       nx, ny, nz;
-
-  PetscFunctionBegin;
-  /*
-   Write the hdf5 files
-  */
-  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscSNPrintf(H5filename,FILENAME_MAX,"%s.%.5i.h5",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
-  ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,H5filename,FILE_MODE_WRITE,&H5Viewer);
-  ierr = VecView(fields->U,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->Uc,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->Uv,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->Ud,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->Ue,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->velocity,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->fracvelocity,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->vfperm,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->V,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->pmult,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->theta,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->pressure,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(ctx->RegFracWellFlowRate,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->VolCrackOpening,H5Viewer);CHKERRQ(ierr);
-  ierr = VecView(fields->VolLeakOffRate,H5Viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&H5Viewer);CHKERRQ(ierr);
-
-  /*
-   Write the XDMF Description
-   */
-  ierr = PetscSNPrintf(XDMFfilename,FILENAME_MAX,"%s.%.5i.xmf",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
-  ierr = PetscSNPrintf(H5coordfilename,FILENAME_MAX,"%s.h5",ctx->prefix);CHKERRQ(ierr);
-
-  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,XDMFfilename,&XDMFViewer);CHKERRQ(ierr);
-  ierr = XDMFuniformgridInitialize(XDMFViewer,ctx->timevalue,H5filename);CHKERRQ(ierr);
-  ierr = XDMFtopologyAdd (XDMFViewer,nx,ny,nz,H5coordfilename,"Coordinates");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Displacement");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,3,"Vector","Cell",H5filename,"Cell Fracture Displacement");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,3,"Vector","Cell",H5filename,"View Displacement");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","node",H5filename,"Displacement Diff");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","node",H5filename,"Displacement Diff1");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"Fluid Velocity");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,3,"Vector","Node",H5filename,"FracFluid Velocity");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,6,"Tensor6","Cell",H5filename,"Permeability_V-field");CHKERRQ(ierr);       /*Cell*/
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Fracture");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx-1,ny-1,nz-1,1,"Scalar","Cell",H5filename,"PermeabilityMultiplier");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Temperature");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Pressure");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Regularized Fracture Well Flow Rate");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Volumetric Crack Opening");CHKERRQ(ierr);
-  ierr = XDMFattributeAdd(XDMFViewer,nx,ny,nz,1,"Scalar","Node",H5filename,"Volumetric Leakoff Rate");CHKERRQ(ierr);
-  ierr = XDMFuniformgridFinalize(XDMFViewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&XDMFViewer);CHKERRQ(ierr);
-  /*
-   Add an entry in the multistep XDMF file
-   */
-  ierr = XDMFmultistepAddstep(ctx->XDMFviewer,XDMFfilename);CHKERRQ(ierr);
-#endif
-  PetscFunctionReturn(0);
-}
 
 #undef __FUNCT__
 #define __FUNCT__ "FieldsBinaryWrite"

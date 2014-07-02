@@ -131,20 +131,19 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 
 #undef __FUNCT__
 #define __FUNCT__ "FormSNESIJacobian"
-extern PetscErrorCode FormSNESIJacobian(SNES snes,Vec VelnPress,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user)
+extern PetscErrorCode FormSNESIJacobian(SNES snes,Vec VelnPress,Mat Jac,Mat Jacpre,void *user)
 {
 	PetscErrorCode    ierr;
 	VFCtx             *ctx=(VFCtx*)user;
 	
 	PetscFunctionBegin;
-	*str = DIFFERENT_NONZERO_PATTERN;
-	ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
-	ierr = MatCopy(ctx->KVelP,*Jac,*str);
-	ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	if (*Jac != *Jacpre) {
-		ierr = MatAssemblyBegin(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-		ierr = MatAssemblyEnd(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatCopy(ctx->KVelP,Jacpre,DIFFERENT_NONZERO_PATTERN);
+	ierr = MatAssemblyBegin(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	if (Jac != Jacpre) {
+    ierr = MatCopy(Jacpre,Jac,DIFFERENT_NONZERO_PATTERN);
+		ierr = MatAssemblyBegin(Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+		ierr = MatAssemblyEnd(Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	}
 	PetscFunctionReturn(0);
 }

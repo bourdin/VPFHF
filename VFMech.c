@@ -13,8 +13,8 @@
 
 extern PetscErrorCode BCUInit(VFBC *BC,VFPreset preset)
 {
-  PetscErrorCode  ierr;
   PetscInt        c,loc;
+  PetscErrorCode  ierr;
   
   PetscFunctionBegin;
   for (loc = 0; loc < 6; loc++)
@@ -65,7 +65,7 @@ extern PetscErrorCode BCUInit(VFBC *BC,VFPreset preset)
       BC[2].face[Z1]       = ZERO;
       break;
     case VFPRESET_NONE:
-      ierr = VFBCSetFromOptions(BC,"U",3);
+      ierr = VFBCSetFromOptions(BC,"U",3);CHKERRQ(ierr);
       break;
     default:
       SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_USER,"ERROR: [%s] unknown preset %i.\n",__FUNCT__,preset);
@@ -181,10 +181,10 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
   alpha    = matprop->alpha;
   coefbeta = matprop->beta / (3.*lambda + 2.*mu);
   
-  ierr = PetscMalloc3(e->ng,PetscReal,&sigma11_elem,e->ng,PetscReal,&sigma22_elem,e->ng,PetscReal,&sigma33_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&sigma12_elem,e->ng,PetscReal,&sigma23_elem,e->ng,PetscReal,&sigma13_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&epsilon11_elem,e->ng,PetscReal,&epsilon22_elem,e->ng,PetscReal,&epsilon33_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&epsilon12_elem,e->ng,PetscReal,&epsilon23_elem,e->ng,PetscReal,&epsilon13_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&sigma11_elem,e->ng,&sigma22_elem,e->ng,&sigma33_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&sigma12_elem,e->ng,&sigma23_elem,e->ng,&sigma13_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&epsilon11_elem,e->ng,&epsilon22_elem,e->ng,&epsilon33_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&epsilon12_elem,e->ng,&epsilon23_elem,e->ng,&epsilon13_elem);CHKERRQ(ierr);
   
   for (g = 0; g < e->ng; g++) {
     epsilon11_elem[g]             = 0;
@@ -270,10 +270,10 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal 
   kappa    = lambda + 2.* mu / 3.;
   coefbeta = matprop->beta / (3.*lambda + 2.*mu);
   
-  ierr = PetscMalloc3(e->ng,PetscReal,&sigma11_elem,e->ng,PetscReal,&sigma22_elem,e->ng,PetscReal,&sigma33_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&sigma12_elem,e->ng,PetscReal,&sigma23_elem,e->ng,PetscReal,&sigma13_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&epsilon11_elem,e->ng,PetscReal,&epsilon22_elem,e->ng,PetscReal,&epsilon33_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&epsilon12_elem,e->ng,PetscReal,&epsilon23_elem,e->ng,PetscReal,&epsilon13_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&sigma11_elem,e->ng,&sigma22_elem,e->ng,&sigma33_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&sigma12_elem,e->ng,&sigma23_elem,e->ng,&sigma13_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&epsilon11_elem,e->ng,&epsilon22_elem,e->ng,&epsilon33_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&epsilon12_elem,e->ng,&epsilon23_elem,e->ng,&epsilon13_elem);CHKERRQ(ierr);
   
   ierr = PetscMalloc(e->ng * sizeof(PetscReal),&ElasticEnergyDensity_local);CHKERRQ(ierr);
   for (g = 0; g < e->ng; g++) {
@@ -368,11 +368,11 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_loc
   kappa    = lambda + 2.* mu / 3.;
   coefbeta = matprop->beta / (3.*lambda + 2.*mu);
   
-  ierr = PetscMalloc3(e->ng,PetscReal,&sigma11_elem,e->ng,PetscReal,&sigma22_elem,e->ng,PetscReal,&sigma33_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&sigma12_elem,e->ng,PetscReal,&sigma23_elem,e->ng,PetscReal,&sigma13_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&epsilon11_elem,e->ng,PetscReal,&epsilon22_elem,e->ng,PetscReal,&epsilon33_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&epsilon12_elem,e->ng,PetscReal,&epsilon23_elem,e->ng,PetscReal,&epsilon13_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&e0_11_elem,e->ng,PetscReal,&e0_22_elem,e->ng,PetscReal,&e0_33_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&sigma11_elem,e->ng,&sigma22_elem,e->ng,&sigma33_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&sigma12_elem,e->ng,&sigma23_elem,e->ng,&sigma13_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&epsilon11_elem,e->ng,&epsilon22_elem,e->ng,&epsilon33_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&epsilon12_elem,e->ng,&epsilon23_elem,e->ng,&epsilon13_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&e0_11_elem,e->ng,&e0_22_elem,e->ng,&e0_33_elem);CHKERRQ(ierr);
   
   ierr = PetscMalloc(e->ng * sizeof(PetscReal),&ElasticEnergyDensity_local);CHKERRQ(ierr);
   for (g = 0; g < e->ng; g++) {
@@ -623,8 +623,8 @@ extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
-  ierr   = PetscMalloc2(e->ng,PetscReal,&s_elem,
-                        e->ng,PetscReal,&tr_epsilon);CHKERRQ(ierr);
+  ierr   = PetscMalloc2(e->ng,&s_elem,
+                        e->ng,&tr_epsilon);CHKERRQ(ierr);
   kappa  = matprop->lambda + 2. * matprop->mu / 3.;
   
   for (g = 0; g < e->ng; g++) {
@@ -713,9 +713,9 @@ extern PetscErrorCode VF_ResidualUThermoPoro3D_local(PetscReal *residual_local,P
   coefalpha = (3.* matprop->lambda + 2. * matprop->mu) * matprop->alpha;
   beta      = matprop->beta;
   
-  ierr = PetscMalloc3(e->ng,PetscReal,&theta_elem,
-                      e->ng,PetscReal,&pressure_elem,
-                      e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&theta_elem,
+                      e->ng,&pressure_elem,
+                      e->ng,&v_elem);CHKERRQ(ierr);
   /*
    Initialize pressure_Elem, theta_Elem and v_elem
    */
@@ -784,7 +784,7 @@ extern PetscErrorCode VF_ResidualUThermoPoroShearOnly3D_local(PetscReal *residua
   PetscFunctionBegin;
   coefalpha = (3.* matprop->lambda + 2. * matprop->mu) * matprop->alpha;
   beta      = matprop->beta;
-  ierr      = PetscMalloc2(e->ng,PetscReal,&theta_elem,e->ng,PetscReal,&pressure_elem);CHKERRQ(ierr);
+  ierr      = PetscMalloc2(e->ng,&theta_elem,e->ng,&pressure_elem);CHKERRQ(ierr);
   /*
    Initialize theta_Elem and v_elem
    */
@@ -850,10 +850,10 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
   PetscFunctionBegin;
   coefalpha = (3.* matprop->lambda + 2. * matprop->mu) * matprop->alpha;
   beta      = matprop->beta;
-  ierr      = PetscMalloc4(e->ng,PetscReal,&theta_elem,
-                           e->ng,PetscReal,&pressure_elem,
-                           e->ng,PetscReal,&v_elem,
-                           e->ng,PetscReal,&tr_epsilon);CHKERRQ(ierr);
+  ierr      = PetscMalloc4(e->ng,&theta_elem,
+                           e->ng,&pressure_elem,
+                           e->ng,&v_elem,
+                           e->ng,&tr_epsilon);CHKERRQ(ierr);
   /*
    Initialize theta_Elem and v_elem
    */
@@ -925,10 +925,10 @@ extern PetscErrorCode VF_ResidualUCrackPressure3D_local(PetscReal *residual_loca
   PetscReal      *pressure_elem,*gradv_elem[3];
   
   PetscFunctionBegin;
-  ierr = PetscMalloc4(e->ng,PetscReal,&pressure_elem,
-                      e->ng,PetscReal,&gradv_elem[0],
-                      e->ng,PetscReal,&gradv_elem[1],
-                      e->ng,PetscReal,&gradv_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc4(e->ng,&pressure_elem,
+                      e->ng,&gradv_elem[0],
+                      e->ng,&gradv_elem[1],
+                      e->ng,&gradv_elem[2]);CHKERRQ(ierr);
   
   /*
    Compute the projection of the fields in the local base functions basis
@@ -992,7 +992,7 @@ extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_loc
   /*
    Initialize f_Elem
    */
-  ierr = PetscMalloc3(e->ng,PetscReal,&f_elem[0],e->ng,PetscReal,&f_elem[1],e->ng,PetscReal,&f_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&f_elem[0],e->ng,&f_elem[1],e->ng,&f_elem[2]);CHKERRQ(ierr);
   for (c = 0; c < e->dim; c++) {
     for (g = 0; g < e->ng; g++) {
       f_elem[c][g] = 0;
@@ -1120,10 +1120,10 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
-  ierr     = PetscMalloc3(e->ng,PetscReal,&sigma11_elem,e->ng,PetscReal,&sigma22_elem,e->ng,PetscReal,&sigma33_elem);CHKERRQ(ierr);
-  ierr     = PetscMalloc3(e->ng,PetscReal,&sigma12_elem,e->ng,PetscReal,&sigma23_elem,e->ng,PetscReal,&sigma13_elem);CHKERRQ(ierr);
-  ierr     = PetscMalloc3(e->ng,PetscReal,&epsilon11_elem,e->ng,PetscReal,&epsilon22_elem,e->ng,PetscReal,&epsilon33_elem);CHKERRQ(ierr);
-  ierr     = PetscMalloc3(e->ng,PetscReal,&epsilon12_elem,e->ng,PetscReal,&epsilon23_elem,e->ng,PetscReal,&epsilon13_elem);CHKERRQ(ierr);
+  ierr     = PetscMalloc3(e->ng,&sigma11_elem,e->ng,&sigma22_elem,e->ng,&sigma33_elem);CHKERRQ(ierr);
+  ierr     = PetscMalloc3(e->ng,&sigma12_elem,e->ng,&sigma23_elem,e->ng,&sigma13_elem);CHKERRQ(ierr);
+  ierr     = PetscMalloc3(e->ng,&epsilon11_elem,e->ng,&epsilon22_elem,e->ng,&epsilon33_elem);CHKERRQ(ierr);
+  ierr     = PetscMalloc3(e->ng,&epsilon12_elem,e->ng,&epsilon23_elem,e->ng,&epsilon13_elem);CHKERRQ(ierr);
   ierr     = PetscMalloc(e->ng * sizeof(PetscReal),&v_elem);CHKERRQ(ierr);
   lambda   = matprop->lambda;
   mu       = matprop->mu;
@@ -1215,13 +1215,13 @@ extern PetscErrorCode VF_PressureWork3D_local(PetscReal *PressureWork_local,Pets
   PetscReal      *pressure_elem,*gradv_elem[3],*u_elem[3];
   
   PetscFunctionBegin;
-  ierr = PetscMalloc4(e->ng,PetscReal,&pressure_elem,
-                      e->ng,PetscReal,&gradv_elem[0],
-                      e->ng,PetscReal,&gradv_elem[1],
-                      e->ng,PetscReal,&gradv_elem[2]);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&u_elem[0],
-                      e->ng,PetscReal,&u_elem[1],
-                      e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc4(e->ng,&pressure_elem,
+                      e->ng,&gradv_elem[0],
+                      e->ng,&gradv_elem[1],
+                      e->ng,&gradv_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&u_elem[0],
+                      e->ng,&u_elem[1],
+                      e->ng,&u_elem[2]);CHKERRQ(ierr);
   
   /*
    Compute the projection of the fields in the local base functions basis
@@ -1282,8 +1282,8 @@ extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscRea
   /*
    Initialize
    */
-  ierr = PetscMalloc3(e->ng,PetscReal,&u_elem[0],e->ng,PetscReal,&u_elem[1],e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,PetscReal,&f_elem[0],e->ng,PetscReal,&f_elem[1],e->ng,PetscReal,&f_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&u_elem[0],e->ng,&u_elem[1],e->ng,&u_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&f_elem[0],e->ng,&f_elem[1],e->ng,&f_elem[2]);CHKERRQ(ierr);
   for (c = 0; c < dim; c++) {
     for (g = 0; g < e->ng; g++) {
       u_elem[c][g] = 0;
@@ -1912,8 +1912,8 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
   /*
    get local mat and RHS
    */
-  ierr = PetscMalloc2(nrow,PetscReal,&residual_local,
-                      nrow * nrow,PetscReal,&bilinearForm_local);CHKERRQ(ierr);
+  ierr = PetscMalloc2(nrow,&residual_local,
+                      nrow * nrow,&bilinearForm_local);CHKERRQ(ierr);
   ierr = DMGetLocalVector(ctx->daVect,&residual_localVec);CHKERRQ(ierr);
   ierr = VecSet(residual_localVec,0.);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx->daVect,residual_localVec,&residual_array);CHKERRQ(ierr);
@@ -2266,7 +2266,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_UIJacobian"
-extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure *str,void *user)
+extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat K,Mat KPC,void *user)
 {
   VFCtx          *ctx=(VFCtx*)user;
   
@@ -2291,7 +2291,7 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   
-  ierr = MatZeroEntries(*K);CHKERRQ(ierr);
+  ierr = MatZeroEntries(K);CHKERRQ(ierr);
   /*
    Get coordinates
    */
@@ -2313,14 +2313,14 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
     ierr = DMGlobalToLocalBegin(ctx->daVect,U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
     ierr = DMGlobalToLocalEnd(ctx->daVect,U,INSERT_VALUES,U_localVec);CHKERRQ(ierr);
     ierr = DMDAVecGetArrayDOF(ctx->daVect,U_localVec,&u_array);CHKERRQ(ierr);
-    ierr = MatZeroEntries(*KPC);CHKERRQ(ierr);
+    ierr = MatZeroEntries(KPC);CHKERRQ(ierr);
   }
   /*
    get local mat
    */
-  ierr = PetscMalloc3(nrow * nrow,PetscReal,&bilinearForm_local,
-                      nrow * nrow,PetscReal,&bilinearFormPC_local,
-                      nrow,MatStencil,&row);CHKERRQ(ierr);
+  ierr = PetscMalloc3(nrow * nrow,&bilinearForm_local,
+                      nrow * nrow,&bilinearFormPC_local,
+                      nrow,&row);CHKERRQ(ierr);
 
   /*
    loop through all elements (ei,ej)
@@ -2348,11 +2348,13 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                                          ek,ej,ei,&ctx->e3D);
-            if (ctx->vfprop.eta != ctx->vfprop.PCeta) {
-              ierr = PetscMemcpy(&PCvfprop,&ctx->vfprop,sizeof(VFProp));CHKERRQ(ierr);
-              PCvfprop.eta = PCvfprop.PCeta;
-              ierr = PetscMemcpy(&PCmatprop,&ctx->matprop[ctx->layer[ek]],sizeof(VFProp));CHKERRQ(ierr);
-              ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&PCmatprop,&PCvfprop,ek,ej,ei,&ctx->e3D);
+            if (KPC != K) {
+              if (ctx->vfprop.eta != ctx->vfprop.PCeta) {
+                ierr = PetscMemcpy(&PCvfprop,&ctx->vfprop,sizeof(VFProp));CHKERRQ(ierr);
+                PCvfprop.eta = PCvfprop.PCeta;
+                ierr = PetscMemcpy(&PCmatprop,&ctx->matprop[ctx->layer[ek]],sizeof(VFProp));CHKERRQ(ierr);
+                ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&PCmatprop,&PCvfprop,ek,ej,ei,&ctx->e3D);
+              }
             }
             break;
         }
@@ -2366,28 +2368,26 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
             }
           }
         }
-        ierr = MatSetValuesStencil(*K,nrow,row,nrow,row,bilinearForm_local,ADD_VALUES);CHKERRQ(ierr);
-        if (ctx->unilateral == UNILATERAL_NOCOMPRESSION && ctx->vfprop.eta != ctx->vfprop.PCeta) {
-            ierr = MatSetValuesStencil(*KPC,nrow,row,nrow,row,bilinearFormPC_local,ADD_VALUES);CHKERRQ(ierr);          
-        } else {
-          ierr = MatSetValuesStencil(*KPC,nrow,row,nrow,row,bilinearForm_local,ADD_VALUES);CHKERRQ(ierr);
-        }         
+        if (KPC != K) {
+          ierr = MatSetValuesStencil(KPC,nrow,row,nrow,row,bilinearFormPC_local,ADD_VALUES);CHKERRQ(ierr); 
+        }
+        ierr = MatSetValuesStencil(K,nrow,row,nrow,row,bilinearForm_local,ADD_VALUES);CHKERRQ(ierr); 
       }
     }
   }
-  ierr = MatAssemblyBegin(*K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(*K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  
-  ierr = MatApplyDirichletBC(*K,ctx->daVect,&ctx->bcU[0]);CHKERRQ(ierr);
-  ierr = MatAssemblyBegin(*K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(*K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);  
+  ierr = MatApplyDirichletBC(K,&ctx->bcU[0]);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
-  ierr = MatAssemblyBegin(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-
-  ierr = MatApplyDirichletBC(*KPC,ctx->daVect,&ctx->bcU[0]);CHKERRQ(ierr);
-  ierr = MatAssemblyBegin(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(*KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  if (KPC != K) {
+    ierr = MatAssemblyBegin(KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);  
+    ierr = MatApplyDirichletBC(KPC,&ctx->bcU[0]);CHKERRQ(ierr);
+    ierr = MatAssemblyBegin(KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  }
 
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx->daScal,V_localVec,&v_array);CHKERRQ(ierr);
@@ -2396,10 +2396,7 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *K,Mat *KPC,MatStructure
     ierr = DMDAVecRestoreArrayDOF(ctx->daVect,U_localVec,&u_array);CHKERRQ(ierr);
     ierr = DMRestoreLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
   }
-
   ierr = PetscFree3(bilinearForm_local,bilinearFormPC_local,row);CHKERRQ(ierr);
-
-  *str = SAME_NONZERO_PATTERN;
   PetscFunctionReturn(0);
 }
 
@@ -2418,7 +2415,7 @@ extern PetscErrorCode VF_USNESMonitor(SNES snes,PetscInt U_its,PetscReal fnorm,v
   ierr = VecMax(U,PETSC_NULL,&vmax);CHKERRQ(ierr);
   ierr = VecMin(U,PETSC_NULL,&vmin);CHKERRQ(ierr);
   ierr = PetscObjectGetComm((PetscObject)snes,&comm);CHKERRQ(ierr);
-  ierr = PetscPrintf(comm,"U_snes_iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",U_its,norm,vmax,vmin);CHKERRQ(ierr);
+  ierr = PetscPrintf(comm,"U_snes_iter_step %d :solution norm = %g, max sol. value  = %g, min sol. value = %g\n",U_its,norm,vmax,vmin);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -2605,8 +2602,8 @@ extern PetscErrorCode VF_BilinearFormVCouplingShearOnly3D_local(PetscReal *Mat_l
   PetscReal      *ElasticEnergyDensityS_local,*ElasticEnergyDensityD_local;
   
   PetscFunctionBegin;
-  ierr = PetscMalloc2(e->ng,PetscReal,&ElasticEnergyDensityS_local,
-                      e->ng,PetscReal,&ElasticEnergyDensityD_local);CHKERRQ(ierr);
+  ierr = PetscMalloc2(e->ng,&ElasticEnergyDensityS_local,
+                      e->ng,&ElasticEnergyDensityD_local);CHKERRQ(ierr);
   ierr = ElasticEnergyDensitySphericalDeviatoric3D_local(ElasticEnergyDensityS_local,ElasticEnergyDensityD_local,
                                                          U_array,theta_array,thetaRef_array,pressure_array,
                                                          matprop,ek,ej,ei,e);CHKERRQ(ierr);
@@ -2644,8 +2641,8 @@ extern PetscErrorCode VF_BilinearFormVCouplingNoCompression3D_local(PetscReal *M
   PetscReal      *ElasticEnergyDensityS_local,*ElasticEnergyDensityD_local;
   
   PetscFunctionBegin;
-  ierr = PetscMalloc2(e->ng,PetscReal,&ElasticEnergyDensityS_local,
-                      e->ng,PetscReal,&ElasticEnergyDensityD_local);CHKERRQ(ierr);
+  ierr = PetscMalloc2(e->ng,&ElasticEnergyDensityS_local,
+                      e->ng,&ElasticEnergyDensityD_local);CHKERRQ(ierr);
   ierr = ElasticEnergyDensitySphericalDeviatoricNoCompression3D_local(ElasticEnergyDensityS_local,ElasticEnergyDensityD_local,
                                                          U_array,theta_array,thetaRef_array,pressure_array,
                                                          matprop,ek,ej,ei,e);CHKERRQ(ierr);
@@ -2683,10 +2680,10 @@ extern PetscErrorCode VF_ResidualVCrackPressure3D_local(PetscReal *residual_loca
   PetscReal      *pressure_elem,*u_elem[3];
   
   PetscFunctionBegin;
-  ierr = PetscMalloc4(e->ng,PetscReal,&pressure_elem,
-                      e->ng,PetscReal,&u_elem[0],
-                      e->ng,PetscReal,&u_elem[1],
-                      e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc4(e->ng,&pressure_elem,
+                      e->ng,&u_elem[0],
+                      e->ng,&u_elem[1],
+                      e->ng,&u_elem[2]);CHKERRQ(ierr);
   
   /*
    Compute the projection of the fields in the local base functions basis
@@ -2784,7 +2781,7 @@ extern PetscErrorCode VF_AT2SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local
   PetscReal      coef = Gc / vfprop->atCv * .25;
   
   PetscFunctionBegin;
-  ierr = PetscMalloc4(e->ng,PetscReal,&v_elem,e->ng,PetscReal,&gradv_elem[0],e->ng,PetscReal,&gradv_elem[1],e->ng,PetscReal,&gradv_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc4(e->ng,&v_elem,e->ng,&gradv_elem[0],e->ng,&gradv_elem[1],e->ng,&gradv_elem[2]);CHKERRQ(ierr);
   
   for (g = 0; g < e->ng; g++) {
     v_elem[g]        = 0.;
@@ -2824,7 +2821,7 @@ extern PetscErrorCode VF_AT1SurfaceEnergy3D_local(PetscReal *SurfaceEnergy_local
   PetscReal      coef = Gc / vfprop->atCv * .25;
   
   PetscFunctionBegin;
-  ierr = PetscMalloc4(e->ng,PetscReal,&v_elem,e->ng,PetscReal,&gradv_elem[0],e->ng,PetscReal,&gradv_elem[1],e->ng,PetscReal,&gradv_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc4(e->ng,&v_elem,e->ng,&gradv_elem[0],e->ng,&gradv_elem[1],e->ng,&gradv_elem[2]);CHKERRQ(ierr);
   
   for (g = 0; g < e->ng; g++) {
     v_elem[g]        = 0.;
@@ -3158,8 +3155,8 @@ extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
   /*
    get local mat and residual
    */
-  ierr = PetscMalloc2(nrow,PetscReal,&residual_local,
-                      nrow * nrow,PetscReal,&K_local);CHKERRQ(ierr);
+  ierr = PetscMalloc2(nrow,&residual_local,
+                      nrow * nrow,&K_local);CHKERRQ(ierr);
   ierr = DMGetLocalVector(ctx->daScal,&residual_localVec);CHKERRQ(ierr);
   ierr = VecSet(residual_localVec,0.);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,residual_localVec,&residual_array);CHKERRQ(ierr);
@@ -3281,7 +3278,7 @@ extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_VIJacobian"
-extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStructure *str,void *user)
+extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat Jac,Mat Jacpre,void *user)
 {
   PetscErrorCode ierr;
   VFCtx          *ctx=(VFCtx*)user;
@@ -3304,9 +3301,6 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
   
   PetscFunctionBegin;
   /*
-   ierr = MatCopy(ctx->KV,*Jac,*str);
-   */
-  /*
    Get global number of vertices along each coordinate axis on the ENTIRE mesh
    */
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -3318,7 +3312,7 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
    */
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   
-  ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
+  ierr = MatZeroEntries(Jacpre);CHKERRQ(ierr);
   /*
    Get coordinates
    */
@@ -3357,8 +3351,8 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
   /*
    get local mat and RHS
    */
-  ierr = PetscMalloc2(nrow * nrow,PetscReal,&Jac_local,
-                      nrow,MatStencil,&row);CHKERRQ(ierr);
+  ierr = PetscMalloc2(nrow * nrow,&Jac_local,
+                      nrow,&row);CHKERRQ(ierr);
   
   /*
    loop through all elements (ei,ej)
@@ -3418,7 +3412,7 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
         /*
          Add local stiffness matrix to global stiffness natrix
          */
-        ierr = MatSetValuesStencil(*Jac,nrow,row,nrow,row,Jac_local,ADD_VALUES);CHKERRQ(ierr);
+        ierr = MatSetValuesStencil(Jacpre,nrow,row,nrow,row,Jac_local,ADD_VALUES);CHKERRQ(ierr);
         
         /*
          Jump to next element
@@ -3426,8 +3420,8 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
       }
     }
   }
-  ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   
   /*
    Cleanup
@@ -3447,11 +3441,12 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStruct
   
   ierr = PetscFree2(Jac_local,row);CHKERRQ(ierr);
   
-  ierr = MatApplyDirichletBCRowCol(*Jac,ctx->daScal,ctx->bcV);CHKERRQ(ierr);
+  ierr = MatApplyDirichletBCRowCol(Jacpre,ctx->bcV);CHKERRQ(ierr);
   if (ctx->vfprop.atnum == 2)
-    ierr = VF_IrrevApplyEQMat(*Jac,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
-  
-  *str = SAME_NONZERO_PATTERN;
+    ierr = VF_IrrevApplyEQMat(Jacpre,ctx->fields->VIrrev,&(ctx->vfprop),ctx);CHKERRQ(ierr);
+  if (Jac != Jacpre) {
+    ierr = MatCopy(Jacpre,Jac,DIFFERENT_NONZERO_PATTERN);CHKERRQ(ierr);
+  }
   PetscFunctionReturn(0);
 }
 
@@ -3470,7 +3465,7 @@ extern PetscErrorCode VF_VSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,voi
   ierr = VecMax(V,PETSC_NULL,&vmax);CHKERRQ(ierr);
   ierr = VecMin(V,PETSC_NULL,&vmin);CHKERRQ(ierr);
   ierr = PetscObjectGetComm((PetscObject)snes,&comm);CHKERRQ(ierr);
-  ierr = PetscPrintf(comm,"V_snes_iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",its,norm,vmax,vmin);CHKERRQ(ierr);
+  ierr = PetscPrintf(comm,"V_snes_iter_step %d :solution norm = %g, max sol. value  = %g, min sol. value = %g\n",its,norm,vmax,vmin);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

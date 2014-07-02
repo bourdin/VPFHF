@@ -171,7 +171,6 @@ typedef enum {
 
 typedef enum {
 	FILEFORMAT_BIN,
-	FILEFORMAT_HDF5,
 	FILEFORMAT_VTK
 } VFFileFormatType;
 

@@ -20,9 +20,9 @@ extern PetscErrorCode FEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	PetscFunctionBegin;
 	
   ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KP);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KPlhs);CHKERRQ(ierr);		
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->JacP);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,&ctx->KP);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,&ctx->KPlhs);CHKERRQ(ierr);		
+  ierr = DMCreateMatrix(ctx->daScal,&ctx->JacP);CHKERRQ(ierr);
   ierr = MatZeroEntries(ctx->JacP);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->KP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->KPlhs,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
@@ -118,20 +118,20 @@ extern PetscErrorCode FlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 
 #undef __FUNCT__
 #define __FUNCT__ "FormSNESIJacobian_P"
-extern PetscErrorCode FormSNESIJacobian_P(SNES snes,Vec pressure,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user)
+extern PetscErrorCode FormSNESIJacobian_P(SNES snes,Vec pressure,Mat Jac,Mat Jacpre,void *user)
 {
 	PetscErrorCode ierr;
 	VFCtx          *ctx=(VFCtx*)user;
 
 	PetscFunctionBegin;
-	*str = DIFFERENT_NONZERO_PATTERN;
-	ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
-	ierr = MatCopy(ctx->KP,*Jac,*str);
-	ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	if (*Jac != *Jacpre) {
-		ierr = MatAssemblyBegin(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-		ierr = MatAssemblyEnd(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatZeroEntries(Jacpre);CHKERRQ(ierr);
+	ierr = MatCopy(ctx->KP,Jacpre,DIFFERENT_NONZERO_PATTERN);
+	ierr = MatAssemblyBegin(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	if (Jac != Jacpre) {
+  	ierr = MatCopy(Jacpre,Jac,DIFFERENT_NONZERO_PATTERN);
+		ierr = MatAssemblyBegin(Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+		ierr = MatAssemblyEnd(Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	}	
 
 	PetscFunctionReturn(0);
@@ -189,8 +189,8 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 	ierr = DMGlobalToLocalBegin(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);	
-	ierr = PetscMalloc2(nrow*nrow,PetscReal,&K_local,nrow*nrow,PetscReal,&M_local);CHKERRQ(ierr);
-	ierr = PetscMalloc2(nrow,PetscReal,&RHS_local,nrow,MatStencil,&row);CHKERRQ(ierr);
+	ierr = PetscMalloc2(nrow*nrow,&K_local,nrow*nrow,&M_local);CHKERRQ(ierr);
+	ierr = PetscMalloc2(nrow,&RHS_local,nrow,&row);CHKERRQ(ierr);
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -200,7 +200,7 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 
 				ierr = VFFlow_FEM_MatMPAssembly3D_local(M_local,&ctx->flowprop,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
-                ierr = VFFlow_FEM_MatKPAssembly3D_local(K_local,&ctx->flowprop,perm_array,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);			
+        ierr = VFFlow_FEM_MatKPAssembly3D_local(K_local,&ctx->flowprop,perm_array,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);			
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
 						for (i = 0; i < ctx->e3D.nphix; i++,l++) {

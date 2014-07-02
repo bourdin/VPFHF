@@ -31,9 +31,9 @@ extern PetscErrorCode VF_FEMSNESHeatSolverInitialize(VFCtx *ctx, VFFields *field
 	PetscErrorCode ierr;
   PetscFunctionBegin;
 	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KT);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KTlhs);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->JacT);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,&ctx->KT);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,&ctx->KTlhs);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,&ctx->JacT);CHKERRQ(ierr);
 	ierr = MatZeroEntries(ctx->KT);CHKERRQ(ierr);
 	ierr = MatZeroEntries(ctx->KTlhs);CHKERRQ(ierr);
 	ierr = MatZeroEntries(ctx->JacT);CHKERRQ(ierr);
@@ -107,20 +107,19 @@ extern PetscErrorCode VF_HeatFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 
 #undef __FUNCT__
 #define __FUNCT__ "FormSNESHeatIJacobian"
-extern PetscErrorCode FormSNESHeatIJacobian(SNES snes,Vec T,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user)
+extern PetscErrorCode FormSNESHeatIJacobian(SNES snes,Vec T,Mat Jac,Mat Jacpre,void *user)
 {
 	PetscErrorCode  ierr;
 	VFCtx				   *ctx=(VFCtx*)user;
 	
 	PetscFunctionBegin;
-	*str = DIFFERENT_NONZERO_PATTERN;
-	ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
-	ierr = MatCopy(ctx->KT,*Jac,*str);
-	ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	if (*Jac != *Jacpre) {
-		ierr = MatAssemblyBegin(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-		ierr = MatAssemblyEnd(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatCopy(ctx->KT,Jacpre,DIFFERENT_NONZERO_PATTERN);
+	ierr = MatAssemblyBegin(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	if (Jac != Jacpre) {
+  	ierr = MatCopy(Jacpre,Jac,DIFFERENT_NONZERO_PATTERN);
+		ierr = MatAssemblyBegin(Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+		ierr = MatAssemblyEnd(Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	}	
 	PetscFunctionReturn(0);
 }
@@ -171,7 +170,6 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
 	MatStencil     *row;
 	FACE           face;
-	MatStructure   flg;
 	PetscReal      *KM_local,*KC_local,*KD_local,*K1_local,*K2_local,*KN_local,*KS_local;
 	Vec            diffsvty_local;
 	PetscReal      ****diffsvty_array;
@@ -191,7 +189,6 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	Vec            v_local;
 	
 	PetscFunctionBegin;
-	flg = SAME_NONZERO_PATTERN;
 	timestepsize = ctx->flowprop.timestepsize;	
 	theta = ctx->flowprop.theta;
 	rho_liq_array = ctx->flowprop.rho;
@@ -254,16 +251,16 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-	ierr = PetscMalloc5(nrow*nrow,PetscReal,&KM_local,
-						nrow*nrow,PetscReal,&KC_local,
-						nrow*nrow,PetscReal,&KD_local,
-						nrow*nrow,PetscReal,&K1_local,
-						nrow*nrow,PetscReal,&K2_local);CHKERRQ(ierr);
-	ierr = PetscMalloc5(nrow*nrow,PetscReal,&KN_local,
-						nrow*nrow,PetscReal,&KS_local,
-						nrow,PetscReal,&RHS_local,
-						nrow,PetscReal,&RHS1_local,
-						nrow,MatStencil,&row);CHKERRQ(ierr);	
+	ierr = PetscMalloc5(nrow*nrow,&KM_local,
+						nrow*nrow,&KC_local,
+						nrow*nrow,&KD_local,
+						nrow*nrow,&K1_local,
+						nrow*nrow,&K2_local);CHKERRQ(ierr);
+	ierr = PetscMalloc5(nrow*nrow,&KN_local,
+						nrow*nrow,&KS_local,
+						nrow,&RHS_local,
+						nrow,&RHS1_local,
+						nrow,&row);CHKERRQ(ierr);	
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -483,7 +480,7 @@ extern PetscErrorCode VecApplyFluxBC(PetscReal *RHS_local,PetscReal ****flux_arr
 	PetscReal      *flux_elem,*v_elem;
 	
 	PetscFunctionBegin;
-  ierr = PetscMalloc2(e->ng,PetscReal,&flux_elem,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc2(e->ng,&flux_elem,e->ng,&v_elem);CHKERRQ(ierr);
 	for (g = 0; g < e->ng; g++) {
     v_elem[g] = 0;
     flux_elem[g] = 0;
@@ -707,8 +704,8 @@ extern PetscErrorCode VF_HeatMatN_local(PetscReal *KN_ele,VFCartFEElement3D *e,P
 	PetscReal		*v_elem;
 
 	PetscFunctionBegin;
-	ierr = PetscMalloc3(e->ng,PetscReal,&velx_loc,e->ng,PetscReal,&vely_loc,e->ng,PetscReal,&velz_loc);CHKERRQ(ierr);
-	ierr = PetscMalloc4(e->ng,PetscReal,&dvelx_dx_loc,e->ng,PetscReal,&dvely_dy_loc,e->ng,PetscReal,&dvelz_dz_loc,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
+	ierr = PetscMalloc3(e->ng,&velx_loc,e->ng,&vely_loc,e->ng,&velz_loc);CHKERRQ(ierr);
+	ierr = PetscMalloc4(e->ng,&dvelx_dx_loc,e->ng,&dvely_dy_loc,e->ng,&dvelz_dz_loc,e->ng,&v_elem);CHKERRQ(ierr);
 	for (eg = 0; eg < e->ng; eg++){
 		velx_loc[eg] = 0.;
 		vely_loc[eg] = 0.;
@@ -776,7 +773,7 @@ extern PetscErrorCode VF_HeatMatC_local(PetscReal *KC_ele,VFCartFEElement3D *e,P
 	PetscReal		*v_elem;
   
 	PetscFunctionBegin;
-	ierr = PetscMalloc4(e->ng,PetscReal,&velx_loc,e->ng,PetscReal,&vely_loc,e->ng,PetscReal,&velz_loc,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
+	ierr = PetscMalloc4(e->ng,&velx_loc,e->ng,&vely_loc,e->ng,&velz_loc,e->ng,&v_elem);CHKERRQ(ierr);
 	for (eg = 0; eg < e->ng; eg++){
 		velx_loc[eg] = 0.;
 		vely_loc[eg] = 0.;
@@ -839,8 +836,8 @@ extern PetscErrorCode VecApplyHeatSourceTerms(PetscReal *K1_local,PetscReal *K2_
 	PetscReal		*v_elem;
 	
 	PetscFunctionBegin;
-	ierr = PetscMalloc4(e->ng,PetscReal,&velx_loc,e->ng,PetscReal,&vely_loc,e->ng,PetscReal,&velz_loc,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
-	ierr = PetscMalloc4(e->ng,PetscReal,&loc_source,e->ng,PetscReal,&dsource_dx_loc,e->ng,PetscReal,&dsource_dy_loc,e->ng,PetscReal,&dsource_dz_loc);CHKERRQ(ierr);
+	ierr = PetscMalloc4(e->ng,&velx_loc,e->ng,&vely_loc,e->ng,&velz_loc,e->ng,&v_elem);CHKERRQ(ierr);
+	ierr = PetscMalloc4(e->ng,&loc_source,e->ng,&dsource_dx_loc,e->ng,&dsource_dy_loc,e->ng,&dsource_dz_loc);CHKERRQ(ierr);
 	for (eg = 0; eg < e->ng; eg++) {
 		loc_source[eg] = 0.;
 		dsource_dx_loc[eg] = 0.;

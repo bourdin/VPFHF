@@ -282,14 +282,12 @@ extern PetscErrorCode VecSetFromBC(Vec BCVec,VFBC *BC)
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
   PetscInt       i,j,k,c;
-  DM             da;
   PetscReal  ****BC_array,BCValue;
   PetscInt       dof;
+  DM             da;
   
   PetscFunctionBegin;
-  ierr = PetscObjectQuery((PetscObject) BCVec,"DM",(PetscObject *) &da); CHKERRQ(ierr);
-  if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
-  
+  ierr = VecGetDM(BCVec,&da);CHKERRQ(ierr);
   ierr = DMDAGetInfo(da,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
                     &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -496,15 +494,13 @@ extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,VFBC *BC)
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
   PetscInt       i,j,k,c;
-  DM             da;
   PetscReal  ****RHS_array;
   PetscReal  ****BCU_array;
   PetscInt       dim,dof;
+  DM             da;
   
   PetscFunctionBegin;
-  ierr = PetscObjectQuery((PetscObject) RHS,"DM",(PetscObject *) &da); CHKERRQ(ierr);
-    if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
-  
+  ierr = VecGetDM(RHS,&da);CHKERRQ(ierr);
   ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
                     &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -758,9 +754,7 @@ extern PetscErrorCode ResidualApplyDirichletBC(Vec residual,Vec U,Vec BCU,VFBC *
   PetscInt       dim,dof;
   
   PetscFunctionBegin;
-  ierr = PetscObjectQuery((PetscObject) residual,"DM",(PetscObject *) &da); CHKERRQ(ierr);
-    if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
-  
+  ierr = VecGetDM(residual,&da);CHKERRQ(ierr);
   ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
                     &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -1008,7 +1002,7 @@ extern PetscErrorCode ResidualApplyDirichletBC(Vec residual,Vec U,Vec BCU,VFBC *
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,VFBC *BC)
+extern PetscErrorCode MatApplyDirichletBC(Mat K,VFBC *BC)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -1019,16 +1013,10 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,VFBC *BC)
   PetscReal      one=1.;
   PetscInt       numBC=0,l=0;
   PetscInt       dim,dof;
+  DM             da;
 
   PetscFunctionBegin;
-  
-  /*
-    This is only implemented in petsc-dev (as of petsc-3.1 days)
-  */
-  /*
-    ierr = PetscObjectQuery((PetscObject) K,"DM",(PetscObject *) &da); CHKERRQ(ierr);
-    if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
-  */
+  ierr = MatGetDM(K,&da);CHKERRQ(ierr);
   ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
                     &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -1172,7 +1160,7 @@ extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,VFBC *BC)
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,VFBC *BC)
+extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,VFBC *BC)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -1183,16 +1171,10 @@ extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,VFBC *BC)
   PetscReal      one=1.;
   PetscInt       numBC=0,l=0;
   PetscInt       dim,dof;
+  DM             da;
 
   PetscFunctionBegin;
-  
-  /*
-    This is only implemented in petsc-dev (as of petsc-3.1 days)
-  */
-  /*
-    ierr = PetscObjectQuery((PetscObject) K,"DM",(PetscObject *) &da); CHKERRQ(ierr);
-    if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
-  */
+  ierr = MatGetDM(K,&da);CHKERRQ(ierr);
   ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
                     &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -1326,31 +1308,6 @@ extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,VFBC *BC)
   }
   ierr = MatZeroRowsColumnsStencil(K,numBC,row,one,NULL,NULL);CHKERRQ(ierr);
   ierr = PetscFree(row);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "DAReadCoordinatesHDF5"
-/*
-  DAReadCoordinatesHDF5
-
-  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
-*/
-extern PetscErrorCode DAReadCoordinatesHDF5(DM da,const char filename[])
-{
-#ifdef PETSC_HAVE_HDF5
-  PetscErrorCode ierr;
-  Vec            Coords;
-  PetscViewer    HDF5Viewer;
-  
-  PetscFunctionBegin;
-  ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_READ,&HDF5Viewer);
-  ierr = DMGetGlobalVector(da,&Coords);CHKERRQ(ierr);
-  ierr = VecLoad(Coords,HDF5Viewer);CHKERRQ(ierr);
-  ierr = DMDASetCoordinates(da,Coords);CHKERRQ(ierr);
-  ierr = DMRestoreGlobalVector(da,&Coords);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&HDF5Viewer);CHKERRQ(ierr);
-#endif
   PetscFunctionReturn(0);
 }
 
@@ -1542,8 +1499,7 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,VFBC *BC,PetscReal
   PetscInt       dim,dof;
   
   PetscFunctionBegin;
-  ierr = PetscObjectQuery((PetscObject) RHS,"DM",(PetscObject *) &da); CHKERRQ(ierr);
-    if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
+  ierr = VecGetDM(RHS,&da);CHKERRQ(ierr);
   
   ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
                     &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);

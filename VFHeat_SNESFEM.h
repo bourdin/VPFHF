@@ -10,7 +10,7 @@
 extern PetscErrorCode VF_FEMSNESHeatSolverInitialize(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode VF_FEMSNESHeatSolverFinalize(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode VF_HeatFEMSNESSolve(VFCtx *ctx,VFFields *fields);
-extern PetscErrorCode FormSNESHeatIJacobian(SNES snes,Vec T,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user);
+extern PetscErrorCode FormSNESHeatIJacobian(SNES snes,Vec T,Mat Jac,Mat Jacpre,void *user);
 extern PetscErrorCode FormSNESHeatIFunction(SNES snes,Vec T,Vec Func,void *user);
 extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx, VFFields *field);
 extern PetscErrorCode VecApplyFluxBC(PetscReal *RHS_local,PetscReal ****flux_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,VFCartFEElement2D *e,PetscReal ***v_array);
