@@ -96,24 +96,24 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 	ierr = ResetSourceTerms(ctx->Source,ctx->flowprop);
 	ierr = ResetBoundaryTerms(ctx,fields);CHKERRQ(ierr);
   
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KP);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,&ctx->KP);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->KP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = MatZeroEntries(ctx->KP);CHKERRQ(ierr);
 
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KPlhs);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,&ctx->KPlhs);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->KPlhs,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = MatZeroEntries(ctx->KPlhs);CHKERRQ(ierr);
 
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->JacP);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,&ctx->JacP);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->JacP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = MatZeroEntries(ctx->JacP);CHKERRQ(ierr);  
   
   ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KVelP);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daFlow,&ctx->KVelP);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->KVelP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = MatZeroEntries(ctx->KVelP);CHKERRQ(ierr);
 
-  ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->KVelPlhs);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daFlow,&ctx->KVelPlhs);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->KVelPlhs,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = MatZeroEntries(ctx->KVelPlhs);CHKERRQ(ierr);
   
@@ -125,7 +125,7 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject)ctx->RHSVelPpre,"Previous RHS of flow solver");CHKERRQ(ierr);
   ierr = VecSet(ctx->RHSVelPpre,0.);CHKERRQ(ierr);
   
-  ierr = DMCreateMatrix(ctx->daFlow,MATAIJ,&ctx->JacVelP);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daFlow,&ctx->JacVelP);CHKERRQ(ierr);
 	ierr = MatZeroEntries(ctx->JacVelP);CHKERRQ(ierr);
 	ierr = MatSetOption(ctx->JacVelP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   
@@ -338,9 +338,7 @@ extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,VFB
   PetscInt       dim,dof;
 
   PetscFunctionBegin;
-  ierr = PetscObjectQuery((PetscObject) Func,"DM",(PetscObject*) &da);CHKERRQ(ierr);
-  if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
-
+  ierr = VecGetDM(Func,&da);CHKERRQ(ierr);
   ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -430,9 +428,7 @@ extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,VFBC *BC)
   PetscInt       dim,dof;
 
   PetscFunctionBegin;
-  ierr = PetscObjectQuery((PetscObject) RHS,"DM",(PetscObject*) &da);CHKERRQ(ierr);
-  if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");
-
+  ierr = VecGetDM(RHS,&da);CHKERRQ(ierr);
   ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -537,8 +533,7 @@ extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,VFBC *bcP)
   DM             da;
 
   PetscFunctionBegin;
-  ierr = PetscObjectQuery((PetscObject) K,"DM",(PetscObject*) &da);CHKERRQ(ierr);
-  if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
+  ierr = MatGetDM(K,&da);CHKERRQ(ierr);
   ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -754,13 +749,11 @@ extern PetscErrorCode VecApplySourceTerms_FEM(PetscReal *Ks_local,PetscReal ***s
         PetscErrorCode ierr;
         PetscInt       i,j,k,l;
         PetscReal      alpha_c;
-        PetscReal      mu;
         PetscReal      *loc_source;
         PetscInt       eg;
         
         PetscFunctionBegin;
         alpha_c = ctx->flowprop.alpha;
-        mu     = ctx->flowprop.mu;
         ierr   = PetscMalloc(e->ng*sizeof(PetscReal),&loc_source);CHKERRQ(ierr);
         
         for (eg = 0; eg < e->ng; eg++) loc_source[eg] = 0.;
@@ -983,14 +976,9 @@ extern PetscErrorCode ResetSourceTerms(Vec Src,VFFlowProp flowpropty)
   PetscInt       dim,dof;
   PetscInt       ei,ej,ek;
   DM             da;
-  PetscReal      mu,beta_c;
 
   PetscFunctionBegin;
-  beta_c = flowpropty.beta;
-  mu     = flowpropty.mu;
-  ierr   = PetscObjectQuery((PetscObject)Src,"DM",(PetscObject*)&da);CHKERRQ(ierr);
-  if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Vector not generated from a DA");
-
+  ierr = VecGetDM(Src,&da);CHKERRQ(ierr);
   ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);

@@ -29,7 +29,7 @@ extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
   
   ierr = KSPCreate(PETSC_COMM_WORLD,&ctx->kspVelP);CHKERRQ(ierr);
   ierr = KSPSetTolerances(ctx->kspVelP,1.e-6,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
-  ierr = KSPSetOperators(ctx->kspVelP,ctx->KVelP,ctx->KVelP,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
+  ierr = KSPSetOperators(ctx->kspVelP,ctx->KVelP,ctx->KVelP);CHKERRQ(ierr);
   ierr = KSPSetInitialGuessNonzero(ctx->kspVelP,PETSC_TRUE);CHKERRQ(ierr);
   ierr = KSPAppendOptionsPrefix(ctx->kspVelP,"Flowksp_");CHKERRQ(ierr);
   ierr = KSPSetType(ctx->kspVelP,KSPBCGSL);CHKERRQ(ierr);
@@ -146,14 +146,12 @@ extern PetscErrorCode VecApplyFractureWellSource(PetscReal *Ks_local,PetscReal *
   PetscErrorCode ierr;
   PetscInt       i,j,k,l,c;
   PetscReal      alpha_c;
-  PetscReal      mu;
   PetscReal      *loc_source,*dv_elem[3],*v_elem,*v_mag_elem;
   PetscInt       eg;
   
   PetscFunctionBegin;
   alpha_c = ctx->flowprop.alpha;
-  mu     = ctx->flowprop.mu;
-  ierr = PetscMalloc6(e->ng,PetscReal,&loc_source,e->ng,PetscReal,&v_elem,e->ng,PetscReal,&dv_elem[0],e->ng,PetscReal,&dv_elem[1],e->ng,PetscReal,&dv_elem[2],e->ng,PetscReal,&v_mag_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc6(e->ng,&loc_source,e->ng,&v_elem,e->ng,&dv_elem[0],e->ng,&dv_elem[1],e->ng,&dv_elem[2],e->ng,&v_mag_elem);CHKERRQ(ierr);
   for (eg = 0; eg < e->ng; eg++){
     loc_source[eg] = 0.;
     v_elem[eg] = 0.;
@@ -200,14 +198,12 @@ extern PetscErrorCode VecApplySourceTerms(PetscReal *Ks_local,PetscReal ***sourc
   PetscErrorCode ierr;
   PetscInt       i,j,k,l;
   PetscReal      alpha_c;
-  PetscReal      mu;
   PetscReal      *loc_source, *v_elem;
   PetscInt       eg;
   
   PetscFunctionBegin;
   alpha_c = ctx->flowprop.alpha;
-  mu     = ctx->flowprop.mu;
-  ierr = PetscMalloc2(e->ng,PetscReal,&loc_source,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc2(e->ng,&loc_source,e->ng,&v_elem);CHKERRQ(ierr);
   for (eg = 0; eg < e->ng; eg++){
     loc_source[eg] = 0.;
     v_elem[eg] = 0.;
@@ -476,7 +472,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
   PetscInt       ek,ej,ei;
-  PetscInt       i,j,k,l,ll;
+  PetscInt       i,j,k,l;
   PetscInt       veldof = 3;
   PetscInt       c;
   PetscReal      ****perm_array;
@@ -491,7 +487,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
   PetscReal      *KL_local,*KLrhs_local;
   PetscReal      *KAf_local,*KBf_local,*KDf_local,*KP_local,*KBfTrans_local;
   PetscReal      *KAfrhs_local,*KBfrhs_local,*KDfrhs_local,*KPrhs_local,*KBfTransrhs_local;
-  PetscReal      beta_c,alpha_c,mu,gx,gy,gz;
+  PetscReal      alpha_c,mu;
   PetscReal      theta,timestepsize;
   PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
   MatStencil     *row,*row1;
@@ -502,7 +498,6 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
   FACE           face;
   PetscReal      ***prebc_array;
   Vec            prebc_local;
-  MatStructure   flg;
   PetscReal      hwx, hwy, hwz;
   PetscReal      ***v_array;
   Vec            v_local;
@@ -526,9 +521,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
   
   
   PetscFunctionBegin;
-  flg = SAME_NONZERO_PATTERN;
   M_inv     = ctx->flowprop.M_inv;
-  beta_c = ctx->flowprop.beta;
   alpha_c = ctx->flowprop.alpha;
   theta = ctx->flowprop.theta;
   timestepsize = ctx->flowprop.timestepsize;
@@ -536,9 +529,6 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
   alphabiot  = ctx->flowprop.alphabiot;
   K_dr  = ctx->flowprop.K_dr;
   mu     = ctx->flowprop.mu;
-  gx     = ctx->flowprop.g[0];
-  gy     = ctx->flowprop.g[1];
-  gz     = ctx->flowprop.g[2];
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = MatZeroEntries(K);CHKERRQ(ierr);
@@ -615,33 +605,33 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
   ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->RegFracWellFlowRate,INSERT_VALUES,fracflow_local);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,fracflow_local,&fracflow_array);CHKERRQ(ierr);
   
-  ierr = PetscMalloc5(nrow*nrow,PetscReal,&KA_local,
-                      nrow*nrow,PetscReal,&KB_local,
-                      nrow*nrow,PetscReal,&KD_local,
-                      nrow*nrow,PetscReal,&KBTrans_local,
-                      nrow*nrow,PetscReal,&KS_local);CHKERRQ(ierr);
-  ierr = PetscMalloc4(nrow*nrow,PetscReal,&KArhs_local,
-                      nrow*nrow,PetscReal,&KBrhs_local,
-                      nrow*nrow,PetscReal,&KDrhs_local,
-                      nrow*nrow,PetscReal,&KBTransrhs_local);CHKERRQ(ierr);
+  ierr = PetscMalloc5(nrow*nrow,&KA_local,
+                      nrow*nrow,&KB_local,
+                      nrow*nrow,&KD_local,
+                      nrow*nrow,&KBTrans_local,
+                      nrow*nrow,&KS_local);CHKERRQ(ierr);
+  ierr = PetscMalloc4(nrow*nrow,&KArhs_local,
+                      nrow*nrow,&KBrhs_local,
+                      nrow*nrow,&KDrhs_local,
+                      nrow*nrow,&KBTransrhs_local);CHKERRQ(ierr);
   
-  ierr = PetscMalloc6(nrow*nrow,PetscReal,&KAf_local,
-                      nrow*nrow,PetscReal,&KBf_local,
-                      nrow*nrow,PetscReal,&KDf_local,
-                      nrow*nrow,PetscReal,&KBfTrans_local,
-                      nrow*nrow,PetscReal,&KP_local,
-                      nrow*nrow,PetscReal,&KL_local);CHKERRQ(ierr);
+  ierr = PetscMalloc6(nrow*nrow,&KAf_local,
+                      nrow*nrow,&KBf_local,
+                      nrow*nrow,&KDf_local,
+                      nrow*nrow,&KBfTrans_local,
+                      nrow*nrow,&KP_local,
+                      nrow*nrow,&KL_local);CHKERRQ(ierr);
   
-  ierr = PetscMalloc6(nrow*nrow,PetscReal,&KAfrhs_local,
-                      nrow*nrow,PetscReal,&KBfrhs_local,
-                      nrow*nrow,PetscReal,&KDfrhs_local,
-                      nrow*nrow,PetscReal,&KBfTransrhs_local,
-                      nrow*nrow,PetscReal,&KPrhs_local,
-                      nrow*nrow,PetscReal,&KLrhs_local);CHKERRQ(ierr);
+  ierr = PetscMalloc6(nrow*nrow,&KAfrhs_local,
+                      nrow*nrow,&KBfrhs_local,
+                      nrow*nrow,&KDfrhs_local,
+                      nrow*nrow,&KBfTransrhs_local,
+                      nrow*nrow,&KPrhs_local,
+                      nrow*nrow,&KLrhs_local);CHKERRQ(ierr);
   
-  ierr = PetscMalloc3(nrow,PetscReal,&RHS_local,
-                      nrow,MatStencil,&row,
-                      nrow,MatStencil,&row1);CHKERRQ(ierr);
+  ierr = PetscMalloc3(nrow,&RHS_local,
+                      nrow,&row,
+                      nrow,&row1);CHKERRQ(ierr);
   for (ek = zs; ek < zs+zm; ek++) {
     for (ej = ys; ej < ys+ym; ej++) {
       for (ei = xs; ei < xs+xm; ei++) {
@@ -1127,16 +1117,9 @@ extern PetscErrorCode VecApplyPressureBC(PetscReal *RHS_local,PetscReal ***pre_a
   PetscErrorCode ierr;
   PetscInt       i,j,k,l,g;
   PetscReal      *pre_elem,*v_elem;
-  PetscReal      beta_c,mu;
-  PetscReal      kx,ky,kz;
   
   PetscFunctionBegin;
-  ierr = PetscMalloc2(e->ng,PetscReal,&pre_elem,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
-  beta_c  = flowpropty.beta;
-  mu      = flowpropty.mu;
-  kx = perm_array[ek][ej][ei][0];
-  ky = perm_array[ek][ej][ei][1];
-  kz = perm_array[ek][ej][ei][2];
+  ierr = PetscMalloc2(e->ng,&pre_elem,e->ng,&v_elem);CHKERRQ(ierr);
   /* Initialize pre_Elem  */
   for (g = 0; g < e->ng; g++) {
     pre_elem[g] = 0;
@@ -1299,12 +1282,10 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,VFBC *bcQ)
   PetscReal      one=1.;
   PetscInt       numBC=0,l=0;
   PetscInt       dim,dof=3;
-  DM                              da;
+  DM             da;
   
   PetscFunctionBegin;
-  ierr = PetscObjectQuery((PetscObject) K,"DM",(PetscObject *) &da); CHKERRQ(ierr);
-  if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
-  
+  ierr = MatGetDM(K,&da);CHKERRQ(ierr);
   ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -1802,10 +1783,10 @@ extern PetscErrorCode VF_RHSFlowMechUCoupling_local(PetscReal *K_local,VFCartFEE
   
   PetscFunctionBegin;
   alphabiot  = flowpropty.alphabiot;
-  ierr = PetscMalloc4(e->ng,PetscReal,&v_elem,
-                      e->ng,PetscReal,&du_elem[0],
-                      e->ng,PetscReal,&du_elem[1],
-                      e->ng,PetscReal,&du_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc4(e->ng,&v_elem,
+                      e->ng,&du_elem[0],
+                      e->ng,&du_elem[1],
+                      e->ng,&du_elem[2]);CHKERRQ(ierr);
   for (eg = 0; eg < e->ng; eg++){
     v_elem[eg] = 0.;
     for (c = 0; c < 3; c++){
@@ -1851,14 +1832,12 @@ extern PetscErrorCode VF_RHSFlowMechUCouplingFIXSTRESS_local(PetscReal *K_local,
   PetscInt          i,j,k,l;
   PetscInt          eg;
   PetscReal         *v_elem;
-  PetscReal         *p_diff_elem,alphabiot,K_dr,nu,E;
+  PetscReal         *p_diff_elem,alphabiot,K_dr;
   
   PetscFunctionBegin;
   alphabiot  = flowpropty.alphabiot;
   K_dr  = flowpropty.K_dr;
-  nu       = matprop->nu;
-  E       = matprop->E;
-  ierr = PetscMalloc2(e->ng,PetscReal,&v_elem,e->ng,PetscReal,&p_diff_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc2(e->ng,&v_elem,e->ng,&p_diff_elem);CHKERRQ(ierr);
   for (eg = 0; eg < e->ng; eg++){
     v_elem[eg] = 0.;
     p_diff_elem[eg] = 0.;
@@ -1901,21 +1880,21 @@ extern PetscErrorCode VF_RHSFractureFlowCoupling_local(PetscReal *K_local,VFCart
   PetscReal         *n_old_elem[3],*v_old_mag_elem;
   
   PetscFunctionBegin;
-  ierr = PetscMalloc6(e->ng,PetscReal,&dv_elem[0],
-                      e->ng,PetscReal,&dv_elem[1],
-                      e->ng,PetscReal,&dv_elem[2],
-                      e->ng,PetscReal,&u_elem[0],
-                      e->ng,PetscReal,&u_elem[1],
-                      e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc6(e->ng,&dv_elem[0],
+                      e->ng,&dv_elem[1],
+                      e->ng,&dv_elem[2],
+                      e->ng,&u_elem[0],
+                      e->ng,&u_elem[1],
+                      e->ng,&u_elem[2]);CHKERRQ(ierr);
   
-  ierr = PetscMalloc6(e->ng,PetscReal,&dv_old_elem[0],
-                      e->ng,PetscReal,&dv_old_elem[1],
-                      e->ng,PetscReal,&dv_old_elem[2],
-                      e->ng,PetscReal,&u_old_elem[0],
-                      e->ng,PetscReal,&u_old_elem[1],
-                      e->ng,PetscReal,&u_old_elem[2]);CHKERRQ(ierr);
-  ierr = PetscMalloc4(e->ng,PetscReal,&n_elem[0],e->ng,PetscReal,&n_elem[1],e->ng,PetscReal,&n_elem[2],e->ng,PetscReal,&v_mag_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc4(e->ng,PetscReal,&n_old_elem[0],e->ng,PetscReal,&n_old_elem[1],e->ng,PetscReal,&n_old_elem[2],e->ng,PetscReal,&v_old_mag_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc6(e->ng,&dv_old_elem[0],
+                      e->ng,&dv_old_elem[1],
+                      e->ng,&dv_old_elem[2],
+                      e->ng,&u_old_elem[0],
+                      e->ng,&u_old_elem[1],
+                      e->ng,&u_old_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc4(e->ng,&n_elem[0],e->ng,&n_elem[1],e->ng,&n_elem[2],e->ng,&v_mag_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc4(e->ng,&n_old_elem[0],e->ng,&n_old_elem[1],e->ng,&n_old_elem[2],e->ng,&v_old_mag_elem);CHKERRQ(ierr);
   
   for (eg = 0; eg < e->ng; eg++){
     for (c = 0; c < 3; c++){
@@ -2004,8 +1983,8 @@ extern PetscErrorCode VF_MatAFractureFlowCoupling_local(PetscReal *Kd_ele,VFCart
   PetscReal               *dv_elem[3],*u_elem[3],*v_mag_elem,*n_elem[3];
   PetscInt                eg;
   
-  ierr = PetscMalloc6(e->ng,PetscReal,&dv_elem[0],e->ng,PetscReal,&dv_elem[1],e->ng,PetscReal,&dv_elem[2],e->ng,PetscReal,&u_elem[0],e->ng,PetscReal,&u_elem[1],e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);
-  ierr = PetscMalloc4(e->ng,PetscReal,&n_elem[0],e->ng,PetscReal,&n_elem[1],e->ng,PetscReal,&n_elem[2],e->ng,PetscReal,&v_mag_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc6(e->ng,&dv_elem[0],e->ng,&dv_elem[1],e->ng,&dv_elem[2],e->ng,&u_elem[0],e->ng,&u_elem[1],e->ng,&u_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc4(e->ng,&n_elem[0],e->ng,&n_elem[1],e->ng,&n_elem[2],e->ng,&v_mag_elem);CHKERRQ(ierr);
   for (eg = 0; eg < e->ng; eg++){
     for(c = 0; c < 3; c++){
       dv_elem[c][eg] = 0;
@@ -2119,8 +2098,8 @@ extern PetscErrorCode VF_MatBTFractureFlowCoupling_local(PetscReal *Kd_ele,VFCar
   PetscReal               *dv_elem[3],*u_elem[3],*n_elem[3],*v_mag_elem;
   PetscInt                eg;
   
-  ierr = PetscMalloc6(e->ng,PetscReal,&dv_elem[0],e->ng,PetscReal,&dv_elem[1],e->ng,PetscReal,&dv_elem[2],e->ng,PetscReal,&u_elem[0],e->ng,PetscReal,&u_elem[1],e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);
-  ierr = PetscMalloc4(e->ng,PetscReal,&n_elem[0],e->ng,PetscReal,&n_elem[1],e->ng,PetscReal,&n_elem[2],e->ng,PetscReal,&v_mag_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc6(e->ng,&dv_elem[0],e->ng,&dv_elem[1],e->ng,&dv_elem[2],e->ng,&u_elem[0],e->ng,&u_elem[1],e->ng,&u_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc4(e->ng,&n_elem[0],e->ng,&n_elem[1],e->ng,&n_elem[2],e->ng,&v_mag_elem);CHKERRQ(ierr);
   for (eg = 0; eg < e->ng; eg++){
     for(c = 0; c < 3; c++){
       dv_elem[c][eg] = 0;
@@ -2210,8 +2189,8 @@ extern PetscErrorCode VF_MatBFractureFlowCoupling_local(PetscReal *Kd_ele,VFCart
   PetscReal               *dv_elem[3],*u_elem[3],*n_elem[3],*v_mag_elem;
   PetscInt                eg;
   
-  ierr = PetscMalloc6(e->ng,PetscReal,&dv_elem[0],e->ng,PetscReal,&dv_elem[1],e->ng,PetscReal,&dv_elem[2],e->ng,PetscReal,&u_elem[0],e->ng,PetscReal,&u_elem[1],e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);
-  ierr = PetscMalloc4(e->ng,PetscReal,&n_elem[0],e->ng,PetscReal,&n_elem[1],e->ng,PetscReal,&n_elem[2],e->ng,PetscReal,&v_mag_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc6(e->ng,&dv_elem[0],e->ng,&dv_elem[1],e->ng,&dv_elem[2],e->ng,&u_elem[0],e->ng,&u_elem[1],e->ng,&u_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc4(e->ng,&n_elem[0],e->ng,&n_elem[1],e->ng,&n_elem[2],e->ng,&v_mag_elem);CHKERRQ(ierr);
   for (eg = 0; eg < e->ng; eg++){
     for(c = 0; c < 3; c++){
       dv_elem[c][eg] = 0;
@@ -2302,8 +2281,8 @@ extern PetscErrorCode VF_MatDFractureFlowCoupling_local(PetscReal *Kd_ele,VFCart
   PetscReal               *dv_elem[3],*u_elem[3],*n_elem[3],*v_mag_elem,*v_elem;
   PetscInt                eg;
   
-  ierr = PetscMalloc6(e->ng,PetscReal,&dv_elem[0],e->ng,PetscReal,&dv_elem[1],e->ng,PetscReal,&dv_elem[2],e->ng,PetscReal,&u_elem[0],e->ng,PetscReal,&u_elem[1],e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);
-  ierr = PetscMalloc5(e->ng,PetscReal,&n_elem[0],e->ng,PetscReal,&n_elem[1],e->ng,PetscReal,&n_elem[2],e->ng,PetscReal,&v_mag_elem,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc6(e->ng,&dv_elem[0],e->ng,&dv_elem[1],e->ng,&dv_elem[2],e->ng,&u_elem[0],e->ng,&u_elem[1],e->ng,&u_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc5(e->ng,&n_elem[0],e->ng,&n_elem[1],e->ng,&n_elem[2],e->ng,&v_mag_elem,e->ng,&v_elem);CHKERRQ(ierr);
   for (eg = 0; eg < e->ng; eg++){
     for(c = 0; c < 3; c++){
       dv_elem[c][eg] = 0;
@@ -2399,7 +2378,7 @@ extern PetscErrorCode VF_MatFluidCompreStiffMatrix_local(PetscReal *Kd_ele,VFCar
   PetscReal               *dv_elem[3],*u_elem[3];
   PetscInt                eg;
   
-  ierr = PetscMalloc6(e->ng,PetscReal,&dv_elem[0],e->ng,PetscReal,&dv_elem[1],e->ng,PetscReal,&dv_elem[2],e->ng,PetscReal,&u_elem[0],e->ng,PetscReal,&u_elem[1],e->ng,PetscReal,&u_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc6(e->ng,&dv_elem[0],e->ng,&dv_elem[1],e->ng,&dv_elem[2],e->ng,&u_elem[0],e->ng,&u_elem[1],e->ng,&u_elem[2]);CHKERRQ(ierr);
   for (eg = 0; eg < e->ng; eg++){
     for(c = 0; c < 3; c++){
       dv_elem[c][eg] = 0;
@@ -2521,8 +2500,8 @@ extern PetscErrorCode VF_MatDFractureFlowCouplingAveCOD_local(PetscReal *Kd_ele,
   PetscReal               *dv_elem[3],*n_elem[3],*v_mag_elem,*v_elem;
   PetscInt                eg;
   
-  ierr = PetscMalloc3(e->ng,PetscReal,&dv_elem[0],e->ng,PetscReal,&dv_elem[1],e->ng,PetscReal,&dv_elem[2]);CHKERRQ(ierr);
-  ierr = PetscMalloc5(e->ng,PetscReal,&n_elem[0],e->ng,PetscReal,&n_elem[1],e->ng,PetscReal,&n_elem[2],e->ng,PetscReal,&v_mag_elem,e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
+  ierr = PetscMalloc3(e->ng,&dv_elem[0],e->ng,&dv_elem[1],e->ng,&dv_elem[2]);CHKERRQ(ierr);
+  ierr = PetscMalloc5(e->ng,&n_elem[0],e->ng,&n_elem[1],e->ng,&n_elem[2],e->ng,&v_mag_elem,e->ng,&v_elem);CHKERRQ(ierr);
   for (eg = 0; eg < e->ng; eg++){
     for(c = 0; c < 3; c++){
       dv_elem[c][eg] = 0;
@@ -2616,7 +2595,7 @@ extern PetscErrorCode VF_MatDFractureFlowCouplingAveCOD_local(PetscReal *Kd_ele,
 extern PetscErrorCode VF_MatApplyFracturePressureBC_local(PetscReal *K_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ***v_array)
 {
   PetscErrorCode          ierr;
-  PetscInt                i,j,k,l,c;
+  PetscInt                i,j,k,l;
   PetscInt                ii,jj,kk;
   PetscReal               *dv_elem;
   PetscInt                eg;

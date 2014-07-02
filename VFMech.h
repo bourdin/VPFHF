@@ -25,9 +25,6 @@ extern PetscErrorCode VF_UAssembly3D(Mat K,Vec RHS,VFFields *fields,VFCtx *ctx);
 extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *OverbdnWork,PetscReal *PressureWork,VFFields *fields,VFCtx *ctx);
 
 extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx);
-extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *Jac,Mat *Jac1,MatStructure *str,void *user);
-extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec Func,void *user);
-extern PetscErrorCode VF_USNESMonitor(SNES snes,PetscInt U_its,PetscReal fnorm,void* ptr);
 extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx);
 extern PetscErrorCode BCVInit(VFBC *BC,VFPreset preset);
 extern PetscErrorCode BCVUpdate(VFBC *BC,VFPreset preset);
@@ -37,11 +34,12 @@ extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx);
  These functions are not meant to be called outside of VFMech,
  but since snesU and snesV are initialized outside of VFMech, I have no other choice
  */
-extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat *Jac,Mat *Jac1,MatStructure *str,void *user);
+extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat Jac,Mat Jac1,void *user);
 extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec Func,void *user);
 extern PetscErrorCode VF_VSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr);
 
-extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat *Jac,Mat *Jac1,MatStructure *str,void *user);
+extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat Jac,Mat Jac1,void *user);
 extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec Func,void *user);
 extern PetscErrorCode VF_UInitialGuess(SNES snesU, Vec x, void *user);
+extern PetscErrorCode VF_USNESMonitor(SNES snes,PetscInt U_its,PetscReal fnorm,void* ptr);
 #endif

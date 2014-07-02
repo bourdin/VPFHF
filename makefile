@@ -1,19 +1,20 @@
+all: VF_Chevron
+
 include makefile.include	
 
-all: VF_Chevron #Utils
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
 
-binarch: bin
-	@mkdir -p ${VFDIR}/bin/${PETSC_ARCH}
-bin:
-	@mkdir ${VFDIR}/bin
+.PHONY: Utils test dirs
 
-VF_Chevron: binarch VF_Chevron.o ${VFOBJ} chkopts
-	-@${CLINKER} -o bin/${PETSC_ARCH}/VF_Chevron VF_Chevron.o ${VFOBJ} ${PETSC_LIB}
+dirs:
+	@mkdir -p bin/${PETSC_ARCH}
 
-Utils: binarch
+VF_Chevron: dirs ${VFOBJ} VF_Chevron.o chkopts
+	${CLINKER} -o bin/${PETSC_ARCH}/VF_Chevron VF_Chevron.o ${VFOBJ} ${PETSC_LIB}
+
+Utils: dirs
 	@echo Making all in ${VFDIR}/Utils
 	@make -C ${VFDIR}/Utils
 

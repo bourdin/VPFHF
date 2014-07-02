@@ -62,23 +62,23 @@ extern PetscErrorCode MixedFlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 	ierr = VecSet(ctx->V,1.0);CHKERRQ(ierr);
 	ierr = VecCopy(fields->V,ctx->V);CHKERRQ(ierr);
   
-//	temporary created permfield in ctx so permeability an be in ctx
+  /*	temporary created permfield in ctx so permeability an be in ctx */
 	ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
 	ierr = VecSet(ctx->Perm,0.0);CHKERRQ(ierr);
 	ierr = VecCopy(fields->vfperm,ctx->Perm);CHKERRQ(ierr);
 	ierr = TSSetIFunction(ctx->tsVelP,PETSC_NULL,FormIFunction,ctx);CHKERRQ(ierr);
-    ierr = TSSetIJacobian(ctx->tsVelP,ctx->JacVelP,ctx->JacVelP,FormIJacobian,ctx);CHKERRQ(ierr);
+  ierr = TSSetIJacobian(ctx->tsVelP,ctx->JacVelP,ctx->JacVelP,FormIJacobian,ctx);CHKERRQ(ierr);
 	ierr = TSSetRHSFunction(ctx->tsVelP,PETSC_NULL,FormFunction,ctx);CHKERRQ(ierr);
 	ierr = TSSetSolution(ctx->tsVelP,fields->VelnPress);CHKERRQ(ierr);
 	ierr = TSSetInitialTimeStep(ctx->tsVelP,0.0,ctx->timevalue);CHKERRQ(ierr);
-    ierr = TSSetDuration(ctx->tsVelP,ctx->maxtimestep,ctx->maxtimevalue);CHKERRQ(ierr);
+  ierr = TSSetDuration(ctx->tsVelP,ctx->maxtimestep,ctx->maxtimevalue);CHKERRQ(ierr);
 //	ierr = FormInitialSolution(fields->VelnPress,fields->FlowBCArray,&ctx->bcFlow[0],ctx);CHKERRQ(ierr);
 //	if (ctx->verbose > 1) {
 		ierr = TSMonitorSet(ctx->tsVelP,MixedFEMTSMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 //	}	
 	ierr = TSSetFromOptions(ctx->tsVelP);CHKERRQ(ierr);	
-    ierr = TSSolve(ctx->tsVelP,fields->VelnPress,&ctx->timevalue);CHKERRQ(ierr);
-    ierr = TSGetTimeStepNumber(ctx->tsVelP,&ctx->timestep);CHKERRQ(ierr);
+  ierr = TSSolve(ctx->tsVelP,fields->VelnPress);CHKERRQ(ierr);
+  ierr = TSGetTimeStepNumber(ctx->tsVelP,&ctx->timestep);CHKERRQ(ierr);
 	ierr = TSGetConvergedReason(ctx->tsVelP,&reason);CHKERRQ(ierr);
 //	 PetscPrintf(PETSC_COMM_WORLD,"%s at time %G after %D steps\n",TSConvergedReasons[reason],ctx->timevalue,ctx->timestep);
 /*
@@ -164,21 +164,20 @@ extern PetscErrorCode FormFunction(TS ts,PetscReal t,Vec vec1,Vec Func,void *use
 
 #undef __FUNCT__
 #define __FUNCT__ "FormIJacobian"
-extern PetscErrorCode FormIJacobian(TS ts,PetscReal t,Vec VelnPress,Vec VelnPressdot,PetscReal shift,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user)
+extern PetscErrorCode FormIJacobian(TS ts,PetscReal t,Vec VelnPress,Vec VelnPressdot,PetscReal shift,Mat Jac,Mat Jacpre,void *user)
 {
 	PetscErrorCode ierr;
 	VFCtx				*ctx=(VFCtx*)user;
 
 	PetscFunctionBegin;
-	*str = DIFFERENT_NONZERO_PATTERN;
-	ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
-	ierr = MatCopy(ctx->KVelP,*Jac,*str);
-	ierr = MatAXPY(*Jac,shift,ctx->KVelPlhs,*str);CHKERRQ(ierr);
-	ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	if (*Jac != *Jacpre) {
-		ierr = MatAssemblyBegin(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-		ierr = MatAssemblyEnd(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatCopy(ctx->KVelP,Jacpre,DIFFERENT_NONZERO_PATTERN);
+	ierr = MatAXPY(Jacpre,shift,ctx->KVelPlhs,DIFFERENT_NONZERO_PATTERN);CHKERRQ(ierr);
+	ierr = MatAssemblyBegin(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	if (Jac != Jacpre) {
+    ierr = MatCopy(Jacpre,Jac,DIFFERENT_NONZERO_PATTERN);
+		ierr = MatAssemblyBegin(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+		ierr = MatAssemblyEnd(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	}	
 	PetscFunctionReturn(0);
 }
@@ -202,9 +201,7 @@ extern PetscErrorCode MatApplyTSVelocityBC(Mat K,Mat Klhs,VFBC *bcQ)
 	PetscReal      zero=0.0;
 	
 	PetscFunctionBegin;
-	ierr = PetscObjectQuery((PetscObject) K,"DM",(PetscObject *) &da); CHKERRQ(ierr);
-	if (!da) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG," Matrix not generated from a DA");
-	
+  ierr = MatGetDM(K,&da);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -357,7 +354,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	Vec            perm_local;
 	PetscReal      hx,hy,hz;
 	PetscReal      *KA_local,*KB_local,*KD_local,*KBTrans_local,*Klhs_local;
-	PetscReal      beta_c,alpha_c,mu,gx,gy,gz;
+	PetscReal      alpha_c;
 	PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
 	MatStencil     *row,*row1;
 	PetscReal      ***source_array;
@@ -372,12 +369,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 
 	PetscFunctionBegin;
 	M_inv     = ctx->flowprop.M_inv;
-	beta_c = ctx->flowprop.beta;
 	alpha_c = ctx->flowprop.alpha;
-	mu     = ctx->flowprop.mu;
-	gx     = ctx->flowprop.g[0];
-	gy     = ctx->flowprop.g[1];
-	gz     = ctx->flowprop.g[2];	
 	ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 		// This line ensures that the number of cells is one less than the number of nodes. Force processing of cells to stop once the second to the last node is processed 
@@ -404,14 +396,14 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-	ierr = PetscMalloc5(nrow*nrow,PetscReal,&KA_local,
-						nrow*nrow,PetscReal,&KB_local,
-						nrow*nrow,PetscReal,&KD_local,
-						nrow*nrow,PetscReal,&KBTrans_local,
-						nrow*nrow,PetscReal,&Klhs_local);CHKERRQ(ierr);
-	ierr = PetscMalloc3(nrow,PetscReal,&RHS_local,
-						nrow,MatStencil,&row,
-						nrow,MatStencil,&row1);CHKERRQ(ierr);
+	ierr = PetscMalloc5(nrow*nrow,&KA_local,
+						nrow*nrow,&KB_local,
+						nrow*nrow,&KD_local,
+						nrow*nrow,&KBTrans_local,
+						nrow*nrow,&Klhs_local);CHKERRQ(ierr);
+	ierr = PetscMalloc3(nrow,&RHS_local,
+						nrow,&row,
+						nrow,&row1);CHKERRQ(ierr);
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -884,16 +876,13 @@ extern PetscErrorCode FormInitialSolution(Vec VelnPress,Vec VelnPressBV, VFBC *b
 	DM             da;
 	PetscReal		****UnPre_array;
 	PetscReal      ****IniSol_array;
-	PetscReal      hx,hy,hz;
 	
 	PetscFunctionBegin;
-	ierr = PetscObjectQuery((PetscObject)VelnPress,"DM",(PetscObject*)&da);CHKERRQ(ierr);
-	if (!da) SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_WRONG,"Vector not generated from a DMDA");	
+  ierr = VecGetDM(VelnPress,&da);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(da,VelnPress,&IniSol_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(da,VelnPressBV,&UnPre_array);CHKERRQ(ierr);
-	hx   = 1./(nx-1);hy = 1./(ny-1);hz = 1./(nz-1);
 		if (xs == 0) {
 			i = 0;
 			if (bcP[0].face[X0] == FIXED) {

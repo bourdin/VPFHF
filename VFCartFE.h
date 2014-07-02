@@ -143,8 +143,8 @@ extern PetscErrorCode VecSetFromBC(Vec BCVec,VFBC *BC);
 
 extern PetscErrorCode VecApplyDirichletBC(Vec RHS,Vec BCU,VFBC *BC);
 extern PetscErrorCode ResidualApplyDirichletBC(Vec Residual,Vec U,Vec BCU,VFBC *BC);
-extern PetscErrorCode MatApplyDirichletBC(Mat K,DM da,VFBC *BC);
-extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,DM da,VFBC *BC);
+extern PetscErrorCode MatApplyDirichletBC(Mat K,VFBC *BC);
+extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,VFBC *BC);
 extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,VFBC *BC,PetscReal *BCpres);
 
 #endif

@@ -90,9 +90,6 @@ int main(int argc,char **argv)
       case FILEFORMAT_VTK:       
         ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);
       break;
-      case FILEFORMAT_HDF5:       
-        ierr = FieldsH5Write(&ctx,&fields);
-      break;
       case FILEFORMAT_BIN:
         ierr = FieldsBinaryWrite(&ctx,&fields);
       break; 

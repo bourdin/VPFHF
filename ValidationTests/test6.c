@@ -137,7 +137,7 @@ int main(int argc,char **argv)
     if (ctx.hasInsitu) {
       ierr = PetscPrintf(PETSC_COMM_WORLD,"Work of surface forces:  \t%e\n",ctx.InsituWork);CHKERRQ(ierr);
     }
-    ierr = PetscPrintf(PETSC_COMM_WORLD,  "Total Mechanical energy: \t%e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,  "Total Mechanical energy: \t%e\n",ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 
     /*
       Compute and display total crack opening

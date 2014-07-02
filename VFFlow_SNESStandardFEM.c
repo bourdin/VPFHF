@@ -75,46 +75,85 @@ extern PetscErrorCode VF_FormFlowStandardFEMIFunction(SNES snes,Vec Pressure,Vec
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_FlowStandardFEMSNESSolve"
-extern PetscErrorCode VF_FlowStandardFEMSNESSolve(VFCtx *ctx,VFFields *fields)
+#define __FUNCT__ "FractureFlowVelocityCompute_local"
+extern PetscErrorCode FractureFlowVelocityCompute_local(PetscReal ****cellvelocityrate_array, PetscReal ***press_array,PetscReal ****u_array, PetscReal ***v_array, VFFlowProp flowpropty, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
-	PetscErrorCode     ierr;
-	SNESConvergedReason reason;
-	PetscInt           its;
-	PetscReal           Pmin,Pmax;
+	PetscErrorCode ierr;
+	PetscInt		i, j, k, c;
+	PetscInt		eg;
+  PetscReal   mu;
+  PetscReal		element_vol = 0;
+  PetscReal   *gradpress_elem[3];
+  PetscReal         *u_elem[3];
+  PetscReal         *n_elem[3],*v_mag_elem;
+
   
 	PetscFunctionBegin;
-	ierr = VecCopy(fields->V,ctx->V);CHKERRQ(ierr);
-	ierr = VecCopy(fields->U,ctx->U);CHKERRQ(ierr);
-  ierr = VF_FormFlowStandardFEMMatricesnVectors(ctx->KP,ctx->KPlhs,ctx->RHSP,fields,ctx);CHKERRQ(ierr);
-	ierr = SNESSetFunction(ctx->snesP,ctx->PFunct,VF_FormFlowStandardFEMIFunction,ctx);CHKERRQ(ierr);
-  ierr = SNESSetJacobian(ctx->snesP,ctx->JacP,ctx->JacP,VF_FormFlowStandardFEMIJacobian,ctx);CHKERRQ(ierr);
-	if (ctx->verbose > 1) {
-		ierr = SNESMonitorSet(ctx->snesP,FEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	}
-  ierr = SNESSolve(ctx->snesP,PETSC_NULL,fields->pressure);CHKERRQ(ierr);
-	ierr = SNESGetConvergedReason(ctx->snesP,&reason);CHKERRQ(ierr);
-  ierr = FlowVelocityCompute(ctx,fields);CHKERRQ(ierr);
-  if (ctx->FractureFlowCoupling) {
-    ierr = FractureFlowVelocityCompute(ctx,fields);CHKERRQ(ierr);
+  cellvelocityrate_array[ek][ej][ei][0] = 0;
+  cellvelocityrate_array[ek][ej][ei][1] = 0;
+  cellvelocityrate_array[ek][ej][ei][2] = 0;
+  mu      = flowpropty.mu;
+  ierr = PetscMalloc7(e->ng,&n_elem[0],
+                      e->ng,&n_elem[1],
+                      e->ng,&n_elem[2],
+                      e->ng,&u_elem[0],
+                      e->ng,&u_elem[1],
+                      e->ng,&u_elem[2],
+                      e->ng,&v_mag_elem);CHKERRQ(ierr);
+  
+	ierr = PetscMalloc3(e->ng,&gradpress_elem[0],e->ng,&gradpress_elem[1],e->ng,&gradpress_elem[2]);CHKERRQ(ierr);
+  for (eg = 0; eg < e->ng; eg++){
+    for (c = 0; c < 3; c++){
+      u_elem[c][eg] = 0.;
+      n_elem[c][eg] = 0;
+      gradpress_elem[c][eg] = 0.;
+    }
+    v_mag_elem[eg] = 0.;
+    element_vol += e->weight[eg];
   }
-	if (reason < 0) {
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snes_StandardFlowSolver diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
-	} else {
-		ierr = SNESGetIterationNumber(ctx->snesP,&its);CHKERRQ(ierr);
-		ierr = PetscPrintf(PETSC_COMM_WORLD,"      snes_StandardFlowSolver converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
-	}
-  ierr = VecMin(fields->pressure,PETSC_NULL,&Pmin);CHKERRQ(ierr);
-	ierr = VecMax(fields->pressure,PETSC_NULL,&Pmax);CHKERRQ(ierr);
-	ierr = PetscPrintf(PETSC_COMM_WORLD,"      Pressure min / max:     %e %e\n",Pmin,Pmax);CHKERRQ(ierr);
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        for (eg = 0; eg < e->ng; eg++) {
+          for (c= 0; c < 3; c++){
+            n_elem[c][eg] += v_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][c][eg];
+            u_elem[c][eg] += u_array[ek+k][ej+j][ei+i][c]*e->phi[k][j][i][eg];
+            gradpress_elem[c][eg] += press_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][c][eg];
+          }
+        }
+      }
+    }
+  }
+  for (eg = 0; eg < e->ng; eg++){
+    v_mag_elem[eg] = sqrt((pow(n_elem[0][eg],2))+(pow(n_elem[1][eg],2))+(pow(n_elem[2][eg],2)));
+    for(c = 0; c < 3; c++){
+      n_elem[c][eg] = n_elem[c][eg]/v_mag_elem[eg];
+    }
+    if((PetscIsInfOrNanScalar(n_elem[0][eg])) || (PetscIsInfOrNanScalar(n_elem[1][eg])) || (PetscIsInfOrNanScalar(n_elem[2][eg])) )
+    {
+      n_elem[0][eg] = n_elem[1][eg] = n_elem[2][eg] = v_mag_elem[eg] = 0;
+    }
+  }
+  for (eg = 0; eg < e->ng; eg++) {
+    cellvelocityrate_array[ek][ej][ei][0] += -((1.-(pow(n_elem[0][eg],2)))*gradpress_elem[0][eg]
+                                              -gradpress_elem[1][eg]*n_elem[0][eg]*n_elem[1][eg]
+                                              -gradpress_elem[2][eg]*n_elem[0][eg]*n_elem[2][eg])*4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*v_mag_elem[eg]*e->weight[eg]/mu;
+    
+    cellvelocityrate_array[ek][ej][ei][1] += -(-gradpress_elem[0][eg]*n_elem[0][eg]*n_elem[1][eg]
+                                               +(1.-pow(n_elem[1][eg],2))*gradpress_elem[1][eg]
+                                               -gradpress_elem[2][eg]*n_elem[1][eg]*n_elem[2][eg])*4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*v_mag_elem[eg]*e->weight[eg]/mu;
+    
+    cellvelocityrate_array[ek][ej][ei][2] += -(-gradpress_elem[0][eg]*n_elem[0][eg]*n_elem[2][eg]
+                                               -gradpress_elem[1][eg]*n_elem[1][eg]*n_elem[2][eg]
+                                               +(1.-pow(n_elem[2][eg],2))*gradpress_elem[2][eg])*4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*v_mag_elem[eg]*e->weight[eg]/mu;
+  }
+  cellvelocityrate_array[ek][ej][ei][0] = cellvelocityrate_array[ek][ej][ei][0]/element_vol;
+  cellvelocityrate_array[ek][ej][ei][1] = cellvelocityrate_array[ek][ej][ei][1]/element_vol;
+  cellvelocityrate_array[ek][ej][ei][2] = cellvelocityrate_array[ek][ej][ei][2]/element_vol;
+	ierr = PetscFree3(gradpress_elem[0],gradpress_elem[1],gradpress_elem[2]);CHKERRQ(ierr);
+  ierr = PetscFree7(n_elem[0],n_elem[1],n_elem[2],u_elem[0],u_elem[1],u_elem[2],v_mag_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
-
-
-
-
-
 
 #undef __FUNCT__
 #define __FUNCT__ "FractureFlowVelocityCompute"
@@ -195,86 +234,39 @@ extern PetscErrorCode FractureFlowVelocityCompute(VFCtx *ctx, VFFields *fields)
 	PetscFunctionReturn(0);
 }
 
-
-
 #undef __FUNCT__
-#define __FUNCT__ "FractureFlowVelocityCompute_local"
-extern PetscErrorCode FractureFlowVelocityCompute_local(PetscReal ****cellvelocityrate_array, PetscReal ***press_array,PetscReal ****u_array, PetscReal ***v_array, VFFlowProp flowpropty, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
+#define __FUNCT__ "VF_FlowStandardFEMSNESSolve"
+extern PetscErrorCode VF_FlowStandardFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 {
-	PetscErrorCode ierr;
-	PetscInt		i, j, k, c;
-	PetscInt		eg;
-  PetscReal   mu;
-  PetscReal		element_vol = 0;
-  PetscReal   *gradpress_elem[3];
-  PetscReal         *u_elem[3];
-  PetscReal         *n_elem[3],*v_mag_elem;
-
+	PetscErrorCode     ierr;
+	SNESConvergedReason reason;
+	PetscInt           its;
+	PetscReal           Pmin,Pmax;
   
 	PetscFunctionBegin;
-  cellvelocityrate_array[ek][ej][ei][0] = 0;
-  cellvelocityrate_array[ek][ej][ei][1] = 0;
-  cellvelocityrate_array[ek][ej][ei][2] = 0;
-  mu      = flowpropty.mu;
-  ierr = PetscMalloc7(e->ng,PetscReal,&n_elem[0],
-                      e->ng,PetscReal,&n_elem[1],
-                      e->ng,PetscReal,&n_elem[2],
-                      e->ng,PetscReal,&u_elem[0],
-                      e->ng,PetscReal,&u_elem[1],
-                      e->ng,PetscReal,&u_elem[2],
-                      e->ng,PetscReal,&v_mag_elem);CHKERRQ(ierr);
-  
-	ierr = PetscMalloc3(e->ng,PetscReal,&gradpress_elem[0],e->ng,PetscReal,&gradpress_elem[1],e->ng,PetscReal,&gradpress_elem[2]);CHKERRQ(ierr);
-  for (eg = 0; eg < e->ng; eg++){
-    for (c = 0; c < 3; c++){
-      u_elem[c][eg] = 0.;
-      n_elem[c][eg] = 0;
-      gradpress_elem[c][eg] = 0.;
-    }
-    v_mag_elem[eg] = 0.;
-    element_vol += e->weight[eg];
+	ierr = VecCopy(fields->V,ctx->V);CHKERRQ(ierr);
+	ierr = VecCopy(fields->U,ctx->U);CHKERRQ(ierr);
+  ierr = VF_FormFlowStandardFEMMatricesnVectors(ctx->KP,ctx->KPlhs,ctx->RHSP,fields,ctx);CHKERRQ(ierr);
+	ierr = SNESSetFunction(ctx->snesP,ctx->PFunct,VF_FormFlowStandardFEMIFunction,ctx);CHKERRQ(ierr);
+  ierr = SNESSetJacobian(ctx->snesP,ctx->JacP,ctx->JacP,VF_FormFlowStandardFEMIJacobian,ctx);CHKERRQ(ierr);
+	if (ctx->verbose > 1) {
+		ierr = SNESMonitorSet(ctx->snesP,FEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	}
+  ierr = SNESSolve(ctx->snesP,PETSC_NULL,fields->pressure);CHKERRQ(ierr);
+	ierr = SNESGetConvergedReason(ctx->snesP,&reason);CHKERRQ(ierr);
+  ierr = FlowVelocityCompute(ctx,fields);CHKERRQ(ierr);
+  if (ctx->FractureFlowCoupling) {
+    ierr = FractureFlowVelocityCompute(ctx,fields);CHKERRQ(ierr);
   }
-  for (k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++) {
-        for (eg = 0; eg < e->ng; eg++) {
-          for (c= 0; c < 3; c++){
-            n_elem[c][eg] += v_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][c][eg];
-            u_elem[c][eg] += u_array[ek+k][ej+j][ei+i][c]*e->phi[k][j][i][eg];
-            gradpress_elem[c][eg] += press_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][c][eg];
-          }
-        }
-      }
-    }
-  }
-  for (eg = 0; eg < e->ng; eg++){
-    v_mag_elem[eg] = sqrt((pow(n_elem[0][eg],2))+(pow(n_elem[1][eg],2))+(pow(n_elem[2][eg],2)));
-    for(c = 0; c < 3; c++){
-      n_elem[c][eg] = n_elem[c][eg]/v_mag_elem[eg];
-    }
-    if((PetscIsInfOrNanScalar(n_elem[0][eg])) || (PetscIsInfOrNanScalar(n_elem[1][eg])) || (PetscIsInfOrNanScalar(n_elem[2][eg])) )
-    {
-      n_elem[0][eg] = n_elem[1][eg] = n_elem[2][eg] = v_mag_elem[eg] = 0;
-    }
-  }
-  for (eg = 0; eg < e->ng; eg++) {
-    cellvelocityrate_array[ek][ej][ei][0] += -((1.-(pow(n_elem[0][eg],2)))*gradpress_elem[0][eg]
-                                              -gradpress_elem[1][eg]*n_elem[0][eg]*n_elem[1][eg]
-                                              -gradpress_elem[2][eg]*n_elem[0][eg]*n_elem[2][eg])*4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*v_mag_elem[eg]*e->weight[eg]/mu;
-    
-    cellvelocityrate_array[ek][ej][ei][1] += -(-gradpress_elem[0][eg]*n_elem[0][eg]*n_elem[1][eg]
-                                               +(1.-pow(n_elem[1][eg],2))*gradpress_elem[1][eg]
-                                               -gradpress_elem[2][eg]*n_elem[1][eg]*n_elem[2][eg])*4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*v_mag_elem[eg]*e->weight[eg]/mu;
-    
-    cellvelocityrate_array[ek][ej][ei][2] += -(-gradpress_elem[0][eg]*n_elem[0][eg]*n_elem[2][eg]
-                                               -gradpress_elem[1][eg]*n_elem[1][eg]*n_elem[2][eg]
-                                               +(1.-pow(n_elem[2][eg],2))*gradpress_elem[2][eg])*4*(pow((u_elem[0][eg]*n_elem[0][eg] + u_elem[1][eg]*n_elem[1][eg] + u_elem[2][eg]*n_elem[2][eg]),3))*v_mag_elem[eg]*e->weight[eg]/mu;
-  }
-  cellvelocityrate_array[ek][ej][ei][0] = cellvelocityrate_array[ek][ej][ei][0]/element_vol;
-  cellvelocityrate_array[ek][ej][ei][1] = cellvelocityrate_array[ek][ej][ei][1]/element_vol;
-  cellvelocityrate_array[ek][ej][ei][2] = cellvelocityrate_array[ek][ej][ei][2]/element_vol;
-	ierr = PetscFree3(gradpress_elem[0],gradpress_elem[1],gradpress_elem[2]);CHKERRQ(ierr);
-  ierr = PetscFree7(n_elem[0],n_elem[1],n_elem[2],u_elem[0],u_elem[1],u_elem[2],v_mag_elem);CHKERRQ(ierr);
+	if (reason < 0) {
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snes_StandardFlowSolver diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+	} else {
+		ierr = SNESGetIterationNumber(ctx->snesP,&its);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_WORLD,"      snes_StandardFlowSolver converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+	}
+  ierr = VecMin(fields->pressure,PETSC_NULL,&Pmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->pressure,PETSC_NULL,&Pmax);CHKERRQ(ierr);
+	ierr = PetscPrintf(PETSC_COMM_WORLD,"      Pressure min / max:     %e %e\n",Pmin,Pmax);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -367,7 +359,7 @@ extern PetscErrorCode FlowVelocityCompute_local(PetscReal ****cellvelocityrate_a
   cellvelocityrate_array[ek][ej][ei][1] = 0;
   cellvelocityrate_array[ek][ej][ei][2] = 0;
   mu      = flowpropty.mu;
-	ierr = PetscMalloc4(e->ng,PetscReal,&gradpress_elem[0],e->ng,PetscReal,&gradpress_elem[1],e->ng,PetscReal,&gradpress_elem[2],e->ng,PetscReal,&v_elem);CHKERRQ(ierr);
+	ierr = PetscMalloc4(e->ng,&gradpress_elem[0],e->ng,&gradpress_elem[1],e->ng,&gradpress_elem[2],e->ng,&v_elem);CHKERRQ(ierr);
 	for (eg = 0; eg < e->ng; eg++){
     for(c = 0; c < 3; c++){
       gradpress_elem[c][eg] = 0.;
@@ -418,7 +410,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   Vec            perm_local;
   PetscReal      hx,hy,hz;  
   PetscReal      *K1_local,*K2_local,*KS_local,*K3_local,*K4_local,*KD_local,*KDF_local;
-  PetscReal      beta_c,alpha_c,mu;
+  PetscReal      mu;
   PetscReal      theta,timestepsize;
   PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
   MatStencil     *row;
@@ -428,7 +420,6 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 	Vec            fluxbc_local;
   PetscReal      M_inv;
   FACE           face;
-  MatStructure   flg;
   PetscReal      hwx, hwy, hwz;
   PetscReal      ***v_array;
   Vec            v_local;
@@ -454,7 +445,6 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 
 
   PetscFunctionBegin;  
-  flg = SAME_NONZERO_PATTERN;
   alphabiot  = ctx->flowprop.alphabiot;
   K_dr  = ctx->flowprop.K_dr;
   M_inv     = ctx->flowprop.M_inv;
@@ -463,8 +453,6 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
     M_inv = M_inv+alphabiot*alphabiot/K_dr;
   }
   
-  beta_c = ctx->flowprop.beta;
-  alpha_c = ctx->flowprop.alpha;
   theta = ctx->flowprop.theta;
   timestepsize = ctx->flowprop.timestepsize;
   mu     = ctx->flowprop.mu;
@@ -551,14 +539,14 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = DMGlobalToLocalBegin(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
   ierr = DMGlobalToLocalEnd(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScalCell,pmult_local,&pmult_array);CHKERRQ(ierr);
-  ierr = PetscMalloc7(nrow*nrow,PetscReal,&K1_local,
-                      nrow*nrow,PetscReal,&K2_local,
-                      nrow*nrow,PetscReal,&KS_local,
-                      nrow*nrow,PetscReal,&KD_local,
-                      nrow,PetscReal,&RHS_local,
-                      4,PetscReal,&RHS1_local,
-                      nrow,MatStencil,&row);CHKERRQ(ierr);
-  ierr = PetscMalloc3(nrow*nrow,PetscReal,&K3_local,nrow*nrow,PetscReal,&K4_local,nrow*nrow,PetscReal,&KDF_local);CHKERRQ(ierr);
+  ierr = PetscMalloc7(nrow*nrow,&K1_local,
+                      nrow*nrow,&K2_local,
+                      nrow*nrow,&KS_local,
+                      nrow*nrow,&KD_local,
+                      nrow,&RHS_local,
+                      4,&RHS1_local,
+                      nrow,&row);CHKERRQ(ierr);
+  ierr = PetscMalloc3(nrow*nrow,&K3_local,nrow*nrow,&K4_local,nrow*nrow,&KDF_local);CHKERRQ(ierr);
   
   for (ek = zs; ek < zs+zm; ek++) {
     for (ej = ys; ej < ys+ym; ej++) {
@@ -887,20 +875,19 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_FormFlowStandardFEMIJacobian"
-extern PetscErrorCode VF_FormFlowStandardFEMIJacobian(SNES snes,Vec Pressure,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user)
+extern PetscErrorCode VF_FormFlowStandardFEMIJacobian(SNES snes,Vec Pressure,Mat Jac,Mat JacPre,void *user)
 {
 	PetscErrorCode    ierr;
 	VFCtx             *ctx=(VFCtx*)user;
 	
 	PetscFunctionBegin;
-	*str = DIFFERENT_NONZERO_PATTERN;
-	ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
-	ierr = MatCopy(ctx->KP,*Jac,*str);
-	ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	if (*Jac != *Jacpre) {
-		ierr = MatAssemblyBegin(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-		ierr = MatAssemblyEnd(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatZeroEntries(JacPre);CHKERRQ(ierr);
+	ierr = MatCopy(ctx->KP,JacPre,SAME_NONZERO_PATTERN);
+	ierr = MatAssemblyBegin(JacPre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(JacPre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	if (Jac != JacPre) {
+		ierr = MatAssemblyBegin(Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+		ierr = MatAssemblyEnd(Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	}
 	PetscFunctionReturn(0);
 }

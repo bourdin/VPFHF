@@ -18,9 +18,9 @@ extern PetscErrorCode FEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	PetscErrorCode ierr;
 	
 	ierr = MPI_Comm_size(PETSC_COMM_WORLD,&comm_size);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KP);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->KPlhs);CHKERRQ(ierr);		
-  ierr = DMCreateMatrix(ctx->daScal,MATAIJ,&ctx->JacP);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,&ctx->KP);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daScal,&ctx->KPlhs);CHKERRQ(ierr);		
+  ierr = DMCreateMatrix(ctx->daScal,&ctx->JacP);CHKERRQ(ierr);
   ierr = MatZeroEntries(ctx->JacP);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->KP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->KPlhs,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
@@ -80,7 +80,7 @@ extern PetscErrorCode FlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 	ierr = TSMonitorSet(ctx->tsP,FEMTSMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = TSSetFromOptions(ctx->tsP);CHKERRQ(ierr);	
 
-    ierr = TSSolve(ctx->tsP,fields->pressure,PETSC_NULL);CHKERRQ(ierr);
+    ierr = TSSolve(ctx->tsP,fields->pressure);CHKERRQ(ierr);
     ierr = TSGetTimeStepNumber(ctx->tsP,&temp_step);CHKERRQ(ierr);
 	
 	ierr = VecDestroy(&ctx->Perm);CHKERRQ(ierr);
@@ -123,21 +123,20 @@ extern PetscErrorCode FormFunction_P(TS ts,PetscReal t,Vec vec1,Vec Func,void *u
 
 #undef __FUNCT__
 #define __FUNCT__ "FormIJacobian_P"
-extern PetscErrorCode FormIJacobian_P(TS ts,PetscReal t,Vec pressure,Vec pressuredot,PetscReal shift,Mat *Jac,Mat *Jacpre,MatStructure *str,void *user)
+extern PetscErrorCode FormIJacobian_P(TS ts,PetscReal t,Vec pressure,Vec pressuredot,PetscReal shift,Mat Jac,Mat Jacpre,void *user)
 {
 	PetscErrorCode ierr;
 	VFCtx          *ctx=(VFCtx*)user;
 
 	PetscFunctionBegin;
-	*str = DIFFERENT_NONZERO_PATTERN;
-	ierr = MatZeroEntries(*Jac);CHKERRQ(ierr);
-	ierr = MatCopy(ctx->KP,*Jac,*str);
-	ierr = MatAXPY(*Jac,shift,ctx->KPlhs,*str);CHKERRQ(ierr);
-	ierr = MatAssemblyBegin(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(*Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	if (*Jac != *Jacpre) {
-		ierr = MatAssemblyBegin(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-		ierr = MatAssemblyEnd(*Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatCopy(ctx->KP,Jacpre,DIFFERENT_NONZERO_PATTERN);
+	ierr = MatAXPY(Jacpre,shift,ctx->KPlhs,DIFFERENT_NONZERO_PATTERN);CHKERRQ(ierr);
+	ierr = MatAssemblyBegin(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(Jacpre,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	if (Jac != Jacpre) {
+  	ierr = MatCopy(Jacpre,Jac,DIFFERENT_NONZERO_PATTERN);
+		ierr = MatAssemblyBegin(Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+		ierr = MatAssemblyEnd(Jac,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	}	
 	
 /*	ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"Jacobian.txt",&viewer);CHKERRQ(ierr);
@@ -190,8 +189,8 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMGlobalToLocalEnd(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);	
 
-	ierr = PetscMalloc2(nrow*nrow,PetscReal,&K_local,nrow*nrow,PetscReal,&Klhs_local);CHKERRQ(ierr);
-	ierr = PetscMalloc2(nrow,PetscReal,&RHS_local,nrow,MatStencil,&row);CHKERRQ(ierr);
+	ierr = PetscMalloc2(nrow*nrow,&K_local,nrow*nrow,&Klhs_local);CHKERRQ(ierr);
+	ierr = PetscMalloc2(nrow,&RHS_local,nrow,&row);CHKERRQ(ierr);
 	
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
