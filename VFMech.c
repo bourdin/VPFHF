@@ -2292,6 +2292,9 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat K,Mat KPC,void *user)
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   
   ierr = MatZeroEntries(K);CHKERRQ(ierr);
+  if (KPC != K) {
+    ierr = MatZeroEntries(KPC);CHKERRQ(ierr);
+  }
   /*
    Get coordinates
    */
@@ -2335,26 +2338,27 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat K,Mat KPC,void *user)
         /*
          Compute and accumulate the contribution of the local stiffness matrix to the global stiffness matrix
          */
-        for (l = 0; l < nrow * nrow; l++) bilinearForm_local[l] = 0.;
+        ierr = PetscMemzero(bilinearForm_local,nrow * nrow * sizeof(PetscReal));
+        ierr = PetscMemzero(bilinearFormPC_local,nrow * nrow * sizeof(PetscReal));
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
             ierr = VF_BilinearFormU3D_local(bilinearForm_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-                                            ek,ej,ei,&ctx->e3D);                                   
+                                            ek,ej,ei,&ctx->e3D); 
+            ierr = PetscMemcpy(bilinearFormPC_local,bilinearForm_local,nrow * nrow * sizeof(PetscReal));
             break;
           case UNILATERAL_SHEARONLY:
             ierr = VF_BilinearFormUShearOnly3D_local(bilinearForm_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                                      ek,ej,ei,&ctx->e3D);
+            ierr = PetscMemcpy(bilinearFormPC_local,bilinearForm_local,nrow * nrow * sizeof(PetscReal));
             break;
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                                          ek,ej,ei,&ctx->e3D);
             if (KPC != K) {
-              if (ctx->vfprop.eta != ctx->vfprop.PCeta) {
-                ierr = PetscMemcpy(&PCvfprop,&ctx->vfprop,sizeof(VFProp));CHKERRQ(ierr);
-                PCvfprop.eta = PCvfprop.PCeta;
-                ierr = PetscMemcpy(&PCmatprop,&ctx->matprop[ctx->layer[ek]],sizeof(VFProp));CHKERRQ(ierr);
-                ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&PCmatprop,&PCvfprop,ek,ej,ei,&ctx->e3D);
-              }
+              ierr = PetscMemcpy(&PCvfprop,&ctx->vfprop,sizeof(VFProp));CHKERRQ(ierr);
+              PCvfprop.eta = PCvfprop.PCeta;
+              ierr = PetscMemcpy(&PCmatprop,&ctx->matprop[ctx->layer[ek]],sizeof(VFMatProp));CHKERRQ(ierr);
+              ierr = VF_BilinearFormUNoCompression3D_local(bilinearFormPC_local,u_array,v_array,&PCmatprop,&PCvfprop,ek,ej,ei,&ctx->e3D);
             }
             break;
         }
@@ -2368,10 +2372,11 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat K,Mat KPC,void *user)
             }
           }
         }
+
+        ierr = MatSetValuesStencil(K,nrow,row,nrow,row,bilinearForm_local,ADD_VALUES);CHKERRQ(ierr); 
         if (KPC != K) {
           ierr = MatSetValuesStencil(KPC,nrow,row,nrow,row,bilinearFormPC_local,ADD_VALUES);CHKERRQ(ierr); 
         }
-        ierr = MatSetValuesStencil(K,nrow,row,nrow,row,bilinearForm_local,ADD_VALUES);CHKERRQ(ierr); 
       }
     }
   }
@@ -2382,11 +2387,11 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat K,Mat KPC,void *user)
   ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
   if (KPC != K) {
-    ierr = MatAssemblyBegin(KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);  
-    ierr = MatApplyDirichletBC(KPC,&ctx->bcU[0]);CHKERRQ(ierr);
-    ierr = MatAssemblyBegin(KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+      ierr = MatAssemblyBegin(KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+      ierr = MatAssemblyEnd(KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);  
+      ierr = MatApplyDirichletBC(KPC,&ctx->bcU[0]);CHKERRQ(ierr);
+      ierr = MatAssemblyBegin(KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+      ierr = MatAssemblyEnd(KPC,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   }
 
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
