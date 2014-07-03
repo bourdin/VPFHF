@@ -896,11 +896,11 @@ extern PetscErrorCode ResetFlowBC(VFBC *bcP,VFBC *bcQ, VFFlowCases flowcase)
     for (c = 0; c < 3; c++) bcQ[c].face[i] = NONE;
   }
   for (i = 0; i < 12; i++) {
-    bcP[0].face[i] = NONE;
+    bcP[0].edge[i] = NONE;
     for (c = 0; c < 3; c++) bcQ[c].edge[i] = NONE;
   }
   for (i = 0; i < 8; i++) {
-    bcP[0].face[i] = NONE;
+    bcP[0].vertex[i] = NONE;
     for (c = 0; c < 3; c++) bcQ[c].vertex[i] = NONE;
   }
   switch (flowcase) {
