@@ -417,7 +417,7 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	ierr = MatAssemblyEnd(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);	
-	ierr = MatApplyDirichletBC(K,ctx->daScal,&ctx->bcT[0]);CHKERRQ(ierr);	
+	ierr = MatApplyDirichletBC(K,&ctx->bcT[0]);CHKERRQ(ierr);	
 	ierr = MatAssemblyBegin(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(Klhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);

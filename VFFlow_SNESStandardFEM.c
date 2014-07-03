@@ -786,7 +786,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = MatAssemblyEnd(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatApplyDirichletBC(K,ctx->daScal,&ctx->bcP[0]);CHKERRQ(ierr);
+  ierr = MatApplyDirichletBC(K,&ctx->bcP[0]);CHKERRQ(ierr);
   ierr = MatAssemblyBegin(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
