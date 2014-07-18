@@ -136,7 +136,6 @@ typedef enum {
 
 typedef enum {
 	UNILATERAL_NONE,
-	UNILATERAL_SHEARONLY,
 	UNILATERAL_NOCOMPRESSION
 } VFUnilateralType;
 
