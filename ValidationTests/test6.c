@@ -102,8 +102,6 @@ int main(int argc,char **argv)
   }
 
   ctx.matprop[0].alpha = 0.;
-
-
   ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
