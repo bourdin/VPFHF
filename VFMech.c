@@ -514,82 +514,6 @@ extern PetscErrorCode VF_BilinearFormU3D_local(PetscReal *Mat_local,PetscReal **
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_BilinearFormUShearOnly3D_local"
-/*
- VF_BilinearFormUShearOnly3D_local
- 
- (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
- */
-extern PetscErrorCode VF_BilinearFormUShearOnly3D_local(PetscReal *Mat_local,PetscReal ***v_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
-{
-  PetscInt       g,i1,i2,j1,j2,k1,k2,c1,c2,l;
-  PetscReal      *s_elem;
-  PetscReal       mat_gauss,kappa;
-  PetscErrorCode ierr;
-  
-  PetscFunctionBegin;
-  kappa = matprop->lambda + 2. * matprop->mu / 3.;
-  ierr   = PetscMalloc(e->ng * sizeof(PetscReal),&s_elem);CHKERRQ(ierr);
-
-  /*
-    s_elem is the material's compliance multiplicator (s(v) = v^2+\eta)
-  */
-  for (g = 0; g < e->ng; g++) s_elem[g] = 0.;
-  for (k1 = 0; k1 < e->nphiz; k1++) {
-    for (j1 = 0; j1 < e->nphiy; j1++) {
-      for (i1 = 0; i1 < e->nphix; i1++) {
-        for (g = 0; g < e->ng; g++) {
-          s_elem[g] += v_array[ek+k1][ej+j1][ei+i1] * e->phi[k1][j1][i1][g];
-        }
-      }
-    }
-  }
-  for (g = 0; g < e->ng; g++) {
-    s_elem[g] = s_elem[g] * s_elem[g] + vfprop->eta;
-  }
-  ierr = PetscLogFlops(2 * e->ng * (1. + e->nphix * e->nphiy * e->nphiz));CHKERRQ(ierr);
-  
-  for (l = 0; l < 9 * e->nphix * e->nphiy * e->nphiz * e->nphix * e->nphiy * e->nphiz; l++) {
-  Mat_local[l] = 0;
-  }
-  for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
-    for (j1 = 0; j1 < e->nphiy; j1++) {
-      for (i1 = 0; i1 < e->nphix; i1++) {
-        for (c1 = 0; c1 < e->dim; c1++) {
-          for (k2 = 0; k2 < e->nphiz; k2++) {
-            for (j2 = 0; j2 < e->nphiy; j2++) {
-              for (i2 = 0; i2 < e->nphix; i2++) {
-                for (c2 = 0; c2 < e->dim; c2++,l++) {
-                  for (g = 0; g < e->ng; g++){
-                    /* spherical part */
-                    mat_gauss = kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
-                    /* deviatoric part */
-                    mat_gauss -= 2. * matprop->mu * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.;
-                    mat_gauss += matprop->mu * s_elem[g] * e->dphi[k1][j1][i1][c2][g] * e->dphi[k2][j2][i2][c1][g];
-                    /* 13 flops */
-                    if (c1 == c2) {
-                      mat_gauss += matprop->mu * s_elem[g] * 
-                                    (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g] + 
-                                     e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g] + 
-                                     e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]);
-                      /* 8 flops */
-                    }
-                  Mat_local[l] += e->weight[g] * mat_gauss;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  ierr = PetscLogFlops(e->nphix * e->nphiy * e->nphiz * e->nphix * e->nphiy * e->nphiz * (9 + e->ng * (13*9+8*3)));CHKERRQ(ierr);  
-  ierr = PetscFree(s_elem);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "VF_BilinearFormUNoCompression3D_local"
 /*
  VF_BilinearFormUNoCompression3D_local
@@ -731,86 +655,18 @@ extern PetscErrorCode VF_ResidualUThermoPoro3D_local(PetscReal *residual_local,P
       for (j = 0; j < e->nphiy; j++) {
         for (i = 0; i < e->nphix; i++) {
           for (c = 0; c < dim; c++,l++) {
-            residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
-            * (coefalpha * theta_elem[g] + beta * pressure_elem[g])
-            * (v_elem[g] * v_elem[g] + vfprop->eta);
+            residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g] 
+                                 * (coefalpha * theta_elem[g] * (v_elem[g] * v_elem[g] + vfprop->eta) + beta * pressure_elem[g] * v_elem[g]);
           }
         }
       }
     }
   }
-  ierr = PetscLogFlops(9 * dim * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  ierr = PetscLogFlops(10 * dim * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
   /*
    Clean up
    */
   ierr = PetscFree3(theta_elem,pressure_elem,v_elem);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-
-#undef __FUNCT__
-#define __FUNCT__ "VF_ResidualUThermoPoroShearOnly3D_local"
-/*
- VF_ResidualUThermoPoroShearOnly3D_local
- 
- (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
- */
-extern PetscErrorCode VF_ResidualUThermoPoroShearOnly3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
-{
-  PetscErrorCode ierr;
-  PetscInt       l,i,j,k,g,c;
-  PetscInt       dim=3;
-  PetscReal      *theta_elem,*pressure_elem;
-  PetscReal      coefalpha,beta;
-  
-  PetscFunctionBegin;
-  coefalpha = (3.* matprop->lambda + 2. * matprop->mu) * matprop->alpha;
-  beta      = matprop->beta;
-  ierr      = PetscMalloc2(e->ng,&theta_elem,e->ng,&pressure_elem);CHKERRQ(ierr);
-  /*
-   Initialize theta_Elem and v_elem
-   */
-  for (g = 0; g < e->ng; g++) {
-    theta_elem[g]    = 0;
-    pressure_elem[g] = 0;
-  }
-  /*
-   Compute theta_elem
-   */
-  for (g = 0; g < e->ng; g++) {
-    for (k = 0; k < e->nphiz; k++) {
-      for (j = 0; j < e->nphiy; j++) {
-        for (i = 0; i < e->nphix; i++) {
-          theta_elem[g] += e->phi[k][j][i][g]
-          * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
-          pressure_elem[g] += e->phi[k][j][i][g] * pressure_array[ek+k][ej+j][ei+i];
-        }
-      }
-    }
-  }
-  ierr = PetscLogFlops(6 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
-  /*
-   Accumulate the contribution of the current element to the local
-   version of the RHS.
-   Note that only sperical terms appear in the RHS so there is no V
-   */
-  for (g = 0; g < e->ng; g++) {
-    for (l = 0,k = 0; k < e->nphiz; k++) {
-      for (j = 0; j < e->nphiy; j++) {
-        for (i = 0; i < e->nphix; i++) {
-          for (c = 0; c < dim; c++,l++) {
-            residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
-            * (theta_elem[g] * coefalpha + pressure_elem[g] * beta);
-          }
-        }
-      }
-    }
-  }
-  ierr = PetscLogFlops(6 * dim * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
-  /*
-   Clean up
-   */
-  ierr = PetscFree2(theta_elem,pressure_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -858,7 +714,6 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
           tr_epsilon[g] += e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] +
                            e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] +
                            e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2];         
-
         }
       }
     }
@@ -873,12 +728,11 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
         for (i = 0; i < e->nphix; i++) {
           for (c = 0; c < dim; c++,l++) {
             if (tr_epsilon[g] > 0) {
-              residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
-              * (coefalpha * theta_elem[g] + beta * pressure_elem[g])
-              * (v_elem[g] * v_elem[g] + vfprop->eta);
+              residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g] 
+                                   * (coefalpha * theta_elem[g] * (v_elem[g] * v_elem[g] + vfprop->eta) + beta * pressure_elem[g] * v_elem[g]);
             } else {
-              residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g]
-              * (theta_elem[g] * coefalpha + pressure_elem[g] * beta);
+              residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g] 
+                                   * (coefalpha * theta_elem[g] * vfprop->eta + beta * pressure_elem[g]);
             }
           }
         }
@@ -1919,10 +1773,6 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
             ierr = VF_BilinearFormU3D_local(bilinearForm_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                    ek,ej,ei,&ctx->e3D);
             break;
-          case UNILATERAL_SHEARONLY:
-            ierr = VF_BilinearFormUShearOnly3D_local(bilinearForm_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-                                            ek,ej,ei,&ctx->e3D);
-            break;
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                             ek,ej,ei,&ctx->e3D);
@@ -1958,11 +1808,6 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
             ierr = VF_ResidualUThermoPoro3D_local(residual_local,v_array,theta_array,thetaRef_array,pressure_array,
                                            &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                            ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
-            break;
-          case UNILATERAL_SHEARONLY:
-            ierr = VF_ResidualUThermoPoroShearOnly3D_local(residual_local,v_array,theta_array,thetaRef_array,
-                                                    pressure_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-                                                    ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
             break;
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_ResidualUThermoPoroNoCompression3D_local(residual_local,u_array,v_array,theta_array,thetaRef_array,
@@ -2328,11 +2173,6 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat K,Mat KPC,void *user)
                                             ek,ej,ei,&ctx->e3D); 
             ierr = PetscMemcpy(bilinearFormPC_local,bilinearForm_local,nrow * nrow * sizeof(PetscReal));
             break;
-          case UNILATERAL_SHEARONLY:
-            ierr = VF_BilinearFormUShearOnly3D_local(bilinearForm_local,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
-                                                     ek,ej,ei,&ctx->e3D);
-            ierr = PetscMemcpy(bilinearFormPC_local,bilinearForm_local,nrow * nrow * sizeof(PetscReal));
-            break;
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_BilinearFormUNoCompression3D_local(bilinearForm_local,u_array,v_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                                          ek,ej,ei,&ctx->e3D);
@@ -2575,44 +2415,6 @@ extern PetscErrorCode VF_BilinearFormVCoupling3D_local(PetscReal *Mat_local,Pets
 
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_BilinearFormVCouplingShearOnly3D_local"
-/*
- VF_BilinearFormVCouplingShearOnly3D_local
- 
- (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
- */
-extern PetscErrorCode VF_BilinearFormVCouplingShearOnly3D_local(PetscReal *Mat_local,PetscReal ****U_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
-{
-  PetscErrorCode ierr;
-  PetscInt       g,i1,i2,j1,j2,k1,k2,l;
-  PetscReal      *ElasticEnergyDensityS_local,*ElasticEnergyDensityD_local;
-  
-  PetscFunctionBegin;
-  ierr = PetscMalloc2(e->ng,&ElasticEnergyDensityS_local,
-                      e->ng,&ElasticEnergyDensityD_local);CHKERRQ(ierr);
-  ierr = ElasticEnergyDensitySphericalDeviatoric3D_local(ElasticEnergyDensityS_local,ElasticEnergyDensityD_local,
-                                                         U_array,theta_array,thetaRef_array,matprop,ek,ej,ei,e);CHKERRQ(ierr);
-  for (l = 0,k1 = 0; k1 < e->nphiz; k1++) {
-    for (j1 = 0; j1 < e->nphiy; j1++) {
-      for (i1 = 0; i1 < e->nphix; i1++) {
-        for (k2 = 0; k2 < e->nphiz; k2++) {
-          for (j2 = 0; j2 < e->nphiy; j2++) {
-            for (i2 = 0; i2 < e->nphix; i2++,l++) {
-              for (g = 0; g < e->ng; g++) {
-                Mat_local[l] += e->weight[g] * e->phi[k1][j1][i1][g] * e->phi[k2][j2][i2][g] * ElasticEnergyDensityD_local[g] * 2.;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  ierr = PetscFree2(ElasticEnergyDensityS_local,ElasticEnergyDensityD_local);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-
-#undef __FUNCT__
 #define __FUNCT__ "VF_BilinearFormVCouplingNoCompression3D_local"
 /*
  VF_BilinearFormVCouplingNoCompression3D_local
@@ -2649,6 +2451,137 @@ extern PetscErrorCode VF_BilinearFormVCouplingNoCompression3D_local(PetscReal *M
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "VF_ResidualVThermoPoro3D_local"
+/*
+  
+  VF_ResidualVThermoPoro3D_local: local assembly of the contribution of the thermo and poroelasticity terms to the V residual
+  
+  (c) 2014 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VF_ResidualVThermoPoro3D_local(PetscReal *residual_local,PetscReal ****u_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
+{
+  PetscErrorCode ierr;
+  PetscInt       l,i,j,k,g,c;
+  PetscReal      *Dtheta_elem,*pressure_elem,*divu_elem;
+  PetscReal      coefalpha,beta;
+  
+  PetscFunctionBegin;
+  coefalpha = (3.* matprop->lambda + 2. * matprop->mu) * matprop->alpha;
+  beta      = matprop->beta;
+  
+  ierr = PetscMalloc3(e->ng,&Dtheta_elem,
+                      e->ng,&pressure_elem,
+                      e->ng,&divu_elem);CHKERRQ(ierr);
+  /*
+   Initialize pressure_Elem, theta_Elem and v_elem
+   */
+  for (g = 0; g < e->ng; g++) {
+    Dtheta_elem[g]    = 0;
+    pressure_elem[g] = 0;
+    divu_elem[g]        = 0.;
+  }
+  /*
+   Compute theta_elem
+   */
+  for (g = 0; g < e->ng; g++) {
+    for (k = 0; k < e->nphiz; k++) {
+      for (j = 0; j < e->nphiy; j++) {
+        for (i = 0; i < e->nphix; i++) {
+          Dtheta_elem[g] += e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
+          pressure_elem[g] += e->phi[k][j][i][g] * pressure_array[ek+k][ej+j][ei+i];
+          for (c = 0; c < 3; c++) {
+            divu_elem[g] += e->dphi[k][j][i][c][g] * u_array[ek+k][ej+j][ei+i][c];
+          }
+        }
+      }
+    }
+  }
+  ierr = PetscLogFlops(11 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  
+  for (g = 0; g < e->ng; g++) {
+    for (l = 0,k = 0; k < e->nphiz; k++) {
+      for (j = 0; j < e->nphiy; j++) {
+        for (i = 0; i < e->nphix; i++) {
+          residual_local[l] += e->weight[g] * e->phi[k][j][i][g] 
+                             * pressure_elem[g] * (coefalpha * Dtheta_elem[g] - beta * divu_elem[g]);
+        }
+      }
+    }
+  }
+  ierr = PetscLogFlops(7 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  ierr = PetscFree3(Dtheta_elem,pressure_elem,divu_elem);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_ResidualVThermoPoroNoCompression3D_local"
+/*
+  
+  VF_ResidualVThermoPoroNoCompression3D_local: local assembly of the contribution of the thermo and poroelasticity terms to the V residual
+  
+  (c) 2014 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VF_ResidualVThermoPoroNoCompression3D_local(PetscReal *residual_local,PetscReal ****u_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
+{
+  PetscErrorCode ierr;
+  PetscInt       l,i,j,k,g,c;
+  PetscReal      *Dtheta_elem,*pressure_elem,*divu_elem,*tr_epsilon;
+  PetscReal      coefalpha,beta;
+  
+  PetscFunctionBegin;
+  coefalpha = (3.* matprop->lambda + 2. * matprop->mu) * matprop->alpha;
+  beta      = matprop->beta;
+  
+  ierr = PetscMalloc4(e->ng,&Dtheta_elem,
+                      e->ng,&pressure_elem,
+                      e->ng,&divu_elem,
+                      e->ng,&tr_epsilon);CHKERRQ(ierr);
+  /*
+   Initialize pressure_Elem, theta_Elem and v_elem
+   */
+  for (g = 0; g < e->ng; g++) {
+    Dtheta_elem[g]    = 0;
+    pressure_elem[g] = 0;
+    divu_elem[g]        = 0.;
+  }
+  /*
+   Compute theta_elem
+   */
+  for (g = 0; g < e->ng; g++) {
+    for (k = 0; k < e->nphiz; k++) {
+      for (j = 0; j < e->nphiy; j++) {
+        for (i = 0; i < e->nphix; i++) {
+          Dtheta_elem[g] += e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
+          pressure_elem[g] += e->phi[k][j][i][g] * pressure_array[ek+k][ej+j][ei+i];
+          for (c = 0; c < 3; c++) {
+            divu_elem[g] += e->dphi[k][j][i][c][g] * u_array[ek+k][ej+j][ei+i][c];
+          }
+          tr_epsilon[g] += e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0] +
+                           e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1] +
+                           e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2];         
+        }
+      }
+    }
+  }
+  ierr = PetscLogFlops(11 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  
+  for (g = 0; g < e->ng; g++) {
+    if (tr_epsilon[g] > 0.) {
+      for (l = 0,k = 0; k < e->nphiz; k++) {
+        for (j = 0; j < e->nphiy; j++) {
+          for (i = 0; i < e->nphix; i++) {
+            residual_local[l] += e->weight[g] * e->phi[k][j][i][g] 
+                               * pressure_elem[g] * (coefalpha * Dtheta_elem[g] - beta * divu_elem[g]);
+          }
+        }
+      }
+    }
+  }
+  ierr = PetscLogFlops(7 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
+  ierr = PetscFree4(Dtheta_elem,pressure_elem,divu_elem,tr_epsilon);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_ResidualVCrackPressure3D_local"
@@ -3173,16 +3106,13 @@ extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
             ierr = VF_BilinearFormVCoupling3D_local(K_local,U_array,theta_array,thetaRef_array,
                                            &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
                                            &ctx->e3D);CHKERRQ(ierr);
-            break;
-          case UNILATERAL_SHEARONLY:
-            ierr = VF_BilinearFormVCouplingShearOnly3D_local(K_local,U_array,theta_array,thetaRef_array,
-                                                    &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
-                                                    &ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_ResidualVThermoPoro3D_local(residual_local,U_array,theta_array,thetaRef_array,pressure_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D);
             break;
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_BilinearFormVCouplingNoCompression3D_local(K_local,U_array,theta_array,thetaRef_array,
                                                     &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
                                                     &ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_ResidualVThermoPoroNoCompression3D_local(residual_local,U_array,theta_array,thetaRef_array,pressure_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D);
             break;
         }
         
@@ -3361,11 +3291,6 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat Jac,Mat Jacpre,void *use
             ierr = VF_BilinearFormVCoupling3D_local(Jac_local,U_array,theta_array,thetaRef_array,
                                            &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
                                            &ctx->e3D);CHKERRQ(ierr);
-            break;
-          case UNILATERAL_SHEARONLY:
-            ierr = VF_BilinearFormVCouplingShearOnly3D_local(Jac_local,U_array,theta_array,thetaRef_array,
-                                                    &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,
-                                                    &ctx->e3D);CHKERRQ(ierr);
             break;
           case UNILATERAL_NOCOMPRESSION:
             ierr = VF_BilinearFormVCouplingNoCompression3D_local(Jac_local,U_array,theta_array,thetaRef_array,
