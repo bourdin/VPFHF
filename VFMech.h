@@ -10,14 +10,12 @@ extern PetscErrorCode BCUUpdate(VFBC *BC,VFPreset preset);
 extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensity_local,
                                                    PetscReal ****u_array,
                                                    PetscReal ***theta_array,PetscReal ***thetaRef_array,
-                                                   PetscReal ***pressure_array,
                                                    VFMatProp *matprop,PetscInt ek,PetscInt ej,PetscInt ei,
                                                    VFCartFEElement3D *e);
 extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal *ElasticEnergyDensityS_local,
                                                                       PetscReal *ElasticEnergyDensityD_local,
                                                                       PetscReal ****u_array,
                                                                       PetscReal ***theta_array,PetscReal ***thetaRef_array,
-                                                                      PetscReal ***pressure_array,
                                                                       VFMatProp *matprop,PetscInt ek,PetscInt ej,PetscInt ei,
                                                                       VFCartFEElement3D *e);
 
