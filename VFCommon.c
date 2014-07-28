@@ -555,7 +555,6 @@ extern PetscErrorCode VFMatPropGet(VFMatProp *matprop,PetscInt n)
     matprop[i].lambda = matprop[i].E * matprop[i].nu / (1. + matprop[i].nu) / (1. - 2. * matprop[i].nu);
     matprop[i].mu     = matprop[i].E / (1. + matprop[i].nu) * .5;
   }
-
   PetscFunctionReturn(0);
 }
 
@@ -944,7 +943,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = MatSetOption(JacU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daVect,&JacPCU);CHKERRQ(ierr);
   ierr = MatSetOption(JacPCU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-
 
   /* 
     Compute null space associated with rigid motions

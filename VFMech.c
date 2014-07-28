@@ -3,6 +3,7 @@
 #include "VFCommon.h"
 #include "VFMech.h"
 
+#define UNILATERAL_THRES 0.
 #undef __FUNCT__
 #define __FUNCT__ "BCUInit"
 /*
@@ -423,7 +424,7 @@ extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoricNoCompression3D_loc
                                    + sigma13_elem[g] * epsilon13_elem[g];
     tr_epsilon = epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g];
     
-    if (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g] > 0) {
+    if (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g] >= UNILATERAL_THRES) {
       ElasticEnergyDensityS_local[g] = kappa * tr_epsilon * tr_epsilon * .5;
     } else {
       ElasticEnergyDensityS_local[g] = 0.;
@@ -567,10 +568,10 @@ extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local
                 for (c2 = 0; c2 < e->dim; c2++,l++) {
                   for (g = 0; g < e->ng; g++){
                     /* spherical part */
-                    if (tr_epsilon[g] > 0.) {
+                    if (tr_epsilon[g] >= UNILATERAL_THRES) {
                       mat_gauss = kappa * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
                     } else {
-                      mat_gauss = kappa * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
+                      mat_gauss = kappa * ( 1. + vfprop->eta) * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g];
                     }
                     /* deviatoric part */
                     mat_gauss -= 2. * matprop->mu * s_elem[g] * e->dphi[k1][j1][i1][c1][g] * e->dphi[k2][j2][i2][c2][g] / 3.;
@@ -727,12 +728,12 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
       for (j = 0; j < e->nphiy; j++) {
         for (i = 0; i < e->nphix; i++) {
           for (c = 0; c < dim; c++,l++) {
-            if (tr_epsilon[g] > 0) {
+            if (tr_epsilon[g] >= UNILATERAL_THRES) {
               residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g] 
                                    * (coefalpha * theta_elem[g] * (v_elem[g] * v_elem[g] + vfprop->eta) + beta * pressure_elem[g] * v_elem[g]);
             } else {
               residual_local[l] += e->weight[g] * e->dphi[k][j][i][c][g] 
-                                   * (coefalpha * theta_elem[g] * vfprop->eta + beta * pressure_elem[g]);
+                                   * (coefalpha * theta_elem[g] * (1. + vfprop->eta) + beta * pressure_elem[g]);
             }
           }
         }
