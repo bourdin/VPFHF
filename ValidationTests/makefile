@@ -11,172 +11,174 @@ include ${PETSC_DIR}/conf/rules
 
 RELPATH_VFOBJ = $(VFOBJ:%=../%)
 test1: test1.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o test1 test1.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o test1 test1.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test2: test2.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o test2 test2.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o test2 test2.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test3: test3.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o test3 test3.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o test3 test3.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test4: test4.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o test4 test4.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o test4 test4.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test5: test5.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test6a: test6a.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test6: test6.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
+	#@echo PETSC_LIB is ${PETSC_LIB}
+	#@echo PETSC_TAO_LIB is ${PETSC_TAO_LIB}
 
 test7: test7.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test8: test8.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test9: test9.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test10: test10.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test11: test11.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test12: test12.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test13: test13.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test14: test14.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test15: test15.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test16: test16.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test16_sym: test16_sym.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 	
 test17: test17.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test18: test18.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test19: test19.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test20: test20.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test21: test21.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 	
 test22: test22.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test23: test23.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test24: test24.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test25: test25.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test26: test26.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test27: test27.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test28: test28.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test29: test29.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test30: test30.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test31: test31.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test32: test32.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test33: test33.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test34: test34.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test35: test35.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test36: test36.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test37: test37.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test38: test38.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test39: test39.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test40: test40.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test41: test41.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test42: test42.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test43: test43.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 	
 test44: test44.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test45: test45.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test46: test46.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test47: test47.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test48: test48.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test49: test49.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test50: test50.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test51: test51.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test52: test52.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 	
 test53: test53.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 temp: temp.o ${RELPATH_VFOBJ} chkopts
-	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 	
 runtest1: test1
 	@echo "Running " $@

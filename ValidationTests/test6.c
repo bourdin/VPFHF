@@ -74,6 +74,7 @@ mpiexec -n 4 ./test6 -n 100,100,2 -l 1,1,.1 -E 1 -nu 0 -U_snes_monitor          
 */
 
 #include "petsc.h"
+#include "petsctao.h"
 #include "VFCartFE.h"
 #include "VFCommon.h"
 #include "VFMech.h"

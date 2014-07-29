@@ -251,6 +251,7 @@ typedef struct {
 	VFPreset            preset;
 	SNES                snesV;
 	SNES                snesU;
+	Tao                 taoU;
 	/*
 	 Global variables for regular FEM Flow
 	 */
@@ -374,7 +375,6 @@ typedef struct {
 	Vec                 RHSFracVelPpre;
 	Mat                 KFracVelPlhs;
 	Vec                 PreFracFlowFields;
-	VFFields            *fields;
   Vec                 FracVelBCArray;
   VFBC                bcFracQ[3];
   Vec                 V;
@@ -388,6 +388,8 @@ typedef struct {
   PetscInt            numfracWells;
   Vec                 RegFracWellFlowRate;
   DM                  daVectCell;
+
+	VFFields            *fields;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

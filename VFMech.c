@@ -1236,7 +1236,7 @@ extern PetscErrorCode VF_InSituStressWork3D_local(PetscReal *Work_local,PetscRea
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWork,PetscReal *PressureWork,VFFields *fields,VFCtx *ctx)
+extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWork,PetscReal *PressureWork,Vec U,VFCtx *ctx)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -1282,33 +1282,33 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
    get U_array
    */
   ierr = DMGetLocalVector(ctx->daVect,&u_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,u_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,u_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daVect,U,INSERT_VALUES,u_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daVect,U,INSERT_VALUES,u_localVec);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx->daVect,u_localVec,&u_array);CHKERRQ(ierr);
   /*
    get v_array
    */
   ierr = DMGetLocalVector(ctx->daScal,&v_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->fields->V,INSERT_VALUES,v_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->fields->V,INSERT_VALUES,v_localVec);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,v_localVec,&v_array);CHKERRQ(ierr);
   /*
    get theta_array, thetaRef_array
    */
   ierr = DMGetLocalVector(ctx->daScal,&theta_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->fields->theta,INSERT_VALUES,theta_localVec);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,theta_localVec,&theta_array);CHKERRQ(ierr);
   ierr = DMGetLocalVector(ctx->daScal,&thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->fields->thetaRef,INSERT_VALUES,thetaRef_localVec);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,thetaRef_localVec,&thetaRef_array);CHKERRQ(ierr);
   /*
    get pressure_array
    */
   ierr = DMGetLocalVector(ctx->daScal,&pressure_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->fields->pressure,INSERT_VALUES,pressure_localVec);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,pressure_localVec,&pressure_array);CHKERRQ(ierr);
   /*
    Allocating multi-dimensional vectors in C is a pain, so for the in-situ stresses / surface stresses,
@@ -1546,11 +1546,12 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
 extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode      ierr;
-  SNESConvergedReason reason;
+  TaoConvergedReason  reason;
   PetscInt            its,flg= 0;
   PetscReal           Umin,Umax;
   
   PetscFunctionBegin;
+  /*
   if (ctx->verbose > 1) {
     ierr = SNESMonitorSet(ctx->snesU,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   }
@@ -1567,6 +1568,16 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   ierr = SNESGetConvergedReason(ctx->snesU,&reason);CHKERRQ(ierr);
   if (reason < 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+    flg = reason;
+  } else {
+    ierr = SNESGetIterationNumber(ctx->snesU,&its);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+  }
+  */
+  ierr = TaoSolve(ctx->taoU);CHKERRQ(ierr);
+  ierr = TaoGetConvergedReason(ctx->taoU,&reason);CHKERRQ(ierr);
+  if (reason < 0) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] taoU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
     flg = reason;
   } else {
     ierr = SNESGetIterationNumber(ctx->snesU,&its);CHKERRQ(ierr);
@@ -2225,6 +2236,71 @@ extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat K,Mat KPC,void *user)
     ierr = DMRestoreLocalVector(ctx->daVect,&U_localVec);CHKERRQ(ierr);
   }
   ierr = PetscFree3(bilinearForm_local,bilinearFormPC_local,row);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+
+
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_U_TaoObjective"
+/*
+  
+  VF_U_TaoObjective:
+  
+  (c) 2014 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VF_U_TaoObjective(Tao taoU,Vec U, PetscReal *objective,void *user)
+{
+  PetscErrorCode ierr;
+  VFCtx          *ctx=(VFCtx*)user;
+  PetscReal       ElasticEnergy,InsituWork,PressureWork;
+  
+  PetscFunctionBegin;
+  ElasticEnergy = 0.;
+  InsituWork    = 0.;
+  PressureWork  = 0.;
+  ierr = VF_UEnergy3D(&ElasticEnergy,&InsituWork,&PressureWork,U,user);CHKERRQ(ierr);
+  *objective = ElasticEnergy + InsituWork + PressureWork;
+  PetscFunctionReturn(0);
+}
+#undef __FUNCT__
+#define __FUNCT__ "VF_U_TAOGradient"
+/*
+  
+  VF_U_TAOGradient:
+  
+  (c) 2014 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VF_U_TAOGradient(Tao taoU,Vec U,Vec gradient,void *user)
+{
+  PetscErrorCode ierr;
+  VFCtx          *ctx=(VFCtx*)user;
+  
+  PetscFunctionBegin;
+  ierr = VF_UResidual(ctx->snesU,U,gradient,user);CHKERRQ(ierr);
+  ierr = GradientApplyDirichletBC(gradient,U,&ctx->bcU[0]);CHKERRQ(ierr);
+  
+  PetscFunctionReturn(0);
+}
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_U_TAOHessian"
+/*
+  
+  VF_U_TAOHessian:
+  
+  (c) 2014 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VF_U_TAOHessian(Tao taoU,Vec U,Mat H,Mat Hpre,void *user)
+{
+  PetscErrorCode ierr;
+  VFCtx          *ctx=(VFCtx*)user;
+
+  PetscFunctionBegin;
+  ierr = VF_UIJacobian(ctx->snesU,U,H,Hpre,user);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

@@ -994,6 +994,152 @@ extern PetscErrorCode ResidualApplyDirichletBC(Vec residual,Vec U,Vec BCU,VFBC *
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "GradientApplyDirichletBC"
+/*
+  GradientApplyDirichletBC
+
+  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode GradientApplyDirichletBC(Vec gradient,Vec U,VFBC *BC)
+{
+  PetscErrorCode ierr;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       i,j,k,c;
+  DM             da;
+  PetscReal  ****gradient_array;
+  PetscReal  ****U_array;
+  PetscInt       dim,dof;
+  
+  PetscFunctionBegin;
+  ierr = VecGetDM(gradient,&da);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
+                    &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  
+  if (dim == 2) {
+    ierr = PetscMalloc(sizeof(PetscReal ***),&gradient_array);CHKERRQ(ierr);
+    ierr = PetscMalloc(sizeof(PetscReal ***),&U_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,gradient,&gradient_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,U,&U_array[0]);CHKERRQ(ierr);
+  } else {
+    ierr = DMDAVecGetArrayDOF(da,gradient,&gradient_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,U,&U_array);CHKERRQ(ierr);
+  }
+  
+  for (c = 0;c < dof;c++) {
+    /* 
+      Faces
+    */
+    if (xs == 0) {
+      /*
+        x == 0
+      */
+      i = 0;
+      if (BC[c].face[X0] != NONE) {
+        for (k = zs; k < zs + zm; k++) {
+          for (j = ys; j < ys + ym; j++) {
+            gradient_array[k][j][i][c] = 0.;
+          }
+        }
+      }
+    }
+    if (xs + xm == nx) {
+      /*
+        x == nx-1
+      */
+      i = nx-1;
+      if (BC[c].face[X1] != NONE) {
+        for (k = zs; k < zs + zm; k++) {
+          for (j = ys; j < ys + ym; j++) {
+            gradient_array[k][j][i][c] = 0.;
+          }
+        }
+      }
+    }
+    if (ys == 0) {
+      /*
+        y == 0
+      */
+      j = 0;
+      if (BC[c].face[Y0] != NONE) {
+        for (k = zs; k < zs + zm; k++) {
+          for (i = xs; i < xs + xm; i++) {
+            gradient_array[k][j][i][c] = 0.;
+          }
+        }
+      }
+    }
+    if (ys + ym == ny) {
+      /*
+        y == ny-1
+      */
+      j = ny-1;
+      if (BC[c].face[Y1] != NONE) {
+        for (k = zs; k < zs + zm; k++) {
+          for (i = xs; i < xs + xm; i++) {
+            gradient_array[k][j][i][c] = 0.;
+          }
+        }
+      }
+    }
+    if (dim == 3) {
+      if (zs == 0) {
+        /*
+          z == 0
+        */
+        k = 0;
+        if (BC[c].face[Z0] != NONE) {
+          for (j = ys; j < ys + ym; j++) {
+            for (i = xs; i < xs + xm; i++) {
+              gradient_array[k][j][i][c] = 0.;
+            }
+          }
+        }
+      }
+      if (zs + zm == nz) {
+        /*
+          z == nz-1
+        */
+        k = nz-1;
+        if (BC[c].face[Z1] != NONE) {
+          for (j = ys; j < ys + ym; j++) {
+            for (i = xs; i < xs + xm; i++) {
+              gradient_array[k][j][i][c] = 0.;
+            }
+          }
+        }
+      }
+    }
+    /*
+      edges
+    */
+    /* 
+      vertices
+    */
+    if (xs == 0       && ys == 0       && zs == 0       && BC[c].vertex[X0Y0Z0] !=NONE) gradient_array[0][0][0][c]          = 0.;
+    if (xs == 0       && ys == 0       && zs + zm == nz && BC[c].vertex[X0Y0Z1] !=NONE) gradient_array[nz-1][0][0][c]       = 0.;
+    if (xs == 0       && ys + ym == ny && zs == 0       && BC[c].vertex[X0Y1Z0] !=NONE) gradient_array[0][ny-1][0][c]       = 0.;
+    if (xs == 0       && ys + ym == ny && zs + zm == nz && BC[c].vertex[X0Y1Z1] !=NONE) gradient_array[nz-1][ny-1][0][c]    = 0.;
+    if (xs + xm == nx && ys == 0       && zs == 0       && BC[c].vertex[X1Y0Z0] !=NONE) gradient_array[0][0][nx-1][c]       = 0.;
+    if (xs + xm == nx && ys == 0       && zs + zm == nz && BC[c].vertex[X1Y0Z1] !=NONE) gradient_array[nz-1][0][nx-1][c]    = 0.;
+    if (xs + xm == nx && ys + ym == ny && zs == 0       && BC[c].vertex[X1Y1Z0] !=NONE) gradient_array[0][ny-1][nx-1][c]    = 0.;
+    if (xs + xm == nx && ys + ym == ny && zs + zm == nz && BC[c].vertex[X1Y1Z1] !=NONE) gradient_array[nz-1][ny-1][nx-1][c] = 0.;
+  }
+  
+  if (dim == 2) {
+    ierr = DMDAVecRestoreArrayDOF(da,gradient,&gradient_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,U,&U_array[0]);CHKERRQ(ierr);
+    ierr = PetscFree(gradient_array);CHKERRQ(ierr);
+    ierr = PetscFree(U_array);CHKERRQ(ierr);
+  } else {
+    ierr = DMDAVecRestoreArrayDOF(da,gradient,&gradient_array);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,U,&U_array);CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "MatApplyDirichletBC"

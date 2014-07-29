@@ -1,4 +1,5 @@
 #include "petsc.h"
+#include "petscTao.h"
 #include "VFCartFE.h"
 #include "VFCommon_private.h"
 #include "VFCommon.h"
@@ -924,6 +925,13 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   /*
    U solver initialization
    */
+  ierr = DMCreateGlobalVector(ctx->daVect,&residualU);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daVect,&JacU);CHKERRQ(ierr);
+  ierr = MatSetOption(JacU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(ctx->daVect,&JacPCU);CHKERRQ(ierr);
+  ierr = MatSetOption(JacPCU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
+
+  /*
   ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesU);CHKERRQ(ierr);
   ierr = SNESSetDM(ctx->snesU,ctx->daVect);CHKERRQ(ierr);
   ierr = SNESSetOptionsPrefix(ctx->snesU,"U_");CHKERRQ(ierr);
@@ -937,13 +945,8 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = SNESSetComputeInitialGuess(ctx->snesU,VF_UInitialGuess,ctx);CHKERRQ(ierr);
   ierr = SNESSetTolerances(ctx->snesU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = SNESSetFromOptions(ctx->snesU);CHKERRQ(ierr);
+  */
   
-  ierr = DMCreateGlobalVector(ctx->daVect,&residualU);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daVect,&JacU);CHKERRQ(ierr);
-  ierr = MatSetOption(JacU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-  ierr = DMCreateMatrix(ctx->daVect,&JacPCU);CHKERRQ(ierr);
-  ierr = MatSetOption(JacPCU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-
   /* 
     Compute null space associated with rigid motions
   */
@@ -964,6 +967,8 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = MatSetFromOptions(JacU);
   ierr = MatSetFromOptions(JacPCU);
   */
+  
+  /*
   ierr = SNESSetFunction(ctx->snesU,residualU,VF_UResidual,ctx);CHKERRQ(ierr);
   ierr = SNESSetJacobian(ctx->snesU,JacU,JacPCU,VF_UIJacobian,ctx);CHKERRQ(ierr);
 
@@ -974,6 +979,25 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = KSPGetPC(kspU,&pcU);CHKERRQ(ierr);
   ierr = PCSetType(pcU,PCBJACOBI);CHKERRQ(ierr);
   ierr = PCSetFromOptions(pcU);CHKERRQ(ierr);
+  */
+
+  ierr = TaoCreate(PETSC_COMM_WORLD,&ctx->taoU);CHKERRQ(ierr);
+  ierr = TaoSetOptionsPrefix(ctx->taoU,"U_");CHKERRQ(ierr);
+  ierr = TaoSetFromOptions(ctx->taoU);CHKERRQ(ierr);
+  ierr = TaoSetInitialVector(ctx->taoU,ctx->fields->U);CHKERRQ(ierr);
+  
+  //ierr = TaoSetObjectiveRoutine(ctx->taoU,VF_U_TaoObjective,ctx);CHKERRQ(ierr);
+  //ierr = TaoSetGradientRoutine(ctx->taoU,VF_U_TaoGradient,ctx);CHKERRQ(ierr);
+  //ierr = TaoSetHessianRoutine(ctx->taoU,JacU,JacPCU,VF_U_TaoObjective,ctx);CHKERRQ(ierr);
+
+  ierr = TaoGetKSP(ctx->taoU,&kspU);CHKERRQ(ierr);
+  ierr = KSPSetTolerances(kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSetType(kspU,KSPCG);CHKERRQ(ierr);
+  ierr = KSPSetFromOptions(kspU);CHKERRQ(ierr);
+  ierr = KSPGetPC(kspU,&pcU);CHKERRQ(ierr);
+  ierr = PCSetType(pcU,PCBJACOBI);CHKERRQ(ierr);
+  ierr = PCSetFromOptions(pcU);CHKERRQ(ierr);
+
   /*
    V solver initialization
    */
@@ -1197,9 +1221,9 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = DMDestroy(&ctx->daScalCell);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daVectCell);CHKERRQ(ierr);
 
-  ierr = SNESDestroy(&ctx->snesU);CHKERRQ(ierr);
+  //ierr = SNESDestroy(&ctx->snesU);CHKERRQ(ierr);
+  ierr = TaoDestroy(&ctx->taoU);CHKERRQ(ierr);
   ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
-
   ierr = VecDestroy(&ctx->pressure_old);CHKERRQ(ierr);
 
   
