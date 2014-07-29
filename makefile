@@ -12,7 +12,7 @@ dirs:
 	@mkdir -p bin/${PETSC_ARCH}
 
 VF_Chevron: dirs ${VFOBJ} VF_Chevron.o chkopts
-	${CLINKER} -o bin/${PETSC_ARCH}/VF_Chevron VF_Chevron.o ${VFOBJ} ${PETSC_LIB}
+	${CLINKER} -o bin/${PETSC_ARCH}/VF_Chevron VF_Chevron.o ${VFOBJ} ${PETSC_TAO_LIB}
 
 Utils: dirs
 	@echo Making all in ${VFDIR}/Utils
