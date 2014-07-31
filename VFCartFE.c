@@ -1001,7 +1001,7 @@ extern PetscErrorCode ResidualApplyDirichletBC(Vec residual,Vec U,Vec BCU,VFBC *
 
   (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode GradientApplyDirichletBC(Vec gradient,Vec U,VFBC *BC)
+extern PetscErrorCode GradientApplyDirichletBC(Vec gradient,VFBC *BC)
 {
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
@@ -1010,7 +1010,6 @@ extern PetscErrorCode GradientApplyDirichletBC(Vec gradient,Vec U,VFBC *BC)
   PetscInt       i,j,k,c;
   DM             da;
   PetscReal  ****gradient_array;
-  PetscReal  ****U_array;
   PetscInt       dim,dof;
   
   PetscFunctionBegin;
@@ -1021,12 +1020,9 @@ extern PetscErrorCode GradientApplyDirichletBC(Vec gradient,Vec U,VFBC *BC)
   
   if (dim == 2) {
     ierr = PetscMalloc(sizeof(PetscReal ***),&gradient_array);CHKERRQ(ierr);
-    ierr = PetscMalloc(sizeof(PetscReal ***),&U_array);CHKERRQ(ierr);
     ierr = DMDAVecGetArrayDOF(da,gradient,&gradient_array[0]);CHKERRQ(ierr);
-    ierr = DMDAVecGetArrayDOF(da,U,&U_array[0]);CHKERRQ(ierr);
   } else {
     ierr = DMDAVecGetArrayDOF(da,gradient,&gradient_array);CHKERRQ(ierr);
-    ierr = DMDAVecGetArrayDOF(da,U,&U_array);CHKERRQ(ierr);
   }
   
   for (c = 0;c < dof;c++) {
@@ -1131,12 +1127,9 @@ extern PetscErrorCode GradientApplyDirichletBC(Vec gradient,Vec U,VFBC *BC)
   
   if (dim == 2) {
     ierr = DMDAVecRestoreArrayDOF(da,gradient,&gradient_array[0]);CHKERRQ(ierr);
-    ierr = DMDAVecRestoreArrayDOF(da,U,&U_array[0]);CHKERRQ(ierr);
     ierr = PetscFree(gradient_array);CHKERRQ(ierr);
-    ierr = PetscFree(U_array);CHKERRQ(ierr);
   } else {
     ierr = DMDAVecRestoreArrayDOF(da,gradient,&gradient_array);CHKERRQ(ierr);
-    ierr = DMDAVecRestoreArrayDOF(da,U,&U_array);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }

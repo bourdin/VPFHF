@@ -126,7 +126,7 @@ int main(int argc,char **argv)
     ctx.ElasticEnergy = 0;
     ctx.InsituWork    = 0;
     ctx.PressureWork  = 0.;
-    ierr              = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
+    ierr              = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,fields.U,&ctx);CHKERRQ(ierr);
     ctx.TotalEnergy   = ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork;
 
     ierr = PetscPrintf(PETSC_COMM_WORLD,  "Elastic Energy:          \t%e\n",ctx.ElasticEnergy);CHKERRQ(ierr);

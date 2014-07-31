@@ -41,6 +41,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec Func,void *user);
 extern PetscErrorCode VF_UInitialGuess(SNES snesU, Vec x, void *user);
 extern PetscErrorCode VF_USNESMonitor(SNES snes,PetscInt U_its,PetscReal fnorm,void* ptr);
 
-extern PetscErrorCode VF_U_TAOGradient(Tao taoU,Vec U,Vec gradient, void *user);
-extern PetscErrorCode VF_U_TAOHessian(Tao taoU,Vec U,Mat H,Mat Hpre, void *user);
+extern PetscErrorCode VF_U_TaoObjective(Tao taoU,Vec U, PetscReal *objective,void *user);
+extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient, void *user);
+extern PetscErrorCode VF_U_TaoHessian(Tao taoU,Vec U,Mat H,Mat Hpre, void *user);
 #endif

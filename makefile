@@ -21,3 +21,6 @@ Utils: dirs
 test:
 	@echo Running all tests in ${VFDIR}/ValidationTests
 	@make -C ${VFDIR}/ValidationTests test
+
+clean::
+	@make -C ${VFDIR}/ValidationTests clean
