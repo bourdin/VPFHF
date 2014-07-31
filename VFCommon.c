@@ -986,18 +986,23 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = TaoSetFromOptions(ctx->taoU);CHKERRQ(ierr);
   ierr = TaoSetInitialVector(ctx->taoU,ctx->fields->U);CHKERRQ(ierr);
   
-  //ierr = TaoSetObjectiveRoutine(ctx->taoU,VF_U_TaoObjective,ctx);CHKERRQ(ierr);
-  //ierr = TaoSetGradientRoutine(ctx->taoU,VF_U_TaoGradient,ctx);CHKERRQ(ierr);
-  //ierr = TaoSetHessianRoutine(ctx->taoU,JacU,JacPCU,VF_U_TaoObjective,ctx);CHKERRQ(ierr);
+  ierr = TaoSetObjectiveRoutine(ctx->taoU,VF_U_TaoObjective,ctx);CHKERRQ(ierr);
+  ierr = TaoSetGradientRoutine(ctx->taoU,VF_U_TaoGradient,ctx);CHKERRQ(ierr);
+  ierr = TaoSetHessianRoutine(ctx->taoU,JacU,JacPCU,VF_U_TaoHessian,ctx);CHKERRQ(ierr);
+ierr = TaoView(ctx->taoU,PETSC_VIEWER_STDOUT_WORLD);
+
 
   ierr = TaoGetKSP(ctx->taoU,&kspU);CHKERRQ(ierr);
-  ierr = KSPSetTolerances(kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
-  ierr = KSPSetType(kspU,KSPCG);CHKERRQ(ierr);
-  ierr = KSPSetFromOptions(kspU);CHKERRQ(ierr);
-  ierr = KSPGetPC(kspU,&pcU);CHKERRQ(ierr);
-  ierr = PCSetType(pcU,PCBJACOBI);CHKERRQ(ierr);
-  ierr = PCSetFromOptions(pcU);CHKERRQ(ierr);
-
+  if (kspU) {
+    ierr = KSPSetOptionsPrefix(kspU,"U_");CHKERRQ(ierr);
+    ierr = KSPSetTolerances(kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+    ierr = KSPSetType(kspU,KSPCG);CHKERRQ(ierr);
+    ierr = KSPSetFromOptions(kspU);CHKERRQ(ierr);
+    ierr = KSPGetPC(kspU,&pcU);CHKERRQ(ierr);
+    ierr = PCSetOptionsPrefix(pcU,"U_");CHKERRQ(ierr);
+    ierr = PCSetType(pcU,PCBJACOBI);CHKERRQ(ierr);
+    ierr = PCSetFromOptions(pcU);CHKERRQ(ierr);
+  }
   /*
    V solver initialization
    */
@@ -1136,7 +1141,7 @@ extern PetscErrorCode VFElasticityTimeStep(VFCtx *ctx,VFFields *fields)
   ctx->ElasticEnergy=0;
   ctx->InsituWork   =0;
   ctx->PressureWork = 0.;
-  ierr              = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,&ctx->PressureWork,fields,ctx);CHKERRQ(ierr);
+  ierr              = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,&ctx->PressureWork,fields->U,ctx);CHKERRQ(ierr);
   ctx->TotalEnergy  = ctx->ElasticEnergy - ctx->InsituWork - ctx->PressureWork;
   PetscFunctionReturn(0);
 }
@@ -1182,7 +1187,7 @@ extern PetscErrorCode VFFractureTimeStep(VFCtx *ctx,VFFields *fields)
 
   ctx->ElasticEnergy = 0.;
   ctx->InsituWork    = 0.;
-  ierr               = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,&ctx->PressureWork,fields,ctx);CHKERRQ(ierr);
+  ierr               = VF_UEnergy3D(&ctx->ElasticEnergy,&ctx->InsituWork,&ctx->PressureWork,fields->U,ctx);CHKERRQ(ierr);
   ctx->SurfaceEnergy = 0.;
   ierr               = VF_VEnergy3D(&ctx->SurfaceEnergy,fields,ctx);CHKERRQ(ierr);
   ctx->TotalEnergy   = ctx->ElasticEnergy + ctx->SurfaceEnergy - ctx->InsituWork - ctx->PressureWork;

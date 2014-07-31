@@ -1229,8 +1229,6 @@ extern PetscErrorCode CellToNodeInterpolation(Vec node_vec,Vec cell_vec,VFCtx *c
 		ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,cell_vec,&cell_arraydof);CHKERRQ(ierr);
 	}
   ierr = VecDestroy(&volume);CHKERRQ(ierr);
-	ierr = MPI_Reduce(&nodal_sum_local,&TotalNodeSum,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
-	ierr = MPI_Reduce(&cell_sum_local,&TotalCellSum,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

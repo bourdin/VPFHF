@@ -1252,8 +1252,8 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   PetscReal      ***theta_array;
   PetscReal      ***thetaRef_array;
   PetscReal      ***pressure_array;
-  PetscReal      myInsituWork   = 0.,myPressureWork= 0.;
-  PetscReal      myElasticEnergy= 0.,myElasticEnergyLocal= 0.;
+  PetscReal      myInsituWork,myPressureWork;
+  PetscReal      myElasticEnergy,myElasticEnergyLocal;
   PetscReal      hx,hy,hz;
   PetscReal      ****coords_array;
   PetscReal      ****f_array;
@@ -1266,6 +1266,11 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
   PetscReal      BBmin[3],BBmax[3];
   
   PetscFunctionBegin;
+  myElasticEnergy = 0.;
+  myInsituWork = 0.;
+  myPressureWork = 0.;
+  myElasticEnergyLocal = 0;
+  
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -1512,10 +1517,11 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
       }
     }
   }
-  ierr = MPI_Reduce(&myElasticEnergy,ElasticEnergy,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
-  ierr = MPI_Reduce(&myPressureWork,PressureWork,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
-  ierr = MPI_Reduce(&myInsituWork,InsituWork,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
   
+  ierr = MPI_Allreduce(&myElasticEnergy,ElasticEnergy,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+  ierr = MPI_Allreduce(&myPressureWork,PressureWork,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+  ierr = MPI_Allreduce(&myInsituWork,InsituWork,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_localVec,&u_array);CHKERRQ(ierr);
@@ -1549,6 +1555,10 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   TaoConvergedReason  reason;
   PetscInt            its,flg= 0;
   PetscReal           Umin,Umax;
+  PetscReal           f;
+  PetscReal           gnorm;
+  PetscReal           cnorm;
+  PetscReal           xdiff;
   
   PetscFunctionBegin;
   /*
@@ -1580,8 +1590,11 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] taoU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
     flg = reason;
   } else {
-    ierr = SNESGetIterationNumber(ctx->snesU,&its);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+    //ierr = SNESGetIterationNumber(ctx->snesU,&its);CHKERRQ(ierr);
+    
+    ierr = TaoGetSolutionStatus(ctx->taoU,&its,&f,&gnorm,&cnorm,&xdiff,&reason);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"its=%i f=%g gnorm=%g cnorm=%g,xdiff=%g\n",its,f,gnorm,cnorm,xdiff);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      taoU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
   }
   PetscFunctionReturn(flg);
 }
@@ -2266,35 +2279,34 @@ extern PetscErrorCode VF_U_TaoObjective(Tao taoU,Vec U, PetscReal *objective,voi
   PetscFunctionReturn(0);
 }
 #undef __FUNCT__
-#define __FUNCT__ "VF_U_TAOGradient"
+#define __FUNCT__ "VF_U_TaoGradient"
 /*
   
-  VF_U_TAOGradient:
+  VF_U_TaoGradient:
   
   (c) 2014 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VF_U_TAOGradient(Tao taoU,Vec U,Vec gradient,void *user)
+extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
 {
   PetscErrorCode ierr;
   VFCtx          *ctx=(VFCtx*)user;
   
   PetscFunctionBegin;
   ierr = VF_UResidual(ctx->snesU,U,gradient,user);CHKERRQ(ierr);
-  ierr = GradientApplyDirichletBC(gradient,U,&ctx->bcU[0]);CHKERRQ(ierr);
-  
+  ierr = GradientApplyDirichletBC(gradient,&ctx->bcU[0]);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_U_TAOHessian"
+#define __FUNCT__ "VF_U_TaoHessian"
 /*
   
-  VF_U_TAOHessian:
+  VF_U_TaoHessian:
   
   (c) 2014 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VF_U_TAOHessian(Tao taoU,Vec U,Mat H,Mat Hpre,void *user)
+extern PetscErrorCode VF_U_TaoHessian(Tao taoU,Vec U,Mat H,Mat Hpre,void *user)
 {
   PetscErrorCode ierr;
   VFCtx          *ctx=(VFCtx*)user;
@@ -2899,8 +2911,8 @@ extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFC
       }
   }
   *SurfaceEnergy = 0.;
-  ierr           = MPI_Reduce(&mySurfaceEnergy,SurfaceEnergy,1,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);CHKERRQ(ierr);
   
+  ierr = MPI_Allreduce(&mySurfaceEnergy,SurfaceEnergy,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx->daScal,v_localVec,&v_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&v_localVec);CHKERRQ(ierr);
