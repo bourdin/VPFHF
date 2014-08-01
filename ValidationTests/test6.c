@@ -102,7 +102,7 @@ int main(int argc,char **argv)
     ctx.hasCrackPressure = PETSC_TRUE;
   }
 
-  ctx.matprop[0].alpha = 0.;
+  //ctx.matprop[0].alpha = 0.;
   ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
@@ -120,6 +120,7 @@ int main(int argc,char **argv)
     }
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Solving for p = %g\n",ctx.timevalue);CHKERRQ(ierr);
     ierr = VecSet(fields.pressure,ctx.timevalue);CHKERRQ(ierr);
+    ierr = VecSet(fields.theta,ctx.timevalue);CHKERRQ(ierr);
     ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
     ierr = VF_StepU(&fields,&ctx);
 

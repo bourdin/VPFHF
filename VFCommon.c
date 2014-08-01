@@ -1,5 +1,5 @@
 #include "petsc.h"
-#include "petscTao.h"
+#include "petsctao.h"
 #include "VFCartFE.h"
 #include "VFCommon_private.h"
 #include "VFCommon.h"
@@ -989,8 +989,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = TaoSetObjectiveRoutine(ctx->taoU,VF_U_TaoObjective,ctx);CHKERRQ(ierr);
   ierr = TaoSetGradientRoutine(ctx->taoU,VF_U_TaoGradient,ctx);CHKERRQ(ierr);
   ierr = TaoSetHessianRoutine(ctx->taoU,JacU,JacPCU,VF_U_TaoHessian,ctx);CHKERRQ(ierr);
-ierr = TaoView(ctx->taoU,PETSC_VIEWER_STDOUT_WORLD);
-
 
   ierr = TaoGetKSP(ctx->taoU,&kspU);CHKERRQ(ierr);
   if (kspU) {
