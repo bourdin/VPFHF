@@ -1952,7 +1952,6 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
           ierr = VF_ResidualUCrackPressure3D_local(residual_local,v_array,pressure_array,
                                                     &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
         }
-
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
             for (i = 0; i < ctx->e3D.nphix; i++) {
@@ -2383,7 +2382,7 @@ extern PetscErrorCode VF_U_TaoObjective(Tao taoU,Vec U, PetscReal *objective,voi
   InsituWork    = 0.;
   PressureWork  = 0.;
   ierr = VF_UEnergy3D(&ElasticEnergy,&InsituWork,&PressureWork,U,user);CHKERRQ(ierr);
-  *objective = ElasticEnergy + InsituWork + PressureWork;
+  *objective = ElasticEnergy - InsituWork - PressureWork;
   PetscFunctionReturn(0);
 }
 #undef __FUNCT__
@@ -2674,9 +2673,9 @@ extern PetscErrorCode VF_ResidualVThermoPoro3D_local(PetscReal *residual_local,P
    Initialize pressure_Elem, theta_Elem and v_elem
    */
   for (g = 0; g < e->ng; g++) {
-    Dtheta_elem[g]    = 0;
-    pressure_elem[g] = 0;
-    divu_elem[g]        = 0.;
+    Dtheta_elem[g]   = 0.;
+    pressure_elem[g] = 0.;
+    divu_elem[g]     = 0.;
   }
   /*
    Compute theta_elem

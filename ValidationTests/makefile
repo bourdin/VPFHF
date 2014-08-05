@@ -30,8 +30,6 @@ test6a: test6a.o ${RELPATH_VFOBJ} chkopts
 
 test6: test6.o ${RELPATH_VFOBJ} chkopts
 	${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
-	#@echo PETSC_LIB is ${PETSC_LIB}
-	#@echo PETSC_TAO_LIB is ${PETSC_TAO_LIB}
 
 test7: test7.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}

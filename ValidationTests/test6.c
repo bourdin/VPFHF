@@ -71,6 +71,32 @@ mpiexec -n 4 ./test6 -n 100,100,2 -l 1,1,.1 -E 1 -nu 0 -U_snes_monitor          
              -U_pc_type hypre  -u_pc_hypre_type boomeramg -u_pc_hypre_boomeramg_strong_threshold 0.7  \
              -epsilon .03 -verbose 0 -eta 1e-8 -atnum 1 -unilateral nocompression  -pressure 1.5      \
              -maxtimestep 2 
+             
+srun -n 12   ./test6 -n 100,100,2 -l 1,1,.1 -E 1 -nu 0 -atnum 1 -epsilon .03 -eta 1e-8                    \
+             -npc 1 -pc0_center 0.5,0.5,0.01 -pc0_phi 90 -pc0_r .2 -pc0_theta 45 -pc0_thickness .015      \
+             -insitumax 0,0,0,0,0,0 -insitumin 0,0,0,0,0,0 -minvol 0. -maxvol .1 -maxtimestep 11          \
+             -options_file ../BCfiles/2DXYRigidMotion.txt                                                 \
+             -V_X0_BC ONE -V_X1_BC ONE -V_Y0_BC ONE -V_Y1_BC ONE                                          \
+             -u_pc_type hypre -u_pc_hypre_boomeramg_strong_threshold 0.7 -u_pc_hypre_type boomeramg       \
+             -pressure 1.5 -unilateral nocompression -alpha 0 -beta 1  -verbose 0 -U_snes_monitor 
+             
+srun -n 12   ./test6 -n 100,10,10 -l 1,.1,.1 -E 1 -nu 0 -atnum 1 -epsilon .05 -eta 1e-8                   \
+             -npc 1 -pc0_center 0.5,0.05,0.05 -pc0_phi 90 -pc0_r 1. -pc0_theta 45 -pc0_thickness .015      \
+             -insitumax 0,0,0,0,0,0 -insitumin 0,0,0,0,0,0 -minvol 0. -maxvol .1 -maxtimestep 11          \
+             -U_Y0_BC_1 ZERO -U_Y1_BC_1 ZERO -U_Z0_BC_2 ZERO -U_Z1_BC_2 ZERO                              \
+             -U_X0_BC_0 FIXED -U_X1_BC_0 FIXED -U_X0_0 -1. -U_X1_0 1.                                     \
+             -U_tao_type lmvm -U_tao_monitor -U_tao_fatol 1e-9 -U_tao_frtol 1e-9                          \
+             -pressure 0 -alpha 0 -beta 0 -unilateral nocompression  -maxtimestep 1
+
+
+srun -n 12   ./test6 -n 100,10,10 -l 1,.1,.1 -E 1 -nu 0 -atnum 1 -epsilon .03 -eta 1e-8                   \
+             -npc 1 -pc0_center 0.5,0.05,0.05 -pc0_phi 90 -pc0_r 1. -pc0_theta 00 -pc0_thickness .015     \
+             -insitumax 0,0,0,0,0,0 -insitumin 0,0,0,0,0,0 -minvol 0. -maxvol .1 -maxtimestep 11          \
+             -U_Y0_BC_1 NONE -U_Y1_BC_1 NONE -U_Z0_BC_2 NONE -U_Z1_BC_2 NONE                              \
+             -U_X0_BC_0 FIXED -U_X0_BC_1 ZERO  -U_X0_BC_2 ZERO -U_X1_BC_0 FIXED                           \
+             -U_X1_BC_1 ZERO -U_X1_BC_2 ZERO -U_X0_0 0 -U_X1_0 0.                                         \
+             -U_tao_type ntr -U_tao_monitor -U_tao_fatol 1e-9 -U_tao_frtol 1e-9                           \
+             -pressure 1 -alpha 0 -beta 10 -unilateral nocompression  -maxtimestep 1   -pressurize no
 */
 
 #include "petsc.h"
@@ -98,15 +124,11 @@ int main(int argc,char **argv)
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 
   ierr = PetscOptionsGetReal(NULL,"-pressure",&p,&flg);CHKERRQ(ierr);
-  if (flg) {
-    ctx.hasCrackPressure = PETSC_TRUE;
-  }
 
-  ctx.matprop[0].alpha = 0.;
   ierr = VecSet(fields.U,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-
+  
   /*
     VF BC for U and V are now setup in VFCommon.c
   */
@@ -118,9 +140,11 @@ int main(int argc,char **argv)
     } else {
       ctx.timevalue = p;
     }
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Solving for p = %g\n",ctx.timevalue);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nSolving for p = %g\n",ctx.timevalue);CHKERRQ(ierr);
     ierr = VecSet(fields.pressure,ctx.timevalue);CHKERRQ(ierr);
+    ierr = VecSet(fields.theta,ctx.timevalue);CHKERRQ(ierr);
     ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
+
     ierr = VF_StepU(&fields,&ctx);
 
     ctx.ElasticEnergy = 0;
