@@ -92,11 +92,11 @@ srun -n 12   ./test6 -n 100,10,10 -l 1,.1,.1 -E 1 -nu 0 -atnum 1 -epsilon .05 -e
 srun -n 12   ./test6 -n 100,10,10 -l 1,.1,.1 -E 1 -nu 0 -atnum 1 -epsilon .03 -eta 1e-8                   \
              -npc 1 -pc0_center 0.5,0.05,0.05 -pc0_phi 90 -pc0_r 1. -pc0_theta 00 -pc0_thickness .015     \
              -insitumax 0,0,0,0,0,0 -insitumin 0,0,0,0,0,0 -minvol 0. -maxvol .1 -maxtimestep 11          \
-             -U_Y0_BC_1 NONE -U_Y1_BC_1 NONE -U_Z0_BC_2 NONE -U_Z1_BC_2 NONE                              \
-             -U_X0_BC_0 FIXED -U_X0_BC_1 ZERO  -U_X0_BC_2 ZERO -U_X1_BC_0 FIXED                           \
-             -U_X1_BC_1 ZERO -U_X1_BC_2 ZERO -U_X0_0 0 -U_X1_0 0.                                         \
-             -U_tao_type ntr -U_tao_monitor -U_tao_fatol 1e-9 -U_tao_frtol 1e-9                           \
-             -pressure 1 -alpha 0 -beta 10 -unilateral nocompression  -maxtimestep 1   -pressurize no
+             -U_Y0_BC_1 ZERO -U_Y1_BC_1 ZERO -U_Z0_BC_2 ZERO -U_Z1_BC_2 ZERO                              \
+             -U_X0_BC_1 NONE  -U_X0_BC_2 NONE -U_X1_BC_1 NONE -U_X1_BC_2 NONE                             \
+             -U_X0_BC_0 FIXED -U_X1_BC_0 FIXED -U_X0_0 0 -U_X1_0 0.                                       \
+             -U_tao_type nls -U_tao_monitor -U_tao_fatol 1e-9 -U_tao_frtol 1e-9                           \
+             -pressure 1 -alpha 10 -beta 0 -unilateral nocompression  -maxtimestep 1   -pressurize no
 */
 
 #include "petsc.h"
