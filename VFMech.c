@@ -3,7 +3,12 @@
 #include "VFCommon.h"
 #include "VFMech.h"
 
-#define UNILATERAL_THRES 0.
+#define UNILATERAL_THRES 0
+/*
+  use UNILATERAL_THRES -1e+10 in order to test the tensile part of the energy (equivalent to unilateral none)
+  use UNILATERAL_THRES  1e+10 in order to test the compressive part of the energy (equivalent to the defunct shear only)
+*/
+
 #undef __FUNCT__
 #define __FUNCT__ "BCUInit"
 /*

@@ -140,7 +140,7 @@ int main(int argc,char **argv)
     } else {
       ctx.timevalue = p;
     }
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nSolving for p = %g\n",ctx.timevalue);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nStep %i: solving for p = %g\n",ctx.timestep,ctx.timevalue);CHKERRQ(ierr);
     ierr = VecSet(fields.pressure,ctx.timevalue);CHKERRQ(ierr);
     ierr = VecSet(fields.theta,ctx.timevalue);CHKERRQ(ierr);
     ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
