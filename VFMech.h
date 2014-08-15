@@ -36,8 +36,6 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat Jac,Mat Jac1,void *user)
 extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec Func,void *user);
 extern PetscErrorCode VF_VSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void* ptr);
 
-extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat Jac,Mat Jac1,void *user);
-extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec Func,void *user);
 extern PetscErrorCode VF_UInitialGuess(SNES snesU, Vec x, void *user);
 extern PetscErrorCode VF_USNESMonitor(SNES snes,PetscInt U_its,PetscReal fnorm,void* ptr);
 

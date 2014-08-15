@@ -607,13 +607,13 @@ extern PetscErrorCode VF_BilinearFormUNoCompression3D_local(PetscReal *Mat_local
 
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_ResidualUThermoPoro3D_local"
+#define __FUNCT__ "VF_GradientUThermoPoro3D_local"
 /*
- VF_ResidualUThermoPoro3D_local
+ VF_GradientUThermoPoro3D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ResidualUThermoPoro3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
+extern PetscErrorCode VF_GradientUThermoPoro3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
@@ -677,13 +677,13 @@ extern PetscErrorCode VF_ResidualUThermoPoro3D_local(PetscReal *residual_local,P
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_ResidualUThermoPoroNoCompression3D_local"
+#define __FUNCT__ "VF_GradientUThermoPoroNoCompression3D_local"
 /*
- VF_ResidualUThermoPoroNoCompression3D_local
+ VF_GradientUThermoPoroNoCompression3D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *residual_local,PetscReal ****u_array,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
+extern PetscErrorCode VF_GradientUThermoPoroNoCompression3D_local(PetscReal *residual_local,PetscReal ****u_array,PetscReal ***v_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,PetscReal ***pressure_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
@@ -754,13 +754,13 @@ extern PetscErrorCode VF_ResidualUThermoPoroNoCompression3D_local(PetscReal *res
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_ResidualUCrackPressure3D_local"
+#define __FUNCT__ "VF_GradientUCrackPressure3D_local"
 /*
- VF_ResidualUCrackPressure3D_local
+ VF_GradientUCrackPressure3D_local
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ResidualUCrackPressure3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***pressure_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
+extern PetscErrorCode VF_GradientUCrackPressure3D_local(PetscReal *residual_local,PetscReal ***v_array,PetscReal ***pressure_array,VFMatProp *matprop,VFProp *vfprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
 {
   PetscErrorCode ierr;
   PetscInt       l,i,j,k,g,c;
@@ -819,13 +819,13 @@ extern PetscErrorCode VF_ResidualUCrackPressure3D_local(PetscReal *residual_loca
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_ResidualUInSituStresses3D_local"
+#define __FUNCT__ "VF_GradientUInSituStresses3D_local"
 /*
- VF_ResidualUInSituStresses3D_local: Accumulates the contribution of surface forces along the face of an element
+ VF_GradientUInSituStresses3D_local: Accumulates the contribution of surface forces along the face of an element
  
  (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
  */
-extern PetscErrorCode VF_ResidualUInSituStresses3D_local(PetscReal *residual_local,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,VFCartFEElement3D *e)
+extern PetscErrorCode VF_GradientUInSituStresses3D_local(PetscReal *residual_local,PetscReal ****f_array,PetscInt ek,PetscInt ej,PetscInt ei,FACE face,VFCartFEElement3D *e)
 {
   PetscInt       i,j,k,l,c,g;
   PetscReal      *f_elem[3];
@@ -1675,37 +1675,12 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   PetscReal           xdiff;
   
   PetscFunctionBegin;
-  /*
-  if (ctx->verbose > 1) {
-    ierr = SNESMonitorSet(ctx->snesU,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  }
-  ierr = SNESSolve(ctx->snesU,PETSC_NULL,fields->U);CHKERRQ(ierr);
-  if (ctx->verbose > 1) {
-    ierr = VecView(fields->U,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-  }
-  if (ctx->verbose > 0) {
-    ierr = VecMin(fields->U,PETSC_NULL,&Umin);CHKERRQ(ierr);
-    ierr = VecMax(fields->U,PETSC_NULL,&Umax);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Umin = %g, Umax = %g\n",Umin,Umax);CHKERRQ(ierr);
-  }
-  
-  ierr = SNESGetConvergedReason(ctx->snesU,&reason);CHKERRQ(ierr);
-  if (reason < 0) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
-    flg = reason;
-  } else {
-    ierr = SNESGetIterationNumber(ctx->snesU,&its);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
-  }
-  */
   ierr = TaoSolve(ctx->taoU);CHKERRQ(ierr);
   ierr = TaoGetConvergedReason(ctx->taoU,&reason);CHKERRQ(ierr);
   if (reason < 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] taoU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
     flg = reason;
   } else {
-    //ierr = SNESGetIterationNumber(ctx->snesU,&its);CHKERRQ(ierr);
-    
     ierr = TaoGetSolutionStatus(ctx->taoU,&its,&f,&gnorm,&cnorm,&xdiff,&reason);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"its=%i f=%g gnorm=%g cnorm=%g,xdiff=%g\n",its,f,gnorm,cnorm,xdiff);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"      taoU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
@@ -1724,18 +1699,20 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
 extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode      ierr;
-  SNESConvergedReason reason;
+  TaoConvergedReason  reason;
   PetscInt            its;
   PetscReal           Umin,Umax;
+  PetscReal           f;
+  PetscReal           gnorm;
+  PetscReal           cnorm;
+  PetscReal           xdiff;
   
   PetscFunctionBegin;
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"%s: computing boundary displacements\n",__FUNCT__);CHKERRQ(ierr);
   }
-  if (ctx->verbose > 0) {
-    ierr = SNESMonitorSet(ctx->snesU,VF_USNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  }
-  ierr = SNESSolve(ctx->snesU,PETSC_NULL,fields->BCU);CHKERRQ(ierr);
+  ierr = TaoSolve(ctx->taoU);CHKERRQ(ierr);
+  ierr = VecCopy(fields->U,fields->BCU);CHKERRQ(ierr);
   
   if (ctx->verbose > 1) {
     ierr = VecView(fields->BCU,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
@@ -1746,18 +1723,14 @@ extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Umin = %g, Umax = %g\n",Umin,Umax);CHKERRQ(ierr);
   }
   
-  ierr = SNESGetConvergedReason(ctx->snesU,&reason);CHKERRQ(ierr);
+  ierr = TaoGetConvergedReason(ctx->taoU,&reason);CHKERRQ(ierr);
   if (reason < 0) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] taoU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
   } else {
-    ierr = SNESGetIterationNumber(ctx->snesU,&its);CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+    ierr = TaoGetSolutionStatus(ctx->taoU,&its,&f,&gnorm,&cnorm,&xdiff,&reason);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"its=%i f=%g gnorm=%g cnorm=%g,xdiff=%g\n",its,f,gnorm,cnorm,xdiff);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      taoU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
   }
-  
-  /*
-   Copy elastic solution to U, since it is going to be the solution of the first time step
-   */
-  ierr = VecCopy(fields->BCU,fields->U);CHKERRQ(ierr);
   
   /*
    Update boundary condition flags and others
@@ -1795,9 +1768,10 @@ extern PetscErrorCode VF_UInitialGuess(SNES snesU, Vec x, void *user)
   ierr = VecCopy(ctx->fields->U,x);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
 #undef __FUNCT__
-#define __FUNCT__ "VF_UResidual"
-extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
+#define __FUNCT__ "VF_U_TaoGradient"
+extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
 {
   VFCtx          *ctx=(VFCtx*)user;
 
@@ -1811,13 +1785,13 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
   PetscInt       i2,j2,k2,c2;
   PetscInt       dim  = 3;
   PetscInt       nrow = dim * ctx->e3D.nphix * ctx->e3D.nphiy * ctx->e3D.nphiz;
-  Vec            residual_localVec,V_localVec,U_localVec;
+  Vec            gradient_localVec,V_localVec,U_localVec;
   Vec            theta_localVec,thetaRef_localVec;
   Vec            pressure_localVec;
-  PetscReal      ****residual_array,***v_array,****u_array;
+  PetscReal      ****gradient_array,***v_array,****u_array;
   PetscReal      ***theta_array,***thetaRef_array;
   PetscReal      ***pressure_array;
-  PetscReal      *residual_local,*bilinearForm_local;
+  PetscReal      *gradient_local,*bilinearForm_local;
   PetscReal      hx,hy,hz;
   PetscReal      ****coords_array;
   PetscReal      ****f_array;
@@ -1830,7 +1804,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
   PetscReal      BBmin[3],BBmax[3];
   
   PetscFunctionBegin;
-  ierr = VecSet(residual,0.0);CHKERRQ(ierr);
+  ierr = VecSet(gradient,0.0);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -1887,11 +1861,11 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
   /*
    get local mat and RHS
    */
-  ierr = PetscMalloc2(nrow,&residual_local,
+  ierr = PetscMalloc2(nrow,&gradient_local,
                       nrow * nrow,&bilinearForm_local);CHKERRQ(ierr);
-  ierr = DMGetLocalVector(ctx->daVect,&residual_localVec);CHKERRQ(ierr);
-  ierr = VecSet(residual_localVec,0.);CHKERRQ(ierr);
-  ierr = DMDAVecGetArrayDOF(ctx->daVect,residual_localVec,&residual_array);CHKERRQ(ierr);
+  ierr = DMGetLocalVector(ctx->daVect,&gradient_localVec);CHKERRQ(ierr);
+  ierr = VecSet(gradient_localVec,0.);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,gradient_localVec,&gradient_array);CHKERRQ(ierr);
  
   /*
    loop through all elements (ei,ej)
@@ -1918,7 +1892,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
             break;
         }
         /*
-          Accumulate residual += BilinearForm . U in local indexing
+          Accumulate gradient += BilinearForm . U in local indexing
           Note that the local indexing for matrices and arrays are different...
         */
         for (l = 0,k1 = 0; k1 < ctx->e3D.nphiz; k1++) {
@@ -1929,7 +1903,7 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                   for (j2 = 0; j2 < ctx->e3D.nphiy; j2++) {
                     for (i2 = 0; i2 < ctx->e3D.nphix; i2++) {
                       for (c2 = 0; c2 < ctx->e3D.dim; c2++,l++) {
-                        residual_array[ek+k1][ej+j1][ei+i1][c1] += bilinearForm_local[l] * u_array[ek+k2][ej+j2][ei+i2][c2];
+                        gradient_array[ek+k1][ej+j1][ei+i1][c1] += bilinearForm_local[l] * u_array[ek+k2][ej+j2][ei+i2][c2];
                       }
                     }
                   }
@@ -1941,29 +1915,29 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
         /*
          Compute and accumulate the local contribution of the effective strain contribution to the global RHS
          */
-        for (l = 0; l < nrow; l++) residual_local[l] = 0.;
+        for (l = 0; l < nrow; l++) gradient_local[l] = 0.;
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
-            ierr = VF_ResidualUThermoPoro3D_local(residual_local,v_array,theta_array,thetaRef_array,pressure_array,
+            ierr = VF_GradientUThermoPoro3D_local(gradient_local,v_array,theta_array,thetaRef_array,pressure_array,
                                            &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                            ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
             break;
           case UNILATERAL_NOCOMPRESSION:
-            ierr = VF_ResidualUThermoPoroNoCompression3D_local(residual_local,u_array,v_array,theta_array,thetaRef_array,
+            ierr = VF_GradientUThermoPoroNoCompression3D_local(gradient_local,u_array,v_array,theta_array,thetaRef_array,
                                                     pressure_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                                     ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
             break;
         }
         if (ctx->hasCrackPressure) {
-          ierr = VF_ResidualUCrackPressure3D_local(residual_local,v_array,pressure_array,
+          ierr = VF_GradientUCrackPressure3D_local(gradient_local,v_array,pressure_array,
                                                     &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
         }
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
             for (i = 0; i < ctx->e3D.nphix; i++) {
               for (c = 0; c < dim; c++,l++) {
-                residual_array[ek+k][ej+j][ei+i][c] -= residual_local[l];
-                residual_local[l]                    = 0;
+                gradient_array[ek+k][ej+j][ei+i][c] -= gradient_local[l];
+                gradient_local[l]                    = 0;
               }
             }
           }
@@ -1994,13 +1968,13 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                 }
               }
             }
-            ierr = VF_ResidualUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_GradientUInSituStresses3D_local(gradient_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    residual_array[0][ej+j][ei+i][c] -= residual_local[l];
-                    residual_local[l]                 = 0;
+                    gradient_array[0][ej+j][ei+i][c] -= gradient_local[l];
+                    gradient_local[l]                 = 0;
                   }
                 }
               }
@@ -2030,13 +2004,13 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                 }
               }
             }
-            ierr = VF_ResidualUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_GradientUInSituStresses3D_local(gradient_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    residual_array[nz][ej+j][ei+i][c] -= residual_local[l];
-                    residual_local[l]                  = 0;
+                    gradient_array[nz][ej+j][ei+i][c] -= gradient_local[l];
+                    gradient_local[l]                  = 0;
                   }
                 }
               }
@@ -2067,13 +2041,13 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                 }
               }
             }
-            ierr = VF_ResidualUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_GradientUInSituStresses3D_local(gradient_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    residual_array[ek+k][0][ei+i][c] -= residual_local[l];
-                    residual_local[l]                 = 0;
+                    gradient_array[ek+k][0][ei+i][c] -= gradient_local[l];
+                    gradient_local[l]                 = 0;
                   }
                 }
               }
@@ -2103,13 +2077,13 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                 }
               }
             }
-            ierr = VF_ResidualUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_GradientUInSituStresses3D_local(gradient_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    residual_array[ek+k][ny][ei+i][c] -= residual_local[l];
-                    residual_local[l]                    = 0;
+                    gradient_array[ek+k][ny][ei+i][c] -= gradient_local[l];
+                    gradient_local[l]                    = 0;
                   }
                 }
               }
@@ -2140,13 +2114,13 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                 }
               }
             }
-            ierr = VF_ResidualUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_GradientUInSituStresses3D_local(gradient_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    residual_array[ek+k][ej+j][0][c] -= residual_local[l];
-                    residual_local[l]                 = 0;
+                    gradient_array[ek+k][ej+j][0][c] -= gradient_local[l];
+                    gradient_local[l]                 = 0;
                   }
                 }
               }
@@ -2177,13 +2151,13 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
                 }
               }
             }
-            ierr = VF_ResidualUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_GradientUInSituStresses3D_local(gradient_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    residual_array[ek+k][ej+j][nx][c] -= residual_local[l];
-                    residual_local[l]                    = 0;
+                    gradient_array[ek+k][ej+j][nx][c] -= gradient_local[l];
+                    gradient_local[l]                    = 0;
                   }
                 }
               }
@@ -2199,12 +2173,12 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
   /*
    Global Assembly and Boundary Conditions
    */
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,residual_localVec,&residual_array);CHKERRQ(ierr);
-  ierr = DMLocalToGlobalBegin(ctx->daVect,residual_localVec,ADD_VALUES,residual);CHKERRQ(ierr);
-  ierr = DMLocalToGlobalEnd(ctx->daVect,residual_localVec,ADD_VALUES,residual);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daVect,&residual_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,gradient_localVec,&gradient_array);CHKERRQ(ierr);
+  ierr = DMLocalToGlobalBegin(ctx->daVect,gradient_localVec,ADD_VALUES,gradient);CHKERRQ(ierr);
+  ierr = DMLocalToGlobalEnd(ctx->daVect,gradient_localVec,ADD_VALUES,gradient);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daVect,&gradient_localVec);CHKERRQ(ierr);
 
-  ierr = ResidualApplyDirichletBC(residual,U,ctx->fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
+  ierr = GradientApplyDirichletBC(gradient,&ctx->bcU[0]);CHKERRQ(ierr);
   /*
    Cleanup
    */
@@ -2224,14 +2198,20 @@ extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec residual,void *user)
     ierr = DMDAVecRestoreArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr);
     ierr = DMRestoreLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
   }
-  ierr = PetscFree2(residual_local,bilinearForm_local);CHKERRQ(ierr);
+  ierr = PetscFree2(gradient_local,bilinearForm_local);CHKERRQ(ierr);
  
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_UIJacobian"
-extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat K,Mat KPC,void *user)
+#define __FUNCT__ "VF_U_TaoHessian"
+/*
+  
+  VF_U_TaoHessian:
+  
+  (c) 2014 Blaise Bourdin bourdin@lsu.edu
+*/
+extern PetscErrorCode VF_U_TaoHessian(Tao taoU,Vec U,Mat K,Mat KPC,void *user)
 {
   VFCtx          *ctx=(VFCtx*)user;
   
@@ -2391,43 +2371,8 @@ extern PetscErrorCode VF_U_TaoObjective(Tao taoU,Vec U, PetscReal *objective,voi
   *objective = ElasticEnergy - InsituWork - PressureWork;
   PetscFunctionReturn(0);
 }
-#undef __FUNCT__
-#define __FUNCT__ "VF_U_TaoGradient"
-/*
-  
-  VF_U_TaoGradient:
-  
-  (c) 2014 Blaise Bourdin bourdin@lsu.edu
-*/
-extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
-{
-  PetscErrorCode ierr;
-  VFCtx          *ctx=(VFCtx*)user;
-  
-  PetscFunctionBegin;
-  ierr = VF_UResidual(ctx->snesU,U,gradient,user);CHKERRQ(ierr);
-  ierr = GradientApplyDirichletBC(gradient,&ctx->bcU[0]);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
 
 
-#undef __FUNCT__
-#define __FUNCT__ "VF_U_TaoHessian"
-/*
-  
-  VF_U_TaoHessian:
-  
-  (c) 2014 Blaise Bourdin bourdin@lsu.edu
-*/
-extern PetscErrorCode VF_U_TaoHessian(Tao taoU,Vec U,Mat H,Mat Hpre,void *user)
-{
-  PetscErrorCode ierr;
-  VFCtx          *ctx=(VFCtx*)user;
-
-  PetscFunctionBegin;
-  ierr = VF_UIJacobian(ctx->snesU,U,H,Hpre,user);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_USNESMonitor"
