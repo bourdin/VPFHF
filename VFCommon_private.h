@@ -25,15 +25,6 @@ static const char *VFFlowBC_Case[] = {
 	0
 };
 
-static const char *VFPresetName[] = {"SYMXY",
-  "SYMX ",
-  "SYMY ",
-  "NOSYM",
-	"NONE ",
-	"VFPresetName",
-	"",
-	0};
-
 static const char *VFMechSolverName[] = {
 	"FRACTURE",
 	"ELASTICITY",
