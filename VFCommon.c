@@ -932,55 +932,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = DMCreateMatrix(ctx->daVect,&JacPCU);CHKERRQ(ierr);
   ierr = MatSetOption(JacPCU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
 
-  /*
-  ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesU);CHKERRQ(ierr);
-  ierr = SNESSetDM(ctx->snesU,ctx->daVect);CHKERRQ(ierr);
-  ierr = SNESSetOptionsPrefix(ctx->snesU,"U_");CHKERRQ(ierr);
-  if (ctx->unilateral == UNILATERAL_NONE) {
-    ierr = SNESSetType(ctx->snesU,SNESKSPONLY);CHKERRQ(ierr);
-  } else {
-    ierr = SNESSetType(ctx->snesU,SNESNEWTONLS);CHKERRQ(ierr);
-    ierr = SNESGetLineSearch(ctx->snesU,&linesearchU);CHKERRQ(ierr);
-    ierr = SNESLineSearchSetType(linesearchU,SNESLINESEARCHL2);CHKERRQ(ierr);
-  }
-  ierr = SNESSetComputeInitialGuess(ctx->snesU,VF_UInitialGuess,ctx);CHKERRQ(ierr);
-  ierr = SNESSetTolerances(ctx->snesU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
-  ierr = SNESSetFromOptions(ctx->snesU);CHKERRQ(ierr);
-  */
-  
-  /* 
-    Compute null space associated with rigid motions
-  */
-  /*
-    For some reason, it does not seem to work. (ksp still diverges without proper BC)
-    Removing for now
-  */
-  /*
-  Vec coord;
-  MatNullSpace matnull;
-  ierr = DMDAGetCoordinates(ctx->daVect,&coord);CHKERRQ(ierr);
-  ierr = MatNullSpaceCreateRigidBody(coord,&matnull);CHKERRQ(ierr);
-  //ierr = MatSetNearNullSpace(JacU,matnull);CHKERRQ(ierr);
-  //ierr = MatSetNearNullSpace(JacPCU,matnull);CHKERRQ(ierr);
-  ierr = MatSetNullSpace(JacU,matnull);CHKERRQ(ierr);
-  ierr = MatSetNullSpace(JacPCU,matnull);CHKERRQ(ierr);
-  ierr = MatNullSpaceDestroy(&matnull);CHKERRQ(ierr);
-  ierr = MatSetFromOptions(JacU);
-  ierr = MatSetFromOptions(JacPCU);
-  */
-  
-  /*
-  ierr = SNESSetFunction(ctx->snesU,residualU,VF_UResidual,ctx);CHKERRQ(ierr);
-  ierr = SNESSetJacobian(ctx->snesU,JacU,JacPCU,VF_UIJacobian,ctx);CHKERRQ(ierr);
-
-  ierr = SNESGetKSP(ctx->snesU,&kspU);CHKERRQ(ierr);
-  ierr = KSPSetTolerances(kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
-  ierr = KSPSetType(kspU,KSPCG);CHKERRQ(ierr);
-  ierr = KSPSetFromOptions(kspU);CHKERRQ(ierr);
-  ierr = KSPGetPC(kspU,&pcU);CHKERRQ(ierr);
-  ierr = PCSetType(pcU,PCBJACOBI);CHKERRQ(ierr);
-  ierr = PCSetFromOptions(pcU);CHKERRQ(ierr);
-  */
 
   ierr = PetscOptionsInsertString("-u_tao_nls_pc_type petsc -u_pc_type hypre -u_pc_hypre_boomeramg_strong_threshold 0.7 -u_pc_hypre_type boomeramg");CHKERRQ(ierr);
   ierr = TaoCreate(PETSC_COMM_WORLD,&ctx->taoU);CHKERRQ(ierr);
@@ -998,6 +949,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = TaoGetKSP(ctx->taoU,&kspU);CHKERRQ(ierr);
   if (kspU) {
     ierr = KSPSetOptionsPrefix(kspU,"U_");CHKERRQ(ierr);
+    ierr = KSPSetTolerances(kspU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
     ierr = KSPSetFromOptions(kspU);CHKERRQ(ierr);
     ierr = KSPGetPC(kspU,&pcU);CHKERRQ(ierr);
     ierr = PCSetOptionsPrefix(pcU,"U_");CHKERRQ(ierr);
@@ -1227,7 +1179,6 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = DMDestroy(&ctx->daScalCell);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daVectCell);CHKERRQ(ierr);
 
-  //ierr = SNESDestroy(&ctx->snesU);CHKERRQ(ierr);
   ierr = TaoDestroy(&ctx->taoU);CHKERRQ(ierr);
   ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->pressure_old);CHKERRQ(ierr);
