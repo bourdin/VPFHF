@@ -54,7 +54,8 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   if (ctx->printhelp) PetscFunctionReturn(0);
 
   ierr = VFFieldsInitialize(ctx,fields);CHKERRQ(ierr);
-  ierr = VFBCCreate(ctx->bcU,3);CHKERRQ(ierr);
+  //ierr = VFBCCreate(ctx->bcU,3);CHKERRQ(ierr);
+  //ierr = VFBCCreate(ctx->bcV,1);CHKERRQ(ierr);
   ierr = VFBCInitialize(ctx);CHKERRQ(ierr);
   ierr = VFSolversInitialize(ctx);CHKERRQ(ierr);
 
@@ -170,8 +171,6 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr            = PetscOptionsReal("-altmintol","\n\tTolerance for alternate minimizations algorithm","",ctx->altmintol,&ctx->altmintol,PETSC_NULL);CHKERRQ(ierr);
     ctx->altminmaxit= 10000;
     ierr            = PetscOptionsInt("-altminmaxit","\n\tMaximum number of alternate minimizations iterations","",ctx->altminmaxit,&ctx->altminmaxit,PETSC_NULL);CHKERRQ(ierr);
-    ctx->preset     = VFPRESET_NONE;
-    ierr            = PetscOptionsEnum("-preset","\n\tPreset simulation type","",VFPresetName,(PetscEnum)ctx->preset,(PetscEnum*)&ctx->preset,PETSC_NULL);CHKERRQ(ierr);
     ctx->unilateral = UNILATERAL_NONE;
     ierr            = PetscOptionsEnum("-unilateral","\n\tType of unilateral conditions","",VFUnilateralName,(PetscEnum)ctx->unilateral,(PetscEnum*)&ctx->unilateral,PETSC_NULL);CHKERRQ(ierr);
     ctx->fileformat = FILEFORMAT_VTK;
@@ -859,14 +858,16 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = BCUInit(&ctx->bcU[0],ctx->preset);CHKERRQ(ierr);
-  ierr = VecSetFromBC(ctx->fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
-
+  ierr = VFBCCreate(&ctx->bcU[0],3);CHKERRQ(ierr);
+  ierr = VFBCSetFromOptions(&ctx->bcU[0],"U",3);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCU:\n");CHKERRQ(ierr);
     ierr = VFBCView(&ctx->bcU[0],PETSC_VIEWER_STDOUT_WORLD,3);CHKERRQ(ierr);
   }
-  ierr = BCVInit(&ctx->bcV[0],ctx->preset);CHKERRQ(ierr);
+  ierr = VecSetFromBC(ctx->fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
+
+  ierr = VFBCCreate(&ctx->bcV[0],1);CHKERRQ(ierr);
+  ierr = VFBCSetFromOptions(&ctx->bcV[0],"V",1);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCV:\n");CHKERRQ(ierr);
     ierr = VFBCView(&ctx->bcV[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);

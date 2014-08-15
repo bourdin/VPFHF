@@ -5,8 +5,6 @@
 #if !defined(VF_Standalone_VFMech_h)
 #define VF_Standalone_VFMech_h
 
-extern PetscErrorCode BCUInit(VFBC *BC,VFPreset preset);
-extern PetscErrorCode BCUUpdate(VFBC *BC,VFPreset preset);
 extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensity_local,
                                                    PetscReal ****u_array,
                                                    PetscReal ***theta_array,PetscReal ***thetaRef_array,
@@ -24,8 +22,6 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *OverbdnWo
 
 extern PetscErrorCode VF_ComputeBCU(VFFields *fields,VFCtx *ctx);
 extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx);
-extern PetscErrorCode BCVInit(VFBC *BC,VFPreset preset);
-extern PetscErrorCode BCVUpdate(VFBC *BC,VFPreset preset);
 extern PetscErrorCode VF_VEnergy3D(PetscReal *SurfaceEnergy,VFFields *fields,VFCtx *ctx);
 extern PetscErrorCode VF_StepV(VFFields *fields,VFCtx *ctx);
 /*

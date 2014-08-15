@@ -121,14 +121,6 @@ typedef enum {
 } VFFlowCases;
 
 typedef enum {
-	VFPRESET_SYMXY,
-	VFPRESET_SYMX,
-	VFPRESET_SYMY,
-	VFPRESET_NOSYM,
-	VFPRESET_NONE
-} VFPreset;
-
-typedef enum {
 	FRACTURE,
 	ELASTICITY,
 	NOMECH
@@ -248,7 +240,6 @@ typedef struct {
 	char                prefix[PETSC_MAX_PATH_LEN];
 	Vec                 coordinates;
 	PetscInt            verbose;
-	VFPreset            preset;
 	SNES                snesV;
 	Tao                 taoU;
 	/*
