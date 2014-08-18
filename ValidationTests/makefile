@@ -1,7 +1,7 @@
 include ../makefile.include	
 CFLAGS=-I..
 
-all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20 test21 test22 test23 test24 test25 test26  test27 test28 test29 test30 test31 test32 test33 test34 test34 test35 test36 test37 test38 test39 test40 test41 test42 test43 test44 test45 test46 test47 test48 test49 test50 test51 test52 test53
+all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test16a test16b test17 test18 test19 test20 test21 test22 test23 test24 test25 test26  test27 test28 test29 test30 test31 test32 test33 test34 test34 test35 test36 test37 test38 test39 test40 test41 test42 test43 test44 test45 test46 test47 test48 test49 test50 test51 test52 test53
  
 test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17 runtest18 runtest19 runtest20 runtest21 runtest2 runtest23 runtest24 runtest25 runtest26 runtest27 runtest28  runtest29 runtest30 runtest31 runtest32 runtest33 runtest34 runtest35 runtest36 runtest37 runtest38 runtest39 runtest40 runtest41 runtest42 runtest43 runtest44 runtest45 runtest46 runtest47 runtest48 runtest49 runtest50 runtest51 runtest52 runtest53
 
@@ -59,11 +59,13 @@ test15: test15.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test16: test16.o ${RELPATH_VFOBJ} chkopts
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}															
+test16a: test16a.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
-test16_sym: test16_sym.o ${RELPATH_VFOBJ} chkopts
+test16b: test16b.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
-	
+
 test17: test17.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
@@ -78,7 +80,7 @@ test20: test20.o ${RELPATH_VFOBJ} chkopts
 
 test21: test21.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
-	
+
 test22: test22.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
@@ -144,7 +146,7 @@ test42: test42.o ${RELPATH_VFOBJ} chkopts
 
 test43: test43.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
-	
+
 test44: test44.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
@@ -171,13 +173,13 @@ test51: test51.o ${RELPATH_VFOBJ} chkopts
 
 test52: test52.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
-	
+
 test53: test53.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 temp: temp.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
-	
+
 runtest1: test1
 	@echo "Running " $@
 	-@ARGS=' -n 201,2,2 -l 10,1,1 -orientation 0 -nu 0 -epsilon 0.25 -eta 0 -gc .1 -maxtimestep 11 -maxtimevalue 4 -atnum 1';\
@@ -657,6 +659,6 @@ runtest53: test53
 	${RM} -f $@.out
 
 clean::
-	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test17 test18 test19 test20 test21 test22 test23 test24 test25 test26 test27 test28 test29 test30 test31 test32 test33 test34 test35 test36 test37 test38 test39 test40 test41 test42 test43 test44 test46 test47 test48 test49 test50 test51 test52 test53
+	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test16a test16b test17 test18 test19 test20 test21 test22 test23 test24 test25 test26 test27 test28 test29 test30 test31 test32 test33 test34 test35 test36 test37 test38 test39 test40 test41 test42 test43 test44 test46 test47 test48 test49 test50 test51 test52 test53
 	-rm -f runtest*
 	-rm -f TEST*
