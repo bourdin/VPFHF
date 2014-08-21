@@ -120,7 +120,7 @@ Option table:
 -V_X0_BC ONE
 -V_X1_BC ONE
 -atnum 1
--epsilon 0.25
+-epsilon 0.5
 -eta 1e-8
 -gc .1
 -l 10,1,1
@@ -143,10 +143,9 @@ Step 0 / 0
       Max. change on V: 0.000000e+00
 Total crack opening: 0.000000
 Elastic Energy:            0.000000e+00
-Work of pressure forces:   0.000000e+00
 Total Mechanical energy:  0.000000e+00
-Surface  energy:          -2.284410e-17
-Total  energy:            -2.284410e-17
+Surface  energy:          -1.142205e-17
+Total  energy:            -1.142205e-17
 ==== time step 1: t = 4.000000e-01
 Step 1 / 0
       taoU converged in 1 iterations 1.
@@ -154,11 +153,10 @@ Step 1 / 0
       V min / max:     1.000000e+00 1.000000e+00
       Max. change on V: 0.000000e+00
 Total crack opening: 0.000000
-Elastic Energy:            2.488889e-02
-Work of pressure forces:   0.000000e+00
-Total Mechanical energy:  2.488889e-02
-Surface  energy:          -2.284410e-17
-Total  energy:            2.488889e-02
+Elastic Energy:            3.200000e-02
+Total Mechanical energy:  3.200000e-02
+Surface  energy:          -1.142205e-17
+Total  energy:            3.200000e-02
 ==== time step 2: t = 8.000000e-01
 Step 2 / 0
       taoU converged in 1 iterations 1.
@@ -166,11 +164,10 @@ Step 2 / 0
       V min / max:     1.000000e+00 1.000000e+00
       Max. change on V: 0.000000e+00
 Total crack opening: 0.000000
-Elastic Energy:            9.955556e-02
-Work of pressure forces:   0.000000e+00
-Total Mechanical energy:  9.955556e-02
-Surface  energy:          -2.284410e-17
-Total  energy:            9.955556e-02
+Elastic Energy:            1.280000e-01
+Total Mechanical energy:  1.280000e-01
+Surface  energy:          -1.142205e-17
+Total  energy:            1.280000e-01
 ==== time step 3: t = 1.200000e+00
 Step 3 / 0
       taoU converged in 1 iterations 1.
@@ -178,182 +175,159 @@ Step 3 / 0
       V min / max:     1.000000e+00 1.000000e+00
       Max. change on V: 0.000000e+00
 Total crack opening: 0.000000
-Elastic Energy:            2.240000e-01
-Work of pressure forces:   0.000000e+00
-Total Mechanical energy:  2.240000e-01
-Surface  energy:          -2.284410e-17
-Total  energy:            2.240000e-01
+Elastic Energy:            2.880000e-01
+Total Mechanical energy:  2.880000e-01
+Surface  energy:          -1.142205e-17
+Total  energy:            2.880000e-01
 ==== time step 4: t = 1.600000e+00
 Step 4 / 0
       taoU converged in 1 iterations 1.
-      snesV converged in 0 iterations 2.
-      V min / max:     1.000000e+00 1.000000e+00
-      Max. change on V: 0.000000e+00
-Total crack opening: 0.000000
-Elastic Energy:            3.982222e-01
-Work of pressure forces:   0.000000e+00
-Total Mechanical energy:  3.982222e-01
-Surface  energy:          -2.284410e-17
-Total  energy:            3.982222e-01
-==== time step 5: t = 2.000000e+00
-Step 5 / 0
-      taoU converged in 1 iterations 1.
       snesV converged in 1 iterations 2.
-      V min / max:     9.375000e-01 1.000000e+00
-      Max. change on V: 6.249997e-02
-Step 5 / 1
+      V min / max:     7.325587e-01 1.000000e+00
+      Max. change on V: 2.674413e-01
+Step 4 / 1
       taoU converged in 1 iterations 1.
       snesV converged in 2 iterations 2.
-      V min / max:     9.212054e-01 1.000000e+00
-      Max. change on V: 3.194702e-02
-Step 5 / 2
+      V min / max:     6.350508e-01 1.000000e+00
+      Max. change on V: 1.180338e-01
+Step 4 / 2
+      taoU converged in 1 iterations 1.
+      snesV converged in 5 iterations 2.
+      V min / max:     4.738839e-01 1.000000e+00
+      Max. change on V: 1.611670e-01
+Step 4 / 3
+      taoU converged in 1 iterations 1.
+      snesV converged in 6 iterations 2.
+      V min / max:     2.581279e-01 1.000000e+00
+      Max. change on V: 2.157560e-01
+Step 4 / 4
+      taoU converged in 1 iterations 1.
+      snesV converged in 5 iterations 2.
+      V min / max:     8.308821e-02 1.000000e+00
+      Max. change on V: 3.197565e-01
+Step 4 / 5
+      taoU converged in 1 iterations 1.
+      snesV converged in 5 iterations 2.
+      V min / max:     1.530291e-02 1.000000e+00
+      Max. change on V: 4.715756e-01
+Step 4 / 6
       taoU converged in 1 iterations 1.
       snesV converged in 4 iterations 2.
-      V min / max:     8.884048e-01 1.000000e+00
-      Max. change on V: 3.810589e-02
-Step 5 / 3
+      V min / max:     2.089781e-03 1.000000e+00
+      Max. change on V: 4.784724e-01
+Step 4 / 7
       taoU converged in 1 iterations 1.
       snesV converged in 3 iterations 2.
-      V min / max:     8.237601e-01 1.000000e+00
-      Max. change on V: 6.464469e-02
-Step 5 / 4
-      taoU converged in 1 iterations 1.
-      snesV converged in 3 iterations 2.
-      V min / max:     7.022973e-01 1.000000e+00
-      Max. change on V: 1.214628e-01
-Step 5 / 5
-      taoU converged in 1 iterations 1.
-      snesV converged in 3 iterations 2.
-      V min / max:     4.976180e-01 1.000000e+00
-      Max. change on V: 2.046793e-01
-Step 5 / 6
-      taoU converged in 1 iterations 1.
-      snesV converged in 3 iterations 2.
-      V min / max:     2.431494e-01 1.000000e+00
-      Max. change on V: 2.544687e-01
-Step 5 / 7
-      taoU converged in 1 iterations 1.
-      snesV converged in 3 iterations 2.
-      V min / max:     7.094640e-02 1.000000e+00
-      Max. change on V: 3.671165e-01
-Step 5 / 8
-      taoU converged in 1 iterations 1.
-      snesV converged in 3 iterations 2.
-      V min / max:     1.667741e-02 1.000000e+00
-      Max. change on V: 5.901619e-01
-Step 5 / 9
-      taoU converged in 1 iterations 1.
-      snesV converged in 3 iterations 2.
-      V min / max:     4.112117e-03 1.000000e+00
-      Max. change on V: 6.385344e-01
-Step 5 / 10
-      taoU converged in 1 iterations 1.
-      snesV converged in 2 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
-      Max. change on V: 4.920471e-01
-Step 5 / 11
-      taoU converged in 1 iterations 1.
-      snesV converged in 2 iterations 2.
-      V min / max:     0.000000e+00 1.000000e+00
-      Max. change on V: 3.463355e-01
-Step 5 / 12
+      Max. change on V: 3.072140e-01
+Step 4 / 8
       taoU converged in 1 iterations 1.
       snesV converged in 1 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
-      Max. change on V: 2.275721e-04
-Step 5 / 13
+      Max. change on V: 2.196199e-02
+Step 4 / 9
       taoU converged in 0 iterations 1.
       snesV converged in 0 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
       Max. change on V: 0.000000e+00
-Total crack opening: 3.985146
-Elastic Energy:            3.850501e-04
-Work of pressure forces:   0.000000e+00
-Total Mechanical energy:  3.850501e-04
-Surface  energy:          1.295025e-01
-Total  energy:            1.298876e-01
-==== time step 6: t = 2.400000e+00
-Step 6 / 0
+Total crack opening: 3.180837
+Elastic Energy:            6.688792e-04
+Total Mechanical energy:  6.688792e-04
+Surface  energy:          1.137606e-01
+Total  energy:            1.144295e-01
+==== time step 5: t = 2.000000e+00
+Step 5 / 0
       taoU converged in 1 iterations 1.
       snesV converged in 1 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
-      Max. change on V: 1.841390e-03
+      Max. change on V: 3.100376e-03
+Step 5 / 1
+      taoU converged in 0 iterations 1.
+      snesV converged in 0 iterations 2.
+      V min / max:     0.000000e+00 1.000000e+00
+      Max. change on V: 0.000000e+00
+Total crack opening: 3.982171
+Elastic Energy:            4.443596e-04
+Total Mechanical energy:  4.443596e-04
+Surface  energy:          1.142301e-01
+Total  energy:            1.146745e-01
+==== time step 6: t = 2.400000e+00
+Step 6 / 0
+      taoU converged in 1 iterations 1.
+      snesV converged in 10 iterations 2.
+      V min / max:     0.000000e+00 1.000000e+00
+      Max. change on V: 1.742377e-03
 Step 6 / 1
       taoU converged in 0 iterations 1.
       snesV converged in 0 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
       Max. change on V: 0.000000e+00
-Total crack opening: 4.786620
-Elastic Energy:            2.704150e-04
-Work of pressure forces:   0.000000e+00
-Total Mechanical energy:  2.704150e-04
-Surface  energy:          1.298020e-01
-Total  energy:            1.300724e-01
+Total crack opening: 4.787109
+Elastic Energy:            3.116667e-04
+Total Mechanical energy:  3.116667e-04
+Surface  energy:          1.144973e-01
+Total  energy:            1.148090e-01
 ==== time step 7: t = 2.800000e+00
 Step 7 / 0
       taoU converged in 1 iterations 1.
-      snesV converged in 5 iterations 2.
+      snesV converged in 10 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
-      Max. change on V: 1.122949e-03
+      Max. change on V: 1.059919e-03
 Step 7 / 1
       taoU converged in 0 iterations 1.
       snesV converged in 0 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
       Max. change on V: 0.000000e+00
-Total crack opening: 5.589422
-Elastic Energy:            1.995504e-04
-Work of pressure forces:   0.000000e+00
-Total Mechanical energy:  1.995504e-04
-Surface  energy:          1.299853e-01
-Total  energy:            1.301849e-01
+Total crack opening: 5.589837
+Elastic Energy:            2.309255e-04
+Total Mechanical energy:  2.309255e-04
+Surface  energy:          1.146607e-01
+Total  energy:            1.148916e-01
 ==== time step 8: t = 3.200000e+00
 Step 8 / 0
       taoU converged in 1 iterations 1.
-      snesV converged in 5 iterations 2.
+      snesV converged in 10 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
-      Max. change on V: 7.331550e-04
+      Max. change on V: 7.000158e-04
 Step 8 / 1
       taoU converged in 0 iterations 1.
       snesV converged in 0 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
       Max. change on V: 0.000000e+00
-Total crack opening: 6.391191
-Elastic Energy:            1.533171e-04
-Work of pressure forces:   0.000000e+00
-Total Mechanical energy:  1.533171e-04
-Surface  energy:          1.301049e-01
-Total  energy:            1.302582e-01
+Total crack opening: 6.391548
+Elastic Energy:            1.779950e-04
+Total Mechanical energy:  1.779950e-04
+Surface  energy:          1.147678e-01
+Total  energy:            1.149458e-01
 ==== time step 9: t = 3.600000e+00
 Step 9 / 0
       taoU converged in 1 iterations 1.
-      snesV converged in 5 iterations 2.
+      snesV converged in 10 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
-      Max. change on V: 5.106759e-04
+      Max. change on V: 5.071059e-04
 Step 9 / 1
       taoU converged in 0 iterations 1.
       snesV converged in 0 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
       Max. change on V: 0.000000e+00
-Total crack opening: 7.192414
-Elastic Energy:            1.214842e-04
-Work of pressure forces:   0.000000e+00
-Total Mechanical energy:  1.214842e-04
-Surface  energy:          1.301872e-01
-Total  energy:            1.303087e-01
+Total crack opening: 7.192729
+Elastic Energy:            1.414312e-04
+Total Mechanical energy:  1.414312e-04
+Surface  energy:          1.148418e-01
+Total  energy:            1.149832e-01
 ==== time step 10: t = 4.000000e+00
 Step 10 / 0
       taoU converged in 1 iterations 1.
-      snesV converged in 5 iterations 2.
+      snesV converged in 10 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
-      Max. change on V: 3.873335e-04
+      Max. change on V: 4.365705e-04
 Step 10 / 1
       taoU converged in 0 iterations 1.
       snesV converged in 0 iterations 2.
       V min / max:     0.000000e+00 1.000000e+00
       Max. change on V: 0.000000e+00
-Total crack opening: 7.993317
-Elastic Energy:            9.868104e-05
-Work of pressure forces:   0.000000e+00
-Total Mechanical energy:  9.868104e-05
-Surface  energy:          1.302462e-01
-Total  energy:            1.303449e-01
+Total crack opening: 7.993597
+Elastic Energy:            1.153331e-04
+Total Mechanical energy:  1.153331e-04
+Surface  energy:          1.148946e-01
+Total  energy:            1.150099e-01

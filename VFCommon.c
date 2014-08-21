@@ -914,25 +914,17 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   PC             pcU,pcV;
   Vec            lbV,ubV;
   Mat            JacV,JacU,JacPCU;
-  Vec            residualV,residualU;
+  Vec            residualV;
   TaoType        taotype;
-  
-  /*
-  Removed for now
-  Vec            coord;
-  MatNullSpace   matnull;  
-  */
   
   PetscFunctionBegin;
   /*
    U solver initialization
    */
-  ierr = DMCreateGlobalVector(ctx->daVect,&residualU);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daVect,&JacU);CHKERRQ(ierr);
   ierr = MatSetOption(JacU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
   ierr = DMCreateMatrix(ctx->daVect,&JacPCU);CHKERRQ(ierr);
   ierr = MatSetOption(JacPCU,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
-
 
   ierr = PetscOptionsInsertString("-u_tao_nls_pc_type petsc -u_pc_type hypre -u_pc_hypre_boomeramg_strong_threshold 0.7 -u_pc_hypre_type boomeramg");CHKERRQ(ierr);
   ierr = TaoCreate(PETSC_COMM_WORLD,&ctx->taoU);CHKERRQ(ierr);
@@ -946,7 +938,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = TaoSetGradientRoutine(ctx->taoU,VF_U_TaoGradient,ctx);CHKERRQ(ierr);
   ierr = TaoSetHessianRoutine(ctx->taoU,JacU,JacPCU,VF_U_TaoHessian,ctx);CHKERRQ(ierr);
 
-  
   ierr = TaoGetKSP(ctx->taoU,&kspU);CHKERRQ(ierr);
   if (kspU) {
     ierr = KSPSetOptionsPrefix(kspU,"U_");CHKERRQ(ierr);

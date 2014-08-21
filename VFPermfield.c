@@ -1073,8 +1073,6 @@ extern PetscErrorCode CellToNodeInterpolation(Vec node_vec,Vec cell_vec,VFCtx *c
 	Vec             volume_local;
 	PetscReal       nodal_sum_local = 0.;
 	PetscReal       cell_sum_local = 0.;
-	PetscReal       TotalNodeSum = 0.;
-	PetscReal       TotalCellSum = 0.;
 	Vec             node_local;
   PetscReal       ***node_array;
 	PetscReal       ****node_arraydof;

@@ -182,7 +182,7 @@ temp: temp.o ${RELPATH_VFOBJ} chkopts
 
 runtest1: test1
 	@echo "Running " $@
-	-@ARGS=' -n 101,5,5 -l 10,1,1  -nu 0 -epsilon 0.25 -eta 1e-8 -gc .1 -maxtimestep 11 -maxtimevalue 4 -atnum 1 -V_X0_BC ONE -U_X0_BC_0 FIXED -U_X0_0 -1. -U_X0_BC_1 ZERO -U_X0_BC_2 ZERO -V_X1_BC ONE -U_X1_BC_0 FIXED -U_X1_0 1. -U_X1_BC_1 ZERO -U_X1_BC_2 ZERO  -verbose 1';\
+	-@ARGS=' -n 101,5,5 -l 10,1,1  -nu 0 -epsilon 0.5 -eta 1e-8 -gc .1 -maxtimestep 11 -maxtimevalue 4 -atnum 1 -V_X0_BC ONE -U_X0_BC_0 FIXED -U_X0_0 -1. -U_X0_BC_1 ZERO -U_X0_BC_2 ZERO -V_X1_BC ONE -U_X1_BC_0 FIXED -U_X1_0 1. -U_X1_BC_1 ZERO -U_X1_BC_2 ZERO  -verbose 1 -alpha 0 -beta 0 -pressure 0';\
 	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
