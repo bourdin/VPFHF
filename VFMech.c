@@ -106,95 +106,6 @@ extern PetscErrorCode ElasticEnergyDensity3D_local(PetscReal *ElasticEnergyDensi
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "ElasticEnergyDensitySphericalDeviatoric3D_local"
-/*
- ElasticEnergyDensitySphericalDeviatoric3D_local
- Compute the spherical and deviatoric parts of the elastic energy density in an element
- (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
- */
-extern PetscErrorCode ElasticEnergyDensitySphericalDeviatoric3D_local(PetscReal *ElasticEnergyDensityS_local,PetscReal *ElasticEnergyDensityD_local,PetscReal ****u_array,PetscReal ***theta_array,PetscReal ***thetaRef_array,VFMatProp *matprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
-{
-  PetscErrorCode ierr;
-  PetscReal      *epsilon11_elem,*epsilon22_elem,*epsilon33_elem,*epsilon12_elem,*epsilon23_elem,*epsilon13_elem;
-  PetscReal      *sigma11_elem,*sigma22_elem,*sigma33_elem,*sigma12_elem,*sigma23_elem,*sigma13_elem;
-  PetscInt       i,j,k,g;
-  PetscReal      lambda,mu,alpha,kappa;
-  PetscReal      *ElasticEnergyDensity_local;
-  
-  PetscFunctionBegin;
-  lambda   = matprop->lambda;
-  mu       = matprop->mu;
-  alpha    = matprop->alpha;
-  kappa    = lambda + 2.* mu / 3.;
-  
-  ierr = PetscMalloc3(e->ng,&sigma11_elem,e->ng,&sigma22_elem,e->ng,&sigma33_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,&sigma12_elem,e->ng,&sigma23_elem,e->ng,&sigma13_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,&epsilon11_elem,e->ng,&epsilon22_elem,e->ng,&epsilon33_elem);CHKERRQ(ierr);
-  ierr = PetscMalloc3(e->ng,&epsilon12_elem,e->ng,&epsilon23_elem,e->ng,&epsilon13_elem);CHKERRQ(ierr);
-  
-  ierr = PetscMalloc(e->ng * sizeof(PetscReal),&ElasticEnergyDensity_local);CHKERRQ(ierr);
-  for (g = 0; g < e->ng; g++) {
-    epsilon11_elem[g]              = 0;
-    epsilon22_elem[g]              = 0;
-    epsilon33_elem[g]              = 0;
-    epsilon12_elem[g]              = 0;
-    epsilon23_elem[g]              = 0;
-    epsilon13_elem[g]              = 0;
-    ElasticEnergyDensity_local[g]  = 0.;
-    ElasticEnergyDensityS_local[g] = 0.;
-    ElasticEnergyDensityD_local[g] = 0.;
-  }
-  for (k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++) {
-        for (g = 0; g < e->ng; g++) {
-          epsilon11_elem[g] += e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][0]
-                             - alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i]);
-          epsilon22_elem[g] += e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][1]
-                             - alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i]);
-          epsilon33_elem[g] += e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2]
-                             - alpha * e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i]-thetaRef_array[ek+k][ej+j][ei+i]);
-          
-          epsilon12_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][1]
-                                + e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
-          epsilon23_elem[g] += (e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][2]
-                                + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][1]) * .5;
-          epsilon13_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][2]
-                                + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
-        }
-      }
-    }
-  }
-  ierr = PetscLogFlops(30 * e->ng * e->nphix * e->nphiy * e->nphiz);CHKERRQ(ierr);
-  
-  for (g = 0; g < e->ng; g++) {
-    sigma11_elem[g]               = (lambda + 2.*mu) * epsilon11_elem[g] + lambda * epsilon22_elem[g] + lambda * epsilon33_elem[g];
-    sigma22_elem[g]               = lambda * epsilon11_elem[g] + (lambda + 2.*mu) * epsilon22_elem[g] + lambda * epsilon33_elem[g];
-    sigma33_elem[g]               = lambda * epsilon11_elem[g] + lambda * epsilon22_elem[g] + (lambda + 2.*mu) * epsilon33_elem[g];
-    sigma12_elem[g]               = 2.*mu * epsilon12_elem[g];
-    sigma23_elem[g]               = 2.*mu * epsilon23_elem[g];
-    sigma13_elem[g]               = 2.*mu * epsilon13_elem[g];
-    ElasticEnergyDensity_local[g] = (sigma11_elem[g] * epsilon11_elem[g]
-                                     + sigma22_elem[g] * epsilon22_elem[g]
-                                     + sigma33_elem[g] * epsilon33_elem[g]) * .5
-                                    + sigma12_elem[g] * epsilon12_elem[g]
-                                    + sigma23_elem[g] * epsilon23_elem[g]
-                                    + sigma13_elem[g] * epsilon13_elem[g];
-    ElasticEnergyDensityS_local[g] = kappa * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g])
-                                   * (epsilon11_elem[g] + epsilon22_elem[g] + epsilon33_elem[g]) * .5;
-    ElasticEnergyDensityD_local[g] = ElasticEnergyDensity_local[g] - ElasticEnergyDensityS_local[g];
-  }
-  ierr = PetscLogFlops(47 * e->ng);CHKERRQ(ierr);
-  
-  ierr = PetscFree3(sigma11_elem,sigma22_elem,sigma33_elem);CHKERRQ(ierr);
-  ierr = PetscFree3(sigma12_elem,sigma23_elem,sigma13_elem);CHKERRQ(ierr);
-  ierr = PetscFree3(epsilon11_elem,epsilon22_elem,epsilon33_elem);CHKERRQ(ierr);
-  ierr = PetscFree3(epsilon12_elem,epsilon23_elem,epsilon13_elem);CHKERRQ(ierr);
-  ierr = PetscFree(ElasticEnergyDensity_local);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "ElasticEnergyDensitySphericalDeviatoricNoCompression3D_local"
 /*
  ElasticEnergyDensitySphericalDeviatoricNoCompression3D_local
@@ -828,21 +739,20 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
   lambda   = matprop->lambda;
   mu       = matprop->mu;
   alpha    = matprop->alpha;
-  threekappa = (3.*lambda + 2. *mu);
+  threekappa = 3.*lambda + 2. *mu;
   coefbeta = matprop->beta / threekappa;
   
-  for (g = 0; g < e->ng; g++) {
-    D11_elem[g] = 0.;
-    D22_elem[g] = 0.;
-    D33_elem[g] = 0.;
-    D12_elem[g] = 0.;
-    D23_elem[g] = 0.;
-    D13_elem[g] = 0.;
-    trepsilon_elem[g] = 0.;
-    v_elem[g] = 0.;
-    pressure_elem[g] = 0.;
-    theta_elem[g] = 0.;
-  }
+  ierr = PetscMemzero(D11_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(D22_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(D33_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(D23_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(D13_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(D12_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(trepsilon_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(v_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(pressure_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(theta_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+
   for (k = 0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
@@ -852,11 +762,12 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
           D33_elem[g] +=  e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2];
           
           D12_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][1]
-                                + e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
+                        + e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
           D23_elem[g] += (e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][2]
-                                + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][1]) * .5;
+                        + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][1]) * .5;
           D13_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][2]
-                                + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
+                        + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
+                        
           v_elem[g] += e->phi[k][j][i][g] * v_array[ek+k][ej+j][ei+i];
           pressure_elem[g] += e->phi[k][j][i][g] * pressure_array[ek+k][ej+j][ei+i];
           theta_elem[g] += e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
@@ -864,6 +775,7 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
       }
     }
   }
+  
   *ElasticEnergy_local = 0.;
   for (g = 0; g < e->ng; g++) {
     trepsilon_elem[g] =  D11_elem[g] + D22_elem[g] + D33_elem[g];
@@ -871,24 +783,23 @@ extern PetscErrorCode VF_ElasticEnergy3D_local(PetscReal *ElasticEnergy_local,Pe
     D11_elem[g] -= trepsilon_elem[g] / 3.;
     D22_elem[g] -= trepsilon_elem[g] / 3.;
     D33_elem[g] -= trepsilon_elem[g] / 3.;
-    
     /* 
       Deviatoric part
       mu (1+eta) * v^2e^D:e^D
     */
-    *ElasticEnergy_local += (( D11_elem[g] * D11_elem[g]
-                             + D22_elem[g] * D22_elem[g]
-                             + D33_elem[g] * D33_elem[g]) * .5
-                             + D12_elem[g] * D12_elem[g]
-                             + D23_elem[g] * D23_elem[g]
-                             + D13_elem[g] * D13_elem[g]) * v_elem[g] * v_elem[g] * (1. + vfprop->eta) * e->weight[g];
+    *ElasticEnergy_local += (  D11_elem[g] * D11_elem[g]
+                            +  D22_elem[g] * D22_elem[g]
+                            +  D33_elem[g] * D33_elem[g] 
+                            + (D12_elem[g] * D12_elem[g]
+                            +  D23_elem[g] * D23_elem[g]
+                            +  D13_elem[g] * D13_elem[g]) * 2.) * v_elem[g] * v_elem[g] * (1. + vfprop->eta) * mu * e->weight[g];
     /*
       Spherical part
-      3\kappa/2 [s(tr(e)/3 - \alpha \theta)  - \beta p / 3/\kappa)]:[s(tr(e)/3 - \alpha \theta)  - \beta p / 3/\kappa)]
+      9\kappa/2 [s(tr(e)/3 - \alpha \theta)  - \beta p / 3/\kappa)]:[s(tr(e)/3 - \alpha \theta)  - \beta p / 3/\kappa)]
     */
     WD = (trepsilon_elem[g] / 3. - alpha * theta_elem[g]) * v_elem[g] - coefbeta * pressure_elem[g];
-    *ElasticEnergy_local += threekappa / 2. * WD * WD * e->weight[g];
-    *ElasticEnergy_local += threekappa / 18. * trepsilon_elem[g] * trepsilon_elem[g] * vfprop->eta * e->weight[g];
+    *ElasticEnergy_local += 3. * threekappa / 2. * WD * WD * e->weight[g];
+    *ElasticEnergy_local += threekappa / 6. * trepsilon_elem[g] * trepsilon_elem[g] * vfprop->eta * e->weight[g];
   }
   ierr = PetscFree3(D11_elem,D22_elem,D33_elem);CHKERRQ(ierr);
   ierr = PetscFree3(D12_elem,D23_elem,D13_elem);CHKERRQ(ierr);
@@ -922,21 +833,20 @@ extern PetscErrorCode VF_ElasticEnergyNoCompression3D_local(PetscReal *ElasticEn
   lambda   = matprop->lambda;
   mu       = matprop->mu;
   alpha    = matprop->alpha;
-  threekappa = (3.*lambda + 2. *mu);
+  threekappa = 3.*lambda + 2. *mu;
   coefbeta = matprop->beta / threekappa;
   
-  for (g = 0; g < e->ng; g++) {
-    D11_elem[g] = 0.;
-    D22_elem[g] = 0.;
-    D33_elem[g] = 0.;
-    D12_elem[g] = 0.;
-    D23_elem[g] = 0.;
-    D13_elem[g] = 0.;
-    trepsilon_elem[g] = 0.;
-    v_elem[g] = 0.;
-    pressure_elem[g] = 0.;
-    theta_elem[g] = 0.;
-  }
+  ierr = PetscMemzero(D11_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(D22_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(D33_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(D23_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(D13_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(D12_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(trepsilon_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(v_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(pressure_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemzero(theta_elem,e->ng * sizeof(PetscReal));CHKERRQ(ierr);
+
   for (k = 0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++) {
@@ -946,11 +856,11 @@ extern PetscErrorCode VF_ElasticEnergyNoCompression3D_local(PetscReal *ElasticEn
           D33_elem[g] +=  e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][2];
           
           D12_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][1]
-                                + e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
+                        + e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
           D23_elem[g] += (e->dphi[k][j][i][1][g] * u_array[ek+k][ej+j][ei+i][2]
-                                + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][1]) * .5;
+                        + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][1]) * .5;
           D13_elem[g] += (e->dphi[k][j][i][0][g] * u_array[ek+k][ej+j][ei+i][2]
-                                + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
+                        + e->dphi[k][j][i][2][g] * u_array[ek+k][ej+j][ei+i][0]) * .5;
           v_elem[g] += e->phi[k][j][i][g] * v_array[ek+k][ej+j][ei+i];
           pressure_elem[g] += e->phi[k][j][i][g] * pressure_array[ek+k][ej+j][ei+i];
           theta_elem[g] += e->phi[k][j][i][g] * (theta_array[ek+k][ej+j][ei+i] - thetaRef_array[ek+k][ej+j][ei+i]);
@@ -975,15 +885,16 @@ extern PetscErrorCode VF_ElasticEnergyNoCompression3D_local(PetscReal *ElasticEn
       Deviatoric part
       mu (1+eta/2) * v^2e^D:e^D
     */
-    *ElasticEnergy_local += (( D11_elem[g] * D11_elem[g]
-                             + D22_elem[g] * D22_elem[g]
-                             + D33_elem[g] * D33_elem[g]) * .5
-                             + D12_elem[g] * D12_elem[g]
-                             + D23_elem[g] * D23_elem[g]
-                             + D13_elem[g] * D13_elem[g]) * v_elem[g] * v_elem[g] * (1. + vfprop->eta / 2.) * e->weight[g];
+    *ElasticEnergy_local += (  D11_elem[g] * D11_elem[g]
+                            +  D22_elem[g] * D22_elem[g]
+                            +  D33_elem[g] * D33_elem[g] 
+                            + (D12_elem[g] * D12_elem[g]
+                            +  D23_elem[g] * D23_elem[g]
+                            +  D13_elem[g] * D13_elem[g]) * 2.) * v_elem[g] * v_elem[g] * (1. + vfprop->eta) * mu * e->weight[g];
+
     /*
       Spherical part
-      3\kappa/2 [s(tr(e)/3 - \alpha \theta)  - \beta p / 3/\kappa)]:[s(tr(e)/3 - \alpha \theta)  - \beta p / 3/\kappa)]
+      9\kappa/2 [s(tr(e)/3 - \alpha \theta)  - \beta p / 3/\kappa)]:[s(tr(e)/3 - \alpha \theta)  - \beta p / 3/\kappa)]
     */
     WD = (trepsilon_elem[g] / 3. - alpha * theta_elem[g]) * s_elem[g] - coefbeta * pressure_elem[g];
     *ElasticEnergy_local += 3. * threekappa / 2. * WD * WD * e->weight[g];
@@ -1527,7 +1438,6 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   PetscErrorCode      ierr;
   TaoConvergedReason  reason;
   PetscInt            its,flg= 0;
-  PetscReal           Umin,Umax;
   PetscReal           f;
   PetscReal           gnorm;
   PetscReal           cnorm;
@@ -2138,7 +2048,6 @@ extern PetscErrorCode VF_U_TaoHessian(Tao taoU,Vec U,Mat K,Mat KPC,void *user)
 extern PetscErrorCode VF_U_TaoObjective(Tao taoU,Vec U, PetscReal *objective,void *user)
 {
   PetscErrorCode ierr;
-  VFCtx          *ctx=(VFCtx*)user;
   PetscReal       ElasticEnergy,InsituWork,PressureWork;
   
   PetscFunctionBegin;
@@ -2912,8 +2821,7 @@ extern PetscErrorCode VF_VResidual(SNES snes,Vec V,Vec residual,void *user)
         /*
          Accumulate stiffness matrix
          */
-        for (l = 0; l < nrow * nrow; l++)
-          K_local[l] = 0.;
+        ierr = PetscMemzero(K_local,nrow * nrow * sizeof(PetscReal));
         switch (ctx->vfprop.atnum ) {
           case 1:
             ierr = VF_BilinearFormVAT13D_local(K_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);
@@ -3097,8 +3005,7 @@ extern PetscErrorCode VF_VIJacobian(SNES snes,Vec V,Mat Jac,Mat Jacpre,void *use
         /*
          Accumulate stiffness matrix
          */
-        for (l = 0; l < nrow * nrow; l++)
-          Jac_local[l] = 0.;
+        ierr = PetscMemzero(Jac_local,nrow * nrow * sizeof(PetscReal));
         switch (ctx->vfprop.atnum ) {
           case 1:
             ierr = VF_BilinearFormVAT13D_local(Jac_local,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,&ctx->e3D,Gc_array[ek][ej][ei]);CHKERRQ(ierr);

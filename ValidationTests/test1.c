@@ -23,18 +23,12 @@ int main(int argc,char **argv)
   Vec            Vold;
   PetscReal      errV;
   PetscInt       altminit;
-  PetscInt       nopt=3;
-  PetscBool      flg;  
   PetscReal      p = 0.,crackVolume=0;
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   
-  PetscInt  orientation = 2;
   ierr = PetscOptionsGetReal(NULL,"-pressure",&p,NULL);CHKERRQ(ierr);
-  ctx.hasCrackPressure = PETSC_TRUE;
-  ctx.matprop[0].beta  = 0.;
-  ctx.matprop[0].alpha = 0.;
   
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
   ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
