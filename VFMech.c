@@ -2049,12 +2049,13 @@ extern PetscErrorCode VF_U_TaoObjective(Tao taoU,Vec U, PetscReal *objective,voi
 {
   PetscErrorCode ierr;
   PetscReal       ElasticEnergy,InsituWork,PressureWork;
+  VFCtx          *ctx=(VFCtx*)user;
   
   PetscFunctionBegin;
   ElasticEnergy = 0.;
   InsituWork    = 0.;
   PressureWork  = 0.;
-  ierr = VF_UEnergy3D(&ElasticEnergy,&InsituWork,&PressureWork,U,user);CHKERRQ(ierr);
+  ierr = VF_UEnergy3D(&ElasticEnergy,&InsituWork,&PressureWork,U,ctx);CHKERRQ(ierr);
   *objective = ElasticEnergy - InsituWork - PressureWork;
   PetscFunctionReturn(0);
 }

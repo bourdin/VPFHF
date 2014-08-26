@@ -915,7 +915,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   Vec            lbV,ubV;
   Mat            JacV,JacU,JacPCU;
   Vec            residualV;
-  TaoType        taotype;
   
   PetscFunctionBegin;
   /*
