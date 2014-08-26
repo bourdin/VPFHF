@@ -282,7 +282,7 @@ extern PetscErrorCode VecSetFromBC(Vec BCVec,VFBC *BC)
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
   PetscInt       i,j,k,c;
-  PetscReal  ****BC_array,BCValue;
+  PetscReal  ****BC_array,BCValue = 0.;
   PetscInt       dof;
   DM             da;
   
@@ -308,8 +308,10 @@ extern PetscErrorCode VecSetFromBC(Vec BCVec,VFBC *BC)
           break;
         case ONE:
           BCValue = 1.;
+          break;
         case FIXED:
           BCValue = BC[c].faceValue[X0];
+          break;
         case NONE:
           break;
       }      
