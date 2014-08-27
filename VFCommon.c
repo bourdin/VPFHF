@@ -1327,14 +1327,13 @@ extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char noda
   /*
     Nodal variables
   */
-  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
-  ierr = PetscViewerSetType(viewer,PETSCVIEWERVTK);CHKERRQ(ierr);
   if (nodalName == NULL) {
     ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s_nodal.%.5i.vts",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
-    ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
+    ierr = PetscViewerVTKOpen(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
   } else {
-    ierr = PetscViewerFileSetName(viewer,nodalName);CHKERRQ(ierr);
+    ierr = PetscViewerVTKOpen(PETSC_COMM_WORLD,nodalName,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
   }
+
   ierr = VecViewVTKDof(ctx->daScal,fields->U,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->Ud,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->Ue,viewer);CHKERRQ(ierr);
@@ -1351,13 +1350,11 @@ extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char noda
   /*
     Cell Variables
   */
-  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
-  ierr = PetscViewerSetType(viewer,PETSCVIEWERVTK);CHKERRQ(ierr);
   if (cellName == NULL) {
     ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s_cell.%.5i.vts",ctx->prefix,ctx->timestep);CHKERRQ(ierr);
-    ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
+    ierr = PetscViewerVTKOpen(PETSC_COMM_WORLD,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
   } else {
-    ierr = PetscViewerFileSetName(viewer,cellName);CHKERRQ(ierr);
+    ierr = PetscViewerVTKOpen(PETSC_COMM_WORLD,cellName,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
   }
   ierr = VecViewVTKDof(ctx->daScalCell,fields->Uc,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScalCell,fields->Uv,viewer);CHKERRQ(ierr);
