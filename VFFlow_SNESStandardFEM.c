@@ -76,7 +76,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMIFunction(SNES snes,Vec Pressure,Vec
 
 #undef __FUNCT__
 #define __FUNCT__ "FractureFlowVelocityCompute_local"
-extern PetscErrorCode FractureFlowVelocityCompute_local(PetscReal ****cellvelocityrate_array, PetscReal ***press_array,PetscReal ****u_array, PetscReal ***v_array, VFFlowProp flowpropty, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
+extern PetscErrorCode FractureFlowVelocityCompute_local(PetscReal ****cellvelocityrate_array, PetscReal ***press_array,PetscReal ****u_array, PetscReal ***v_array, VFFlowProp *flowpropty, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
 	PetscErrorCode ierr;
 	PetscInt		i, j, k, c;
@@ -92,7 +92,7 @@ extern PetscErrorCode FractureFlowVelocityCompute_local(PetscReal ****cellveloci
   cellvelocityrate_array[ek][ej][ei][0] = 0;
   cellvelocityrate_array[ek][ej][ei][1] = 0;
   cellvelocityrate_array[ek][ej][ei][2] = 0;
-  mu      = flowpropty.mu;
+  mu      = flowpropty->mu;
   ierr = PetscMalloc7(e->ng,&n_elem[0],
                       e->ng,&n_elem[1],
                       e->ng,&n_elem[2],
@@ -212,7 +212,7 @@ extern PetscErrorCode FractureFlowVelocityCompute(VFCtx *ctx, VFFields *fields)
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-        ierr = FractureFlowVelocityCompute_local(cellVelocity_array, press_array, u_array,v_array, ctx->flowprop, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
+        ierr = FractureFlowVelocityCompute_local(cellVelocity_array, press_array, u_array,v_array, &ctx->flowprop, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
         
 			}
 		}
@@ -321,7 +321,7 @@ extern PetscErrorCode FlowVelocityCompute(VFCtx *ctx, VFFields *fields)
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-        ierr = FlowVelocityCompute_local(cellVelocity_array, press_array, perm_array, v_array, ctx->flowprop, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
+        ierr = FlowVelocityCompute_local(cellVelocity_array, press_array, perm_array, v_array, &ctx->flowprop, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
 			}
 		}
 	}
@@ -344,7 +344,7 @@ extern PetscErrorCode FlowVelocityCompute(VFCtx *ctx, VFFields *fields)
 
 #undef __FUNCT__
 #define __FUNCT__ "FlowVelocityCompute_local"
-extern PetscErrorCode FlowVelocityCompute_local(PetscReal ****cellvelocityrate_array, PetscReal ***press_array,PetscReal ****perm_array, PetscReal ***v_array, VFFlowProp flowpropty, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
+extern PetscErrorCode FlowVelocityCompute_local(PetscReal ****cellvelocityrate_array, PetscReal ***press_array,PetscReal ****perm_array, PetscReal ***v_array, VFFlowProp *flowpropty, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
 	PetscErrorCode ierr;
 	PetscInt		i, j, k, c;
@@ -358,7 +358,7 @@ extern PetscErrorCode FlowVelocityCompute_local(PetscReal ****cellvelocityrate_a
   cellvelocityrate_array[ek][ej][ei][0] = 0;
   cellvelocityrate_array[ek][ej][ei][1] = 0;
   cellvelocityrate_array[ek][ej][ei][2] = 0;
-  mu      = flowpropty.mu;
+  mu      = flowpropty->mu;
 	ierr = PetscMalloc4(e->ng,&gradpress_elem[0],e->ng,&gradpress_elem[1],e->ng,&gradpress_elem[2],e->ng,&v_elem);CHKERRQ(ierr);
 	for (eg = 0; eg < e->ng; eg++){
     for(c = 0; c < 3; c++){
@@ -409,7 +409,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   Vec            RHS_localVec;
   Vec            perm_local;
   PetscReal      hx,hy,hz;  
-  PetscReal      *K1_local,*K2_local,*KS_local,*K3_local,*K4_local,*KD_local,*KDF_local;
+  PetscReal      *K1_local,*K2_local,*KS_local,*K3_local,*K4_local,*KD_local,*KDF_local,*KF_local;
   PetscReal      mu;
   PetscReal      theta,timestepsize;
   PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
@@ -448,11 +448,6 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   alphabiot  = ctx->flowprop.alphabiot;
   K_dr  = ctx->flowprop.K_dr;
   M_inv     = ctx->flowprop.M_inv;
-  
-  if(ctx->FlowDisplCoupling && ctx->ResFlowMechCoupling == FIXEDSTRESS){
-    M_inv = M_inv+alphabiot*alphabiot/K_dr;
-  }
-  
   theta = ctx->flowprop.theta;
   timestepsize = ctx->flowprop.timestepsize;
   mu     = ctx->flowprop.mu;
@@ -546,7 +541,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
                       nrow,&RHS_local,
                       4,&RHS1_local,
                       nrow,&row);CHKERRQ(ierr);
-  ierr = PetscMalloc3(nrow*nrow,&K3_local,nrow*nrow,&K4_local,nrow*nrow,&KDF_local);CHKERRQ(ierr);
+  ierr = PetscMalloc4(nrow*nrow,&K3_local,nrow*nrow,&K4_local,nrow*nrow,&KDF_local,nrow*nrow,&KF_local);CHKERRQ(ierr);
   
   for (ek = zs; ek < zs+zm; ek++) {
     for (ej = ys; ej < ys+ym; ej++) {
@@ -563,13 +558,48 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 						}
 					}
 				}
-        ierr = VF_MatA_local(KS_local,&ctx->e3D,ek,ej,ei,one_array);CHKERRQ(ierr); 
+        ierr = VF_MatA_local(KS_local,&ctx->e3D,ek,ej,ei,one_array);CHKERRQ(ierr);
+        for (l = 0; l < nrow*nrow; l++) {
+          KS_local[l] = M_inv*KS_local[l];
+        }
         ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KS_local,ADD_VALUES);CHKERRQ(ierr);
         ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,KS_local,ADD_VALUES);CHKERRQ(ierr);
+        
+        
+        
+        
+        
+        
+        if(ctx->FlowDisplCoupling && ctx->ResFlowMechCoupling == FIXEDSTRESS){
+          ierr = VF_MatFlowMechUCouplingFIXSTRESS_local(KF_local,&ctx->e3D,ek,ej,ei,one_array,&ctx->flowprop);CHKERRQ(ierr);
+          ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KF_local,ADD_VALUES);CHKERRQ(ierr);
+          ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,KF_local,ADD_VALUES);CHKERRQ(ierr);
+        }
+
+        
+        
+        
+        
+        
+        
+        
+//        if(ctx->FlowDisplCoupling && ctx->ResFlowMechCoupling == FIXEDSTRESS){
+//          ierr = VF_MatA_local(KF_local,&ctx->e3D,ek,ej,ei,v_array);CHKERRQ(ierr);
+//          for (l = 0; l < nrow*nrow; l++) {
+//            KF_local[l] = pow(alphabiot,2)*KS_local[l]/K_dr;
+//          }
+//          ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KF_local,ADD_VALUES);CHKERRQ(ierr);
+//          ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,KF_local,ADD_VALUES);CHKERRQ(ierr);
+//        }
+        
+        
+        
+        
+        
         ierr = VF_HeatMatK_local(KD_local,&ctx->e3D,ek,ej,ei,perm_array,one_array);CHKERRQ(ierr);
         for (l = 0; l < nrow*nrow; l++) {
-					K1_local[l] = theta/mu*timestepsize*KD_local[l]/M_inv;
-          K2_local[l] = -1.*(1.-theta)/mu*timestepsize*KD_local[l]/M_inv;
+					K1_local[l] = theta/mu*timestepsize*KD_local[l];
+          K2_local[l] = -1.*(1.-theta)/mu*timestepsize*KD_local[l];
 				}
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K1_local,ADD_VALUES);CHKERRQ(ierr);
         ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,K2_local,ADD_VALUES);CHKERRQ(ierr);
@@ -602,11 +632,11 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
             }
           }
         }
-        ierr = Flow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
+        ierr = Flow_Vecg(RHS_local,&ctx->e3D,ek,ej,ei,&ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
             for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-              RHS_array[ek+k][ej+j][ei+i] += -2.0*timestepsize*RHS_local[l]/M_inv;
+              RHS_array[ek+k][ej+j][ei+i] += -2.0*timestepsize*RHS_local[l];
             }
           }
         }
@@ -615,27 +645,27 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
           for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
             for (j = 0; j < ctx->e3D.nphiy; j++) {
               for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-                RHS_array[ek+k][ej+j][ei+i] += -1.0*timestepsize*RHS_local[l]/M_inv;
+                RHS_array[ek+k][ej+j][ei+i] += -1.0*timestepsize*RHS_local[l];
               }
             }
           }
         }
         if(ctx->FlowDisplCoupling){
-          ierr = VF_RHSFlowMechUCoupling_local(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,u_diff_array,v_array);
+          ierr = VF_RHSFlowMechUCoupling_local(RHS_local,&ctx->e3D,ek,ej,ei,&ctx->flowprop,u_diff_array,v_array);
           for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
             for (j = 0; j < ctx->e3D.nphiy; j++) {
               for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-                RHS_array[ek+k][ej+j][ei+i] += -1.0*RHS_local[l]/M_inv;
+                RHS_array[ek+k][ej+j][ei+i] += -1.0*RHS_local[l];
               }
             }
           }
         }
         if(ctx->FlowDisplCoupling && ctx->ResFlowMechCoupling == FIXEDSTRESS){
-          ierr = VF_RHSFlowMechUCouplingFIXSTRESS_local(RHS_local,&ctx->e3D,ek,ej,ei,ctx->flowprop,ctx->matprop,pressure_diff_array,v_array);
+          ierr = VF_RHSFlowMechUCouplingFIXSTRESS_local(RHS_local,&ctx->e3D,ek,ej,ei,&ctx->flowprop,ctx->matprop,pressure_diff_array,v_array);
           for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
             for (j = 0; j < ctx->e3D.nphiy; j++) {
               for (i = 0; i < ctx->e3D.nphix; i++,l++) {
-                RHS_array[ek+k][ej+j][ei+i] += 1.0*RHS_local[l]/M_inv;
+                RHS_array[ek+k][ej+j][ei+i] += 1.0*RHS_local[l];
               }
             }
           }
@@ -649,7 +679,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
 								for (i = 0; i < ctx->e2D.nphiz; i++, l++) {
-									RHS_array[ek+k][ej+j][ei+i] +=  -timestepsize*RHS1_local[l]/M_inv;
+									RHS_array[ek+k][ej+j][ei+i] +=  -timestepsize*RHS1_local[l];
 								}
 							}
 						}
@@ -664,7 +694,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 						for (l=0,k = 0; k < ctx->e2D.nphix; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
 								for (i = 0; i < ctx->e2D.nphiz; i++, l++) {
-									RHS_array[ek+k][ej+j][ei+1] +=  -timestepsize*RHS1_local[l]/M_inv;
+									RHS_array[ek+k][ej+j][ei+1] +=  -timestepsize*RHS1_local[l];
 								}
 							}
 						}
@@ -679,7 +709,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
 							for (j = 0; j < ctx->e2D.nphiz; j++) {
 								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
-									RHS_array[ek+k][ej+j][ei+i] +=  -timestepsize*RHS1_local[l]/M_inv;
+									RHS_array[ek+k][ej+j][ei+i] +=  -timestepsize*RHS1_local[l];
 								}
 							}
 						}
@@ -694,7 +724,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 						for (l=0,k = 0; k < ctx->e2D.nphiy; k++){
 							for (j = 0; j < ctx->e2D.nphiz; j++) {
 								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
-									RHS_array[ek+k][ej+1][ei+i] +=  -timestepsize*RHS1_local[l]/M_inv;
+									RHS_array[ek+k][ej+1][ei+i] +=  -timestepsize*RHS1_local[l];
 								}
 							}
 						}
@@ -709,7 +739,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
 								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
-									RHS_array[ek+k][ej+j][ei+i] +=  -timestepsize*RHS1_local[l]/M_inv;
+									RHS_array[ek+k][ej+j][ei+i] +=  -timestepsize*RHS1_local[l];
 								}
 							}
 						}
@@ -724,7 +754,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 						for (l=0,k = 0; k < ctx->e2D.nphiz; k++){
 							for (j = 0; j < ctx->e2D.nphiy; j++) {
 								for (i = 0; i < ctx->e2D.nphix; i++, l++) {
-									RHS_array[ek+1][ej+j][ei+i] +=  -timestepsize*RHS1_local[l]/M_inv;
+									RHS_array[ek+1][ej+j][ei+i] +=  -timestepsize*RHS1_local[l];
 								}
 							}
 						}
@@ -760,11 +790,11 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
                   for (j = 0; j < ctx->e3D.nphiy; j++) {
                     for (i = 0; i < ctx->e3D.nphix; i++,l++) {
                       if(ctx->well[w_no].type == INJECTOR){
-                        RHS_array[ek+k][ej+j][ei+i] += timestepsize*RHS_local[l]/M_inv;
+                        RHS_array[ek+k][ej+j][ei+i] += timestepsize*RHS_local[l];
                       }
                       else if(ctx->well[w_no].type == PRODUCER)
                       {
-                        RHS_array[ek+k][ej+j][ei+i] += -timestepsize*RHS_local[l]/M_inv;
+                        RHS_array[ek+k][ej+j][ei+i] += -timestepsize*RHS_local[l];
                       }
                     }
                   }
@@ -835,7 +865,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 	ierr = DMRestoreLocalVector(ctx->daScalCell,&pmult_local);CHKERRQ(ierr);
   
   ierr = PetscFree7(K1_local,K2_local,KS_local,KD_local,RHS_local,RHS1_local,row);CHKERRQ(ierr);
-  ierr = PetscFree3(K3_local,K4_local,KDF_local);CHKERRQ(ierr);
+  ierr = PetscFree4(K3_local,K4_local,KDF_local,KF_local);CHKERRQ(ierr);
   
   ierr = VecDestroy(&U_diff);CHKERRQ(ierr);
   ierr = VecDestroy(&Pressure_diff);CHKERRQ(ierr);
@@ -891,3 +921,14 @@ extern PetscErrorCode VF_FormFlowStandardFEMIJacobian(SNES snes,Vec Pressure,Mat
 	}
 	PetscFunctionReturn(0);
 }
+
+
+
+
+
+
+
+
+
+
+

@@ -13,6 +13,7 @@
 #include "VFCommon.h"
 #include "VFMech.h"
 #include "VFFlow.h"
+#include "VFPermfield.h"
 
 VFCtx               ctx;
 VFFields            fields;
@@ -126,7 +127,7 @@ int main(int argc,char **argv)
     ctx.maxtimevalue = 60.;
     ctx.timevalue = 1.;
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-    ierr = FieldsH5Write(&ctx,&fields);
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   }
   else{
     /*Initialization Set initial flow field values. This case is zero. This will have to be called an initialization function*/
@@ -139,7 +140,6 @@ int main(int argc,char **argv)
       ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
       ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-//      ierr = FieldsH5Write(&ctx,&fields);
       ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 
       

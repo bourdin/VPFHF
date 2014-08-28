@@ -47,8 +47,7 @@ int main(int argc,char **argv)
 
 		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-//  ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
-	ctx.flowsolver = FLOWSOLVER_KSPMIXEDFEM;
+	ctx.flowsolver = FLOWSOLVER_SNESSTANDARDFEM;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -212,7 +211,6 @@ int main(int argc,char **argv)
       ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n inf_norm = %f \n",norm_inf);CHKERRQ(ierr);
     }
-    ierr = FieldsH5Write(&ctx,&fields);
   
   
 
@@ -295,7 +293,6 @@ int main(int argc,char **argv)
     ierr = PetscPrintf(PETSC_COMM_WORLD," vol.strain_volume = %g\n",vol5);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," Volume Balance ::: RHS = %g \t LHS = %g \n",vol+vol1,vol3+vol4+vol5);CHKERRQ(ierr);
 
-    ierr = FieldsH5Write(&ctx,&fields);
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
     ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
