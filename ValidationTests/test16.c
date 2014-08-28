@@ -155,11 +155,13 @@ int main(int argc,char **argv)
       if (debug || saveall) {
         switch (ctx.fileformat) {
         case FILEFORMAT_BIN:
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Writing fields in binary file\n");CHKERRQ(ierr);
           ierr = FieldsBinaryWrite(&ctx,&fields);CHKERRQ(ierr);
           break;
         case FILEFORMAT_VTK:
           ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s_nodal.%.5i-%.5i.vts",ctx.prefix,ctx.timestep,altminit);CHKERRQ(ierr);
           ierr = PetscSNPrintf(filenameC,FILENAME_MAX,"%s_cell.%.5i-%.5i.vts",ctx.prefix,ctx.timestep,altminit);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"Writing fields in VTK file %s %s\n",filename,filenameC);CHKERRQ(ierr);
           ierr = FieldsVTKWrite(&ctx,&fields,filename,filenameC);CHKERRQ(ierr);
           break;
         }
