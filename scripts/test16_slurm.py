@@ -132,9 +132,14 @@ def main():
   if args['gamg']:
     cmd += '-U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg '
   if args['hypre']:
-    cmd += '-U_pc_type hypre  -u_pc_hypre_type boomeramg -u_pc_hypre_boomeramg_strong_threshold 0.7'
+    cmd += '-U_pc_type hypre  -u_pc_hypre_type boomeramg -u_pc_hypre_boomeramg_strong_threshold 0.7 '
   cmd += args['extraopts']  
-      
+     
+  cmd += '-u_tao_monitor -u_ksp_converged_reason '
+  cmd += '-u_tao_fatol 0 -u_tao_frtol 0 '
+  cmd += '-u_tao_gatol 1e-10 -u_tao_grtol 1e-10 '
+  #cmd += '-u_tao_view '
+  
   print "Now running %s"%cmd
   os.system(cmd)
   return 0
