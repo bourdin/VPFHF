@@ -1750,23 +1750,6 @@ extern PetscErrorCode VF_MatA_local(PetscReal *A_local,VFCartFEElement3D *e,Pets
       }
     }
   }
-  /*
-   for (l = 0,k = 0; k < e->nphiz; k++) {
-   for (j = 0; j < e->nphiy; j++) {
-   for (i = 0; i < e->nphix; i++) {
-   for (kk = 0; kk < e->nphiz; kk++) {
-   for (jj = 0; jj < e->nphiy; jj++) {
-   for (ii = 0; ii < e->nphix; ii++,l++) {
-   if(v_array[ek+k][ej+j][ei+i] <= 0.05 || v_array[ek+kk][ej+jj][ei+ii] <= 0.05 ){
-   A_local[l] = 0.;
-   }
-   }
-   }
-   }
-   }
-   }
-   }
-   */
   ierr = PetscFree(v_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -2631,59 +2614,4 @@ extern PetscErrorCode VF_MatApplyFracturePressureBC_local(PetscReal *K_ele,VFCar
 	}
   ierr = PetscFree(dv_elem);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
-}
-
-
-
-
-
-
-
-
-
-#undef __FUNCT__
-#define __FUNCT__ "VF_MatFlowMechUCouplingFIXSTRESS_local"
-extern PetscErrorCode VF_MatFlowMechUCouplingFIXSTRESS_local(PetscReal *A_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array,VFFlowProp *flowpropty)
-{
-  PetscErrorCode    ierr;
-  PetscInt          i,j,k,l;
-  PetscInt          ii,jj,kk;
-  PetscInt          eg;
-  PetscReal         *v_elem;
-  PetscReal         alphabiot,K_dr;
-  
-  PetscFunctionBegin;
-  alphabiot  = flowpropty->alphabiot;
-  K_dr  = flowpropty->K_dr;
-  ierr = PetscMalloc(e->ng*sizeof(PetscReal),&v_elem);CHKERRQ(ierr);
-  for (eg = 0; eg < e->ng; eg++){
-    v_elem[eg] = 0.;
-  }
-  for (k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++) {
-        for (eg = 0; eg < e->ng; eg++) {
-          v_elem[eg] += v_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
-        }
-      }
-    }
-  }
-  for (l = 0,k = 0; k < e->nphiz; k++) {
-    for (j = 0; j < e->nphiy; j++) {
-      for (i = 0; i < e->nphix; i++) {
-        for (kk = 0; kk < e->nphiz; kk++) {
-          for (jj = 0; jj < e->nphiy; jj++) {
-            for (ii = 0; ii < e->nphix; ii++,l++) {
-              A_local[l] = 0;
-              for (eg = 0; eg < e->ng; eg++) {
-                A_local[l] += e->phi[k][j][i][eg]*e->phi[kk][jj][ii][eg]*(pow(alphabiot*v_elem[eg],2))*e->weight[eg]/K_dr;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  ierr = PetscFree(v_elem);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
 }

@@ -47,7 +47,4 @@ extern PetscErrorCode VecApplyFractureWellSource(PetscReal *Ks_local,PetscReal *
 extern PetscErrorCode VF_RHSFlowMechUCouplingFIXSTRESS_local(PetscReal *K_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,VFFlowProp *flowpropty,VFMatProp *matprop,PetscReal ***pressure_diff_array,PetscReal ***v_array);
 
 extern PetscErrorCode VF_MatApplyFracturePressureBC_local(PetscReal *K_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscInt dof,PetscReal ***v_array);
-
-extern PetscErrorCode VF_MatFlowMechUCouplingFIXSTRESS_local(PetscReal *A_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***v_array,VFFlowProp *flowpropty);
-
 #endif /* VFFLOW_MIXEDFEM_H */
