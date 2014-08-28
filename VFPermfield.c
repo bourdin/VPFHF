@@ -569,7 +569,7 @@ extern PetscErrorCode VolumetricCrackOpeningCC(PetscReal *CrackVolume, VFCtx *ct
 
 #undef __FUNCT__
 #define __FUNCT__ "VolumetricStrainVolume_local"
-extern PetscErrorCode VolumetricStrainVolume_local(PetscReal *VolStrainVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e, VFFlowProp flowpropty, PetscReal ****u_diff_array, PetscReal ***v_array)
+extern PetscErrorCode VolumetricStrainVolume_local(PetscReal *VolStrainVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e, VFFlowProp *flowpropty, PetscReal ****u_diff_array, PetscReal ***v_array)
 {
   
 	PetscErrorCode ierr;
@@ -582,8 +582,8 @@ extern PetscErrorCode VolumetricStrainVolume_local(PetscReal *VolStrainVolume_lo
                       e->ng,&du_elem[0],
                       e->ng,&du_elem[1],
                       e->ng,&du_elem[2]);CHKERRQ(ierr);
-  timestepsize = flowpropty.timestepsize;
-  alphabiot    = flowpropty.alphabiot;
+  timestepsize = flowpropty->timestepsize;
+  alphabiot    = flowpropty->alphabiot;
   for (eg = 0; eg < e->ng; eg++){
     v_elem[eg] = 0.;
     for (c = 0; c < 3; c++){
@@ -605,10 +605,10 @@ extern PetscErrorCode VolumetricStrainVolume_local(PetscReal *VolStrainVolume_lo
 	*VolStrainVolume_local = 0.;
 	for(eg = 0; eg < e->ng; eg++){
     for(c = 0; c < 3; c++){
-      *VolStrainVolume_local += -1*alphabiot*(pow(v_elem[eg],2))*du_elem[c][eg]*e->weight[eg]/timestepsize;
+      *VolStrainVolume_local += 1*alphabiot*(pow(v_elem[eg],2))*du_elem[c][eg]*e->weight[eg]/timestepsize;
     }
 	}
-	ierr = PetscFree4(du_elem[0],du_elem[1],du_elem[2],v_elem);CHKERRQ(ierr);
+	ierr = PetscFree4(v_elem,du_elem[0],du_elem[1],du_elem[2]);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -711,9 +711,10 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
   PetscReal       mysourceVolumeLocal = 0.,mysourceVolume = 0.;
   PetscReal       mystrainVolumeLocal = 0.,mystrainVolume = 0.;
   FACE           face;
+  PetscReal       timestepsize = 0;
   
   PetscFunctionBegin;
-  
+  timestepsize     = ctx->flowprop.timestepsize;
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -763,53 +764,53 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-				ierr = ModulusVolume_local(&mymodVolumeLocal, ek, ej, ei, &ctx->e3D,ctx->flowprop,press_diff_array,v_array);CHKERRQ(ierr);
+				ierr = ModulusVolume_local(&mymodVolumeLocal, ek, ej, ei, &ctx->e3D,&ctx->flowprop,press_diff_array,v_array);CHKERRQ(ierr);
 				ierr = DivergenceVolume_local(&mydivVolumeLocal, ek, ej, ei, &ctx->e3D,vel_array, v_array);CHKERRQ(ierr);
         if(ctx->hasFluidSources){
           ierr = SourceVolume_local(&mysourceVolumeLocal, ek, ej, ei, &ctx->e3D, src_array, v_array);CHKERRQ(ierr);
         }
         if(ctx->FlowDisplCoupling){
-          ierr = VolumetricStrainVolume_local(&mystrainVolumeLocal, ek, ej, ei, &ctx->e3D,ctx->flowprop,u_diff_array,v_array);CHKERRQ(ierr);
+          ierr = VolumetricStrainVolume_local(&mystrainVolumeLocal, ek, ej, ei, &ctx->e3D,&ctx->flowprop,u_diff_array,v_array);CHKERRQ(ierr);
         }
         mymodVolume += mymodVolumeLocal;
-        mysourceVolume += mysourceVolumeLocal;
-        mydivVolume += mydivVolumeLocal;
+        mysourceVolume += timestepsize*mysourceVolumeLocal;
+        mydivVolume += timestepsize*mydivVolumeLocal;
         mystrainVolume += mystrainVolumeLocal;
         if(ei == 0){
           face = X0;
           ierr = VFCartFEElement2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
           ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,ek,ej,ei,face,&ctx->e2D,vel_array,v_array);
-          mysurfVolume += mysurfVolumeLocal;
+          mysurfVolume += timestepsize*mysurfVolumeLocal;
         }
         if(ei == nx-1){
           face = X1;
           ierr = VFCartFEElement2DInit(&ctx->e2D,hz,hy);CHKERRQ(ierr);
           ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,ek,ej,ei,face,&ctx->e2D,vel_array,v_array);
-          mysurfVolume += mysurfVolumeLocal;
+          mysurfVolume += timestepsize*mysurfVolumeLocal;
         }
         if(ej == 0){
           face = Y0;
           ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
           ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,ek,ej,ei,face,&ctx->e2D,vel_array,v_array);
-          mysurfVolume += mysurfVolumeLocal;
+          mysurfVolume += timestepsize*mysurfVolumeLocal;
         }
         if(ej == ny-1){
           face = Y1;
           ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hz);CHKERRQ(ierr);
           ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,ek,ej,ei,face,&ctx->e2D,vel_array,v_array);
-          mysurfVolume += mysurfVolumeLocal;
+          mysurfVolume += timestepsize*mysurfVolumeLocal;
         }
         if(ek == 0){
           face = Z0;
           ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
           ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,ek,ej,ei,face,&ctx->e2D,vel_array,v_array);
-          mysurfVolume += mysurfVolumeLocal;
+          mysurfVolume += timestepsize*mysurfVolumeLocal;
         }
         if(ek == nz-1){
           face = Z1;
           ierr = VFCartFEElement2DInit(&ctx->e2D,hx,hy);CHKERRQ(ierr);
           ierr = SurfaceFluxVolume_local(&mysurfVolumeLocal,ek,ej,ei,face,&ctx->e2D,vel_array,v_array);
-          mysurfVolume += mysurfVolumeLocal;
+          mysurfVolume += timestepsize*mysurfVolumeLocal;
         }
 			}
 		}
@@ -817,10 +818,10 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
   *SumWellRate = 0;
   for (i = 0; i < ctx->numWells; i++) {
     if(ctx->well[i].type == INJECTOR){
-      *SumWellRate = *SumWellRate + ctx->well[i].Qw;
+      *SumWellRate = *SumWellRate + timestepsize*ctx->well[i].Qw;
     }
     else{
-      *SumWellRate = *SumWellRate - ctx->well[i].Qw;
+      *SumWellRate = *SumWellRate - timestepsize*ctx->well[i].Qw;
     }
   }
 	ierr = MPI_Allreduce(&mymodVolume,ModulusVolume,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
@@ -842,21 +843,26 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
   PetscFunctionReturn(0);
 }
 
+
+
+
+
+
+
 #undef __FUNCT__
 #define __FUNCT__ "ModulusVolume_local"
-extern PetscErrorCode ModulusVolume_local(PetscReal *ModVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e, VFFlowProp flowpropty, PetscReal ***press_diff_array,PetscReal ***v_array)
+extern PetscErrorCode ModulusVolume_local(PetscReal *ModVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e, VFFlowProp *flowpropty, PetscReal ***press_diff_array,PetscReal ***v_array)
 {
   
 	PetscErrorCode ierr;
 	PetscInt		i, j, k;
 	PetscInt		eg;
-	PetscReal		M_inv,timestepsize,*v_elem,*press_diff_elem;
+	PetscReal		M_inv,*v_elem,*press_diff_elem;
   
 	PetscFunctionBegin;
   
   ierr = PetscMalloc2(e->ng,&v_elem,e->ng,&press_diff_elem);CHKERRQ(ierr);
-  M_inv     = flowpropty.M_inv;
-  timestepsize     = flowpropty.timestepsize;
+  M_inv     = flowpropty->M_inv;
 	for (eg = 0; eg < e->ng; eg++){
     v_elem[eg] = 0;
     press_diff_elem[eg] = 0;
@@ -873,7 +879,7 @@ extern PetscErrorCode ModulusVolume_local(PetscReal *ModVolume_local,PetscInt ek
 	}
 	*ModVolume_local = 0.;
 	for(eg = 0; eg < e->ng; eg++){
-		*ModVolume_local += (pow(v_elem[eg],2))*M_inv*press_diff_elem[eg]*e->weight[eg]/timestepsize;
+		*ModVolume_local += (pow(v_elem[eg],2))*M_inv*press_diff_elem[eg]*e->weight[eg];
 	}
 	ierr = PetscFree2(v_elem,press_diff_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -1249,8 +1255,10 @@ extern PetscErrorCode VolumetricLeakOffRate(PetscReal *LeakOffRate, VFCtx *ctx, 
   Vec             CellVolLeakoffRate;
 	Vec             VolLeakoffRate_local;
 	PetscReal       myLeakOffRateLocal = 0.,myLeakOffRate = 0.;
-	
+  PetscReal       timestepsize;
+
   PetscFunctionBegin;
+  timestepsize = ctx->flowprop.timestepsize;
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -1280,7 +1288,7 @@ extern PetscErrorCode VolumetricLeakOffRate(PetscReal *LeakOffRate, VFCtx *ctx, 
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				ierr = VolumetricCrackOpening3D_localCC(&myLeakOffRateLocal, volleakoffrate_array,PETSC_NULL, q_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
-        myLeakOffRate += myLeakOffRateLocal;
+        myLeakOffRate += timestepsize*myLeakOffRateLocal;
 			}
 		}
 	}

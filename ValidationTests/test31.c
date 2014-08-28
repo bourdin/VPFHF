@@ -190,7 +190,7 @@ int main(int argc,char **argv)
   ierr = PetscPrintf(PETSC_COMM_WORLD,"  Computing initial time step solution..................\n");CHKERRQ(ierr);
   displ = lz*(1.+ctx.matprop[0].nu)*((1.-ctx.matprop[0].nu)*stress*lx*ly+ctx.flowprop.alphabiot*SumnIntegral*(1.-2*ctx.matprop[0].nu))/(lx*ly*ctx.matprop[0].E);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   Initial guess displacement: %g\n",displ);CHKERRQ(ierr);
-  ierr = VecSet(fields.BCU,displ);CHKERRQ(ierr);
+  ierr = VecSet(fields.BCU,displ);CHKERRQ(ierr);  
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
   ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
   ierr = VF_IntegrateOnBoundary(&SumnIntegral,fields.pressure,Z1,&ctx);CHKERRQ(ierr);
@@ -212,7 +212,6 @@ int main(int argc,char **argv)
     ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n inf_norm = %f \n",norm_inf);CHKERRQ(ierr);
   }
-//  ierr = FieldsH5Write(&ctx,&fields);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   ierr = VecMax(fields.pressure,PETSC_NULL,&pressure);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(viewer,"%e \t %e \t %e \n",ctx.timestep*ctx.flowprop.timestepsize,displ,pressure);CHKERRQ(ierr);
@@ -220,6 +219,37 @@ int main(int argc,char **argv)
   ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
   ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
   ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 	for (i = 0; i < 6; i++) {
 		ctx.bcP[0].face[i] = NONE;
 		for (c = 0; c < 3; c++) {
