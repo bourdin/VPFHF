@@ -242,7 +242,6 @@ typedef struct {
 	PetscInt            verbose;
 	SNES                snesV;
 	SNES                snesU;
-	Tao                 taoU;
 	/*
 	 Global variables for regular FEM Flow
 	 */
