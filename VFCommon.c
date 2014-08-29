@@ -1179,7 +1179,6 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = DMDestroy(&ctx->daScalCell);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daVectCell);CHKERRQ(ierr);
 
-  //ierr = TaoDestroy(&ctx->taoU);CHKERRQ(ierr);
   ierr = SNESDestroy(&ctx->snesU);CHKERRQ(ierr);
   ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->pressure_old);CHKERRQ(ierr);
