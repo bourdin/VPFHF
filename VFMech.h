@@ -34,4 +34,8 @@ extern PetscErrorCode VF_VSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,voi
 extern PetscErrorCode VF_U_TaoObjective(Tao taoU,Vec U, PetscReal *objective,void *user);
 extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient, void *user);
 extern PetscErrorCode VF_U_TaoHessian(Tao taoU,Vec U,Mat H,Mat Hpre, void *user);
+
+extern PetscErrorCode VF_UIJacobian(SNES snes,Vec U,Mat Jac,Mat Jac1,void *user);
+extern PetscErrorCode VF_UResidual(SNES snes,Vec U,Vec Func,void *user);
+
 #endif

@@ -1436,7 +1436,7 @@ extern PetscErrorCode VF_UEnergy3D(PetscReal *ElasticEnergy,PetscReal *InsituWor
 extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode      ierr;
-  TaoConvergedReason  reason;
+  SNESConvergedReason  reason;
   PetscInt            its,flg= 0;
   PetscReal           f;
   PetscReal           gnorm;
@@ -1444,22 +1444,21 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   PetscReal           xdiff;
   
   PetscFunctionBegin;
-  ierr = TaoSolve(ctx->taoU);CHKERRQ(ierr);
-  ierr = TaoGetConvergedReason(ctx->taoU,&reason);CHKERRQ(ierr);
+  ierr = SNESSolve(ctx->snesU,PETSC_NULL,fields->U);CHKERRQ(ierr);
+  ierr = SNESGetConvergedReason(ctx->snesU,&reason);CHKERRQ(ierr);
   if (reason < 0) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] taoU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
     flg = reason;
   } else {
-    ierr = TaoGetSolutionStatus(ctx->taoU,&its,&f,&gnorm,&cnorm,&xdiff,&reason);CHKERRQ(ierr);
-    //ierr = PetscPrintf(PETSC_COMM_WORLD,"its=%i f=%g gnorm=%g cnorm=%g,xdiff=%g\n",its,f,gnorm,cnorm,xdiff);
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"      taoU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
+    ierr = SNESGetIterationNumber(ctx->snesU,&its);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
   }
   PetscFunctionReturn(flg);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_U_TaoGradient"
-extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
+#define __FUNCT__ "VF_UResidual"
+extern PetscErrorCode VF_UResidual(SNES snesU,Vec U,Vec residual,void *user)
 {
   VFCtx          *ctx=(VFCtx*)user;
 
@@ -1473,13 +1472,13 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
   PetscInt       i2,j2,k2,c2;
   PetscInt       dim  = 3;
   PetscInt       nrow = dim * ctx->e3D.nphix * ctx->e3D.nphiy * ctx->e3D.nphiz;
-  Vec            gradient_localVec,V_localVec,U_localVec;
+  Vec            residual_localVec,V_localVec,U_localVec;
   Vec            theta_localVec,thetaRef_localVec;
   Vec            pressure_localVec;
-  PetscReal      ****gradient_array,***v_array,****u_array;
+  PetscReal      ****residual_array,***v_array,****u_array;
   PetscReal      ***theta_array,***thetaRef_array;
   PetscReal      ***pressure_array;
-  PetscReal      *gradient_local,*bilinearForm_local;
+  PetscReal      *residual_local,*bilinearForm_local;
   PetscReal      hx,hy,hz;
   PetscReal      ****coords_array;
   PetscReal      ****f_array;
@@ -1492,7 +1491,7 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
   PetscReal      BBmin[3],BBmax[3];
   
   PetscFunctionBegin;
-  ierr = VecSet(gradient,0.0);CHKERRQ(ierr);
+  ierr = VecSet(residual,0.0);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -1549,11 +1548,11 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
   /*
    get local mat and RHS
    */
-  ierr = PetscMalloc2(nrow,&gradient_local,
+  ierr = PetscMalloc2(nrow,&residual_local,
                       nrow * nrow,&bilinearForm_local);CHKERRQ(ierr);
-  ierr = DMGetLocalVector(ctx->daVect,&gradient_localVec);CHKERRQ(ierr);
-  ierr = VecSet(gradient_localVec,0.);CHKERRQ(ierr);
-  ierr = DMDAVecGetArrayDOF(ctx->daVect,gradient_localVec,&gradient_array);CHKERRQ(ierr);
+  ierr = DMGetLocalVector(ctx->daVect,&residual_localVec);CHKERRQ(ierr);
+  ierr = VecSet(residual_localVec,0.);CHKERRQ(ierr);
+  ierr = DMDAVecGetArrayDOF(ctx->daVect,residual_localVec,&residual_array);CHKERRQ(ierr);
  
   /*
    loop through all elements (ei,ej)
@@ -1580,7 +1579,7 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
             break;
         }
         /*
-          Accumulate gradient += BilinearForm . U in local indexing
+          Accumulate residual += BilinearForm . U in local indexing
           Note that the local indexing for matrices and arrays are different...
         */
         for (l = 0,k1 = 0; k1 < ctx->e3D.nphiz; k1++) {
@@ -1591,7 +1590,7 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
                   for (j2 = 0; j2 < ctx->e3D.nphiy; j2++) {
                     for (i2 = 0; i2 < ctx->e3D.nphix; i2++) {
                       for (c2 = 0; c2 < ctx->e3D.dim; c2++,l++) {
-                        gradient_array[ek+k1][ej+j1][ei+i1][c1] += bilinearForm_local[l] * u_array[ek+k2][ej+j2][ei+i2][c2];
+                        residual_array[ek+k1][ej+j1][ei+i1][c1] += bilinearForm_local[l] * u_array[ek+k2][ej+j2][ei+i2][c2];
                       }
                     }
                   }
@@ -1603,29 +1602,29 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
         /*
          Compute and accumulate the local contribution of the effective strain contribution to the global RHS
          */
-        for (l = 0; l < nrow; l++) gradient_local[l] = 0.;
+        for (l = 0; l < nrow; l++) residual_local[l] = 0.;
         switch (ctx->unilateral) {
           case UNILATERAL_NONE:
-            ierr = VF_GradientUThermoPoro3D_local(gradient_local,v_array,theta_array,thetaRef_array,pressure_array,
+            ierr = VF_GradientUThermoPoro3D_local(residual_local,v_array,theta_array,thetaRef_array,pressure_array,
                                            &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                            ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
             break;
           case UNILATERAL_NOCOMPRESSION:
-            ierr = VF_GradientUThermoPoroNoCompression3D_local(gradient_local,u_array,v_array,theta_array,thetaRef_array,
+            ierr = VF_GradientUThermoPoroNoCompression3D_local(residual_local,u_array,v_array,theta_array,thetaRef_array,
                                                     pressure_array,&ctx->matprop[ctx->layer[ek]],&ctx->vfprop,
                                                     ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
             break;
         }
         if (ctx->hasCrackPressure) {
-          ierr = VF_GradientUCrackPressure3D_local(gradient_local,v_array,pressure_array,
+          ierr = VF_GradientUCrackPressure3D_local(residual_local,v_array,pressure_array,
                                                     &ctx->matprop[ctx->layer[ek]],&ctx->vfprop,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
         }
         for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
           for (j = 0; j < ctx->e3D.nphiy; j++) {
             for (i = 0; i < ctx->e3D.nphix; i++) {
               for (c = 0; c < dim; c++,l++) {
-                gradient_array[ek+k][ej+j][ei+i][c] -= gradient_local[l];
-                gradient_local[l]                    = 0;
+                residual_array[ek+k][ej+j][ei+i][c] -= residual_local[l];
+                residual_local[l]                    = 0;
               }
             }
           }
@@ -1656,13 +1655,13 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
                 }
               }
             }
-            ierr = VF_GradientUInSituStresses3D_local(gradient_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_GradientUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    gradient_array[0][ej+j][ei+i][c] -= gradient_local[l];
-                    gradient_local[l]                 = 0;
+                    residual_array[0][ej+j][ei+i][c] -= residual_local[l];
+                    residual_local[l]                 = 0;
                   }
                 }
               }
@@ -1692,13 +1691,13 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
                 }
               }
             }
-            ierr = VF_GradientUInSituStresses3D_local(gradient_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_GradientUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    gradient_array[nz][ej+j][ei+i][c] -= gradient_local[l];
-                    gradient_local[l]                  = 0;
+                    residual_array[nz][ej+j][ei+i][c] -= residual_local[l];
+                    residual_local[l]                  = 0;
                   }
                 }
               }
@@ -1729,13 +1728,13 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
                 }
               }
             }
-            ierr = VF_GradientUInSituStresses3D_local(gradient_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_GradientUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    gradient_array[ek+k][0][ei+i][c] -= gradient_local[l];
-                    gradient_local[l]                 = 0;
+                    residual_array[ek+k][0][ei+i][c] -= residual_local[l];
+                    residual_local[l]                 = 0;
                   }
                 }
               }
@@ -1765,13 +1764,13 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
                 }
               }
             }
-            ierr = VF_GradientUInSituStresses3D_local(gradient_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_GradientUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    gradient_array[ek+k][ny][ei+i][c] -= gradient_local[l];
-                    gradient_local[l]                    = 0;
+                    residual_array[ek+k][ny][ei+i][c] -= residual_local[l];
+                    residual_local[l]                    = 0;
                   }
                 }
               }
@@ -1802,13 +1801,13 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
                 }
               }
             }
-            ierr = VF_GradientUInSituStresses3D_local(gradient_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_GradientUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    gradient_array[ek+k][ej+j][0][c] -= gradient_local[l];
-                    gradient_local[l]                 = 0;
+                    residual_array[ek+k][ej+j][0][c] -= residual_local[l];
+                    residual_local[l]                 = 0;
                   }
                 }
               }
@@ -1839,13 +1838,13 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
                 }
               }
             }
-            ierr = VF_GradientUInSituStresses3D_local(gradient_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
+            ierr = VF_GradientUInSituStresses3D_local(residual_local,f_array,ek,ej,ei,face,&ctx->e3D);CHKERRQ(ierr);
             for (l= 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++) {
                   for (c = 0; c < dim; c++,l++) {
-                    gradient_array[ek+k][ej+j][nx][c] -= gradient_local[l];
-                    gradient_local[l]                    = 0;
+                    residual_array[ek+k][ej+j][nx][c] -= residual_local[l];
+                    residual_local[l]                    = 0;
                   }
                 }
               }
@@ -1861,12 +1860,13 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
   /*
    Global Assembly and Boundary Conditions
    */
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,gradient_localVec,&gradient_array);CHKERRQ(ierr);
-  ierr = DMLocalToGlobalBegin(ctx->daVect,gradient_localVec,ADD_VALUES,gradient);CHKERRQ(ierr);
-  ierr = DMLocalToGlobalEnd(ctx->daVect,gradient_localVec,ADD_VALUES,gradient);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daVect,&gradient_localVec);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,residual_localVec,&residual_array);CHKERRQ(ierr);
+  ierr = DMLocalToGlobalBegin(ctx->daVect,residual_localVec,ADD_VALUES,residual);CHKERRQ(ierr);
+  ierr = DMLocalToGlobalEnd(ctx->daVect,residual_localVec,ADD_VALUES,residual);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daVect,&residual_localVec);CHKERRQ(ierr);
 
-  ierr = GradientApplyDirichletBC(gradient,&ctx->bcU[0]);CHKERRQ(ierr);
+  //ierr = residualApplyDirichletBC(residual,&ctx->bcU[0]);CHKERRQ(ierr);
+  ierr = ResidualApplyDirichletBC(residual,U,ctx->fields->BCU,&ctx->bcU[0]);CHKERRQ(ierr);
   /*
    Cleanup
    */
@@ -1886,20 +1886,20 @@ extern PetscErrorCode VF_U_TaoGradient(Tao taoU,Vec U,Vec gradient,void *user)
     ierr = DMDAVecRestoreArrayDOF(ctx->daVect,f_localVec,&f_array);CHKERRQ(ierr);
     ierr = DMRestoreLocalVector(ctx->daVect,&f_localVec);CHKERRQ(ierr);
   }
-  ierr = PetscFree2(gradient_local,bilinearForm_local);CHKERRQ(ierr);
+  ierr = PetscFree2(residual_local,bilinearForm_local);CHKERRQ(ierr);
  
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_U_TaoHessian"
+#define __FUNCT__ "VF_UIJacobian"
 /*
   
-  VF_U_TaoHessian:
+  VF_UIJacobian:
   
   (c) 2014 Blaise Bourdin bourdin@lsu.edu
 */
-extern PetscErrorCode VF_U_TaoHessian(Tao taoU,Vec U,Mat K,Mat KPC,void *user)
+extern PetscErrorCode VF_UIJacobian(SNES snesU,Vec U,Mat K,Mat KPC,void *user)
 {
   VFCtx          *ctx=(VFCtx*)user;
   
@@ -2034,32 +2034,7 @@ extern PetscErrorCode VF_U_TaoHessian(Tao taoU,Vec U,Mat K,Mat KPC,void *user)
 }
 
 
-
-
-
-#undef __FUNCT__
-#define __FUNCT__ "VF_U_TaoObjective"
-/*
-  
-  VF_U_TaoObjective:
-  
-  (c) 2014 Blaise Bourdin bourdin@lsu.edu
-*/
-extern PetscErrorCode VF_U_TaoObjective(Tao taoU,Vec U, PetscReal *objective,void *user)
-{
-  PetscErrorCode ierr;
-  PetscReal       ElasticEnergy,InsituWork,PressureWork;
-  VFCtx          *ctx=(VFCtx*)user;
-  
-  PetscFunctionBegin;
-  ElasticEnergy = 0.;
-  InsituWork    = 0.;
-  PressureWork  = 0.;
-  ierr = VF_UEnergy3D(&ElasticEnergy,&InsituWork,&PressureWork,U,ctx);CHKERRQ(ierr);
-  *objective = ElasticEnergy - InsituWork - PressureWork;
-  PetscFunctionReturn(0);
-}
-
+/* ====================== */
 #undef __FUNCT__
 #define __FUNCT__ "VF_BilinearFormVAT23D_local"
 /*
