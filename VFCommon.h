@@ -241,7 +241,7 @@ typedef struct {
 	Vec                 coordinates;
 	PetscInt            verbose;
 	SNES                snesV;
-	Tao                 taoU;
+	SNES                snesU;
 	/*
 	 Global variables for regular FEM Flow
 	 */

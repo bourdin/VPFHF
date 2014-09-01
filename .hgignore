@@ -8,6 +8,7 @@ syntax: glob
 *h5
 *bin
 *xmf
+*vts
 *ener
 *pres
 tags
