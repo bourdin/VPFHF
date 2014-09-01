@@ -2168,3 +2168,47 @@ extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FA
 	PetscFunctionReturn(0);
 }
 
+
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VF_FastFourierTransforms"
+extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields)
+{
+  PetscErrorCode  ierr;
+	PetscInt		    nx,ny,nz;
+  PetscInt        DIM = 3,dim[3];
+  Vec             x,y,z;
+  
+  PetscFunctionBegin;
+  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  dim[0] = nx; dim[1] = ny; dim[2] = nz;
+  ierr = VecCreate(PETSC_COMM_WORLD,&ctx->FFTIn);CHKERRQ(ierr);
+  ierr = VecSetSizes(ctx->FFTIn,PETSC_DECIDE,nx*ny*nz);CHKERRQ(ierr);
+  ierr = VecSetFromOptions(ctx->FFTIn);CHKERRQ(ierr);
+  ierr = VecDuplicate(ctx->FFTIn,&ctx->FFTOut);CHKERRQ(ierr);
+//  ierr = PetscObjectSetName((PetscObject)ctx->FFTIn, "Real space vector");CHKERRQ(ierr);
+//  ierr = PetscObjectSetName((PetscObject)ctx->FFTOut, "Reconstructed vector");CHKERRQ(ierr);
+ 
+  ierr = VecCopy(fields->pressure,ctx->FFTIn);CHKERRQ(ierr);
+    ierr = MatCreateFFT(PETSC_COMM_WORLD,DIM,dim,MATFFTW,&ctx->KFFT);CHKERRQ(ierr);
+    ierr = MatGetVecsFFTW(ctx->KFFT,&x,&y,&z);CHKERRQ(ierr);
+    ierr = VecScatterPetscToFFTW(ctx->KFFT,ctx->FFTIn,x);CHKERRQ(ierr);
+  /* Apply FFTW_FORWARD and FFTW_BACKWARD */
+
+    ierr = MatMult(ctx->KFFT,x,y);CHKERRQ(ierr);
+//    ierr = MatMultTranspose(ctx->KFFT,y,z);CHKERRQ(ierr);
+    ierr = VecScatterFFTWToPetsc(ctx->KFFT,y,ctx->FFTOut);CHKERRQ(ierr);
+
+  ierr = VecCopy(ctx->FFTOut,fields->theta);CHKERRQ(ierr);
+
+  ierr = VecDestroy(&ctx->FFTIn);CHKERRQ(ierr);
+  ierr = VecDestroy(&ctx->FFTOut);CHKERRQ(ierr);
+  ierr = VecDestroy(&x);CHKERRQ(ierr);
+  ierr = VecDestroy(&y);CHKERRQ(ierr);
+  ierr = VecDestroy(&z);CHKERRQ(ierr);
+  ierr = MatDestroy(&ctx->KFFT);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+

@@ -24,7 +24,6 @@ extern PetscErrorCode BoundaryFlowRate(PetscReal *vel, PetscInt c, PetscInt i, P
 extern PetscErrorCode BoundaryPressure(PetscReal *press, PetscInt i, PetscInt j, PetscInt k, PetscReal hi, PetscReal hj, PetscReal hk, VFResProp resprop);
 extern PetscErrorCode Flow_MatBTranspose(PetscReal *KB_ele, VFCartFEElement3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, PetscInt c, PetscReal ***v_array);
 extern PetscErrorCode VecApplySourceTerms(PetscReal *Ks_local, PetscReal ***source_array, VFCartFEElement3D *e, PetscInt ek, PetscInt ej, PetscInt ei, VFCtx *ctx, PetscReal ***v_array);
-extern PetscErrorCode ResetSourceTerms(Vec Src, VFFlowProp *flowpropty);
 extern PetscErrorCode ResetBoundaryTerms(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode MixedFEMKSPMonitor(KSP ksp,PetscInt its,PetscReal fnorm,void* ptr);
 extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,VFBC *bcQ);

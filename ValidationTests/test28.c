@@ -163,7 +163,7 @@ int main(int argc,char **argv)
 		ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
 		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-//		ierr = FieldsH5Write(&ctx,&fields);
+    ierr = VF_FastFourierTransforms(&ctx,&fields);
     ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
     /*This will have to be called "an update function"*/
     

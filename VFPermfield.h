@@ -33,5 +33,6 @@ extern PetscErrorCode VF_ComputeAverageVField_local(PetscReal ***v_c_array, Pets
 extern PetscErrorCode VolumetricStrainVolume_local(PetscReal *VolStrainVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e, VFFlowProp *flowpropty, PetscReal ****u_diff_array, PetscReal ***v_array);
 extern PetscErrorCode VolumetricFractureWellRate_local(PetscReal *InjVolume_local, PetscReal ***regrate_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
 extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FACE face, VFCtx *ctx);
+extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields);
 
 #endif 

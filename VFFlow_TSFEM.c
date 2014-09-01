@@ -32,7 +32,6 @@ extern PetscErrorCode FEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 
 	ierr = BCPInit(&ctx->bcP[0],ctx);
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-	ierr = ResetSourceTerms(ctx->Source,ctx->flowprop);
 	PetscFunctionReturn(0);
 }
 

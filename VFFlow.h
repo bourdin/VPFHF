@@ -38,7 +38,6 @@ extern PetscErrorCode FEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void
 extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFUnit flowunit,VFResProp resprop);
 extern PetscErrorCode ResetFlowBC(VFBC *bcP,VFBC *bcQ, VFFlowCases flowcase);
 extern PetscErrorCode ResetBoundaryTerms(VFCtx *ctx, VFFields *fields);
-extern PetscErrorCode ResetSourceTerms(Vec Src,VFFlowProp flowpropty);
 extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,VFBC *BC);
 #endif /* VFFLOW_H */
 
