@@ -93,7 +93,6 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
   ierr = BCPInit(&ctx->bcP[0],ctx);
 	ierr = BCQInit(&ctx->bcQ[0],ctx);
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
-	ierr = ResetSourceTerms(ctx->Source,ctx->flowprop);
 	ierr = ResetBoundaryTerms(ctx,fields);CHKERRQ(ierr);
   
   ierr = DMCreateMatrix(ctx->daScal,&ctx->KP);CHKERRQ(ierr);
@@ -963,30 +962,3 @@ extern PetscErrorCode ResetBoundaryTerms(VFCtx *ctx, VFFields *fields)
   ierr = DMDAVecRestoreArray(ctx->daScal,ctx->PresBCArray,&press_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
-#undef __FUNCT__
-#define __FUNCT__ "ResetSourceTerms"
-extern PetscErrorCode ResetSourceTerms(Vec Src,VFFlowProp flowpropty)
-{
-  PetscErrorCode ierr;
-  PetscReal      ***source_array;
-  PetscInt       xs,xm,nx;
-  PetscInt       ys,ym,ny;
-  PetscInt       zs,zm,nz;
-  PetscInt       dim,dof;
-  PetscInt       ei,ej,ek;
-  DM             da;
-
-  PetscFunctionBegin;
-  ierr = VecGetDM(Src,&da);CHKERRQ(ierr);
-  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     &dof,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = DMDAVecGetArray(da,Src,&source_array);CHKERRQ(ierr);
-  for (ek = zs; ek < zs+zm; ek++)
-    for (ej = ys; ej < ys+ym; ej++)
-      for (ei = xs; ei < xs+xm; ei++) source_array[ek][ej][ei] = 0.;
-  ierr = DMDAVecRestoreArray(da,Src,&source_array);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-

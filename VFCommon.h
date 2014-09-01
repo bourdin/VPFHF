@@ -293,7 +293,6 @@ typedef struct {
   */
 	Mat                 KT;
 	Mat                 KTlhs;
-	
 	PC                  pcT;
 	KSP                 kspT;
 	Mat                 JacT;
@@ -378,8 +377,10 @@ typedef struct {
   PetscInt            numfracWells;
   Vec                 RegFracWellFlowRate;
   DM                  daVectCell;
-
 	VFFields            *fields;
+  Mat                 KFFT;
+  Vec                 FFTIn;
+  Vec                 FFTOut;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
