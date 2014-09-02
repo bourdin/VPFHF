@@ -122,7 +122,8 @@ int main(int argc,char **argv)
   ctx.flowprop.K_dr = ctx.matprop[0].E/(2*(1+ctx.matprop[0].nu)*(1-2*ctx.matprop[0].nu));   // For 2D
   stress = -1.0;
   
-	for (i = 0; i < 6; i++) {
+  /*
+	for (i = 0; i < 6; i++)a {
 		ctx.bcV[0].face[i]=NONE;
 		for (j = 0; j < 3; j++) {
 			ctx.bcU[j].face[i] = NONE;
@@ -148,6 +149,7 @@ int main(int argc,char **argv)
   ctx.bcU[2].face[Z0]= ZERO;
   ctx.bcU[1].face[Z1]= ZERO;
   ctx.bcU[2].face[Z1]= FIXED;
+  */
   ctx.hasFlowWells = PETSC_FALSE;
 	ctx.hasFluidSources = PETSC_FALSE;
   ctx.hasInsitu        = PETSC_FALSE;

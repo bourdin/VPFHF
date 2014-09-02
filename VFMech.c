@@ -1437,7 +1437,7 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode      ierr;
   SNESConvergedReason  reason;
-  PetscInt            its,flg= 0;
+  PetscInt            its;
   PetscReal           f;
   PetscReal           gnorm;
   PetscReal           cnorm;
@@ -1448,12 +1448,11 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   ierr = SNESGetConvergedReason(ctx->snesU,&reason);CHKERRQ(ierr);
   if (reason < 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snesU diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
-    flg = reason;
   } else {
     ierr = SNESGetIterationNumber(ctx->snesU,&its);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesU converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
   }
-  PetscFunctionReturn(flg);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__

@@ -4,13 +4,15 @@
  Reservoir simultion with the finite element method using Biot poroelastic approach
  Zheng, Y., Burridge R. and Burns D.
  
- (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
+ (c) 2010-2014 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
 ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 20 -timestepsize 2 -resflowmechcoupling fixedstrain
  ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 10 -resflowmechcoupling fixedstrain
  
  ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesMIXEDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 2 -resflowmechcoupling fixedstress
  ./test30 -l 2,1,3 -n 11,2,11 -flowsolver FLOWSOLVER_snesstandarDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 2 -resflowmechcoupling fixedstress
+
+srun -n 12 ./test30 -l 2,1,3 -n 11,3,11 -flowsolver FLOWSOLVER_snesstandarDFEM -E 14400 -nu 0.2 -maxtimestep 5 -timestepsize 2 -resflowmechcoupling fixedstress  -insitumin 0,0,-4,0,0,0 -insitumax 0,0,-4,0,0,0 -options_file test30.bc 
  */
 
 #include "petsc.h"
@@ -44,7 +46,6 @@ int main(int argc,char **argv)
 	PetscReal   ****perm_array;
 	PetscInt    xs1,xm1,ys1,ym1,zs1,zm1;
   Vec         V_hold;
-  PetscReal   ****bcu_array;
 	PetscReal		****velbc_array;
   PetscReal   vol,vol1,vol2,vol3,vol4,vol5;
 
@@ -65,8 +66,6 @@ int main(int argc,char **argv)
 	ctx.hasFlowWells = PETSC_TRUE;
 	ctx.hasFluidSources = PETSC_FALSE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
-  ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);
   for (k = zs1; k < zs1+zm1; k++) {
     for (j = ys1; j < ys1+ym1; j++) {
@@ -130,53 +129,16 @@ int main(int argc,char **argv)
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   K_Dr = : %e\n\n\n\n\n",ctx.flowprop.K_dr);CHKERRQ(ierr);
 
   /*
-   Beginning of mechanical part of code*/
-    /*
-	 Reset all BC for U and V
-	 */
-	for (i = 0; i < 6; i++) {
-		ctx.bcV[0].face[i]=NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].face[i] = NONE;
-		}
-	}
-	for (i = 0; i < 12; i++) {
-		ctx.bcV[0].edge[i]=NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].edge[i] = NONE;
-		}
-	}
-	for (i = 0; i < 8; i++) {
-		ctx.bcV[0].vertex[i]=NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].vertex[i] = NONE;
-		}
-	}
-//We will use Z and X direction
-  /*	face X0	*/
-  ctx.bcU[0].face[X0]= ZERO;
-  ctx.bcU[1].face[X0]= ZERO;
-  /*	face X1	*/
-  ctx.bcU[0].face[X1]= ZERO;
-  ctx.bcU[1].face[X1]= ZERO;
-  /*	face Y0	*/
-  ctx.bcU[1].face[Y0]= ZERO;
-  /*	face Y1	*/
-  ctx.bcU[1].face[Y1]= ZERO;
-  /*	face Z0	*/
-  ctx.bcU[0].face[Z0]= ZERO;
-  ctx.bcU[1].face[Z0]= ZERO;
-  ctx.bcU[2].face[Z0]= ZERO;
-  /*	face Z1	*/
-  ctx.bcU[0].face[Z1]= ZERO;
-  ctx.bcU[1].face[Z1]= ZERO;
-  ctx.bcU[2].face[Z1]= NONE;
+   Beginning of mechanical part of code
+  */
+
+  /*
   for (i = 0; i < 6; i++) {
     ctx.insitumax[i] = 0.;
     ctx.insitumin[i] = 0.;
   }
   ctx.insitumax[2] = ctx.insitumin[2] = -4.;
-  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
+  */
   ctx.hasInsitu        = PETSC_TRUE;
   ctx.FlowDisplCoupling = PETSC_TRUE;
 	ctx.hasCrackPressure = PETSC_TRUE;
@@ -209,11 +171,13 @@ int main(int argc,char **argv)
   ierr = VecSet(ctx.RHSPpre,0.);CHKERRQ(ierr);
   ctx.timestep = 0;
     ierr = PetscPrintf(PETSC_COMM_WORLD,"  Computing initial time step solution\n");CHKERRQ(ierr);
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
     ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
     ierr = VecCopy(fields.pressure,PreIteSol);CHKERRQ(ierr);
     while (norm_inf > displ_p_tol) {
       ierr = PetscPrintf(PETSC_COMM_WORLD,"   Iteration Step: %d\n",displ_iter);CHKERRQ(ierr);
+      ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
       ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
       ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
       displ_iter++;
