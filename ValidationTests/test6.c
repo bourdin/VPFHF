@@ -95,7 +95,6 @@ srun -n 12   ./test6 -n 100,10,10 -l 1,.1,.1 -E 1 -nu 0 -atnum 1 -epsilon .03 -e
              -U_Y0_BC_1 ZERO -U_Y1_BC_1 ZERO -U_Z0_BC_2 ZERO -U_Z1_BC_2 ZERO                              \
              -U_X0_BC_1 NONE  -U_X0_BC_2 NONE -U_X1_BC_1 NONE -U_X1_BC_2 NONE                             \
              -U_X0_BC_0 FIXED -U_X1_BC_0 FIXED -U_X0_0 0 -U_X1_0 0.                                       \
-             -U_tao_type nls -U_tao_monitor -U_tao_fatol 1e-9 -U_tao_frtol 1e-9                           \
              -pressure 1 -alpha 10 -beta 0 -unilateral nocompression  -maxtimestep 1   -pressurize no
 */
 
