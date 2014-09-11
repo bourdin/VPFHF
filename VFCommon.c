@@ -822,10 +822,10 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VecSet(ctx->RegFracWellFlowRate,0.0);CHKERRQ(ierr);
   for (c = 0; c < ctx->numfracWells; c++) {
     if(ctx->vfprop.atnum == 1){
-      ierr = VFRegDiracDeltaFunction2(ctx->RegFracWellFlowRate,&ctx->fracwell[c],&(ctx->pennycrack[c]),ctx,fields->V);CHKERRQ(ierr);
+      ierr = VFRegDiracDeltaFunction(ctx->RegFracWellFlowRate,&ctx->fracwell[c],&(ctx->pennycrack[c]),ctx,fields->V);CHKERRQ(ierr);
     }
     else {
-      ierr = VFRegDiracDeltaFunction2(ctx->RegFracWellFlowRate,&ctx->fracwell[c],&(ctx->pennycrack[c]),ctx,fields->V);CHKERRQ(ierr);
+      ierr = VFRegDiracDeltaFunction(ctx->RegFracWellFlowRate,&ctx->fracwell[c],&(ctx->pennycrack[c]),ctx,fields->V);CHKERRQ(ierr);
     }
   }
   

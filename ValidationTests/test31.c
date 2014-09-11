@@ -4,7 +4,7 @@
  
  
  ./test31 -l 5,1,1 -n 51,2,5 -flowsolver FLOWSOLVER_snesmixedFEM -E 1 -nu 0.2 -maxtimestep 1002 -timestepsize 0.01 -resflowmechcoupling fixedstress
- ./test31 -l 5,1,1 -n 51,2,5 -flowsolver FLOWSOLVER_snesstandardFEM -E 1 -nu 0.2 -maxtimestep 1002 -timestepsize 0.01 -resflowmechcoupling fixedstress
+ ./test31 -l 5,1,1 -n 51,2,5 -flowsolver FLOWSOLVER_snesstandardFEM -E 1 -nu 0.2 -maxtimestep 1002 -timestepsize 0.01 -resflowmechcoupling fixedstress -options_file test31.bc
  */
 
 #include "petsc.h"
@@ -121,35 +121,6 @@ int main(int argc,char **argv)
   ctx.flowprop.g[2] = 0.;								  //z-component of gravity. unit is ft/s^2
   ctx.flowprop.K_dr = ctx.matprop[0].E/(2*(1+ctx.matprop[0].nu)*(1-2*ctx.matprop[0].nu));   // For 2D
   stress = -1.0;
-  
-  /*
-	for (i = 0; i < 6; i++)a {
-		ctx.bcV[0].face[i]=NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].face[i] = NONE;
-		}
-	}
-	for (i = 0; i < 12; i++) {
-		ctx.bcV[0].edge[i]=NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].edge[i] = NONE;
-		}
-	}
-	for (i = 0; i < 8; i++) {
-		ctx.bcV[0].vertex[i]=NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].vertex[i] = NONE;
-		}
-	}
-  ctx.bcU[1].face[X0]= ZERO;
-  ctx.bcU[1].face[X1]= ZERO;
-  ctx.bcU[1].face[Y0]= ZERO;
-  ctx.bcU[1].face[Y1]= ZERO;
-  ctx.bcU[1].face[Z0]= ZERO;
-  ctx.bcU[2].face[Z0]= ZERO;
-  ctx.bcU[1].face[Z1]= ZERO;
-  ctx.bcU[2].face[Z1]= FIXED;
-  */
   ctx.hasFlowWells = PETSC_FALSE;
 	ctx.hasFluidSources = PETSC_FALSE;
   ctx.hasInsitu        = PETSC_FALSE;
@@ -163,11 +134,6 @@ int main(int argc,char **argv)
   ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
   ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
   /*End of mechanical part of code*/
-  
-  
-  
-  
-  
   ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetType(viewer,PETSCVIEWERASCII);CHKERRQ(ierr);
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%smandel.txt",ctx.prefix);CHKERRQ(ierr);
@@ -221,37 +187,6 @@ int main(int argc,char **argv)
   ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
   ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
   ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
 	for (i = 0; i < 6; i++) {
 		ctx.bcP[0].face[i] = NONE;
 		for (c = 0; c < 3; c++) {
