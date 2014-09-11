@@ -66,7 +66,7 @@ VFFields            fields;
 int main(int argc,char **argv)
 {
 	PetscErrorCode  ierr;
-	PetscViewer     viewer;
+	PetscViewer     viewer,volviewer;
 	PetscViewer     logviewer;
 	char            filename[FILENAME_MAX];
   PetscInt        mode=0;
@@ -95,6 +95,8 @@ int main(int argc,char **argv)
   PetscInt        altminit = 0;
   PetscReal       timesize_o_ite = 0;
   PetscReal       TotalVolInj = 0;
+  PetscReal       PreInt = 0;
+  PetscReal       pm1 = 0,pm2 = 0, pmax1;
 
   
   
@@ -246,13 +248,19 @@ int main(int argc,char **argv)
   ctx.bcV[0].face[X1] = ONE;
   ctx.bcV[0].face[Z0] = ONE;
   ctx.bcV[0].face[Z1] = ONE;
-   ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
+
+  
+  
+  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetType(viewer,PETSCVIEWERASCII);CHKERRQ(ierr);
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.pres",ctx.prefix);CHKERRQ(ierr);
   ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIPrintf(viewer,"Time step \t Timestepsize \t TotalTime \t Pressure \t VolumeInj  \t FracVolume \t LeakOffVolume \n");CHKERRQ(ierr); 
-  
-  
+  ierr = PetscViewerASCIIPrintf(viewer,"Time step \t Timestepsize \t TotalTime \t Pressure \t VolumeInj  \t FracVolume \t LeakOffVolume \t SurfaceEnergy \t ElasticEnergy \t PressureWork \t TotalEnergy\n");CHKERRQ(ierr);
+  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&volviewer);CHKERRQ(ierr);
+  ierr = PetscViewerSetType(volviewer,PETSCVIEWERASCII);CHKERRQ(ierr);
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.vol",ctx.prefix);CHKERRQ(ierr);
+  ierr = PetscViewerFileSetName(volviewer,filename);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(volviewer,"Time step \t Timestepsize \t TotalTime \t Pressure \t Pressure1 \t PressureInt \t VolumeInj  \t FracVolume \t ModVolume \t StrainVolume \t SurfFlux \t VolBalance \t LeakOffVolume \n");CHKERRQ(ierr);
   
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
@@ -349,10 +357,17 @@ int main(int argc,char **argv)
       ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n.........V STEP ERROR errV = %e \t errVP = %e\n\n", errV,errVP);CHKERRQ(ierr);
     }
-//    crackvolume_o = ctx.CrackVolume;
-//    timevalue_o = ctx.timevalue;
-//    TotalLeakOff = TotalLeakOff + ctx.flowprop.timestepsize*ctx.LeakOffRate;
-//    TotalVolInj = TotalVolInj + ctx.flowprop.timestepsize*Q_inj;
+    TotalLeakOff = TotalLeakOff + ctx.flowprop.timestepsize*ctx.LeakOffRate;
+    TotalVolInj = TotalVolInj + ctx.flowprop.timestepsize*Q_inj;
+    ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," divergence_volume = %g\n",vol1);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," surface_flux_volume = %g\n",vol2);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," well_volume = %g\n",vol3);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," source_volume = %g\n",vol4);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," vol.strain_volume = %g\n",vol5);CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD," Volume Balance: RHS = %g \t LHS = %g \n",vol+vol1,vol3+vol4+vol5);CHKERRQ(ierr);
+    
     
     ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
@@ -362,9 +377,19 @@ int main(int argc,char **argv)
     ierr = VecCopy(fields.V,ctx.V_old);CHKERRQ(ierr);
     ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
     ierr = VecMax(fields.pressure,PETSC_NULL,&pmax);CHKERRQ(ierr);
-    ierr = PetscViewerASCIIPrintf(viewer,"%d \t %e \t %e \t %e \t %e \t %e \t %e \n",i,ctx.flowprop.timestepsize,ctx.timevalue,pmax,TotalVolInj,ctx.CrackVolume,TotalLeakOff);CHKERRQ(ierr);
     ctx.timestep = i;
-//    ierr = FieldsH5Write(&ctx,&fields);
+    ctx.ElasticEnergy = 0;
+    ctx.InsituWork    = 0;
+    ctx.PressureWork  = 0.;
+    ctx.SurfaceEnergy = 0.;
+    ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,fields.U,&ctx);CHKERRQ(ierr);
+    ierr = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
+    ctx.TotalEnergy   = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork + ctx.SurfaceEnergy;
+    ierr = PetscViewerASCIIPrintf(viewer,"%d \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e\n",i,ctx.flowprop.timestepsize,i*ctx.flowprop.timestepsize,pmax,TotalVolInj,ctx.CrackVolume,TotalLeakOff,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
+    ierr = VF_ComputeRegularizedFracturePressure(&PreInt,&ctx,&fields);
+    ierr = VecMax(fields.theta,PETSC_NULL,&pmax1);CHKERRQ(ierr);
+    ierr = PetscViewerASCIIPrintf(volviewer,"%d \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e\n",i,ctx.flowprop.timestepsize,i*ctx.flowprop.timestepsize,pmax,pmax1,PreInt,ctx.flowprop.timestepsize*Q_inj,ctx.CrackVolume,vol,vol5,vol2,vol+vol5+vol2+ctx.CrackVolume-crackvolume_o,TotalLeakOff);CHKERRQ(ierr);
+    crackvolume_o = ctx.CrackVolume;
     ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 
 	}

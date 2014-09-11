@@ -421,3 +421,49 @@ extern PetscErrorCode VFRegDiracDeltaFunction1(Vec V,VFWell *well,VFPennyCrack *
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VFRegDiracDeltaFunction"
+extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack *crack,VFCtx *ctx, Vec V)
+{
+  PetscErrorCode      ierr;
+  PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+  PetscReal           ****coords_array;
+  PetscReal           ***v_array,***regv_array;
+  PetscReal           x[3],x0[3];
+  PetscReal           dist;
+  PetscFunctionBegin;
+  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  
+  ierr = DMDAVecGetArray(ctx->daScal,RegV,&regv_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  for (i = 0; i < 3; i++) x0[i] = well->coords[i];
+	ierr = DMDAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  for (k = zs; k < zs+zm; k++) {
+    for (j = ys; j < ys+ym; j++) {
+      for (i = xs; i < xs+xm; i++) {
+        x[2] = coords_array[k][j][i][2];
+        x[1] = coords_array[k][j][i][1];
+        x[0] = coords_array[k][j][i][0];
+        dist =    sqrt((x[0] - x0[0]) * (x[0] - x0[0]) +
+                       (x[1] - x0[1]) * (x[1] - x0[1]) +
+                       (x[2] - x0[2]) * (x[2] - x0[2]));
+        if(dist <= crack->thickness/2.){
+          regv_array[k][j][i] += well->Qw*PETSC_PI/(4.*pow(ctx->vfprop.epsilon,1));
+        }
+        else {
+          regv_array[k][j][i] += well->Qw*exp(-dist/ctx->vfprop.epsilon)*PETSC_PI/(4.*pow(ctx->vfprop.epsilon,1));
+        }
+      }
+    }
+  }
+  ierr = DMDAVecRestoreArray(ctx->daScal,RegV,&regv_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}

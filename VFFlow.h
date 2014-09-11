@@ -39,5 +39,10 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFUnit flowunit,VFResProp
 extern PetscErrorCode ResetFlowBC(VFBC *bcP,VFBC *bcQ, VFFlowCases flowcase);
 extern PetscErrorCode ResetBoundaryTerms(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode VecApplyPressureBC_SNES(Vec Func,Vec pressure, Vec BCF,VFBC *BC);
+extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack *crack,VFCtx *ctx, Vec V);
+extern PetscErrorCode VFRegDiracDeltaFunction1(Vec V,VFWell *well,VFPennyCrack *crack,VFCtx *ctx);
+extern PetscErrorCode VFRegDiracDeltaFunction2(Vec V,VFWell *well,VFPennyCrack *crack,VFCtx *ctx);
+
+
 #endif /* VFFLOW_H */
 
