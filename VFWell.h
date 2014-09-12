@@ -17,4 +17,5 @@ extern PetscErrorCode VFWellBuildVAT2(Vec V,VFWell *well,VFCtx *ctx);
 extern PetscErrorCode VFWellBuildVAT1(Vec V,VFWell *well,VFCtx *ctx);
 extern PetscErrorCode VFRegDiracDeltaFunction1(Vec V,VFWell *well,VFPennyCrack *crack,VFCtx *ctx);
 extern PetscErrorCode VFRegDiracDeltaFunction2(Vec RegV,VFWell *well,VFPennyCrack *crack,VFCtx *ctx,Vec V);
+extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack *crack,VFCtx *ctx, Vec V);
 #endif /* VFWELL_H */
