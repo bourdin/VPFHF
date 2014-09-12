@@ -874,12 +874,14 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
   }
 
   ierr = BCPInit(&ctx->bcP[0],ctx);CHKERRQ(ierr);
+  ierr = VFBCSetFromOptions(&ctx->bcP[0],"P",1);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCP:\n");CHKERRQ(ierr);
     ierr = VFBCView(&ctx->bcP[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
 
   ierr = BCQInit(&ctx->bcQ[0],ctx);CHKERRQ(ierr);
+  ierr = VFBCSetFromOptions(&ctx->bcQ[0],"Q",3);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCQ:\n");CHKERRQ(ierr);
     ierr = VFBCView(&ctx->bcQ[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);

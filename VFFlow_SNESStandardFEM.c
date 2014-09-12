@@ -572,7 +572,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
           ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KF_local,ADD_VALUES);CHKERRQ(ierr);
           ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,KF_local,ADD_VALUES);CHKERRQ(ierr);
         }
-        ierr = VF_HeatMatK_local(KD_local,&ctx->e3D,ek,ej,ei,perm_array,one_array);CHKERRQ(ierr);
+        ierr = VF_HeatMatK_local(KD_local,&ctx->e3D,ek,ej,ei,perm_array,v_array);CHKERRQ(ierr);
         for (l = 0; l < nrow*nrow; l++) {
 					K1_local[l] = theta/mu*timestepsize*KD_local[l];
           K2_local[l] = -1.*(1.-theta)/mu*timestepsize*KD_local[l];
