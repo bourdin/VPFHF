@@ -3,7 +3,7 @@
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
  ./test24 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESMIXEDFEM
- ./test24 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESstandarDFEM
+ ./test24 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED
  ./test24 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_tSMIXEDFEM
  
  */
@@ -72,30 +72,6 @@ int main(int argc,char **argv)
 	hx = lx/(nx-1);
 	hy = ly/(nx-1);
 	hz = lz/(nz-1);
-	for (i = 0; i < 6; i++) {
-		ctx.bcP[0].face[i] = NONE;
-		for (c = 0; c < 3; c++) {
-			ctx.bcQ[c].face[i] = NONE;
-		}
-	}
-	for (i = 0; i < 12; i++) {
-		ctx.bcP[0].edge[i] = NONE;
-		for (c = 0; c < 3; c++) {
-			ctx.bcQ[c].edge[i] = NONE;
-		}
-	}
-	for (i = 0; i < 8; i++) {
-		ctx.bcP[0].vertex[i] = NONE;
-		for (c = 0; c < 3; c++) {
-			ctx.bcQ[c].vertex[i] = NONE;
-		}
-	}
-	ctx.bcQ[0].face[X0] = FIXED;
-	ctx.bcQ[0].face[X1] = FIXED;
-	ctx.bcQ[1].face[Y0] = FIXED;
-	ctx.bcQ[1].face[Y1] = FIXED;
-	ctx.bcQ[2].face[Z0] = FIXED;
-	ctx.bcQ[2].face[Z1] = FIXED;
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
@@ -111,9 +87,7 @@ int main(int argc,char **argv)
          src_array[k][j][i] = 4.*pi*pi*beta/mu*sin(2.*pi*k*hz/lz)*sin(2.*pi*j*hy/ly)*sin(2.*pi*i*hx/lx)*( (1/(lx*lx))+(1/(ly*ly))+(1/(lz*lz)) );
 			}
 		}
-	}
-
-  
+	}  
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
@@ -141,9 +115,6 @@ int main(int argc,char **argv)
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
       ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
       ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-
-      
-      
       ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD," divergence_volume = %g\n",vol1);CHKERRQ(ierr);
@@ -152,8 +123,6 @@ int main(int argc,char **argv)
       ierr = PetscPrintf(PETSC_COMM_WORLD," source_volume = %g\n",vol4);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD," vol.strain_volume = %g\n",vol5);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD," Volume Balance: RHS = %g \t LHS = %g \n",vol+vol1,vol3+vol4+vol5);CHKERRQ(ierr);
-      
-      
       /*This will have to be called "an update function"*/
       ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
       ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);

@@ -106,7 +106,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->verbose = 0;
     ierr         = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
 
-    ctx->flowsolver = FLOWSOLVER_KSPMIXEDFEM;
+    ctx->flowsolver = FLOWSOLVER_SNESSTANDARDFEM;
     ierr          = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
     ctx->units    = UnitaryUnits;
     ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",VFUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
@@ -872,22 +872,21 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCV:\n");CHKERRQ(ierr);
     ierr = VFBCView(&ctx->bcV[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
-
-  ierr = BCPInit(&ctx->bcP[0],ctx);CHKERRQ(ierr);
+  ierr = VFBCCreate(&ctx->bcP[0],1);CHKERRQ(ierr);
   ierr = VFBCSetFromOptions(&ctx->bcP[0],"P",1);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCP:\n");CHKERRQ(ierr);
     ierr = VFBCView(&ctx->bcP[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
-
-  ierr = BCQInit(&ctx->bcQ[0],ctx);CHKERRQ(ierr);
+  ierr = VFBCCreate(&ctx->bcQ[0],3);CHKERRQ(ierr);
   ierr = VFBCSetFromOptions(&ctx->bcQ[0],"Q",3);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCQ:\n");CHKERRQ(ierr);
     ierr = VFBCView(&ctx->bcQ[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);
   }
 
-  ierr = BCTInit(&ctx->bcT[0],ctx);CHKERRQ(ierr);
+  ierr = VFBCCreate(&ctx->bcT[0],1);CHKERRQ(ierr);
+  ierr = VFBCSetFromOptions(&ctx->bcT[0],"T",1);CHKERRQ(ierr);
   if (ctx->verbose > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"BCT:\n");CHKERRQ(ierr);
     ierr = VFBCView(&ctx->bcT[0],PETSC_VIEWER_STDOUT_WORLD,1);CHKERRQ(ierr);

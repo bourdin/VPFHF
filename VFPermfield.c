@@ -564,6 +564,7 @@ extern PetscErrorCode VolumetricCrackOpeningCC(PetscReal *CrackVolume, VFCtx *ct
   ierr = VecDestroy(&CellVolCrackOpening);CHKERRQ(ierr);
   ierr = VecDestroy(&Udotn);CHKERRQ(ierr);
   ierr = VecDestroy(&Uc);CHKERRQ(ierr);
+  ierr = VecDestroy(&Cellvfield);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -575,14 +576,13 @@ extern PetscErrorCode VolumetricStrainVolume_local(PetscReal *VolStrainVolume_lo
 	PetscErrorCode ierr;
 	PetscInt		i, j, k, c;
 	PetscInt		eg;
-	PetscReal    *v_elem,*du_elem[3],alphabiot,timestepsize;
+	PetscReal    *v_elem,*du_elem[3],alphabiot;
   
 	PetscFunctionBegin;
   ierr = PetscMalloc4(e->ng,&v_elem,
                       e->ng,&du_elem[0],
                       e->ng,&du_elem[1],
                       e->ng,&du_elem[2]);CHKERRQ(ierr);
-  timestepsize = flowpropty->timestepsize;
   alphabiot    = flowpropty->alphabiot;
   for (eg = 0; eg < e->ng; eg++){
     v_elem[eg] = 0.;
@@ -605,7 +605,7 @@ extern PetscErrorCode VolumetricStrainVolume_local(PetscReal *VolStrainVolume_lo
 	*VolStrainVolume_local = 0.;
 	for(eg = 0; eg < e->ng; eg++){
     for(c = 0; c < 3; c++){
-      *VolStrainVolume_local += 1*alphabiot*(pow(v_elem[eg],2))*du_elem[c][eg]*e->weight[eg]/timestepsize;
+      *VolStrainVolume_local += 1*alphabiot*(pow(v_elem[eg],2))*du_elem[c][eg]*e->weight[eg];
     }
 	}
 	ierr = PetscFree4(v_elem,du_elem[0],du_elem[1],du_elem[2]);CHKERRQ(ierr);
@@ -705,6 +705,9 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
 	Vec             src_local;
   PetscReal       ****u_diff_array;
 	Vec             U_diff,u_diff_local;
+  PetscReal      ***one_array;
+  Vec            one_local;
+  Vec            Ones;
   PetscReal       mymodVolumeLocal = 0.,mymodVolume = 0.;
   PetscReal       mydivVolumeLocal = 0.,mydivVolume = 0.;
   PetscReal       mysurfVolumeLocal = 0.,mysurfVolume = 0.;
@@ -751,6 +754,13 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
 	ierr = DMGlobalToLocalEnd(ctx->daVect,U_diff,INSERT_VALUES,u_diff_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_diff_local,&u_diff_array);CHKERRQ(ierr);
   
+  ierr = DMCreateGlobalVector(ctx->daScal,&Ones);CHKERRQ(ierr);
+  ierr = VecSet(Ones,1.0);CHKERRQ(ierr);
+  ierr = DMGetLocalVector(ctx->daScal,&one_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScal,Ones,INSERT_VALUES,one_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScal,Ones,INSERT_VALUES,one_local);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScal,one_local,&one_array);CHKERRQ(ierr);
+  
 	*ModulusVolume = 0.;
 	*DivVolume = 0.;
   *SurfVolume = 0;
@@ -764,7 +774,7 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-				ierr = ModulusVolume_local(&mymodVolumeLocal, ek, ej, ei, &ctx->e3D,&ctx->flowprop,press_diff_array,v_array);CHKERRQ(ierr);
+				ierr = ModulusVolume_local(&mymodVolumeLocal, ek, ej, ei, &ctx->e3D,&ctx->flowprop,press_diff_array,one_array);CHKERRQ(ierr);
 				ierr = DivergenceVolume_local(&mydivVolumeLocal, ek, ej, ei, &ctx->e3D,vel_array, v_array);CHKERRQ(ierr);
         if(ctx->hasFluidSources){
           ierr = SourceVolume_local(&mysourceVolumeLocal, ek, ej, ei, &ctx->e3D, src_array, v_array);CHKERRQ(ierr);
@@ -840,6 +850,11 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
   ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_diff_local,&u_diff_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daVect,&u_diff_local);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScal,one_local,&one_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&one_local);CHKERRQ(ierr);
+  ierr = VecDestroy(&Ones);CHKERRQ(ierr);
+  ierr = VecDestroy(&Pressure_diff);CHKERRQ(ierr);
+  ierr = VecDestroy(&U_diff);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

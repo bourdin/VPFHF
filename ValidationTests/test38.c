@@ -48,6 +48,11 @@
  
  
  ./test38 -n 101,2,101 -l 1,0.01,1 -m_inv 1 -E 17 -nu 0.2 -npc 1 -pc0_r 0.06 -pc0_center 0.5,0.005,0.5 -epsilon 0.02 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 0.02 -nw 1 -w0_coords 0.5,0.005,0.5 -w0_constraint Rate -w0_type injector -w0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.01  -Gc 5e1 -mode 0
+ 
+ 
+ 
+ 
+ ./test38 -n 100,2,100 -l 50,1,50 -m_inv 1 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25,0.5,25 -epsilon 2 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 0.6 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -eta 1e-8 -Gc 5e-6
  */
 
 #include "petsc.h"
@@ -302,21 +307,17 @@ int main(int argc,char **argv)
   ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
   
   ctx.timestep = 0;
-  
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
   ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
   ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD," Initial fracture pressure =  %e  Initial fracture volume = %e \n ",p,ctx.CrackVolume);CHKERRQ(ierr);
-//  ierr = FieldsH5Write(&ctx,&fields);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-
   
   ctx.timestep = 0;
   for(i = 1; i < num; i++){
     ite = 0;
-    ctx.flowprop.timestepsize = 0.1;
     ctx.timestep = i;
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nPROCESSING STEP %i. \t\t Iteration = %i \t vtkfiletime = %i\n",i, ite,ctx.timestep);CHKERRQ(ierr);
     ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
