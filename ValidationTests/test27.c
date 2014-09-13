@@ -2,7 +2,7 @@
  test27.c: 3D KSP. Flow problem with source term [pressure = 1/(3*pi^2)*cos(pi*x)*cos(pi*y)*cos(pi*z)]. All pressure boundary condition
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
- ./test27 -n 11,11,11 -l 1,1,1 -m_inv 0 -theta 1 -velp_pc_type jacobi -maxtimestep 1
+ mpiexec -np 2 ./test27 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESSTANDARDFEM -M_inv 0 -P_X0_BC FIXED -P_X1_BC FIXED -P_Y0_BC FIXED -P_Y1_BC FIXED -P_Z0_BC FIXED -P_Z1_BC FIXED -maxtimestep 1
  ./test27 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_TSMIXEDFEM
 
  */
@@ -78,28 +78,7 @@ int main(int argc,char **argv)
 	lx = BBmax[0]-BBmin[0];
 	hx = lx/(nx-1);
 	hy = ly/(nx-1);
-	hz = lz/(nz-1);	
-	for (i = 0; i < 6; i++) {
-		ctx.bcP[0].face[i] = NONE;
-		for (c = 0; c < 3; c++) {
-			ctx.bcQ[c].face[i] = NONE;
-		}
-	}
-	for (i = 0; i < 12; i++) {
-		ctx.bcP[0].edge[i] = NONE;
-		for (c = 0; c < 3; c++) {
-			ctx.bcQ[c].edge[i] = NONE;
-		}
-	}
-	for (i = 0; i < 8; i++) {
-		ctx.bcP[0].vertex[i] = NONE;
-		for (c = 0; c < 3; c++) {
-			ctx.bcQ[c].vertex[i] = NONE;
-		}
-	}
-	for (i = 0; i < 6; i++) {
-		ctx.bcP[0].face[i] = FIXED;
-	}	
+	hz = lz/(nz-1);
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
@@ -128,7 +107,6 @@ int main(int argc,char **argv)
     ctx.maxtimevalue = 60.;
     ctx.timevalue = 1.;
     ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-//    ierr = FieldsH5Write(&ctx,&fields);
     ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   }
   else{
@@ -142,7 +120,6 @@ int main(int argc,char **argv)
       ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
       ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
-//      ierr = FieldsH5Write(&ctx,&fields);
       ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
       /*This will have to be called "an update function"*/
       ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);

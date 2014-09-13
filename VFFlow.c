@@ -90,8 +90,6 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 
   PetscFunctionBegin;
     
-  ierr = BCPInit(&ctx->bcP[0],ctx);
-	ierr = BCQInit(&ctx->bcQ[0],ctx);
 	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
 	ierr = ResetBoundaryTerms(ctx,fields);CHKERRQ(ierr);
   
