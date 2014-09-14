@@ -2,57 +2,18 @@
  test28.c: 1D. Flow problem with source term = 1 and Homogeneous pressure boundary conditions on all sides. Analytical solution is p = x(x-1)/2
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
- ./test38 -n 51,2,11 -l 1,0.01,1 -m_inv 10 -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-16 -num 10 -timestepsize 1
- 
- ./test38 -n 101,2,101 -l 50,1,50 -m_inv 10 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25.,0.5,25 -epsilon 4.0 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 0.7 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-1  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 10 -timestepsize 0.1 -FlowStSnes_pc_type lu -Gc 0.005
- 
- 
- ./test38 -n 101,2,101 -l 50,1,50 -m_inv 10 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25.,0.5,25 -epsilon 4.0 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 1.6 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-3  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-13 -miu 1e-13 -num 10 -timestepsize 0.10  -Gc 0.005 -FlowStSnes_ksp_type gmres
- 
- 
- ./test38 -n 101,2,101 -l 50,1,50 -m_inv 20 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25.,0.5,25 -epsilon 2.0 -pc0_theta 0 -pc0_phi 90  -atnum 1 -pc0_thickness 1.6 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-4  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-14 -num 4 -timestepsize .5  -Gc 5e-3 -FlowstSnes_ksp_type gmres
+
  
  
  
+ ./test38 -n 100,2,100 -l 50,1,50 -m_inv 1 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25,0.5,25 -epsilon 2 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 0.6 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -eta 1e-8 -Gc 5e-6 -V_X0_BC ONE -V_X1_BC ONE -V_Z0_BC ONE -V_Z1_BC ONE -U_Y0_BC_1 ZERO -U_Y1_BC_1 ZERO -U_X0Y0Z0_BC_0 ZERO -U_X0Y0Z0_BC_2 ZERO -U_X1Y0Z0_BC_2 ZERO
+
  
  
- ./test38 -n 201,2,201 -l 50,1,50 -m_inv 20 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25.,0.5,25 -epsilon 2.0 -pc0_theta 0 -pc0_phi 90  -atnum 1 -pc0_thickness 1.1 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize .1  -Gc 5e-3
+ ./test38 -n 100,2,100 -l 50,1,50 -m_inv 1 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25,0.5,25 -epsilon 1 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 0.6 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 2 -timestepsize 0.5  -eta 1e-8 -Gc 5e-6  -V_X0_BC ONE -V_X1_BC ONE -V_Z0_BC ONE -V_Z1_BC ONE -U_Y0_BC_1 ZERO -U_Y1_BC_1 ZERO -U_X0Y0Z0_BC_0 ZERO -U_X0Y0Z0_BC_2 ZERO -U_X1Y0Z0_BC_2 ZERO
  
- 
- 
- 
- 
- ./test38 -n 101,2,101 -l 100,1,100 -m_inv 1 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 50.,0.5,50 -epsilon 0.02 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 0.02 -nfw 1 -fracw0_coords 50,0.5,50 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -Gc 5e-3
- 
- 
- 
- ./test38 -n 200,2,201 -l 50,1,50 -m_inv 1 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25.,0.5,25 -epsilon 1.6 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 0.3 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -Gc 5e-3
- 
- scp cchukw1@head.schur.math.lsu.edu:/archive/cchukw1/new5/TEST.xmf TEST.xmf
- 
- scp cchukw1@stampede.tacc.utexas.edu:/home1/01968/cchukw1/vf-chevron/new/TEST.xmf TEST.xmf
- 
- ./test38 -n 201,2,201 -l 100,1,100 -m_inv 1 -E 17 -nu 0.2 -npc 2 -pc0_r 5.0 -pc0_center 45.,0.5,50 -epsilon 3.2 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 1.2 -pc1_r 5.0 -pc1_center 55.,0.5,50 -pc1_theta 0 -pc1_phi 90 -pc1_thickness 1.2 -nfw 2 -fracw0_coords 45,0.5,50 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2 -fracw1_coords 55,0.5,50 -fracw1_constraint Rate -fracw1_type injector -fracw1_Qw 5e-2 -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -Gc 5e-6
- 
- ./test38 -n 201,2,201 -l 100,1,100 -m_inv 1 -E 17 -nu 0.2 -npc 2 -pc0_r 5.0 -pc0_center 70.,0.5,50 -epsilon 1.5 -pc0_theta 0 -pc0_phi 60  -atnum 2 -pc0_thickness 1.2 -pc1_r 5.0 -pc1_center 30.,0.5,50 -pc1_theta 0 -pc1_phi 120 -pc1_thickness 1.2 -nfw 1 -fracw0_coords 70,0.5,50 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -Gc 5e-6
- 
- 
- 
- 
- 
- ./test38 -n 101,2,101 -l 100,1,100 -m_inv 1 -E 17 -nu 0.2 -npc 1 -pc0_r 6.0 -pc0_center 50.,0.5,50 -epsilon 2.0 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 2.0 -nw 1 -w0_coords 50,0.5,50 -w0_constraint Rate -w0_type injector -w0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -Gc 5e-6 -mode 0
- 
- 
- 
- 
- 
- 
- ./test38 -n 101,2,101 -l 1,0.01,1 -m_inv 1 -E 17 -nu 0.2 -npc 1 -pc0_r 0.06 -pc0_center 0.5,0.005,0.5 -epsilon 0.02 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 0.02 -nw 1 -w0_coords 0.5,0.005,0.5 -w0_constraint Rate -w0_type injector -w0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.01  -Gc 5e1 -mode 0
- 
- 
- 
- 
- ./test38 -n 100,2,100 -l 50,1,50 -m_inv 1 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25,0.5,25 -epsilon 2 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 0.6 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 1000 -timestepsize 0.1  -eta 1e-8 -Gc 5e-6
+  ./test38 -n 100,2,100 -l 50,1,50 -m_inv 1 -E 17 -nu 0.2 -npc 1 -pc0_r 3.0 -pc0_center 25,0.5,25 -epsilon 1 -pc0_theta 0 -pc0_phi 90  -atnum 2 -pc0_thickness 0.6 -nfw 1 -fracw0_coords 25,0.5,25 -fracw0_constraint Rate -fracw0_type injector -fracw0_Qw 5e-2  -flowsolver FLOWSOLVER_snesstandarDFEM -perm 1e-16 -miu 1e-13 -num 2 -timestepsize 0.5  -eta 1e-8 -Gc 5e-6  -V_X0_BC ONE -V_X1_BC ONE -V_Z0_BC ONE -V_Z1_BC ONE -U_Y0_BC_1 ZERO -U_Y1_BC_1 ZERO -U_X0_BC_0 ZERO -U_X0_BC_1 ZERO -U_X0_BC_2 ZERO -U_X1_BC_0 ZERO -U_X1_BC_1 ZERO -U_X1_BC_2 ZERO -U_Z0_BC_0 ZERO -U_Z0_BC_1 ZERO -U_Z0_BC_2 ZERO -U_Z1_BC_0 ZERO -U_Z1_BC_1 ZERO -U_Z1_BC_2 ZERO
+
  */
 
 #include "petsc.h"
@@ -249,11 +210,6 @@ int main(int argc,char **argv)
       SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: mode should be one of {0,1}, got %i\n",mode);
       break;
   }
-  ctx.bcV[0].face[X0] = ONE;
-  ctx.bcV[0].face[X1] = ONE;
-  ctx.bcV[0].face[Z0] = ONE;
-  ctx.bcV[0].face[Z1] = ONE;
-
   
   
   ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
