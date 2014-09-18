@@ -11,7 +11,6 @@
 
 extern PetscErrorCode VFFlow_DarcyMixedFEMSteadyState(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode MixedFEMFlowSolverInitialize(VFCtx *ctx, VFFields *fields);
-extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop, VFUnit flowunit, VFResProp resprop);
 extern PetscErrorCode ResetFlowBC(VFBC *bcP,VFBC *bcQ, VFFlowCases flowcase);
 extern PetscErrorCode FlowMatnVecAssemble(Mat K, Mat Krhs, Vec RHS, VFFields *fields, VFCtx *ctx);
 extern PetscErrorCode Flow_Vecg(PetscReal *Kg_local, VFCartFEElement3D *e,  PetscInt ek, PetscInt ej, PetscInt ei, VFFlowProp *flowpropty, PetscReal ****perm_array, PetscReal ***v_array);
