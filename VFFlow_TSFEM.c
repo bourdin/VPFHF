@@ -31,7 +31,7 @@ extern PetscErrorCode FEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	ierr = PetscObjectSetName((PetscObject)ctx->PFunct,"RHS of FEM TS flow solver");CHKERRQ(ierr);
 
 	ierr = BCPInit(&ctx->bcP[0],ctx);
-	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
+	ierr = GetFlowProp(&ctx->flowprop,ctx->units,&ctx->resprop,ctx->matprop,ctx,fields);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 

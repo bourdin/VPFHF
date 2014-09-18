@@ -1,8 +1,8 @@
 /*
  test26.c: 3D KSP. Flow problem with source term [pressure = 1/(3*pi^2)*cos(pi*x)*cos(pi*y)*cos(pi*z)]. All velocity boundary condition
- (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
+ (c) 2012-2014 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
-./test26 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED
+mpiexec ./test26 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -k 1,1,1 -g 0,0,0 -rhof 0. -mu 1
  ./test26 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_TSMIXEDFEM
  
  */
@@ -22,74 +22,48 @@ VFFields            fields;
 int main(int argc,char **argv)
 {	
 	PetscErrorCode  ierr;
-	PetscViewer		viewer;
-	PetscViewer     logviewer;
-	char			filename[FILENAME_MAX];
-	PetscInt		i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+	PetscInt		i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
 	PetscReal		BBmin[3],BBmax[3];
 	PetscReal		****velbc_array;
 	PetscReal		***src_array;
 	PetscReal		****coords_array;
-	PetscReal		hx,hy,hz;
-	PetscReal		gx,gy,gz;
 	PetscReal		lx,ly,lz;
-	PetscReal		gamma, beta, rho, mu;
-	PetscReal		pi;
   PetscReal   vol,vol1,vol2,vol3,vol4,vol5;
 
-		
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-	ierr = VecSet(ctx.VelBCArray,0.);CHKERRQ(ierr);
-	ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
 	ctx.hasFluidSources = PETSC_TRUE;
 	ctx.hasFlowWells = PETSC_FALSE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
-	pi = 6.*asin(0.5);
-	rho = ctx.flowprop.rho;									 
-	mu = ctx.flowprop.mu;     
-	beta = ctx.flowprop.beta;		
-	gamma = ctx.flowprop.gamma;									
-    gx = ctx.flowprop.g[0];
-    gy = ctx.flowprop.g[1];
-    gz = ctx.flowprop.g[2];
 	lz = BBmax[2]-BBmin[2];
 	ly = BBmax[1]-BBmin[1];
 	lx = BBmax[0]-BBmin[0];
-	hx = lx/(nx-1);
-	hy = ly/(nx-1);
-	hz = lz/(nz-1);	
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				velbc_array[k][j][i][0] = beta/mu*(sin(pi*i*hx/lx)*cos(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gx)/(3.*pi);
-				velbc_array[k][j][i][1] = beta/mu*(cos(pi*i*hx/lx)*sin(pi*j*hy/ly)*cos(pi*k*hz/lz)-gamma*rho*gy)/(3.*pi);
-				velbc_array[k][j][i][2] = beta/mu*(cos(pi*i*hx/lx)*cos(pi*j*hy/ly)*sin(pi*k*hz/lz)-gamma*rho*gz)/(3.*pi);
+        
+        velbc_array[k][j][i][0] = 1./ctx.flowprop.mu*(sin(PETSC_PI*coords_array[k][j][i][0]/lx)*cos(PETSC_PI*coords_array[k][j][i][1]/ly)*cos(PETSC_PI*coords_array[k][j][i][2]/lz)-ctx.flowprop.rho*ctx.flowprop.g[0])/(3.*PETSC_PI);
+				velbc_array[k][j][i][1] = 1./ctx.flowprop.mu*(cos(PETSC_PI*coords_array[k][j][i][0]/lx)*sin(PETSC_PI*coords_array[k][j][i][1]/ly)*cos(PETSC_PI*coords_array[k][j][i][2]/lz)-ctx.flowprop.rho*ctx.flowprop.g[1])/(3.*PETSC_PI);
+				velbc_array[k][j][i][2] = 1./ctx.flowprop.mu*(cos(PETSC_PI*coords_array[k][j][i][0]/lx)*cos(PETSC_PI*coords_array[k][j][i][1]/ly)*sin(PETSC_PI*coords_array[k][j][i][2]/lz)-ctx.flowprop.rho*ctx.flowprop.g[2])/(3.*PETSC_PI);
 			}
 		}
 	}	
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-				src_array[k][j][i] = beta/mu*cos(pi*k*hz/lz)*cos(pi*j*hy/ly)*cos(pi*i*hx/lx)/3.*((1./(lx*lx))+(1./(ly*ly))+(1./(lz*lz))); 
+				src_array[k][j][i] = 1./ctx.flowprop.mu*cos(PETSC_PI*coords_array[k][j][i][2]/lz)*cos(PETSC_PI*coords_array[k][j][i][1]/ly)*cos(PETSC_PI*coords_array[k][j][i][0]/lx)/3.*((1./(lx*lx))+(1./(ly*ly))+(1./(lz*lz)));
 			}
 		}
 	}
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
-	ctx.maxtimestep = 1;
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-  ierr = VecCopy(ctx.Source,fields.theta);
   if(ctx.flowsolver == FLOWSOLVER_TSMIXEDFEM || ctx.flowsolver == FLOWSOLVER_TS){
   	ctx.maxtimestep = 1;
     ctx.maxtimevalue = 60.;
@@ -98,11 +72,6 @@ int main(int argc,char **argv)
     ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   }
   else{
-    /*Initialization Set initial flow field values. This case is zero. This will have to be called an initialization function*/
-    ierr = VecSet(ctx.PreFlowFields,0.);CHKERRQ(ierr);
-    ierr = VecSet(ctx.RHSVelPpre,0.);CHKERRQ(ierr);
-    ierr = VecSet(ctx.pressure_old,0.);CHKERRQ(ierr);
-    ierr = VecSet(ctx.RHSPpre,0.);CHKERRQ(ierr);
     for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
       ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
@@ -132,7 +101,6 @@ int main(int argc,char **argv)
   ierr = PetscPrintf(PETSC_COMM_WORLD," source_volume = %g\n",vol4);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD," vol.strain_volume = %g\n",vol5);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD," Volume Balance: RHS = %g \t LHS = %g \n",vol+vol1,vol3+vol4+vol5);CHKERRQ(ierr);
-  
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
