@@ -52,7 +52,7 @@ extern PetscErrorCode FEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 
 	ierr = BCPInit(&ctx->bcP[0],ctx);
 
-	ierr = GetFlowProp(&ctx->flowprop,ctx->units,ctx->resprop);CHKERRQ(ierr);
+	ierr = GetFlowProp(&ctx->flowprop,ctx->units,&ctx->resprop,ctx->matprop,ctx,fields);CHKERRQ(ierr);
 //	ierr = SETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	// Currently BCpres is a PetscOption received from command line. Also done in test35
 //	ierr = SETBoundaryTerms_P(ctx,fields);CHKERRQ(ierr); // Set fields.pressure according to BC & IC
 	PetscFunctionReturn(0);

@@ -107,12 +107,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr         = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
 
     ctx->flowsolver = FLOWSOLVER_SNESSTANDARDFEM;
-    ierr          = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
-    ctx->units    = UnitaryUnits;
-    ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",VFUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
-    ctx->flowcase = ALLNORMALFLOWBC;
-    ierr          = PetscOptionsEnum("-flowBC","\n\tFlow boundary conditions","",VFFlowBC_Case,(PetscEnum)ctx->flowcase,(PetscEnum*)&ctx->flowcase,PETSC_NULL);CHKERRQ(ierr);
-  
+    ierr          = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);  
     ctx->ResFlowMechCoupling = FIXEDSTRESS;
     ierr          = PetscOptionsEnum("-resflowmechcoupling","\n\tRes flow mech coupling","",ResFlowMechCouplingName,(PetscEnum)ctx->ResFlowMechCoupling,(PetscEnum*)&ctx->ResFlowMechCoupling,PETSC_NULL);CHKERRQ(ierr);
 
