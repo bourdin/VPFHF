@@ -90,7 +90,7 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 
   PetscFunctionBegin;
     
-	ierr = GetFlowProp(&ctx->flowprop,ctx->units,&ctx->resprop,ctx->matprop,ctx,fields);CHKERRQ(ierr);
+	ierr = GetFlowProp(&ctx->flowprop,&ctx->resprop,ctx->matprop,ctx,fields);CHKERRQ(ierr);
   
   ierr = DMCreateMatrix(ctx->daScal,&ctx->KP);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->KP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
@@ -827,7 +827,7 @@ extern PetscErrorCode FEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void
 
 #undef __FUNCT__
 #define __FUNCT__ "GetFlowProp"
-extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFUnit flowunit,VFResProp *resprop,VFMatProp *matprop,VFCtx *ctx,VFFields *fields)
+extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatProp *matprop,VFCtx *ctx,VFFields *fields)
 {
   
   PetscErrorCode ierr;
