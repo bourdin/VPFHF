@@ -774,13 +774,13 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-				ierr = ModulusVolume_local(&mymodVolumeLocal, ek, ej, ei, &ctx->e3D,&ctx->flowprop,press_diff_array,one_array);CHKERRQ(ierr);
+				ierr = ModulusVolume_local(&mymodVolumeLocal, ek, ej, ei, &ctx->e3D,&ctx->flowprop,press_diff_array,v_array);CHKERRQ(ierr);
 				ierr = DivergenceVolume_local(&mydivVolumeLocal, ek, ej, ei, &ctx->e3D,vel_array, v_array);CHKERRQ(ierr);
         if(ctx->hasFluidSources){
           ierr = SourceVolume_local(&mysourceVolumeLocal, ek, ej, ei, &ctx->e3D, src_array, v_array);CHKERRQ(ierr);
         }
         if(ctx->FlowDisplCoupling){
-          ierr = VolumetricStrainVolume_local(&mystrainVolumeLocal, ek, ej, ei, &ctx->e3D,&ctx->flowprop,u_diff_array,v_array);CHKERRQ(ierr);
+          ierr = VolumetricStrainVolume_local(&mystrainVolumeLocal, ek, ej, ei, &ctx->e3D,&ctx->flowprop,u_diff_array,one_array);CHKERRQ(ierr);
         }
         mymodVolume += mymodVolumeLocal;
         mysourceVolume += timestepsize*mysourceVolumeLocal;

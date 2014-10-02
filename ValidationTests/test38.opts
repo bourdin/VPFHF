@@ -7,14 +7,14 @@
 -mu 1e-13 
 -rhof 1.0
 -g 0,0,0
--maxtimestep 3 
+-maxtimestep 30 
 -deltat 0.5  
 -eta 1e-8 
 -Gc 5e-6
 -theta 1.
--beta 1.
--ini_pressure 1.e-3
--atnum 2 
+-beta 1
+-ini_pressure 0
+-atnum 1 
 -epsilon 1 
 -npc 1 
 -pc0_thickness 0.6
@@ -52,3 +52,5 @@
 -U_Z1_BC_2 ZERO 
 -U_Y0_BC_1 ZERO 
 -U_Y1_BC_1 ZERO  
+-altminmaxit 300
+-altmintol 1e-4
