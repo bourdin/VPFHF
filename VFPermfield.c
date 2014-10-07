@@ -780,7 +780,7 @@ extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *
           ierr = SourceVolume_local(&mysourceVolumeLocal, ek, ej, ei, &ctx->e3D, src_array, v_array);CHKERRQ(ierr);
         }
         if(ctx->FlowDisplCoupling){
-          ierr = VolumetricStrainVolume_local(&mystrainVolumeLocal, ek, ej, ei, &ctx->e3D,&ctx->flowprop,u_diff_array,one_array);CHKERRQ(ierr);
+          ierr = VolumetricStrainVolume_local(&mystrainVolumeLocal, ek, ej, ei, &ctx->e3D,&ctx->flowprop,u_diff_array,v_array);CHKERRQ(ierr);
         }
         mymodVolume += mymodVolumeLocal;
         mysourceVolume += timestepsize*mysourceVolumeLocal;
