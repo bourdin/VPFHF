@@ -95,9 +95,7 @@ int main(int argc,char **argv)
         errP = errP/pmax;  
         ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
         ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
-        
         ierr = PetscPrintf(PETSC_COMM_WORLD," Final U_P_ERROR = %e \t V_P_ERROR = %e\n",errP,errV);CHKERRQ(ierr);
-
       }
       while ((errV >= ctx.altmintol || errP >= ctx.altmintol) && altminitp <= ctx.altminmaxit);
     ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
@@ -130,7 +128,6 @@ int main(int argc,char **argv)
     ierr = PetscViewerASCIIPrintf(volviewer,"%d \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,ctx.flowprop.timestepsize,ctx.timestep*ctx.flowprop.timestepsize,pw,pmax,ctx.flowprop.timestepsize*Q_inj,ctx.CrackVolume,vol,vol5,vol2,vol+vol5+vol2+ctx.CrackVolume-crackvolume_old,ctx.flowprop.timestepsize*ctx.LeakOffRate);CHKERRQ(ierr);
     crackvolume_old = ctx.CrackVolume;
     ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-
 	}
   ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
