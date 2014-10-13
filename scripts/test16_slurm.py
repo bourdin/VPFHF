@@ -16,6 +16,8 @@ def parseCommandLine(debug=False):
     vfArgs.add_argument('--format',default='vtk',choices=['bin','vtk'],help='file format')
 
     vfArgs.add_argument('--E',type=float,default=1.,help='Young modulus')
+    vfArgs.add_argument('--alpha',type=float,default=0.,help='linear thermal expansion coefficient')
+    vfArgs.add_argument('--beta',type=float,default=0.,help='Biot poroelastic modulus')
     vfArgs.add_argument('--nu',type=float,default=0.,help='Poisson ratio')
     vfArgs.add_argument('--gc',type=float,default=1.,help='Fracture toughness')
     vfArgs.add_argument('--gceff',default=False,action='store_true',help='Modify Gc to account for effective toughness')
@@ -70,6 +72,7 @@ def parseCommandLine(debug=False):
       args.insitumax = args.insitumin  
 
     args = vars(args)    
+    args['pressurize'] = 1
     return args
     
 def main():
