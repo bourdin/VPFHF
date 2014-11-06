@@ -2054,10 +2054,10 @@ extern PetscErrorCode VF_BilinearFormVAT23D_local(PetscReal *Mat_local,VFMatProp
           for (j2 = 0; j2 < e->nphiy; j2++)
             for (i2 = 0; i2 < e->nphix; i2++,l++)
               for (g = 0; g < e->ng; g++)
-                Mat_local[l] += coef * e->weight[g] * (e->phi[k1][j1][i1][g] *     e->phi[k2][j2][i2][g] / vfprop->epsilon +
-                                                       (e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
-                                                        + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
-                                                        + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g]) * vfprop->epsilon);
+                Mat_local[l] += coef * e->weight[g] * (e->phi[k1][j1][i1][g] *     e->phi[k2][j2][i2][g] / vfprop->epsilon + (
+                                                        e->dphi[k1][j1][i1][0][g] * e->dphi[k2][j2][i2][0][g]
+                                                      + e->dphi[k1][j1][i1][1][g] * e->dphi[k2][j2][i2][1][g]
+                                                      + e->dphi[k1][j1][i1][2][g] * e->dphi[k2][j2][i2][2][g] ) * vfprop->epsilon);
   PetscFunctionReturn(0);
 }
 

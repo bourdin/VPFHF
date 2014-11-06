@@ -25,8 +25,6 @@ def parseCommandLine(debug=False):
 
     vfArgs.add_argument('--insitumin',type=float,nargs=6,default=[0,0,0,0,0,0],help='Insitu stresses in the plane Z0')
     vfArgs.add_argument('--insitumax',type=float,nargs=6,default=None,help='Insitu stresses in the plane Z1')
-    vfArgs.add_argument('--gamg',default=False,action='store_true',help='Use PETSc GAMG solvers')
-    vfArgs.add_argument('--hypre',default=False,action='store_true',help='Use hypre solvers')
     
     misc = parser.add_argument_group('misc')
     misc.add_argument('--mpiexec',help='mpi exec command',default='srun')
@@ -35,8 +33,6 @@ def parseCommandLine(debug=False):
     test16.add_argument('--minvol',type=float,default=0.,help='Initial injected volume')
     test16.add_argument('--maxvol',type=float,default=.1,help='Final injected volume')
     test16.add_argument('--maxtimestep',type=int,default=25,help='Number of time steps')    
-    #test16.add_argument('--mode',type=int,default=3,help='BC type')
-    #test16.add_argument('--bcfile',nargs='*',type=argparse.FileType('r'),help='BC files')
     test16.add_argument('--bcfile',nargs='*',help='BC files')
     
     pc = parser.add_argument_group('penny-shaped cracks')
@@ -132,17 +128,8 @@ def main():
         cmd += '-options_file %s '%f
     else:
         print "Option file %s does not exist... did you use absolute path?"%f
-  if args['gamg']:
-    cmd += '-U_mg_levels_ksp_chebyshev_estimate_eigenvalues 0,0.1,0,1.1 -U_mg_levels_ksp_type chebyshev -U_mg_levels_pc_type sor -U_pc_gamg_agg_nsmooths 1 -U_pc_gamg_threshold 0 -U_pc_gamg_type agg -U_pc_type gamg '
-  if args['hypre']:
-    cmd += '-U_pc_type hypre  -u_pc_hypre_type boomeramg -u_pc_hypre_boomeramg_strong_threshold 0.7 '
   cmd += args['extraopts']  
-     
-  cmd += '-u_tao_monitor -u_ksp_converged_reason '
-  cmd += '-u_tao_fatol 0 -u_tao_frtol 0 '
-  cmd += '-u_tao_gatol 1e-10 -u_tao_grtol 1e-10 '
-  #cmd += '-u_tao_view '
-  
+       
   print "Now running %s"%cmd
   os.system(cmd)
   return 0
