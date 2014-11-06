@@ -2194,7 +2194,7 @@ extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields)
 	PetscInt		    nx,ny,nz;
   PetscInt        DIM = 3,dim[3];
   Vec             x,y,z;
-  
+  /*
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -2210,7 +2210,7 @@ extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields)
     ierr = MatCreateFFT(PETSC_COMM_WORLD,DIM,dim,MATFFTW,&ctx->KFFT);CHKERRQ(ierr);
     ierr = MatGetVecsFFTW(ctx->KFFT,&x,&y,&z);CHKERRQ(ierr);
     ierr = VecScatterPetscToFFTW(ctx->KFFT,ctx->FFTIn,x);CHKERRQ(ierr);
-  /* Apply FFTW_FORWARD and FFTW_BACKWARD */
+//  Apply FFTW_FORWARD and FFTW_BACKWARD 
 
     ierr = MatMult(ctx->KFFT,x,y);CHKERRQ(ierr);
 //    ierr = MatMultTranspose(ctx->KFFT,y,z);CHKERRQ(ierr);
@@ -2224,7 +2224,7 @@ extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields)
   ierr = VecDestroy(&y);CHKERRQ(ierr);
   ierr = VecDestroy(&z);CHKERRQ(ierr);
   ierr = MatDestroy(&ctx->KFFT);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
+	PetscFunctionReturn(0);*/
 }
 
 
