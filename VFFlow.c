@@ -839,11 +839,14 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatP
   PetscReal      ****perm_array;
   PetscBool      flg;
   PetscReal      *k,*g;
+  PetscReal      phi,ks,kf,alpha;
 
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  flowprop->Kw           = 1.;
+  flowprop->Kf           = 1.;
+  flowprop->Ks           = 1.;
+  flowprop->phi           = 1.;
   flowprop->beta  = 1;                                          /*flow rate conversion constant*/
   flowprop->gamma = 1;                                          /*pressure conversion constant*/
   flowprop->alpha = 1;                                          /*volume conversion constatnt*/
@@ -889,7 +892,13 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatP
     ierr = PetscFree(g);CHKERRQ(ierr);
     flowprop->theta        = 1.;
     ierr = PetscOptionsReal("-theta","\n\tTime parameter ","",flowprop->theta,&flowprop->theta,PETSC_NULL);CHKERRQ(ierr);
-    flowprop->M_inv        = 0.;
+    flowprop->phi        = 0.;
+    ierr = PetscOptionsReal("-phi","\n\tPorosity ","",flowprop->phi,&flowprop->phi,PETSC_NULL);CHKERRQ(ierr);
+    flowprop->Ks        = 1.;
+    ierr = PetscOptionsReal("-Ks","\n\tRock modulus ","",flowprop->Ks,&flowprop->Ks,PETSC_NULL);CHKERRQ(ierr);
+    flowprop->Kf        = 1.;
+    ierr = PetscOptionsReal("-Kf","\n\tLiquid modulus ","",flowprop->Kf,&flowprop->Kf,PETSC_NULL);CHKERRQ(ierr);
+    flowprop->M_inv        = flowprop->phi/flowprop->Kf+(flowprop->alphabiot-flowprop->phi)/flowprop->Ks;
     ierr = PetscOptionsReal("-m_inv","\n\tRock compressibility ","",flowprop->M_inv,&flowprop->M_inv,PETSC_NULL);CHKERRQ(ierr);
     flowprop->timestepsize = 1;
     ierr = PetscOptionsReal("-deltat","\n\tTime step size compressibility ","",flowprop->timestepsize,&flowprop->timestepsize,PETSC_NULL);CHKERRQ(ierr);

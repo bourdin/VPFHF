@@ -9,7 +9,7 @@ static const char banner[] = "\n\nVF:\nNumerical implementation of the variation
 typedef struct {
 	PetscReal   mu;             /* Fluid viscosity              */
 	PetscReal   rho;            /* Fluid density                */
-	PetscReal   por;
+	PetscReal   phi;            /* porosity */
 	PetscReal   cf;             /* Fluid compressibility        */
 	PetscReal   M_inv;
 	PetscReal   beta;           /* Conversion constant          */
@@ -19,7 +19,8 @@ typedef struct {
 	PetscReal   timestepsize;   /* Time step size               */
 	PetscReal   g[3];
 	PetscReal   Cp;			        /* Specific heat capacity       */
-	PetscReal   Kw;             /* Modulus of liquid            */
+	PetscReal   Kf;             /* Modulus of liquid            */
+	PetscReal   Ks;             /* Modulus of solid            */
 	PetscReal   alphabiot;      /* Biot's coeficient            */
 	PetscReal   K_dr;           /* Undrained bulk modulus       */
 } VFFlowProp;
