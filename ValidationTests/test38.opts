@@ -1,7 +1,10 @@
 -n 100,2,100 
 -l 50,1,50 
 -k 1e-16,1e-16,1e-16
--m_inv 1 
+-phi 0.2
+-Ks 2
+-Kf 0.125
+-beta 1.
 -E 17 
 -nu 0.2
 -mu 1e-13 
@@ -12,7 +15,6 @@
 -eta 1e-8 
 -Gc 5e-6
 -theta 1.
--beta 1.
 -ini_pressure 0
 -atnum 1 
 -epsilon 1 
