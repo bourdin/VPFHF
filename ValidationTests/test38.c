@@ -121,8 +121,8 @@ int main(int argc,char **argv)
     pw = ctx.PressureWork/ctx.CrackVolume;
   
     ierr = PetscViewerASCIIPrintf(viewer,"%d \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,ctx.flowprop.timestepsize,ctx.timestep*ctx.flowprop.timestepsize,pw,pmax,ctx.flowprop.timestepsize*Q_inj,ctx.CrackVolume,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
+    ierr = VF_ComputeRegularizedFracturePressure(&ctx,&fields);
     /*
-    ierr = VF_ComputeRegularizedFracturePressure(&PreInt,&ctx,&fields);
     ierr = VecMax(fields.theta,PETSC_NULL,&pmax1);CHKERRQ(ierr);
     */
     ierr = PetscViewerASCIIPrintf(volviewer,"%d \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,ctx.flowprop.timestepsize,ctx.timestep*ctx.flowprop.timestepsize,pw,pmax,ctx.flowprop.timestepsize*Q_inj,ctx.CrackVolume,vol,vol5,vol2,vol+vol5+vol2+ctx.CrackVolume-crackvolume_old,ctx.flowprop.timestepsize*ctx.LeakOffRate);CHKERRQ(ierr);

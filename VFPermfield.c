@@ -2236,7 +2236,7 @@ extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields)
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_ComputeRegularizedFracturePressure"
-extern PetscErrorCode VF_ComputeRegularizedFracturePressure(PetscReal *PreInt,VFCtx *ctx, VFFields *fields)
+extern PetscErrorCode VF_ComputeRegularizedFracturePressure(VFCtx *ctx, VFFields *fields)
 {
 	PetscErrorCode  ierr;
 	PetscInt		    ek, ej, ei,i;
@@ -2250,11 +2250,10 @@ extern PetscErrorCode VF_ComputeRegularizedFracturePressure(PetscReal *PreInt,VF
   PetscReal       ****u_array;
   Vec             u_local;
   Vec             press_local;
-  PetscReal       ***press_array;
   Vec             Pressure_cell;
   Vec             press_c_local;
+  PetscReal       ***press_array;
   PetscReal       ***press_c_array;
-  PetscReal       myPressureInt= 0.,myPressureIntLocal = 0.;
   
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -2282,7 +2281,6 @@ extern PetscErrorCode VF_ComputeRegularizedFracturePressure(PetscReal *PreInt,VF
 	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->pressure,INSERT_VALUES,press_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,press_local,&press_array);CHKERRQ(ierr);
   
-  *PreInt = 0;
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -2290,12 +2288,10 @@ extern PetscErrorCode VF_ComputeRegularizedFracturePressure(PetscReal *PreInt,VF
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-				ierr = VF_ComputeRegularizedFracturePressure_local(&myPressureIntLocal,press_c_array,press_array,u_array,v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
-        myPressureInt += myPressureIntLocal;
+				ierr = VF_ComputeRegularizedFracturePressure_local(press_c_array,press_array,u_array,v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
 			}
 		}
 	}
-  ierr = MPI_Allreduce(&myPressureInt,PreInt,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
  	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx->daScal,press_local,&press_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daScal,&press_local);CHKERRQ(ierr);
@@ -2315,7 +2311,7 @@ extern PetscErrorCode VF_ComputeRegularizedFracturePressure(PetscReal *PreInt,VF
 
 #undef __FUNCT__
 #define __FUNCT__ "VF_ComputeRegularizedFracturePressure_local"
-extern PetscErrorCode VF_ComputeRegularizedFracturePressure_local(PetscReal *preintlocal, PetscReal ***press_c_array,  PetscReal ***press_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
+extern PetscErrorCode VF_ComputeRegularizedFracturePressure_local(PetscReal ***press_c_array,  PetscReal ***press_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
 	PetscErrorCode ierr;
 	PetscInt		i, j, k, c;
@@ -2355,11 +2351,7 @@ extern PetscErrorCode VF_ComputeRegularizedFracturePressure_local(PetscReal *pre
       press_c_array[ek][ej][ei] += pre_elem[eg]*u_elem[c][eg]*dv_elem[c][eg]*e->weight[eg];
     }
 	}
-  *preintlocal = press_c_array[ek][ej][ei];
   press_c_array[ek][ej][ei] = press_c_array[ek][ej][ei]/element_vol;
-  if((PetscIsInfOrNanScalar(press_c_array[ek][ej][ei]))){
-    press_c_array[ek][ej][ei] = 0;
-  }
   ierr = PetscFree7(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2],pre_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

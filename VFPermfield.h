@@ -35,8 +35,8 @@ extern PetscErrorCode VolumetricFractureWellRate_local(PetscReal *InjVolume_loca
 extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FACE face, VFCtx *ctx);
 extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode VolumetricFractureWellRate(PetscReal *InjectedVolume, VFCtx *ctx, VFFields *fields);
-extern PetscErrorCode VF_ComputeRegularizedFracturePressure_local(PetscReal *preintlocal, PetscReal ***press_c_array,  PetscReal ***press_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
-extern PetscErrorCode VF_ComputeRegularizedFracturePressure(PetscReal *PreInt,VFCtx *ctx, VFFields *fields);
+extern PetscErrorCode VF_ComputeRegularizedFracturePressure_local(PetscReal ***press_c_array,  PetscReal ***press_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
+extern PetscErrorCode VF_ComputeRegularizedFracturePressure(VFCtx *ctx, VFFields *fields);
 
 
 #endif 
