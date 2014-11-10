@@ -2183,9 +2183,6 @@ extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FA
 	PetscFunctionReturn(0);
 }
 
-
-
-
 #undef __FUNCT__
 #define __FUNCT__ "VF_FastFourierTransforms"
 extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields)
@@ -2227,91 +2224,9 @@ extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields)
 	PetscFunctionReturn(0);*/
 }
 
-
-
-
-
-
-
-
-#undef __FUNCT__
-#define __FUNCT__ "VF_ComputeRegularizedFracturePressure"
-extern PetscErrorCode VF_ComputeRegularizedFracturePressure(VFCtx *ctx, VFFields *fields)
-{
-	PetscErrorCode  ierr;
-	PetscInt		    ek, ej, ei,i;
-	PetscInt		    xs,xm,nx;
-	PetscInt		    ys,ym,ny;
-	PetscInt		    zs,zm,nz;
-	PetscReal		    hx,hy,hz;
-	PetscReal       ****coords_array;
-  PetscReal       ***v_array;
-  Vec             v_local;
-  PetscReal       ****u_array;
-  Vec             u_local;
-  Vec             press_local;
-  Vec             Pressure_cell;
-  Vec             press_c_local;
-  PetscReal       ***press_array;
-  PetscReal       ***press_c_array;
-  
-  PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = DMGetLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-  ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-  
-  ierr = DMGetLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-  ierr = DMDAVecGetArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
-
-  ierr = DMCreateGlobalVector(ctx->daScalCell,&Pressure_cell);CHKERRQ(ierr);
-  ierr = VecSet(Pressure_cell,0.);CHKERRQ(ierr);
-  ierr = DMGetLocalVector(ctx->daScalCell,&press_c_local);CHKERRQ(ierr);
-  ierr = DMGlobalToLocalBegin(ctx->daScalCell,Pressure_cell,INSERT_VALUES,press_c_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScalCell,Pressure_cell,INSERT_VALUES,press_c_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScalCell,press_c_local,&press_c_array);CHKERRQ(ierr);
-  ierr = DMGetLocalVector(ctx->daScal,&press_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->pressure,INSERT_VALUES,press_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->pressure,INSERT_VALUES,press_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScal,press_local,&press_array);CHKERRQ(ierr);
-  
-	for (ek = zs; ek < zs+zm; ek++) {
-		for (ej = ys; ej < ys+ym; ej++) {
-			for (ei = xs; ei < xs+xm; ei++) {
-				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
-				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
-				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-				ierr = VF_ComputeRegularizedFracturePressure_local(press_c_array,press_array,u_array,v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
-			}
-		}
-	}
- 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArray(ctx->daScal,press_local,&press_array);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daScal,&press_local);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArray(ctx->daScalCell,press_c_local,&press_c_array);CHKERRQ(ierr);
-  ierr = DMRestoreLocalVector(ctx->daScalCell,&press_c_local);CHKERRQ(ierr);
-  ierr = DMLocalToGlobalBegin(ctx->daScalCell,press_c_local,ADD_VALUES,Pressure_cell);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daScalCell,press_c_local,ADD_VALUES,Pressure_cell);CHKERRQ(ierr);
-  ierr = VecSet(fields->theta,0.);CHKERRQ(ierr);
-  ierr = CellToNodeInterpolation(fields->theta,Pressure_cell,ctx); CHKERRQ(ierr);
-  ierr = VecDestroy(&Pressure_cell);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
 #undef __FUNCT__
 #define __FUNCT__ "VF_ComputeRegularizedFracturePressure_local"
-extern PetscErrorCode VF_ComputeRegularizedFracturePressure_local(PetscReal ***press_c_array,  PetscReal ***press_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
+extern PetscErrorCode VF_ComputeRegularizedFracturePressure_local(PetscReal ***press_c_array, PetscReal ***press_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
 	PetscErrorCode ierr;
 	PetscInt		i, j, k, c;
@@ -2326,7 +2241,7 @@ extern PetscErrorCode VF_ComputeRegularizedFracturePressure_local(PetscReal ***p
                       e->ng,&pre_elem);CHKERRQ(ierr);
 	for (eg = 0; eg < e->ng; eg++){
     for(c = 0; c < 3; c++){
-      dv_elem[c][eg] = 0;
+      dv_elem[c][eg] = 0.;
       u_elem[c][eg] = 0;
     }
     pre_elem[eg] = 0;
@@ -2336,23 +2251,95 @@ extern PetscErrorCode VF_ComputeRegularizedFracturePressure_local(PetscReal ***p
 			for (j = 0; j < e->nphiy; j++) {
 				for (i = 0; i < e->nphix; i++) {
           for (c = 0; c < 3; c++){
-            dv_elem[c][eg] += v_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][c][eg];
             u_elem[c][eg] += u_array[ek+k][ej+j][ei+i][c] * e->phi[k][j][i][eg];
+            dv_elem[c][eg] += v_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][c][eg];
           }
           pre_elem[eg] += press_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
 				}
 			}
 		}
-	}
+	}  
 	press_c_array[ek][ej][ei] = 0.;
 	for(eg = 0; eg < e->ng; eg++){
     for (c = 0; c < 3; c++){
-      element_vol += u_elem[c][eg]*dv_elem[c][eg]*e->weight[eg];
       press_c_array[ek][ej][ei] += pre_elem[eg]*u_elem[c][eg]*dv_elem[c][eg]*e->weight[eg];
+      element_vol += e->weight[eg];
     }
-	}
+  }
   press_c_array[ek][ej][ei] = press_c_array[ek][ej][ei]/element_vol;
-  ierr = PetscFree7(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2],pre_elem);CHKERRQ(ierr);
+	ierr = PetscFree7(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2],pre_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "VF_ComputeRegularizedFracturePressure"
+extern PetscErrorCode VF_ComputeRegularizedFracturePressure(VFCtx *ctx, VFFields *fields)
+{
+	PetscErrorCode  ierr;
+	PetscInt		    ek, ej, ei;
+	PetscInt		    xs,xm,nx;
+	PetscInt		    ys,ym,ny;
+	PetscInt		    zs,zm,nz;
+	PetscReal		    hx,hy,hz;
+	PetscReal       ****coords_array;
+	PetscReal       ****u_array;
+	Vec             u_local;
+	PetscReal       ***v_array;
+	Vec             v_local;
+  PetscReal       ***press_array;
+  Vec             press_local;
+  Vec             Pressure_cell;
+  Vec             press_c_local;
+  PetscReal       ***press_c_array;
+  
+  PetscFunctionBegin;
+  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMGetLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
+	ierr = DMGetLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(ctx->daScalCell,&Pressure_cell);CHKERRQ(ierr);
+  ierr = VecSet(Pressure_cell,0.0);CHKERRQ(ierr);
+	ierr = DMGetLocalVector(ctx->daScalCell,&press_c_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScalCell,Pressure_cell,INSERT_VALUES,press_c_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScalCell,Pressure_cell,INSERT_VALUES,press_c_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScalCell,press_c_local,&press_c_array);CHKERRQ(ierr);
+
+  ierr = DMGetLocalVector(ctx->daScal,&press_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->pressure,INSERT_VALUES,press_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->pressure,INSERT_VALUES,press_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,press_local,&press_array);CHKERRQ(ierr);
+	for (ek = zs; ek < zs+zm; ek++) {
+		for (ej = ys; ej < ys+ym; ej++) {
+			for (ei = xs; ei < xs+xm; ei++) {
+				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VF_ComputeRegularizedFracturePressure_local(press_c_array, press_array, u_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
+			}
+		}
+	}
+  ierr = DMDAVecRestoreArray(ctx->daScal,press_local,&press_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScal,&press_local);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScalCell,press_c_local,&press_c_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daScalCell,&press_c_local);CHKERRQ(ierr);
+	ierr = DMLocalToGlobalBegin(ctx->daScalCell,press_c_local,ADD_VALUES,Pressure_cell);CHKERRQ(ierr);
+	ierr = DMLocalToGlobalEnd(ctx->daScalCell,press_c_local,ADD_VALUES,Pressure_cell);CHKERRQ(ierr);
+  ierr = VecSet(fields->fracpressure,0.);CHKERRQ(ierr);
+  ierr = CellToNodeInterpolation(fields->fracpressure,Pressure_cell,ctx); CHKERRQ(ierr);
+  ierr = VecDestroy(&Pressure_cell);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
