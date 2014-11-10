@@ -1349,6 +1349,7 @@ extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char noda
   ierr = VecViewVTKDof(ctx->daScal,ctx->RegFracWellFlowRate,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->VolCrackOpening,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->VolLeakOffRate,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->fracpressure,viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
 
   /*

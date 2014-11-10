@@ -96,6 +96,7 @@ int main(int argc,char **argv)
         ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
         ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
         ierr = PetscPrintf(PETSC_COMM_WORLD," Final U_P_ERROR = %e \t V_P_ERROR = %e\n",errP,errV);CHKERRQ(ierr);
+        ierr = VF_ComputeRegularizedFracturePressure(&ctx,&fields);
       }
       while ((errV >= ctx.altmintol || errP >= ctx.altmintol) && altminitp <= ctx.altminmaxit);
     ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
