@@ -2,17 +2,10 @@
  test36.c: 1D. Flow problem with source term = 1 and Homogeneous pressure boundary conditions on all sides. Analytical solution is p = x(x-1)/2
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
-./test36 -n 101,2,101 -l 1,0.01,1 -m_inv 0 -E 17 -0 -nu 0.2 -npc 1 -pc0_r 0.1 -pc0_center 0.3,0.005,0.5 -epsilon 0.03eta 0 -pc0_phi 40 -pc0_thickness 0.01 -atnum 1 -flowsolver FLOWSOLVER_snesmixeDFEM -perm 1e-14 -miu 1e-13 -num 2 -timestepsize 0.1  -Gc 5e6
+ make clean;make test36;clear
+./test36 -n 101,2,101 -l 1,0.01,1  -E 17 -0 -nu 0.2 -npc 1 -pc0_r 0.2 -pc0_center 0.5,0.005,0.5 -epsilon 0.04 -pc0_theta 0 -pc0_phi 0. -pc0_thickness 0.025 -atnum 1 -Gc 5e6
  
  
- ./test36 -n 51,2,51 -l 1,0.01,1 -m_inv 0 -E 17 -0 -nu 0.2 -npc 1 -pc0_r 0.1 -pc0_center 0.5,0.005,0.5 -epsilon 0.02 -pc0_theta 0 -pc0_phi 30 -pc0_thickness 0.04 -atnum 2 -flowsolver FLOWSOLVER_snesmixeDFEM -perm 1e-14 -miu 1e-13 -num 2 -timestepsize 0.1  -Gc 5e6 -permmax 1e-12
- 
- ./test36 -n 101,2,101 -l 1,0.01,1 -m_inv 0 -E 17 -0 -nu 0.2 -npc 1 -pc0_r 0.1 -pc0_center 0.5,0.005,0.5 -epsilon 0.04 -pc0_theta 0 -pc0_phi 0 -pc0_thickness 0.02 -atnum 2 -flowsolver FLOWSOLVER_snesmixeDFEM -perm 1e-14 -miu 1e-13 -num 2 -timestepsize 0.1  -Gc 5e6 -permmax 1e-12
- 
- ./test36 -n 101,2,101 -l 1,0.01,1 -m_inv 0 -E 17 -0 -nu 0.2 -npc 2 -pc0_r 0.1 -pc0_center 0.45,0.005,0.5 -epsilon 0.04 -pc0_theta 0 -pc0_phi 90 -pc0_thickness 0.02 -pc1_r 0.1 -pc1_center 0.55,0.005,0.5 -pc1_theta 0 -pc1_phi 90 -pc1_thickness 0.02 -atnum 2 -flowsolver FLOWSOLVER_snesmixeDFEM -perm 1e-14 -miu 1e-13 -num 2 -timestepsize 0.1  -Gc 5e6 -permmax 1e-12
- 
- 
- ./test36 -n 101,2,101 -l 1,0.01,1  -E 17 -0 -nu 0.2 -npc 1 -pc0_r 0.2 -pc0_center 0.5,0.005,0.5 -epsilon 0.01 -pc0_theta 0 -pc0_phi 45 -pc0_thickness 0.02 -atnum 2 -flowsolver FLOWSOLVER_snesmixeDFEM  -Gc 5e6
  */
 
 #include "petsc.h"
@@ -64,7 +57,7 @@ int main(int argc,char **argv)
   
   for (j = ys; j < ys+ym; j++) {
     for (i = xs; i < xs+xm; i++) {
-      bcu_array[0][j][i][2] = -0.1;
+      bcu_array[0][j][i][2] = -0.5;
       bcu_array[0][j][i][0] = -0.;
       
       bcu_array[nz-1][j][i][2] = 0.5;
@@ -91,10 +84,10 @@ int main(int argc,char **argv)
 			ctx.bcU[j].vertex[i] = NONE;
 		}
 	}
-  ctx.bcU[0].face[X0]= ZERO;
+//  ctx.bcU[0].face[X0]= ZERO;
   ctx.bcU[1].face[X0]= ZERO;
   
-  ctx.bcU[0].face[X1]= ZERO;
+//  ctx.bcU[0].face[X1]= ZERO;
   ctx.bcU[1].face[X1]= ZERO;
   
   
@@ -124,6 +117,7 @@ int main(int argc,char **argv)
   ctx.timestep = 0;
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
   ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
+  ierr = VolumetricCrackOpeningNewCC(&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 
   

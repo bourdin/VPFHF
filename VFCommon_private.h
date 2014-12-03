@@ -17,14 +17,6 @@ static const char *VFUnitName[] = {
         0
 };
 
-static const char *VFFlowBC_Case[] = {
-	"ALLNORMALFLOWBC",
-	"ALLPRESSUREBC",
-	"VFFlowBC_Case",
-	"",
-	0
-};
-
 static const char *VFMechSolverName[] = {
 	"FRACTURE",
 	"ELASTICITY",

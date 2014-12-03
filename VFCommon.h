@@ -55,10 +55,8 @@ typedef struct {
   Vec theta_old;
   Vec VelnPress_old;
   Vec velocity_old;
-  Vec Uc;
-  Vec Uv;
-  Vec Ud;
-  Vec Ue;
+  Vec widthc;
+	Vec width;
 } VFFields;
 
 /*
@@ -115,11 +113,6 @@ typedef enum {
 	FieldUnits,       /* Flow computation in field units            */
 	MetricUnits       /* Flow computation in metric units           */
 } VFUnit;
-
-typedef enum {
-	ALLNORMALFLOWBC,
-	ALLPRESSUREBC
-} VFFlowCases;
 
 typedef enum {
 	FRACTURE,
@@ -272,7 +265,6 @@ typedef struct {
 	Vec                 RHSVelP;
 	Vec                 RHSVelPpre;
 	VFUnit              units;
-	VFFlowCases         flowcase;
 	Vec                 Source;
 	DM                  daScalCell;
 	Mat                 KVelPlhs;
@@ -382,6 +374,10 @@ typedef struct {
   Mat                 KFFT;
   Vec                 FFTIn;
   Vec                 FFTOut;
+  CartFEElement3D     s3D;
+	CartFEElement2D     s2D;
+	CartFEElement1D     s1D;
+  VFCartFEElement1D    e1D;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
