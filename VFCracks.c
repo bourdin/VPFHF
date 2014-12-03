@@ -341,7 +341,7 @@ extern PetscErrorCode VFRectangularCrackSetName(VFRectangularCrack *RectangularC
 #define __FUNCT__ "VFDistanceToRectangularCrack"
 /*
  VFDistanceToRectangularCrack: Computes the distance between a point with coordinates x and a RectangularCrack described by RectangularCrack
- (c) 2010-2012 Chukwudi CHukwudozie cchukw1@tigers.lsu.edu
+ (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  */
 extern PetscErrorCode VFDistanceToRectangularCrack(PetscReal *d,PetscReal *x,VFRectangularCrack *Crack)
 {

@@ -39,6 +39,24 @@ typedef struct {
   PetscReal    dphi[1][2][2][2][9];  /* phi[j][i][l][g] = value of the derivative w.r.t. x_l of the (i,j)^th basis function at g^th integration point */
 } VFCartFEElement2D;
 
+
+
+typedef struct {
+  PetscInt     dim;                  /* dimension of the space */
+  PetscInt     ng;                   /* number of integration points */
+  PetscInt     nphix;                /* number of basis functions along the x axis */
+  PetscInt     nphiy;                /* number of basis functions along the y axis */
+  PetscInt     nphiz;                /* number of basis functions along the z axis */
+  PetscReal    lx;                   /* length of the element */
+  PetscReal    ly;                   /* length of the element */
+  PetscReal    lz;                   /* length of the element */
+  /*PetscReal    *weight;*/              /* integration weight */
+  PetscReal    weight[9];            /* integration weight */
+  PetscReal    phi[1][2][2][9];      /* phi[j][i][g] = value of (i,j)^th basis function at g^th integration point */
+  PetscReal    dphi[1][2][2][2][9];  /* phi[j][i][l][g] = value of the derivative w.r.t. x_l of the (i,j)^th basis function at g^th integration point */
+} VFCartFEElement22D;
+
+
 typedef struct {
   PetscInt     dim;                  /* dimension of the space */
   PetscInt     ng;                   /* number of integration points */
@@ -125,6 +143,33 @@ typedef struct {
   PetscReal     vertexValue[8];   
 } VFBC;
 
+typedef struct {
+  PetscInt     dim;                  /* dimension of the space */
+  PetscInt     nphix;                /* number of basis functions along the x axis */
+  PetscInt     nphiy;                /* number of basis functions along the y axis */
+  PetscInt     nphiz;                /* number of basis functions along the z axis */
+  PetscReal    phi[1][1][2];      /* phi[i][g] = value of i^th basis function at g^th integration point */
+  PetscReal    dphi[1][1][2];     /* dphi[i][g] = value of the derivative of the i^th basis function at g^th integration point */
+} CartFEElement1D;
+
+typedef struct {
+  PetscInt     dim;                  /* dimension of the space */
+  PetscInt     nphix;                /* number of basis functions along the x axis */
+  PetscInt     nphiy;                /* number of basis functions along the y axis */
+  PetscInt     nphiz;                /* number of basis functions along the z axis */
+  PetscReal    phi[1][2][2];      /* phi[j][i][g] = value of (i,j)^th basis function at g^th integration point */
+  PetscReal    dphi[1][2][2][2];  /* phi[j][i][l][g] = value of the derivative w.r.t. x_l of the (i,j)^th basis function at g^th integration point */
+} CartFEElement2D;
+
+typedef struct {
+  PetscInt     dim;                  /* dimension of the space */
+  PetscInt     nphix;                /* number of basis functions along the x axis */
+  PetscInt     nphiy;                /* number of basis functions along the y axis */
+  PetscInt     nphiz;                /* number of basis functions along the z axis */
+  PetscReal    phi[2][2][2];     /* phi[k][j][i][g] = value of (i,j,k)^th basis function at g^th integration point */
+  PetscReal    dphi[2][2][2][3]; /* phi[k][j][i][l][g] = value of the derivative w.r.t. x_l of the (i,j,k)^th basis function at g^th integration point */
+} CartFEElement3D;
+
 #ifndef VFCartFEC
 extern PetscErrorCode VFCartFEInit();
 extern PetscErrorCode VFCartFEElement1DCreate1D(VFCartFEElement1D *e);
@@ -147,6 +192,13 @@ extern PetscErrorCode GradientApplyDirichletBC(Vec gradient,VFBC *BC);
 extern PetscErrorCode MatApplyDirichletBC(Mat K,VFBC *BC);
 extern PetscErrorCode MatApplyDirichletBCRowCol(Mat K,VFBC *BC);
 extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCU,VFBC *BC,PetscReal *BCpres);
+
+extern PetscErrorCode CartFEElement1DCreate(CartFEElement1D *e);
+extern PetscErrorCode CartFEElement1DInit(CartFEElement1D *e,PetscReal x,PetscReal lx);
+extern PetscErrorCode CartFEElement2DCreate(CartFEElement2D *e);
+extern PetscErrorCode CartFEElement2DInit(CartFEElement2D *e,PetscReal x,PetscReal y,PetscReal lx,PetscReal ly);
+extern PetscErrorCode CartFEElement3DCreate(CartFEElement3D *e);
+extern PetscErrorCode CartFEElement3DInit(CartFEElement3D *e,PetscReal x,PetscReal y,PetscReal z,PetscReal lx,PetscReal ly,PetscReal lz);
 
 #endif
 #endif /* VFCartFEH */

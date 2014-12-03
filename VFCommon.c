@@ -748,9 +748,6 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) ctx->RegFracWellFlowRate,"Regularized Fracture Well Flow Rate");CHKERRQ(ierr);
   ierr = VecSet(ctx->RegFracWellFlowRate,0.);CHKERRQ(ierr);
   
-  
-  
-  
   ierr = DMCreateGlobalVector(ctx->daFlow,&fields->VelnPress_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->VelnPress_old,"Previous Velocity and Pressure");CHKERRQ(ierr);
   ierr = VecSet(fields->VelnPress_old,0.0);CHKERRQ(ierr);
@@ -774,24 +771,14 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daScal,&fields->pressure_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->pressure_old,"Previous Pressure");CHKERRQ(ierr);
   ierr = VecSet(fields->pressure_old,0.);CHKERRQ(ierr);
-  
-  ierr = DMCreateGlobalVector(ctx->daVectCell,&fields->Uc);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) fields->Uc,"Cell Fracture Displacement");CHKERRQ(ierr);
-  ierr = VecSet(fields->Uc,0.0);CHKERRQ(ierr);
 
-  
-  ierr = DMCreateGlobalVector(ctx->daVectCell,&fields->Uv);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) fields->Uv,"View Displacement");CHKERRQ(ierr);
-  ierr = VecSet(fields->Uv,0.0);CHKERRQ(ierr);
-  
-  ierr = DMCreateGlobalVector(ctx->daVect,&fields->Ud);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) fields->Ud,"Displacement Diff");CHKERRQ(ierr);
-  ierr = VecSet(fields->Ud,0.0);CHKERRQ(ierr);
-  
-  ierr = DMCreateGlobalVector(ctx->daVect,&fields->Ue);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) fields->Ue,"Displacement Diff1");CHKERRQ(ierr);
-  ierr = VecSet(fields->Ue,0.0);CHKERRQ(ierr);
-  
+  ierr = DMCreateGlobalVector(ctx->daScal,&fields->width);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->width,"Average width");CHKERRQ(ierr);
+  ierr = VecSet(fields->width,0.);CHKERRQ(ierr);
+
+  ierr = DMCreateGlobalVector(ctx->daScalCell,&fields->widthc);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) fields->widthc,"Average cell width");CHKERRQ(ierr);
+  ierr = VecSet(fields->widthc,0.);CHKERRQ(ierr);
   /*
    Create optional penny-shaped and rectangular cracks
    */
@@ -1223,11 +1210,8 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&fields->fracvelocity);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->fracVelnPress);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->FracVelBCArray);CHKERRQ(ierr);
-
-  ierr = VecDestroy(&fields->Uc);CHKERRQ(ierr);
-  ierr = VecDestroy(&fields->Uv);CHKERRQ(ierr);
-  ierr = VecDestroy(&fields->Ud);CHKERRQ(ierr);
-  ierr = VecDestroy(&fields->Ue);CHKERRQ(ierr);
+  ierr = VecDestroy(&fields->width);CHKERRQ(ierr);
+  ierr = VecDestroy(&fields->widthc);CHKERRQ(ierr);
   
   ierr = PetscFree(ctx->fracwell);CHKERRQ(ierr);
   ierr = PetscFree(ctx->well);CHKERRQ(ierr);
@@ -1339,8 +1323,6 @@ extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char noda
   }
 
   ierr = VecViewVTKDof(ctx->daScal,fields->U,viewer);CHKERRQ(ierr);
-  ierr = VecViewVTKDof(ctx->daScal,fields->Ud,viewer);CHKERRQ(ierr);
-  ierr = VecViewVTKDof(ctx->daScal,fields->Ue,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->velocity,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->fracvelocity,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->V,viewer);CHKERRQ(ierr);
@@ -1350,6 +1332,7 @@ extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char noda
   ierr = VecViewVTKDof(ctx->daScal,fields->VolCrackOpening,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->VolLeakOffRate,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScal,fields->fracpressure,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScal,fields->width,viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
 
   /*
@@ -1361,10 +1344,9 @@ extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char noda
   } else {
     ierr = PetscViewerVTKOpen(PETSC_COMM_WORLD,cellName,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
   }
-  ierr = VecViewVTKDof(ctx->daScalCell,fields->Uc,viewer);CHKERRQ(ierr);
-  ierr = VecViewVTKDof(ctx->daScalCell,fields->Uv,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScalCell,fields->vfperm,viewer);CHKERRQ(ierr);
   ierr = VecViewVTKDof(ctx->daScalCell,fields->pmult,viewer);CHKERRQ(ierr);
+  ierr = VecViewVTKDof(ctx->daScalCell,fields->widthc,viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

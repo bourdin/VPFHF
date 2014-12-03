@@ -92,6 +92,7 @@ extern PetscErrorCode VFCartFEElement1DInit(VFCartFEElement1D *e,PetscReal lx)
   PetscErrorCode ierr;
   
   PetscFunctionBegin;
+  ierr = VFCartFEElement1DCreate(e);CHKERRQ(ierr);
   e->lx        = lx;
   e->ly        = 0.;
   e->lz        = 0.;
@@ -1754,3 +1755,113 @@ extern PetscErrorCode VecApplyDirichletFlowBC(Vec RHS,Vec BCF,VFBC *BC,PetscReal
   PetscFunctionReturn(0);
 }
 
+
+#undef __FUNCT__
+#define __FUNCT__ "CartFEElement1DCreate"
+extern PetscErrorCode CartFEElement1DCreate(CartFEElement1D *e)
+{
+  PetscFunctionBegin;
+  e->dim       = 1;
+  e->nphix     = 2;
+  e->nphiy     = 1;
+  e->nphiz     = 1;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "CartFEElement1DInit"
+extern PetscErrorCode CartFEElement1DInit(CartFEElement1D *e,PetscReal x,PetscReal lx)
+{
+  PetscErrorCode ierr;
+  PetscReal       var;
+  
+  PetscFunctionBegin;
+  var = (x-lx/2.)/lx/2.;
+  e->phi[0][0][0] = (1. - var) * .5;
+  e->phi[0][0][1] = (1. + var) * .5;
+  e->dphi[0][0][0] = -1. / lx;
+  e->dphi[0][0][1] =  1. / lx;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "CartFEElement2DCreate"
+extern PetscErrorCode CartFEElement2DCreate(CartFEElement2D *e)
+{
+  PetscFunctionBegin;
+  e->dim       = 2;
+  e->nphix     = 2;
+  e->nphiy     = 2;
+  e->nphiz     = 1;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "CartFEElement2DInit"
+extern PetscErrorCode CartFEElement2DInit(CartFEElement2D *e,PetscReal x,PetscReal y,PetscReal lx,PetscReal ly)
+{
+  PetscErrorCode      ierr;
+  CartFEElement1D     ex,ey;
+  PetscInt            i,j;
+  
+  PetscFunctionBegin;
+  ierr = CartFEElement1DCreate(&ex);CHKERRQ(ierr);
+  ierr = CartFEElement1DInit(&ex,x,lx);CHKERRQ(ierr);
+  ierr = CartFEElement1DCreate(&ey);CHKERRQ(ierr);
+  ierr = CartFEElement1DInit(&ey,y,ly);CHKERRQ(ierr);
+  ierr = CartFEElement2DCreate(e);CHKERRQ(ierr);
+  for (j = 0; j < e->nphiy; j++) {
+    for (i = 0; i < e->nphix; i++) {
+      e->phi[0][j][i]     = ey.phi[0][0][j] * ex.phi[0][0][i];
+      e->dphi[0][j][i][0] = ey.phi[0][0][j] * ex.dphi[0][0][i];
+      e->dphi[0][j][i][1] = ey.dphi[0][0][j] * ex.phi[0][0][i];
+      
+    }
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "CartFEElement3DCreate"
+extern PetscErrorCode CartFEElement3DCreate(CartFEElement3D *e)
+{
+  PetscFunctionBegin;
+  e->dim       = 3;
+  e->nphix     = 2;
+  e->nphiy     = 2;
+  e->nphiz     = 2;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "CartFEElement3DInit"
+extern PetscErrorCode CartFEElement3DInit(CartFEElement3D *e,PetscReal x,PetscReal y,PetscReal z,PetscReal lx,PetscReal ly,PetscReal lz)
+{
+  PetscErrorCode      ierr;
+  CartFEElement1D     ex,ey,ez;
+  PetscInt            i,j,k;
+  
+  PetscFunctionBegin;
+  ierr = CartFEElement1DCreate(&ex);CHKERRQ(ierr);
+  ierr = CartFEElement1DInit(&ex,x,lx);CHKERRQ(ierr);
+  ierr = CartFEElement1DCreate(&ey);CHKERRQ(ierr);
+  ierr = CartFEElement1DInit(&ey,y,ly);CHKERRQ(ierr);
+  ierr = CartFEElement1DCreate(&ez);CHKERRQ(ierr);
+  ierr = CartFEElement1DInit(&ez,z,lz);CHKERRQ(ierr);
+  
+  ierr = CartFEElement3DCreate(e);CHKERRQ(ierr);
+  
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        e->phi[k][j][i]     = ez.phi[0][0][k] * ey.phi[0][0][j] * ex.phi[0][0][i];
+        e->dphi[k][j][i][0] = ez.phi[0][0][k] * ey.phi[0][0][j] * ex.dphi[0][0][i];
+        e->dphi[k][j][i][1] = ez.phi[0][0][k] * ey.dphi[0][0][j] * ex.phi[0][0][i];
+        e->dphi[k][j][i][2] = ez.dphi[0][0][k] * ey.phi[0][0][j] * ex.phi[0][0][i];
+        
+      }
+    }
+  }
+  
+  PetscFunctionReturn(0);
+}
