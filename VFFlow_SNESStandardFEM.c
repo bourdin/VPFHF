@@ -188,8 +188,8 @@ extern PetscErrorCode FractureFlowVelocityCompute(VFCtx *ctx, VFFields *fields)
 	ierr = DMDAVecGetArray(ctx->daScal,press_local,&press_array);CHKERRQ(ierr);
   
   ierr = DMGetLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daVect,ctx->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daVect,ctx->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
 
   ierr = DMGetLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
@@ -244,8 +244,6 @@ extern PetscErrorCode VF_FlowStandardFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	PetscReal           Pmin,Pmax;
   
 	PetscFunctionBegin;
-	ierr = VecCopy(fields->V,ctx->V);CHKERRQ(ierr);
-	ierr = VecCopy(fields->U,ctx->U);CHKERRQ(ierr);
   ierr = VF_FormFlowStandardFEMMatricesnVectors(ctx->KP,ctx->KPlhs,ctx->RHSP,fields,ctx);CHKERRQ(ierr);
 	ierr = SNESSetFunction(ctx->snesP,ctx->PFunct,VF_FormFlowStandardFEMIFunction,ctx);CHKERRQ(ierr);
   ierr = SNESSetJacobian(ctx->snesP,ctx->JacP,ctx->JacP,VF_FormFlowStandardFEMIJacobian,ctx);CHKERRQ(ierr);
@@ -500,7 +498,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = DMCreateGlobalVector(ctx->daVect,&U_diff);CHKERRQ(ierr);
   ierr = VecSet(U_diff,0.);CHKERRQ(ierr);
   ierr = VecAXPY(U_diff,-1.0,ctx->U_old);CHKERRQ(ierr);
-  ierr = VecAXPY(U_diff,1.0,ctx->U);CHKERRQ(ierr);
+  ierr = VecAXPY(U_diff,1.0,fields->U);CHKERRQ(ierr);
   
   ierr = DMGetLocalVector(ctx->daVect,&u_diff_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalBegin(ctx->daVect,U_diff,INSERT_VALUES,u_diff_local);CHKERRQ(ierr);
@@ -508,8 +506,8 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_diff_local,&u_diff_array);CHKERRQ(ierr);
   
   ierr = DMGetLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daVect,ctx->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daVect,ctx->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
 
   ierr = DMGetLocalVector(ctx->daVect,&u_old_local);CHKERRQ(ierr);

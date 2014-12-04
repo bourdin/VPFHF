@@ -74,8 +74,6 @@ extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields)
   ierr = VecDuplicate(ctx->RHSVelP,&VecRHS);CHKERRQ(ierr);
   ierr = VecDuplicate(ctx->RHSVelP,&vec);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = VecCopy(fields->V,ctx->V);CHKERRQ(ierr);
-	ierr = VecCopy(fields->U,ctx->U);CHKERRQ(ierr);
   ierr = FlowMatnVecAssemble(ctx->KVelP,ctx->KVelPlhs,ctx->RHSVelP,fields,ctx);CHKERRQ(ierr);
   ierr = VecCopy(ctx->RHSVelP,VecRHS);CHKERRQ(ierr);
   ierr = VecAXPBY(VecRHS,one_minus_theta,theta,ctx->RHSVelPpre);CHKERRQ(ierr);
@@ -570,7 +568,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
   ierr = DMCreateGlobalVector(ctx->daVect,&U_diff);CHKERRQ(ierr);
   ierr = VecSet(U_diff,0.);CHKERRQ(ierr);
   ierr = VecAXPY(U_diff,-1.0,ctx->U_old);CHKERRQ(ierr);
-  ierr = VecAXPY(U_diff,1.0,ctx->U);CHKERRQ(ierr);
+  ierr = VecAXPY(U_diff,1.0,fields->U);CHKERRQ(ierr);
   
   ierr = DMGetLocalVector(ctx->daVect,&u_diff_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalBegin(ctx->daVect,U_diff,INSERT_VALUES,u_diff_local);CHKERRQ(ierr);
@@ -578,8 +576,8 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_diff_local,&u_diff_array);CHKERRQ(ierr);
   
   ierr = DMGetLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daVect,ctx->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daVect,ctx->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
   
   ierr = DMGetLocalVector(ctx->daVect,&u_old_local);CHKERRQ(ierr);
