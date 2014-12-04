@@ -87,8 +87,6 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	PetscReal           Pmin,Pmax;
 
 	PetscFunctionBegin;
-	ierr = VecCopy(fields->V,ctx->V);CHKERRQ(ierr);
-	ierr = VecCopy(fields->U,ctx->U);CHKERRQ(ierr);
   ierr = FlowMatnVecAssemble(ctx->KVelP,ctx->KVelPlhs,ctx->RHSVelP,fields,ctx);CHKERRQ(ierr);
 	ierr = SNESSetFunction(ctx->snesVelP,ctx->FlowFunct,FormSNESIFunction,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesVelP,ctx->JacVelP,ctx->JacVelP,FormSNESIJacobian,ctx);CHKERRQ(ierr);
