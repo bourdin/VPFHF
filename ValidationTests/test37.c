@@ -239,7 +239,7 @@ int main(int argc,char **argv)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nPROCESSING STEP %i. \t\t Iteration = %i \t vtkfiletime = %i\n",i, ite,ctx.timestep);CHKERRQ(ierr);
     ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
     ierr = VF_StepU(&fields,&ctx);
-    ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepP(&fields,&ctx);
     ierr = FieldsH5Write(&ctx,&fields);
     errP  = 1e+10;
     errV  = 1e+10;

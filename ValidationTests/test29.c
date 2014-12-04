@@ -67,7 +67,7 @@ int main(int argc,char **argv)
   	ctx.maxtimestep = 20;
     ctx.maxtimevalue = 100.;
     ctx.timevalue = 0.1;
-    ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepP(&fields,&ctx);
     ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 }
   else{
@@ -75,7 +75,7 @@ int main(int argc,char **argv)
   ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
-		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepP(&fields,&ctx);
     ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
     ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);

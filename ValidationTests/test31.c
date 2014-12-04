@@ -62,7 +62,7 @@ int main(int argc,char **argv)
   ierr = PetscPrintf(PETSC_COMM_WORLD,"   Initial guess displacement: %g\n",displ);CHKERRQ(ierr);
   ierr = VecSet(fields.BCU,displ);CHKERRQ(ierr);  
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-  ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+  ierr = VF_StepP(&fields,&ctx);
   ierr = VF_IntegrateOnBoundary(&SumnIntegral,fields.pressure,Z1,&ctx);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"\n Integrand = %f \n",SumnIntegral);CHKERRQ(ierr);
   ierr = VecCopy(fields.pressure,PreIteSol);CHKERRQ(ierr);
@@ -72,7 +72,7 @@ int main(int argc,char **argv)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"   Update displacement: %g \t Displ_error = %g\n",displ,norm_inf);CHKERRQ(ierr);
     ierr = VecSet(fields.BCU,displ);CHKERRQ(ierr);
     ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-    ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepP(&fields,&ctx);
     ierr = VF_IntegrateOnBoundary(&SumnIntegral,fields.pressure,Z1,&ctx);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n Integrand = %f \n",SumnIntegral);CHKERRQ(ierr);
     displ_iter++;
@@ -111,7 +111,7 @@ int main(int argc,char **argv)
     ierr = VecCopy(fields.pressure,PreIteSol);CHKERRQ(ierr);
     while (norm_inf > displ_p_tol) {
       ierr = PetscPrintf(PETSC_COMM_WORLD,"  Step %d, Iteration Step: %d\n",ctx.timestep, displ_iter);CHKERRQ(ierr);
-      ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+      ierr = VF_StepP(&fields,&ctx);
       ierr = VF_IntegrateOnBoundary(&SumnIntegral,fields.pressure,Z1,&ctx);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n Integrand = %f \n",SumnIntegral);CHKERRQ(ierr);
       displ = lz*(1.+ctx.matprop[0].nu)*((1.-ctx.matprop[0].nu)*stress*lx*ly+ctx.flowprop.alphabiot*SumnIntegral*(1.-2*ctx.matprop[0].nu))/(lx*ly*ctx.matprop[0].E);

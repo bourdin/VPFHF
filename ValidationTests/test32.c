@@ -199,12 +199,12 @@ int main(int argc,char **argv)
   ctx.timestep = 0;
     ierr = PetscPrintf(PETSC_COMM_WORLD,"  Computing initial time step solution\n");CHKERRQ(ierr);
     ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-    ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepP(&fields,&ctx);
     ierr = VecCopy(fields.pressure,PreIteSol);CHKERRQ(ierr);
     while (norm_inf > displ_p_tol) {
       ierr = PetscPrintf(PETSC_COMM_WORLD,"   Iteration Step: %d\n",displ_iter);CHKERRQ(ierr);
       ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-      ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+      ierr = VF_StepP(&fields,&ctx);
       displ_iter++;
       ierr = VecWAXPY(error,-1.0,fields.pressure,PreIteSol);
       ierr = VecCopy(fields.pressure,PreIteSol);CHKERRQ(ierr);
@@ -275,7 +275,7 @@ int main(int argc,char **argv)
     ierr = VecCopy(fields.pressure,PreIteSol);CHKERRQ(ierr);
   while (norm_inf > displ_p_tol) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"  Step %d, Iteration Step: %d\n",ctx.timestep, displ_iter);CHKERRQ(ierr);
-    ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepP(&fields,&ctx);
     ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
     displ_iter++;
     ierr = VecWAXPY(error,-1.0,fields.pressure,PreIteSol);

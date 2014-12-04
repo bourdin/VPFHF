@@ -292,7 +292,7 @@ int main(int argc,char **argv)
     ite = 0;
     ctx.timestep++;
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nPROCESSING STEP %i. \t\t Iteration = %i \t vtkfiletime = %i\n",i, ite,ctx.timestep);CHKERRQ(ierr);
-    ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepP(&fields,&ctx);
     ierr = VF_StepU(&fields,&ctx);
     ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
     ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
@@ -309,7 +309,7 @@ int main(int argc,char **argv)
       ite++;
       ctx.timestep++;
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\nTime step = %d .......Iteration step =  %i \t timevalue = %e \t timestepsize = %e \t errP = %e \t vtkfiletime = %i\n",i,ite, ctx.flowprop.timestepsize,ctx.flowprop.timestepsize, errP, ctx.timestep);CHKERRQ(ierr);
-   		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+      ierr = VF_StepP(&fields,&ctx);
       ierr = VF_StepU(&fields,&ctx);
       ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
       ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
