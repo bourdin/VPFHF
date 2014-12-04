@@ -174,11 +174,11 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 
 
 /*
- VFFlowTimeStep: Does one time step of the flow solver selected in ctx.flowsolver
+ VF_StepP: Does one time step of the flow solver selected in ctx.flowsolver
  */
 #undef __FUNCT__
-#define __FUNCT__ "VFFlowTimeStep"
-extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields)
+#define __FUNCT__ "VF_StepP"
+extern PetscErrorCode VF_StepP(VFFields *fields,VFCtx *ctx)
 {
   PetscErrorCode ierr;
   

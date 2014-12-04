@@ -172,7 +172,7 @@ int main(int argc,char **argv)
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
     
-    ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepP(&fields,&ctx);
     ierr = FieldsH5Write(&ctx,&fields);
   
   ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);

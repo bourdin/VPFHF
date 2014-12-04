@@ -26,7 +26,7 @@ extern PetscErrorCode BCQInit(VFBC *BCQ,VFCtx *ctx);
 extern PetscErrorCode BCFracQInit(VFBC *BCFracQ,VFCtx *ctx);
 extern PetscErrorCode BCPInit(VFBC *BCP,VFCtx *ctx);
 extern PetscErrorCode SETBoundaryTerms_P(VFCtx *ctx, VFFields *fields);
-extern PetscErrorCode VFFlowTimeStep(VFCtx *ctx,VFFields *fields);
+extern PetscErrorCode VF_StepP(VFFields *fields,VFCtx *ctx);
 extern PetscErrorCode VecApplyPressureBC_FEM(Vec RHS,Vec BCF,VFBC *BC);
 extern PetscErrorCode MatApplyPressureBC_FEM(Mat K,Mat M,VFBC *bcP);
 extern PetscErrorCode VFFlow_FEM_MatKPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscReal ****perm_array, PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e);

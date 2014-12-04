@@ -212,7 +212,7 @@ int main(int argc,char **argv)
     ierr = VF_PermeabilityUpDate(&ctx,&fields);CHKERRQ(ierr);
     ierr = VecCopy(fields.V,V_hold);CHKERRQ(ierr);
     ierr = VecSet(fields.V,1.0);CHKERRQ(ierr);
-    ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepP(&fields,&ctx);
     ierr = VecCopy(V_hold,fields.V);CHKERRQ(ierr);
     ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
     ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);

@@ -86,7 +86,7 @@ int main(int argc,char **argv)
         ierr = VecCopy(fields.pressure,Pold);CHKERRQ(ierr);
         altminitp++;
         ierr = PetscPrintf(PETSC_COMM_WORLD," Time step %i, U-P-loop alt min step %i, max pressure = %e, U_P_ERROR = %e \t V_P_ERROR = %e \n",ctx.timestep,altminitp,pmax,errP,errV);CHKERRQ(ierr);
-        ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+        ierr = VF_StepP(&fields,&ctx);
         ierr = VF_StepU(&fields,&ctx);
         ierr = VF_StepV(&fields,&ctx);
         ierr = VecAXPY(Pold,-1.,fields.pressure);CHKERRQ(ierr);

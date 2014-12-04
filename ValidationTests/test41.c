@@ -140,7 +140,7 @@ int main(int argc,char **argv)
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
-		ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepP(&fields,&ctx);
 		ierr = FieldsH5Write(&ctx,&fields);
 	}
 	ierr = VecSet(fields.VelnPress,0.);CHKERRQ(ierr);

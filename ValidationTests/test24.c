@@ -3,8 +3,8 @@
  (c) 2012-2014 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
  ./test24 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESMIXEDFEM
- ./test24 -n 11,11,11 -l 1,1,1 -m_inv 0 -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -k 1,1,1 -g 0,0,0 -rhof 0. -mu 1
  ./test24 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_tSMIXEDFEM
+ ./test24 -n 11,11,11 -l 1,1,1 -m_inv 0 -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -k 1,1,1 -g 0,0,0 -rhof 0. -mu 1
  
  */
 
@@ -69,13 +69,13 @@ int main(int argc,char **argv)
   	ctx.maxtimestep = 1;
     ctx.maxtimevalue = 60.;
     ctx.timevalue = 1.;
-    ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepP(&fields,&ctx);
     ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   }
   else{
     for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
-      ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+      ierr = VF_StepP(&fields,&ctx);
       ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
       ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);
