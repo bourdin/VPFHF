@@ -39,6 +39,7 @@ int main(int argc,char **argv)
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   ctx.hasCrackPressure = PETSC_TRUE;
   ctx.FlowDisplCoupling = PETSC_TRUE;
+//  ctx.FlowDisplCoupling = PETSC_FALSE;
   ctx.ResFlowMechCoupling = FIXEDSTRESS;
   ctx.FractureFlowCoupling = PETSC_TRUE;
   ctx.hasFluidSources = PETSC_FALSE;
@@ -65,6 +66,16 @@ int main(int argc,char **argv)
   ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
   ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
+  
+  
+  
+  
+  ierr = VolumetricCrackOpeningNewCC(&ctx,&fields);CHKERRQ(ierr);
+
+  
+  
+  
+  
   ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD," Initial fracture pressure =  %e  Initial fracture volume = %e \n ",p,ctx.CrackVolume);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
@@ -89,6 +100,16 @@ int main(int argc,char **argv)
         ierr = VF_StepP(&fields,&ctx);
         ierr = VF_StepU(&fields,&ctx);
         ierr = VF_StepV(&fields,&ctx);
+        
+        
+        
+        ierr = VolumetricCrackOpeningNewCC(&ctx,&fields);CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD," \n ######End of NEWCC function \n\n ");CHKERRQ(ierr);
+        ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+        
+        
+        
+        
         ierr = VecAXPY(Pold,-1.,fields.pressure);CHKERRQ(ierr);
         ierr = VecNorm(Pold,NORM_INFINITY,&errP);CHKERRQ(ierr);
         ierr = VecMax(fields.pressure,PETSC_NULL,&pmax);CHKERRQ(ierr);
@@ -109,6 +130,7 @@ int main(int argc,char **argv)
     ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
     ierr = VecCopy(fields.U,ctx.U_old);CHKERRQ(ierr);
     ierr = VecCopy(fields.V,ctx.V_old);CHKERRQ(ierr);
+    ierr = VecCopy(fields.widthc,ctx.widthc_old);CHKERRQ(ierr);
     ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
     ierr = VecMax(fields.pressure,PETSC_NULL,&pmax);CHKERRQ(ierr);
     ctx.ElasticEnergy = 0;

@@ -49,7 +49,7 @@ int main(int argc,char **argv)
     /*
       Do flow solver step 
     */
-    ierr = VFFlowTimeStep(&ctx,&fields);CHKERRQ(ierr);
+    ierr = VF_StepP(&fields,&ctx);CHKERRQ(ierr);
 
     /*
       Do mechanics step

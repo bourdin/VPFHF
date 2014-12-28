@@ -779,6 +779,10 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daScalCell,&fields->widthc);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->widthc,"Average cell width");CHKERRQ(ierr);
   ierr = VecSet(fields->widthc,0.);CHKERRQ(ierr);
+  
+  ierr = DMCreateGlobalVector(ctx->daScalCell,&ctx->widthc_old);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->widthc_old,"Average cell width (old)");CHKERRQ(ierr);
+  ierr = VecSet(ctx->widthc_old,0.);CHKERRQ(ierr);
   /*
    Create optional penny-shaped and rectangular cracks
    */
@@ -1212,6 +1216,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&ctx->FracVelBCArray);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->width);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->widthc);CHKERRQ(ierr);
+  ierr = VecDestroy(&ctx->widthc_old);CHKERRQ(ierr);
   
   ierr = PetscFree(ctx->fracwell);CHKERRQ(ierr);
   ierr = PetscFree(ctx->well);CHKERRQ(ierr);
