@@ -57,7 +57,7 @@ int main(int argc,char **argv)
   
   for (j = ys; j < ys+ym; j++) {
     for (i = xs; i < xs+xm; i++) {
-      bcu_array[0][j][i][2] = -0.5;
+      bcu_array[0][j][i][2] = -0.1;
       bcu_array[0][j][i][0] = -0.;
       
       bcu_array[nz-1][j][i][2] = 0.5;
@@ -84,10 +84,10 @@ int main(int argc,char **argv)
 			ctx.bcU[j].vertex[i] = NONE;
 		}
 	}
-//  ctx.bcU[0].face[X0]= ZERO;
+  ctx.bcU[0].face[X0]= ZERO;
   ctx.bcU[1].face[X0]= ZERO;
   
-//  ctx.bcU[0].face[X1]= ZERO;
+  ctx.bcU[0].face[X1]= ZERO;
   ctx.bcU[1].face[X1]= ZERO;
   
   
@@ -117,10 +117,41 @@ int main(int argc,char **argv)
   ctx.timestep = 0;
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
   ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Fracture Volume = %e\n",ctx.CrackVolume);CHKERRQ(ierr);
+
+  ctx.timestep = 1;
+
   ierr = VolumetricCrackOpeningNewCC(&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 
+  ctx.timestep = 2;
+
+  ierr = VolumetricCrackOpeningNewCC2(&ctx,&fields);CHKERRQ(ierr);
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+
+  ctx.bcU[2].face[Z0]= ZERO;
+  ctx.bcU[2].face[Z1]= ZERO;
+  ierr = VecSet(fields.pressure,1e-3);CHKERRQ(ierr);
+  ctx.hasCrackPressure = PETSC_TRUE;
+  ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
+
+  ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+
+  ctx.timestep = 3;
+
+  ierr = VolumetricCrackOpeningNewCC(&ctx,&fields);CHKERRQ(ierr);
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+
+  ctx.timestep = 4;
+
+  ierr = VolumetricCrackOpeningNewCC1(&ctx,&fields);CHKERRQ(ierr);
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   
+  ctx.timestep = 5;
+  ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   
   
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);

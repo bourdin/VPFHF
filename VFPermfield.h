@@ -42,8 +42,16 @@ extern PetscErrorCode VolumetricCrackOpening3D_localNewCC(PetscReal ***volcracko
 
 extern PetscErrorCode VolumetricCrackOpeningNewCC(VFCtx *ctx, VFFields *fields);
 
-extern PetscErrorCode ComputeUcdotGradVlocal(PetscReal *cod,PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s);
+extern PetscErrorCode ComputeUcdotGradVlocal(PetscReal *cod, PetscReal *v_elem, PetscReal *grad,PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s);
 extern PetscErrorCode IntegrateUcdotGradVlocal(PetscReal *w_ave, PetscReal *cod, VFCartFEElement1D *e);
 
+
+extern PetscErrorCode VolumetricCrackOpeningNewCC1(VFCtx *ctx, VFFields *fields);
+extern PetscErrorCode VolumetricCrackOpeningNewCC2(VFCtx *ctx, VFFields *fields);
+extern PetscErrorCode ComputeUcdotGradVlocal1(PetscReal *cod, PetscReal *v_elem, PetscReal *grad, PetscReal *n_elem, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s);
+
+extern PetscErrorCode IntegrateUcdotGradVlocal1(PetscReal *w_ave, PetscReal *cod, VFCartFEElement1D *e);
+
+extern PetscErrorCode GradV3D_local(PetscReal ***grad_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
 
 #endif
