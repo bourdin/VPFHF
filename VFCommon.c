@@ -57,7 +57,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   //ierr = VFBCCreate(ctx->bcV,1);CHKERRQ(ierr);
   ierr = VFBCInitialize(ctx);CHKERRQ(ierr);
   ierr = VFSolversInitialize(ctx);CHKERRQ(ierr);
-
+  
   ctx->heatsolver = HEATSOLVER_SNESFEM;
   ierr            = FlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
   ierr            = VF_HeatSolverInitialize(ctx,fields);CHKERRQ(ierr);
@@ -316,7 +316,6 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,4,1,
                       PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daFlow);CHKERRQ(ierr);
   
-
 
   ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,&x_nprocs,&y_nprocs,&z_nprocs,
@@ -613,7 +612,16 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
 {
 
   PetscErrorCode ierr;
-  PetscInt       c;
+  PetscInt       c,st;
+  PetscReal      BBmin[3],BBmax[3];
+  PetscReal      thickness;
+  PetscReal      bx,by,bz,res;
+  PetscInt       nx,ny,nz;
+  
+  
+  PetscInt       x_nprocs,y_nprocs,z_nprocs,*olx,*oly,*olz;
+  const PetscInt *lx1,*ly1,*lz1;
+  PetscReal      *l,lx,ly,lz;
 
   PetscFunctionBegin;
   fields->numfields = 19;
@@ -776,6 +784,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) fields->width,"Average width");CHKERRQ(ierr);
   ierr = VecSet(fields->width,0.);CHKERRQ(ierr);
 
+  
   ierr = DMCreateGlobalVector(ctx->daScalCell,&fields->widthc);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->widthc,"Average cell width");CHKERRQ(ierr);
   ierr = VecSet(fields->widthc,0.);CHKERRQ(ierr);
@@ -783,6 +792,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daScalCell,&ctx->widthc_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->widthc_old,"Average cell width (old)");CHKERRQ(ierr);
   ierr = VecSet(ctx->widthc_old,0.);CHKERRQ(ierr);
+  
   /*
    Create optional penny-shaped and rectangular cracks
    */
@@ -828,6 +838,83 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   
   ierr        = VecCopy(fields->VIrrev,fields->V);CHKERRQ(ierr);
   ctx->fields = fields;
+  
+  ierr = DMDAGetBoundingBox(ctx->daScal,BBmin,BBmax);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,&x_nprocs,&y_nprocs,&z_nprocs,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  
+  ierr = DMDAGetOwnershipRanges(ctx->daScal,&lx1,&ly1,&lz1);CHKERRQ(ierr);
+  ierr = PetscMalloc(x_nprocs*sizeof(*olx),&olx);CHKERRQ(ierr);
+  ierr = PetscMalloc(y_nprocs*sizeof(*oly),&oly);CHKERRQ(ierr);
+  ierr = PetscMalloc(z_nprocs*sizeof(*olz),&olz);CHKERRQ(ierr);
+  
+  ierr = PetscMemcpy(olx,lx1,x_nprocs*sizeof(*olx));CHKERRQ(ierr);
+  ierr = PetscMemcpy(oly,ly1,y_nprocs*sizeof(*oly));CHKERRQ(ierr);
+  ierr = PetscMemcpy(olz,lz1,z_nprocs*sizeof(*olz));CHKERRQ(ierr);
+  
+  olx[x_nprocs-1]--;
+  oly[y_nprocs-1]--;
+  olz[z_nprocs-1]--;
+  
+  if(ctx->pennycrack[0].thickness > ctx->rectangularcrack[0].thickness){
+    thickness = ctx->pennycrack[0].thickness;
+  }
+  else{
+    thickness = ctx->rectangularcrack[0].thickness;
+  }
+  bx = (BBmax[0]-BBmin[0])/(nx-1);
+  by = (BBmax[1]-BBmin[1])/(ny-1);
+  bz = (BBmax[2]-BBmin[2])/(nz-1);
+  if(nx == 2){
+    if(by < bz){
+      res = by;
+    }
+    else{
+      res = bz;
+    }
+  }
+  else if(ny == 2){
+    if(bx < bz){
+      res = bx;
+    }
+    else{
+      res = bz;
+    }
+  }
+  else if(nz == 2){
+    if(bx < by){
+      res = bx;
+    }
+    else{
+      res = by;
+    }
+  }
+  else{
+    if(bx < by && bx < bz){
+      res = bx;
+    }
+    else if(by < bx && by < bz){
+      res = by;
+    }
+    else{
+      res = bz;
+    }
+  }
+  ctx->WidthIntLenght = 1.5*(thickness+2*ctx->vfprop.epsilon);
+  
+  st = ctx->WidthIntLenght/(res);
+  
+  ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
+                      DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,st,
+                      PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daWScal);CHKERRQ(ierr);
+  
+  ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
+                      DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,st+1,
+                      PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daWVect);CHKERRQ(ierr);
+  
+  ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
+                      DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,st,
+                      olx,oly,olz,&ctx->daWScalCell);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -1164,6 +1251,9 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = DMDestroy(&ctx->daFlow);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daScalCell);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daVectCell);CHKERRQ(ierr);
+  ierr = DMDestroy(&ctx->daWScalCell);CHKERRQ(ierr);
+  ierr = DMDestroy(&ctx->daWScal);CHKERRQ(ierr);
+  ierr = DMDestroy(&ctx->daWVect);CHKERRQ(ierr);
 
   ierr = SNESDestroy(&ctx->snesU);CHKERRQ(ierr);
   ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
