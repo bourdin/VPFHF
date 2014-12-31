@@ -379,6 +379,10 @@ typedef struct {
 	CartFEElement1D     s1D;
   VFCartFEElement1D    e1D;
   Vec widthc_old;
+  DM                  daWScalCell;
+  PetscReal           WidthIntLenght;
+  DM                  daWScal;
+  DM                  daWVect;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

@@ -54,14 +54,18 @@ int main(int argc,char **argv)
 	hx = lx/(nx-1);
 	hy = ly/(nx-1);
 	hz = lz/(nz-1);
-  
-  for (j = ys; j < ys+ym; j++) {
-    for (i = xs; i < xs+xm; i++) {
-      bcu_array[0][j][i][2] = -0.1;
-      bcu_array[0][j][i][0] = -0.;
-      
-      bcu_array[nz-1][j][i][2] = 0.5;
-      bcu_array[nz-1][j][i][0] = 0.;
+  for(k = zs; k < zs+zm; k++){
+    for (j = ys; j < ys+ym; j++) {
+      for (i = xs; i < xs+xm; i++) {
+        if(k == 0){
+          bcu_array[k][j][i][2] = -0.1;
+          bcu_array[k][j][i][0] = -0.;
+        }
+        if(k == nz-1){
+          bcu_array[k][j][i][2] = 0.5;
+          bcu_array[k][j][i][0] = 0.;
+        }
+      }
     }
   }
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
@@ -110,9 +114,6 @@ int main(int argc,char **argv)
   ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,0);CHKERRQ(ierr);
   ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
-
-  
-  
   
   ctx.timestep = 0;
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
@@ -128,7 +129,7 @@ int main(int argc,char **argv)
 
   ctx.timestep = 2;
 
-  ierr = VolumetricCrackOpeningNewCC2(&ctx,&fields);CHKERRQ(ierr);
+//  ierr = VolumetricCrackOpeningNewCC2(&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 
   ctx.bcU[2].face[Z0]= ZERO;
@@ -146,7 +147,7 @@ int main(int argc,char **argv)
 
   ctx.timestep = 4;
 
-  ierr = VolumetricCrackOpeningNewCC1(&ctx,&fields);CHKERRQ(ierr);
+//  ierr = VolumetricCrackOpeningNewCC1(&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   
   ctx.timestep = 5;
