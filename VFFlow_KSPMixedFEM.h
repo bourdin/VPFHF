@@ -65,4 +65,9 @@ extern PetscErrorCode VF_MatDFractureFlowCoupling_local1(PetscReal *Kd_ele,VFCar
 
 extern PetscErrorCode VF_RHSFractureFlowCoupling_local1(PetscReal *K_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal w,PetscReal ***v_array,PetscReal w_old);
 
+
+
+extern PetscErrorCode VecApplyFracturePressureBC(Vec RHS,Vec BCU);
+extern PetscErrorCode MatApplyFracturePressureBC(Mat K,Vec BCU);
+
 #endif /* VFFLOW_MIXEDFEM_H */

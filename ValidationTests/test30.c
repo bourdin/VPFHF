@@ -37,16 +37,24 @@ int main(int argc,char **argv)
   ierr = DMCreateGlobalVector(ctx.daScal,&V_hold);CHKERRQ(ierr);
   ierr = VecDuplicate(fields.pressure,&error);
   ierr = VecDuplicate(fields.pressure,&PreIteSol);
-  ctx.hasFlowWells = PETSC_TRUE;
+  ctx.hasFlowWells = PETSC_FALSE;
 	ctx.hasFluidSources = PETSC_FALSE;
   ctx.hasInsitu        = PETSC_TRUE;
   ctx.FlowDisplCoupling = PETSC_TRUE;
-	ctx.hasCrackPressure = PETSC_TRUE;
+	ctx.hasCrackPressure = PETSC_FALSE;
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ctx.timestep = 0;
   ierr = PetscPrintf(PETSC_COMM_WORLD,"  Computing initial time step solution\n");CHKERRQ(ierr);
+  
+  ierr = VecSet(fields.pressure,0.);CHKERRQ(ierr);
+  ierr = VecSet(fields.theta,0.);CHKERRQ(ierr);
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
+  
+
   ierr = VF_StepP(&fields,&ctx);
+  
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+
   ierr = VecCopy(fields.pressure,PreIteSol);CHKERRQ(ierr);
   while (norm_inf > displ_p_tol) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"   Iteration Step: %d\n",displ_iter);CHKERRQ(ierr);
@@ -57,12 +65,18 @@ int main(int argc,char **argv)
     ierr = VecCopy(fields.pressure,PreIteSol);CHKERRQ(ierr);
     ierr = VecNorm(error,NORM_INFINITY,&norm_inf);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n inf_norm = %f \n",norm_inf);CHKERRQ(ierr);
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+
   }
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
   ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
   ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
   ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
+  
+  
+  
+  
   ctx.bcQ[2].face[Z0] = NONE;
   ctx.bcP[0].face[Z1] = FIXED;
   ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
@@ -106,6 +120,10 @@ int main(int argc,char **argv)
     ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
   }
+  
+  
+  
+  
   ierr = VecDestroy(&PreIteSol);CHKERRQ(ierr);
   ierr = VecDestroy(&error);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
