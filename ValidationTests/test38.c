@@ -3,6 +3,7 @@
  (c) 2012-2014 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
 
  ./test38 -options_file test38.opts
+ ./test38 -options_file test38_1.opts  -U_snes_monitor   -u_ksp_monitor -alpha 0 -beta 0 -insitumin 0,0,0,0,0,0 -insitumax 0,0,0,0,0,0 -eta 1.e-3 -unilateral nocompression 
 
  */
 
@@ -37,9 +38,8 @@ int main(int argc,char **argv)
 
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ctx.hasCrackPressure = PETSC_TRUE;
-  ctx.FlowDisplCoupling = PETSC_TRUE;
-//  ctx.FlowDisplCoupling = PETSC_FALSE;
+  ctx.FlowDisplCoupling = PETSC_FALSE;
+  ctx.hasInsitu        = PETSC_TRUE;
   ctx.ResFlowMechCoupling = FIXEDSTRESS;
   ctx.FractureFlowCoupling = PETSC_TRUE;
   ctx.hasFluidSources = PETSC_FALSE;
@@ -66,27 +66,15 @@ int main(int argc,char **argv)
   ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
   ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
-  
-  
-  
-  
-  ierr = VolumetricCrackOpeningNewCC(&ctx,&fields);CHKERRQ(ierr);
-
-  
-  
-  
-  
+  ierr = VolumetricCrackOpeningNewCC1(&ctx,&fields);CHKERRQ(ierr);
   ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD," Initial fracture pressure =  %e  Initial fracture volume = %e \n ",p,ctx.CrackVolume);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-  
-  
   ini_pressure = 0.0;
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-ini_pressure",&ini_pressure,PETSC_NULL);CHKERRQ(ierr);
   ierr = VecSet(ctx.PresBCArray,ini_pressure);CHKERRQ(ierr);
   ierr = VecSet(ctx.pressure_old,ini_pressure);CHKERRQ(ierr);
-  
-  for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
+   for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nPROCESSING STEP %i ........................................................... \n",ctx.timestep);CHKERRQ(ierr);
       altminitp = 0;
       errP  = 1e+10;
@@ -100,17 +88,10 @@ int main(int argc,char **argv)
         ierr = VF_StepP(&fields,&ctx);
         ierr = VF_StepU(&fields,&ctx);
         ierr = VF_StepV(&fields,&ctx);
-        
-        
-        
-        ierr = VolumetricCrackOpeningNewCC(&ctx,&fields);CHKERRQ(ierr);
+        ierr = VolumetricCrackOpeningNewCC1(&ctx,&fields);CHKERRQ(ierr);
         ierr = PetscPrintf(PETSC_COMM_WORLD," \n ######End of NEWCC function \n\n ");CHKERRQ(ierr);
         ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-        
-        
-        
-        
-        ierr = VecAXPY(Pold,-1.,fields.pressure);CHKERRQ(ierr);
+         ierr = VecAXPY(Pold,-1.,fields.pressure);CHKERRQ(ierr);
         ierr = VecNorm(Pold,NORM_INFINITY,&errP);CHKERRQ(ierr);
         ierr = VecMax(fields.pressure,PETSC_NULL,&pmax);CHKERRQ(ierr);
         errP = errP/pmax;  

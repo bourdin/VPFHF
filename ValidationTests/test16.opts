@@ -4,14 +4,14 @@
 -epsilon .32
 -eta 1e-8
 -gc .8
--insitumax -0.25,0,-0.3,0,0,0
--insitumin -0.25,0,-0.3,0,0,0
+-insitumax -0.,0,0.,0,0,0
+-insitumin -0.,0,0.,0,0,0
 -l 8,.008,8.
 -maxtimestep 10
 -maxvol 0.05
 -minvol 0.
 -mode 3
--n 50,2,50
+-n 101,2,101
 -npc 1
 -nu 0.
 -p runtest16
@@ -19,6 +19,18 @@
 -pc0_center 4.,.004,4.
 -pc0_phi 30.
 -pc0_theta 0.
--pc0_thickness .32
+-pc0_thickness .12
+-U_Y0_BC_1 ZERO
+-U_Y1_BC_1 ZERO
+-U_X0Y0Z0_BC_0 ZERO
+-U_X0Y0Z0_BC_1 ZERO
+-U_X1Y0Z0_BC_2 ZERO
+-V_X0_BC ONE 
+-V_X1_BC ONE 
+-V_Z0_BC ONE 
+-V_Z1_BC ONE
+-beta 0.1
+-unilateral none
+-atnum 1
 #End of PETSc Option Table entries
 

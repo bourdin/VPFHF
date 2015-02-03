@@ -719,14 +719,14 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
               KL_local[l] = -1.0*timestepsize*theta*KL_local[l];
             }
             
-              ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KAf_local,ADD_VALUES);CHKERRQ(ierr);
-              ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,KAfrhs_local,ADD_VALUES);CHKERRQ(ierr);
-              ierr = MatSetValuesStencil(K,nrow,row,nrow,row1,KBf_local,ADD_VALUES);CHKERRQ(ierr);
-              ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row1,KBfrhs_local,ADD_VALUES);CHKERRQ(ierr);
-              ierr = MatSetValuesStencil(K,nrow,row1,nrow,row,KBfTrans_local,ADD_VALUES);CHKERRQ(ierr);
-              ierr = MatSetValuesStencil(Krhs,nrow,row1,nrow,row,KBfTransrhs_local,ADD_VALUES);CHKERRQ(ierr);
-              ierr = MatSetValuesStencil(K,nrow,row1,nrow,row,KL_local,ADD_VALUES);CHKERRQ(ierr);
-              ierr = MatSetValuesStencil(Krhs,nrow,row1,nrow,row,KLrhs_local,ADD_VALUES);CHKERRQ(ierr);
+            ierr = MatSetValuesStencil(K,nrow,row,nrow,row,KAf_local,ADD_VALUES);CHKERRQ(ierr);
+            ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,KAfrhs_local,ADD_VALUES);CHKERRQ(ierr);
+            ierr = MatSetValuesStencil(K,nrow,row,nrow,row1,KBf_local,ADD_VALUES);CHKERRQ(ierr);
+            ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row1,KBfrhs_local,ADD_VALUES);CHKERRQ(ierr);
+            ierr = MatSetValuesStencil(K,nrow,row1,nrow,row,KBfTrans_local,ADD_VALUES);CHKERRQ(ierr);
+            ierr = MatSetValuesStencil(Krhs,nrow,row1,nrow,row,KBfTransrhs_local,ADD_VALUES);CHKERRQ(ierr);
+            ierr = MatSetValuesStencil(K,nrow,row1,nrow,row,KL_local,ADD_VALUES);CHKERRQ(ierr);
+            ierr = MatSetValuesStencil(Krhs,nrow,row1,nrow,row,KLrhs_local,ADD_VALUES);CHKERRQ(ierr);
           }
           ierr = VF_MatDFractureFlowCoupling_local(KDf_local,&ctx->e3D,ek,ej,ei,u_array,v_array);CHKERRQ(ierr);
           for (l = 0; l < nrow*nrow; l++) {
@@ -734,7 +734,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
             KDf_local[l] = -timestepsize*theta/(24.*mu)*KDf_local[l];
           }
           ierr = MatSetValuesStencil(K,nrow,row1,nrow,row1,KDf_local,ADD_VALUES);CHKERRQ(ierr);
-          ierr = MatSetValuesStencil(Krhs,nrow,row1,nrow,row1,KDfrhs_local,ADD_VALUES);CHKERRQ(ierr);          
+          ierr = MatSetValuesStencil(Krhs,nrow,row1,nrow,row1,KDfrhs_local,ADD_VALUES);CHKERRQ(ierr);
           
           if(ctx->hasFlowWells){
             ierr = VecApplyFractureWellSource(RHS_local,fracflow_array,&ctx->e3D,ek,ej,ei,ctx,v_array);
@@ -1871,7 +1871,7 @@ extern PetscErrorCode VF_RHSFractureFlowCoupling_local(PetscReal *K_local,VFCart
                       e->ng,&dv_old_elem[2],
                       e->ng,&u_old_elem[0],
                       e->ng,&u_old_elem[1],
-                      e->ng,&u_old_elem[2]);CHKERRQ(ierr);  
+                      e->ng,&u_old_elem[2]);CHKERRQ(ierr);
   for (eg = 0; eg < e->ng; eg++){
     for (c = 0; c < 3; c++){
       dv_elem[c][eg] = 0.;
@@ -1982,7 +1982,7 @@ extern PetscErrorCode VF_MatAFractureFlowCoupling_local(PetscReal *Kd_ele,VFCart
 						for (ii = 0; ii < e->nphix; ii++,l++) {
 							Kd_ele[l] = 0.;
 							for (eg = 0; eg < e->ng; eg++) {
-                  Kd_ele[l] += e->phi[k][j][i][eg]*e->phi[kk][jj][ii][eg]*4*pow((u_elem[0][eg]+u_elem[1][eg]+u_elem[2][eg]),3)*v_mag_elem[eg]*e->weight[eg];
+                Kd_ele[l] += e->phi[k][j][i][eg]*e->phi[kk][jj][ii][eg]*4*pow((u_elem[0][eg]+u_elem[1][eg]+u_elem[2][eg]),3)*v_mag_elem[eg]*e->weight[eg];
               }
 						}
 					}
@@ -2492,38 +2492,38 @@ extern PetscErrorCode VF_MatDFractureFlowCouplingAveCOD_local(PetscReal *Kd_ele,
 							Kd_ele[l] = 0.;
 							for (eg = 0; eg < e->ng; eg++) {
                 /*
-                Kd_ele[l] += ((1.-(pow(n_elem[0][eg],2)))*e->dphi[k][j][i][0][eg]
-                              -e->dphi[k][j][i][1][eg]*n_elem[0][eg]*n_elem[1][eg]
-                              -e->dphi[k][j][i][2][eg]*n_elem[0][eg]*n_elem[2][eg])*
-                ((1.-(pow(n_elem[0][eg],2)))*e->dphi[kk][jj][ii][0][eg]
+                 Kd_ele[l] += ((1.-(pow(n_elem[0][eg],2)))*e->dphi[k][j][i][0][eg]
+                 -e->dphi[k][j][i][1][eg]*n_elem[0][eg]*n_elem[1][eg]
+                 -e->dphi[k][j][i][2][eg]*n_elem[0][eg]*n_elem[2][eg])*
+                 ((1.-(pow(n_elem[0][eg],2)))*e->dphi[kk][jj][ii][0][eg]
                  -e->dphi[kk][jj][ii][1][eg]*n_elem[0][eg]*n_elem[1][eg]
                  -e->dphi[kk][jj][ii][2][eg]*n_elem[0][eg]*n_elem[2][eg])
-                *pmult_array[ek][ej][ei]*(pow(v_mag_elem[eg],1))*e->weight[eg];
-                
-                Kd_ele[l] += (-e->dphi[k][j][i][0][eg]*n_elem[0][eg]*n_elem[1][eg]
-                              +(1.-pow(n_elem[1][eg],2))*e->dphi[k][j][i][1][eg]
-                              -e->dphi[k][j][i][2][eg]*n_elem[1][eg]*n_elem[2][eg])
-                *(-e->dphi[kk][jj][ii][0][eg]*n_elem[0][eg]*n_elem[1][eg]
-                  +(1.-pow(n_elem[1][eg],2))*e->dphi[kk][jj][ii][1][eg]
-                  -e->dphi[kk][jj][ii][2][eg]*n_elem[1][eg]*n_elem[2][eg])
-                *pmult_array[ek][ej][ei]*(pow(v_mag_elem[eg],1))*e->weight[eg];
-                
-                Kd_ele[l] += (-e->dphi[k][j][i][0][eg]*n_elem[0][eg]*n_elem[2][eg]
-                              -e->dphi[k][j][i][1][eg]*n_elem[1][eg]*n_elem[2][eg]
-                              +(1.-pow(n_elem[2][eg],2))*e->dphi[k][j][i][2][eg])
-                *(-e->dphi[kk][jj][ii][0][eg]*n_elem[0][eg]*n_elem[2][eg]
-                  -e->dphi[kk][jj][ii][1][eg]*n_elem[1][eg]*n_elem[2][eg]
-                  +(1.-pow(n_elem[2][eg],2))*e->dphi[kk][jj][ii][2][eg])
-                *pmult_array[ek][ej][ei]*(pow(v_mag_elem[eg],1))*e->weight[eg];
-                */
+                 *pmult_array[ek][ej][ei]*(pow(v_mag_elem[eg],1))*e->weight[eg];
+                 
+                 Kd_ele[l] += (-e->dphi[k][j][i][0][eg]*n_elem[0][eg]*n_elem[1][eg]
+                 +(1.-pow(n_elem[1][eg],2))*e->dphi[k][j][i][1][eg]
+                 -e->dphi[k][j][i][2][eg]*n_elem[1][eg]*n_elem[2][eg])
+                 *(-e->dphi[kk][jj][ii][0][eg]*n_elem[0][eg]*n_elem[1][eg]
+                 +(1.-pow(n_elem[1][eg],2))*e->dphi[kk][jj][ii][1][eg]
+                 -e->dphi[kk][jj][ii][2][eg]*n_elem[1][eg]*n_elem[2][eg])
+                 *pmult_array[ek][ej][ei]*(pow(v_mag_elem[eg],1))*e->weight[eg];
+                 
+                 Kd_ele[l] += (-e->dphi[k][j][i][0][eg]*n_elem[0][eg]*n_elem[2][eg]
+                 -e->dphi[k][j][i][1][eg]*n_elem[1][eg]*n_elem[2][eg]
+                 +(1.-pow(n_elem[2][eg],2))*e->dphi[k][j][i][2][eg])
+                 *(-e->dphi[kk][jj][ii][0][eg]*n_elem[0][eg]*n_elem[2][eg]
+                 -e->dphi[kk][jj][ii][1][eg]*n_elem[1][eg]*n_elem[2][eg]
+                 +(1.-pow(n_elem[2][eg],2))*e->dphi[kk][jj][ii][2][eg])
+                 *pmult_array[ek][ej][ei]*(pow(v_mag_elem[eg],1))*e->weight[eg];
+                 */
                 
                 
                 for(c = 0; c < 3; c++){
                   /*
-                  Kd_ele[l] += ((pmult_array[ek][ej][ei]*e->dphi[k][j][i][0][eg]+pmult_array[ek][ej][ei]*e->dphi[k][j][i][1][eg]+pmult_array[ek][ej][ei]*e->dphi[k][j][i][2][eg])*e->dphi[kk][jj][ii][0][eg]
+                   Kd_ele[l] += ((pmult_array[ek][ej][ei]*e->dphi[k][j][i][0][eg]+pmult_array[ek][ej][ei]*e->dphi[k][j][i][1][eg]+pmult_array[ek][ej][ei]*e->dphi[k][j][i][2][eg])*e->dphi[kk][jj][ii][0][eg]
                    +(pmult_array[ek][ej][ei]*e->dphi[k][j][i][0][eg]+pmult_array[ek][ej][ei]*e->dphi[k][j][i][1][eg]+pmult_array[ek][ej][ei]*e->dphi[k][j][i][2][eg])*e->dphi[kk][jj][ii][1][eg]
                    +(pmult_array[ek][ej][ei]*e->dphi[k][j][i][0][eg]+pmult_array[ek][ej][ei]*e->dphi[k][j][i][1][eg]+pmult_array[ek][ej][ei]*e->dphi[k][j][i][2][eg])*e->dphi[kk][jj][ii][2][eg])*(pow(v_elem[eg],2))*e->weight[eg];
-*/
+                   */
                   
                   
                   Kd_ele[l] += pow(pmult_array[ek][ej][ei],2)*e->dphi[k][j][i][c][eg]*e->dphi[kk][jj][ii][c][eg]*e->weight[eg];
@@ -2733,7 +2733,7 @@ extern PetscErrorCode VF_RHSFractureFlowCoupling_local1(PetscReal *K_local,VFCar
                       e->ng,&dv_elem[1],
                       e->ng,&dv_elem[2],
                       e->ng,&dv_mag_elem);CHKERRQ(ierr);
-
+  
   for (eg = 0; eg < e->ng; eg++){
     for (c = 0; c < 3; c++){
       dv_elem[c][eg] = 0.;
@@ -2773,5 +2773,135 @@ extern PetscErrorCode VF_RHSFractureFlowCoupling_local1(PetscReal *K_local,VFCar
     }
   }
   ierr = PetscFree4(dv_elem[0],dv_elem[1],dv_elem[2],dv_mag_elem);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+
+
+
+
+
+
+
+
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VecApplyFracturePressureBC"
+extern PetscErrorCode VecApplyFracturePressureBC(Vec RHS,Vec BCU)
+{
+  PetscErrorCode ierr;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       i,j,k,c;
+  PetscReal      ****RHS_array;
+  PetscReal      ****BCU_array;
+  DM             da;
+  PetscInt       dim,dof;
+  
+  PetscFunctionBegin;
+  ierr = VecGetDM(RHS,&da);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
+                     &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  if (dim == 2) {
+    ierr = PetscMalloc(sizeof(PetscReal ***),&RHS_array);CHKERRQ(ierr);
+    ierr = PetscMalloc(sizeof(PetscReal ***),&BCU_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+  } else {
+    ierr = DMDAVecGetArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
+  }
+  for(c = 0; c < dof; c++){
+    for (k = zs; k < zs+zm; k++) {
+      for (j = ys; j < ys+ym; j++) {
+        for (i = xs; i < xs+xm; i++) {
+          if(BCU_array[k][j][i][c] == 0){
+            RHS_array[k][j][i][c] = 0.;
+          }
+        }
+      }
+    }
+  }
+  if (dim == 2) {
+    ierr = DMDAVecRestoreArrayDOF(da,RHS,&RHS_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+    ierr = PetscFree(RHS_array);CHKERRQ(ierr);
+    ierr = PetscFree(BCU_array);CHKERRQ(ierr);
+  } else {
+    ierr = DMDAVecRestoreArrayDOF(da,RHS,&RHS_array);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
+}
+
+
+
+
+#undef __FUNCT__
+#define __FUNCT__ "MatApplyFracturePressureBC"
+extern PetscErrorCode MatApplyFracturePressureBC(Mat K,Vec BCU)
+{
+  PetscErrorCode ierr;
+  PetscInt       xs,xm,nx;
+  PetscInt       ys,ym,ny;
+  PetscInt       zs,zm,nz;
+  PetscInt       i,j,k,c;
+  MatStencil    *row;
+  PetscReal      one=1.;
+  PetscInt       numBC=0,l=0;
+  PetscInt       dim,dof;
+  DM             da;
+  PetscReal      ****BCU_array;
+
+  
+  PetscFunctionBegin;
+  ierr = MatGetDM(K,&da);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
+                     &dof,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
+  ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  
+  if (dim == 2) {
+    ierr = PetscMalloc(sizeof(PetscReal ***),&BCU_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+  } else {
+    ierr = DMDAVecGetArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
+  }
+  
+  for (c = 0; c < dof; c++) {
+    for (k = zs; k < zs + zm; k++) {
+      for (j = ys; j < ys + ym; j++) {
+        for (i = xs; i < xs+xm; i++) {
+          if(BCU_array[k][j][i][c] == 0){
+            numBC++;
+          }
+        }
+      }
+    }
+  }
+  ierr = PetscMalloc(numBC * sizeof(MatStencil),&row);CHKERRQ(ierr);  
+  for (c = 0; c < dof; c++) {
+      for (k = zs; k < zs + zm; k++) {
+        for (j = ys; j < ys + ym; j++) {
+          for (i = xs; i < xs+xm; i++) {
+            if(BCU_array[k][j][i][c] == 0){
+              row[l].i = i; row[l].j = j; row[l].k = k; row[l].c = c;
+              l++;
+            }
+          }
+        }
+      }
+  }
+   ierr = MatZeroRowsStencil(K,numBC,row,one,NULL,NULL);CHKERRQ(ierr);
+  
+  if (dim == 2) {
+    ierr = DMDAVecRestoreArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+    ierr = PetscFree(BCU_array);CHKERRQ(ierr);
+  } else {
+    ierr = DMDAVecRestoreArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
+  }
+  ierr = PetscFree(row);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

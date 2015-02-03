@@ -34,6 +34,7 @@ int main(int argc,char **argv)
 	PetscReal		lx,ly,lz;
   PetscInt    xs1,xm1,ys1,ym1,zs1,zm1;
   PetscReal      ****bcu_array;
+  PetscReal      ****u_array;
 
 
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -48,6 +49,13 @@ int main(int argc,char **argv)
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
   ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
   ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
+  
+  
+  
+  
+
+
+  
 	lz = BBmax[2]-BBmin[2];
 	ly = BBmax[1]-BBmin[1];
 	lx = BBmax[0]-BBmin[0];
@@ -129,9 +137,32 @@ int main(int argc,char **argv)
 
   ctx.timestep = 2;
 
-//  ierr = VolumetricCrackOpeningNewCC2(&ctx,&fields);CHKERRQ(ierr);
+  ierr = VolumetricCrackOpeningNewCC1(&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+  
+  ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.U,&u_array);CHKERRQ(ierr);
+  for(k = zs; k < zs+zm; k++){
+    for (j = ys; j < ys+ym; j++) {
+      for (i = xs; i < xs+xm; i++) {
+        u_array[k][j][i][0] += -0.;
+        u_array[k][j][i][2] += 1.;
+      }
+    }
+  }
+  
+  ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.U,&u_array);CHKERRQ(ierr);
+  
+  ctx.timestep = 3;
 
+  ierr = VolumetricCrackOpeningNewCC(&ctx,&fields);CHKERRQ(ierr);
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+  
+  ctx.timestep = 4;
+  
+  ierr = VolumetricCrackOpeningNewCC1(&ctx,&fields);CHKERRQ(ierr);
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+  
   ctx.bcU[2].face[Z0]= ZERO;
   ctx.bcU[2].face[Z1]= ZERO;
   ierr = VecSet(fields.pressure,1e-3);CHKERRQ(ierr);
@@ -140,17 +171,17 @@ int main(int argc,char **argv)
 
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
 
-  ctx.timestep = 3;
+  ctx.timestep = 5;
 
   ierr = VolumetricCrackOpeningNewCC(&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 
-  ctx.timestep = 4;
+  ctx.timestep = 6;
 
-//  ierr = VolumetricCrackOpeningNewCC1(&ctx,&fields);CHKERRQ(ierr);
+  ierr = VolumetricCrackOpeningNewCC1(&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   
-  ctx.timestep = 5;
+  ctx.timestep = 7;
   ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   

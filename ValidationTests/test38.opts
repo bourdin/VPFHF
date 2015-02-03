@@ -28,7 +28,9 @@
 -fracw0_coords 25,0.5,25 
 -fracw0_constraint Rate 
 -fracw0_type injector 
--fracw0_Qw 5e-2 
+-fracw0_Qw 5e-1 
+-pressurize
+-unilateral none
 -flowsolver FLOWSOLVER_snesstandarDFEM 
 -insitumax -0.000,0,-0.000,0,0,0
 -insitumin -0.000,0,-0.000,0,0,0
@@ -44,9 +46,13 @@
 -P_Z1_BC FIXED 
 -U_Y0_BC_1 ZERO
 -U_Y1_BC_1 ZERO
--U_X0_BC_0 ZERO
--U_X1_BC_0 ZERO
+-U_X0_BC_0 FIXED
+-U_X1_BC_0 FIXED
+-U_X0_0 0
+-U_X1_0 0
 -U_Z0_BC_2 ZERO
 -U_Z1_BC_2 ZERO
+-U_Z0_2 0
+-U_Z1_2 0
 -altminmaxit 300
--altmintol 5e-2
+-altmintol 5e-3
