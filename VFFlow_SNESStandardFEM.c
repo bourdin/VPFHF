@@ -64,20 +64,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMIFunction(SNES snes,Vec Pressure,Vec
 	ierr = VecCopy(ctx->RHSP,VecRHS);CHKERRQ(ierr);
 	ierr = VecAXPBY(VecRHS,one_minus_theta,theta,ctx->RHSPpre);CHKERRQ(ierr);
 	ierr = MatMultAdd(ctx->KPlhs,ctx->pressure_old,VecRHS,VecRHS);CHKERRQ(ierr);
-  
   ierr = VecApplyDirichletBC(VecRHS,ctx->PresBCArray,&ctx->bcP[0]);CHKERRQ(ierr);
-
-  ierr = VecApplyFracturePressureBC(VecRHS,ctx->V);CHKERRQ(ierr);
-
-  
-  PetscViewer viewer;
-  
-  ierr = PetscViewerASCIIOpen(PETSC_COMM_SELF,"RHSff1.txt",&viewer);CHKERRQ(ierr);
-  ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_INDEX);CHKERRQ(ierr);
-  ierr = VecView(VecRHS,viewer);CHKERRQ(ierr);
-  
-  
-  
 	ierr = MatMult(ctx->KP,Pressure,Func);CHKERRQ(ierr);
   ierr = VecAXPY(Func,-1.0,VecRHS);CHKERRQ(ierr);
 	ierr = VecDestroy(&VecRHS);CHKERRQ(ierr);
@@ -847,25 +834,7 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   ierr = MatAssemblyEnd(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  
-  
-  
-  
-  
-  
-  
 
-  ierr = MatApplyFracturePressureBC(K,ctx->V);CHKERRQ(ierr);
-  ierr = MatAssemblyBegin(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyBegin(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(K,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  
-  
-  
-  
-  
-  
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_old_local,&u_old_array);CHKERRQ(ierr);
   ierr = DMRestoreLocalVector(ctx->daVect,&u_old_local);CHKERRQ(ierr);
 
