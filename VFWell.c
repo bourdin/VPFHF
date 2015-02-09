@@ -422,8 +422,6 @@ extern PetscErrorCode VFRegDiracDeltaFunction1(Vec V,VFWell *well,VFPennyCrack *
   PetscFunctionReturn(0);
 }
 
-
-
 #undef __FUNCT__
 #define __FUNCT__ "VFRegDiracDeltaFunction"
 extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack *crack,VFCtx *ctx, Vec V)
@@ -434,32 +432,95 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
   PetscReal           ***v_array,***regv_array;
   PetscReal           x[3],x0[3];
   PetscReal           dist;
+  PetscReal           lx,ly,lz;
+  PetscReal           BBmin[3],BBmax[3];
+  
+  
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  
+  ierr = DMDAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,RegV,&regv_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  for (i = 0; i < 3; i++) x0[i] = well->coords[i];
 	ierr = DMDAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
-  for (k = zs; k < zs+zm; k++) {
-    for (j = ys; j < ys+ym; j++) {
-      for (i = xs; i < xs+xm; i++) {
-        x[2] = coords_array[k][j][i][2];
-        x[1] = coords_array[k][j][i][1];
-        x[0] = coords_array[k][j][i][0];
-        dist =    sqrt((x[0] - x0[0]) * (x[0] - x0[0]) +
-                       (x[1] - x0[1]) * (x[1] - x0[1]) +
-                       (x[2] - x0[2]) * (x[2] - x0[2]));
-        if(dist <= crack->thickness/2.){
-//          regv_array[k][j][i] += well->Qw*PETSC_PI/(4.*pow(ctx->vfprop.epsilon,1));
-          regv_array[k][j][i] += well->Qw/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2));
+  lz = BBmax[2]-BBmin[2];
+	ly = BBmax[1]-BBmin[1];
+	lx = BBmax[0]-BBmin[0];
+  
+  for (i = 0; i < 3; i++) x0[i] = well->coords[i];
+  
+  if(nx == 2){
+    for (k = zs; k < zs+zm; k++) {
+      for (j = ys; j < ys+ym; j++) {
+        for (i = xs; i < xs+xm; i++) {
+          x[2] = coords_array[k][j][0][2];
+          x[1] = coords_array[k][j][0][1];
+          dist =    sqrt((x[1] - x0[1]) * (x[1] - x0[1]) +
+                         (x[2] - x0[2]) * (x[2] - x0[2]));
+          if(dist <= crack->thickness/2.){
+            regv_array[k][j][i] += well->Qw/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2));
+          }
+          else {
+            regv_array[k][j][i] += well->Qw*exp(-(dist-crack->thickness/2.)/ctx->vfprop.epsilon)/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*lx);
+          }
         }
-        else {
-//          regv_array[k][j][i] += well->Qw*exp(-dist/ctx->vfprop.epsilon)*PETSC_PI/(4.*pow(ctx->vfprop.epsilon,1));
-            regv_array[k][j][i] += well->Qw*exp(-dist/ctx->vfprop.epsilon)/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2));
+      }
+    }
+  }
+  else if(ny == 2){
+    for (k = zs; k < zs+zm; k++) {
+      for (j = ys; j < ys+ym; j++) {
+        for (i = xs; i < xs+xm; i++) {
+          x[2] = coords_array[k][0][i][2];
+          x[0] = coords_array[k][0][i][0];
+          dist =    sqrt((x[0] - x0[0]) * (x[0] - x0[0]) +
+                         (x[2] - x0[2]) * (x[2] - x0[2]));
+          if(dist <= crack->thickness/2.){
+            regv_array[k][j][i] += well->Qw/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2));
+          }
+          else {
+            regv_array[k][j][i] += well->Qw*exp(-(dist-crack->thickness/2.)/ctx->vfprop.epsilon)/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*ly);
+          }
+        }
+      }
+    }
+  }
+  else if(nz == 2){
+    for (k = zs; k < zs+zm; k++) {
+      for (j = ys; j < ys+ym; j++) {
+        for (i = xs; i < xs+xm; i++) {
+          x[1] = coords_array[0][j][i][1];
+          x[0] = coords_array[0][j][i][0];
+          dist =    sqrt((x[0] - x0[0]) * (x[0] - x0[0]) +
+                         (x[1] - x0[1]) * (x[1] - x0[1]));
+          if(dist <= crack->thickness/2.){
+            regv_array[k][j][i] += well->Qw/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2));
+          }
+          else {
+            regv_array[k][j][i] += well->Qw*exp(-(dist-crack->thickness/2.)/ctx->vfprop.epsilon)/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*lz);
+          }
+        }
+      }
+    }
+  }
+  else{
+    for (k = zs; k < zs+zm; k++) {
+      for (j = ys; j < ys+ym; j++) {
+        for (i = xs; i < xs+xm; i++) {
+          x[2] = coords_array[k][j][i][2];
+          x[1] = coords_array[k][j][i][1];
+          x[0] = coords_array[k][j][i][0];
+          dist =    sqrt((x[0] - x0[0]) * (x[0] - x0[0]) +
+                         (x[1] - x0[1]) * (x[1] - x0[1]) +
+                         (x[2] - x0[2]) * (x[2] - x0[2]));
+          if(dist <= crack->thickness/2.){
+            regv_array[k][j][i] += well->Qw/(4.*PETSC_PI*pow(ctx->vfprop.epsilon,3));
+          }
+          else {
+            regv_array[k][j][i] += well->Qw*exp(-(dist-crack->thickness/2.)/ctx->vfprop.epsilon)/(4.*PETSC_PI*pow(ctx->vfprop.epsilon,3));
+          }
         }
       }
     }
