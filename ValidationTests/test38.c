@@ -38,9 +38,9 @@ int main(int argc,char **argv)
 
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ctx.FlowDisplCoupling = PETSC_FALSE;
-  ctx.hasInsitu        = PETSC_TRUE;
+  ctx.FlowDisplCoupling = PETSC_TRUE;
   ctx.ResFlowMechCoupling = FIXEDSTRESS;
+  ctx.hasInsitu        = PETSC_TRUE;
   ctx.FractureFlowCoupling = PETSC_TRUE;
   ctx.hasFluidSources = PETSC_FALSE;
   ctx.hasFlowWells = PETSC_TRUE;
