@@ -105,19 +105,12 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->verbose = 0;
     ierr         = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
 
-    ctx->flowsolver = FLOWSOLVER_SNESSTANDARDFEM;
+    ctx->flowsolver = FLOWSOLVER_NONE;
     ierr          = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);  
     ctx->ResFlowMechCoupling = FIXEDSTRESS;
     ierr          = PetscOptionsEnum("-resflowmechcoupling","\n\tRes flow mech coupling","",ResFlowMechCouplingName,(PetscEnum)ctx->ResFlowMechCoupling,(PetscEnum*)&ctx->ResFlowMechCoupling,PETSC_NULL);CHKERRQ(ierr);
-
-    ctx->fractureflowsolver = MIXEDFEM;
-    ierr                    = PetscOptionsEnum("-fractureflowsolver","\n\tFracture Flow solver","",VFFractureFlowSolverName,(PetscEnum)ctx->fractureflowsolver,(PetscEnum*)&ctx->fractureflowsolver,PETSC_NULL);CHKERRQ(ierr);
-
     ctx->heatsolver = HEATSOLVER_SNESFEM;
     ierr            = PetscOptionsEnum("-heatsolver","\n\tHeat solver","",VFHeatSolverName,(PetscEnum)ctx->heatsolver,(PetscEnum*)&ctx->heatsolver,PETSC_NULL);CHKERRQ(ierr);
-    ctx->Hunits     = UnitaryUnits;
-    ierr            = PetscOptionsEnum("-heatunits","\n\tHeat solver units","",VFUnitName,(PetscEnum)ctx->Hunits,(PetscEnum*)&ctx->Hunits,PETSC_NULL);CHKERRQ(ierr);
-
     ctx->mechsolver = FRACTURE;
     ierr            = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,PETSC_NULL);CHKERRQ(ierr);
     ctx->hasInsitu  = PETSC_FALSE;
@@ -900,10 +893,10 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
       res = bz;
     }
   }
-  ctx->WidthIntLenght = 2.0*(thickness+2*ctx->vfprop.epsilon);
+  ctx->WidthIntLenght = 1.5*(thickness+2*ctx->vfprop.epsilon);
   
   st = ctx->WidthIntLenght/(res);
-  
+  if(ctx->flowsolver != FLOWSOLVER_NONE){
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,st,
                       PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daWScal);CHKERRQ(ierr);
@@ -915,6 +908,8 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,st,
                       olx,oly,olz,&ctx->daWScalCell);CHKERRQ(ierr);
+    
+  }
   PetscFunctionReturn(0);
 }
 
@@ -1251,10 +1246,11 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = DMDestroy(&ctx->daFlow);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daScalCell);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daVectCell);CHKERRQ(ierr);
-  ierr = DMDestroy(&ctx->daWScalCell);CHKERRQ(ierr);
-  ierr = DMDestroy(&ctx->daWScal);CHKERRQ(ierr);
-  ierr = DMDestroy(&ctx->daWVect);CHKERRQ(ierr);
-
+  if(ctx->flowsolver != FLOWSOLVER_NONE){
+    ierr = DMDestroy(&ctx->daWScalCell);CHKERRQ(ierr);
+    ierr = DMDestroy(&ctx->daWScal);CHKERRQ(ierr);
+    ierr = DMDestroy(&ctx->daWVect);CHKERRQ(ierr);
+  }
   ierr = SNESDestroy(&ctx->snesU);CHKERRQ(ierr);
   ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->pressure_old);CHKERRQ(ierr);
