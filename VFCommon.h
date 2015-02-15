@@ -109,12 +109,6 @@ typedef enum {
 } WellType;
 
 typedef enum {
-	UnitaryUnits,     /* All variables are unitary, for testing purposes    */
-	FieldUnits,       /* Flow computation in field units            */
-	MetricUnits       /* Flow computation in metric units           */
-} VFUnit;
-
-typedef enum {
 	FRACTURE,
 	ELASTICITY,
 	NOMECH
@@ -137,13 +131,6 @@ typedef enum {
 	FLOWSOLVER_READFROMFILES,
 	FLOWSOLVER_NONE
 } VFFlowSolverType;
-
-typedef enum {
-	MIXEDFEM,
-	MIXEDFEM_AVECOD,
-	STANDARDFEM,
-	STANDARDFEM_AVECOD
-} VFFractureFlowSolverType;
 
 typedef enum {
 	FIXEDSTRAIN,
@@ -264,7 +251,6 @@ typedef struct {
 	VFFlowProp          flowprop;
 	Vec                 RHSVelP;
 	Vec                 RHSVelPpre;
-	VFUnit              units;
 	Vec                 Source;
 	DM                  daScalCell;
 	Mat                 KVelPlhs;
@@ -296,7 +282,6 @@ typedef struct {
 //	VFBC                bcq[3];
 	SNES                snesT;
 	Vec                 HeatBC;
-	VFUnit              Hunits;
 	/*
 	 SNES solver for Pressure (or flow - T&P)
 	 */
@@ -353,7 +338,6 @@ typedef struct {
 	SNES                snesFracVelP;
 	Vec                 FracResidual;
 	Vec                 RHSFracVelP;
-	VFFractureFlowSolverType    fractureflowsolver;
 	Vec                 RHSFracVelPpre;
 	Mat                 KFracVelPlhs;
 	Vec                 PreFracFlowFields;
