@@ -448,7 +448,6 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   Vec            w_old_local;
   PetscReal      ***w_old_array;
 
-
   PetscFunctionBegin;
   M_inv     = ctx->flowprop.M_inv;
   alphabiot  = ctx->flowprop.alphabiot;
@@ -456,9 +455,6 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
   theta = ctx->flowprop.theta;
   timestepsize = ctx->flowprop.timestepsize;
   mu     = ctx->flowprop.mu;
-  
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"M_inv = %e, \alpha^2/K_dr = %e\n\n",M_inv,alphabiot*alphabiot/K_dr);CHKERRQ(ierr);
-
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = MatZeroEntries(K);CHKERRQ(ierr);
