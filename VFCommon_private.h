@@ -8,15 +8,6 @@
 #if !defined( VF_Standalone_VFCommon_private_h)
 #define VF_Standalone_VFCommon_private_h
 
-static const char *VFUnitName[] = {
-        "UnitaryUnit",
-        "FieldUnit",
-        "MetricUnit",
-        "VFUnitName",
-        "",
-        0
-};
-
 static const char *VFMechSolverName[] = {
 	"FRACTURE",
 	"ELASTICITY",
@@ -46,14 +37,6 @@ static const char *VFFlowSolverName[] = {
 	"READFROMFILES",
 	"FLOWSOLVER_NONE",
 	"VFFlowSolverName",
-	"",
-	0
-};
-
-static const char *VFFractureFlowSolverName[] = {
-	"FRACTUREFLOWSOLVER_SNESMIXEDFEM",
-	"FRACTUREFLOWSOLVER_NONE",
-	"VFFractureFlowSolverName",
 	"",
 	0
 };

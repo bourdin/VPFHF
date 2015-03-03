@@ -1,5 +1,6 @@
 #include "petsc.h"
 #include "VFWell.h"
+#include "VFPermfield.h"
 
 static const char *WellConstraint_Name[] = {
 	"PRESSURE",
@@ -329,102 +330,8 @@ extern PetscErrorCode VFFakeWellBuildVAT2(VFWell *well,VFCtx *ctx)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VFRegDiracDeltaFunction2"
-extern PetscErrorCode VFRegDiracDeltaFunction2(Vec RegV,VFWell *well,VFPennyCrack *crack,VFCtx *ctx, Vec V)
-{
-  PetscErrorCode      ierr;
-  PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-  PetscReal           ****coords_array;
-  PetscReal           ***v_array;
-  PetscReal           ***regv_array;
-  PetscReal           x[3],x0[3];
-  PetscReal           dist;
-  PetscReal           epsilon;
-  
-  PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  epsilon = ctx->vfprop.epsilon;
-  for (i = 0; i < 3; i++) x0[i] = well->coords[i];
-  
-	ierr = DMDAVecGetArray(ctx->daScal,RegV,&regv_array);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
-  for (k = zs; k < zs+zm; k++) {
-    for (j = ys; j < ys+ym; j++) {
-      for (i = xs; i < xs+xm; i++) {
-        x[2] = coords_array[k][j][i][2];
-        x[1] = coords_array[k][j][i][1];
-        x[0] = coords_array[k][j][i][0];
-        dist =    sqrt((x[0] - x0[0]) * (x[0] - x0[0]) +
-                       (x[1] - x0[1]) * (x[1] - x0[1]) +
-                       (x[2] - x0[2]) * (x[2] - x0[2]));
-        if(dist <= crack->thickness/2+epsilon/3){
-          regv_array[k][j][i] += well->Qw;
-        }
-        else {
-          regv_array[k][j][i] += 0;
-        }
-      }
-    }
-  }
-	ierr = DMDAVecRestoreArray(ctx->daScal,RegV,&regv_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "VFRegDiracDeltaFunction1"
-extern PetscErrorCode VFRegDiracDeltaFunction1(Vec V,VFWell *well,VFPennyCrack *crack,VFCtx *ctx)
-{
-  PetscErrorCode      ierr;
-  PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-  PetscReal           ****coords_array;
-  PetscReal           ***v_array;
-  PetscReal           x[3],x0[3];
-  PetscReal           dist;
-  
-  PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  
-	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  
-  for (i = 0; i < 3; i++) x0[i] = well->coords[i];
-  
-	ierr = DMDAVecGetArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
-  for (k = zs; k < zs+zm; k++) {
-    for (j = ys; j < ys+ym; j++) {
-      for (i = xs; i < xs+xm; i++) {
-        x[2] = coords_array[k][j][i][2];
-        x[1] = coords_array[k][j][i][1];
-        x[0] = coords_array[k][j][i][0];
-        dist =    sqrt((x[0] - x0[0]) * (x[0] - x0[0]) +
-                       (x[1] - x0[1]) * (x[1] - x0[1]) +
-                       (x[2] - x0[2]) * (x[2] - x0[2]));
-        if(dist <= crack->thickness/2.){
-          v_array[k][j][i] = well->Qw;
-        }
-        else if (dist < 2. * ctx->vfprop.epsilon+crack->thickness/2.) {
-          v_array[k][j][i] = well->Qw*(1.-dist/ctx->vfprop.epsilon * (1.- .25*dist/ctx->vfprop.epsilon));
-        }
-        else {
-          v_array[k][j][i] = 0.;
-        }
-      }
-    }
-  }
-	ierr = DMDAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "VFRegDiracDeltaFunction"
-extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack *crack,VFCtx *ctx, Vec V)
+extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack *crack,VFRectangularCrack *rcrack,VFCtx *ctx, Vec V)
 {
   PetscErrorCode      ierr;
   PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
@@ -434,6 +341,11 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
   PetscReal           dist;
   PetscReal           lx,ly,lz;
   PetscReal           BBmin[3],BBmax[3];
+  PetscReal           thickness;
+  PetscReal           myInjVolumeRateLocal = 0.,myInjVolumeRate = 0.;
+	PetscReal           hx,hy,hz;
+	PetscInt            ek, ej, ei;
+	PetscReal           scale = 1.,InjectedVolume;
   
   
   PetscFunctionBegin;
@@ -449,6 +361,11 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
 	ly = BBmax[1]-BBmin[1];
 	lx = BBmax[0]-BBmin[0];
   
+  if(crack->thickness > rcrack->thickness)
+    thickness = crack->thickness;
+  else
+    thickness = rcrack->thickness;
+  
   for (i = 0; i < 3; i++) x0[i] = well->coords[i];
   
   if(nx == 2){
@@ -459,11 +376,11 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
           x[1] = coords_array[k][j][0][1];
           dist =    sqrt((x[1] - x0[1]) * (x[1] - x0[1]) +
                          (x[2] - x0[2]) * (x[2] - x0[2]));
-          if(dist <= crack->thickness/2.){
-            regv_array[k][j][i] += well->Qw/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2));
+          if(dist <= thickness/2.){
+            regv_array[k][j][i] = well->Qw/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*lx);
           }
           else {
-            regv_array[k][j][i] += well->Qw*exp(-(dist-crack->thickness/2.)/ctx->vfprop.epsilon)/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*lx);
+            regv_array[k][j][i] = well->Qw*exp(-(dist-thickness/2.)/ctx->vfprop.epsilon)/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*lx);
           }
         }
       }
@@ -477,11 +394,11 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
           x[0] = coords_array[k][0][i][0];
           dist =    sqrt((x[0] - x0[0]) * (x[0] - x0[0]) +
                          (x[2] - x0[2]) * (x[2] - x0[2]));
-          if(dist <= crack->thickness/2.){
-            regv_array[k][j][i] += well->Qw/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2));
+          if(dist <= thickness/2.){
+            regv_array[k][j][i] = well->Qw/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*ly);
           }
           else {
-            regv_array[k][j][i] += well->Qw*exp(-(dist-crack->thickness/2.)/ctx->vfprop.epsilon)/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*ly);
+            regv_array[k][j][i] = well->Qw*exp(-(dist-thickness/2.)/ctx->vfprop.epsilon)/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*ly);
           }
         }
       }
@@ -495,11 +412,11 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
           x[0] = coords_array[0][j][i][0];
           dist =    sqrt((x[0] - x0[0]) * (x[0] - x0[0]) +
                          (x[1] - x0[1]) * (x[1] - x0[1]));
-          if(dist <= crack->thickness/2.){
-            regv_array[k][j][i] += well->Qw/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2));
+          if(dist <= thickness/2.){
+            regv_array[k][j][i] += well->Qw/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*lz);
           }
           else {
-            regv_array[k][j][i] += well->Qw*exp(-(dist-crack->thickness/2.)/ctx->vfprop.epsilon)/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*lz);
+            regv_array[k][j][i] += well->Qw*exp(-(dist-thickness/2.)/ctx->vfprop.epsilon)/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*lz);
           }
         }
       }
@@ -515,16 +432,35 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
           dist =    sqrt((x[0] - x0[0]) * (x[0] - x0[0]) +
                          (x[1] - x0[1]) * (x[1] - x0[1]) +
                          (x[2] - x0[2]) * (x[2] - x0[2]));
-          if(dist <= crack->thickness/2.){
-            regv_array[k][j][i] += well->Qw/(4.*PETSC_PI*pow(ctx->vfprop.epsilon,3));
+          if(dist <= thickness/2.){
+            regv_array[k][j][i] = well->Qw/(4.*PETSC_PI*pow(ctx->vfprop.epsilon,3));
           }
           else {
-            regv_array[k][j][i] += well->Qw*exp(-(dist-crack->thickness/2.)/ctx->vfprop.epsilon)/(4.*PETSC_PI*pow(ctx->vfprop.epsilon,3));
+            regv_array[k][j][i] = well->Qw*exp(-(dist-thickness/2.)/ctx->vfprop.epsilon)/(4.*PETSC_PI*pow(ctx->vfprop.epsilon,3));
           }
         }
       }
     }
   }
+  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  InjectedVolume = 0.;
+	for (ek = zs; ek < zs+zm; ek++) {
+		for (ej = ys; ej < ys+ym; ej++) {
+			for (ei = xs; ei < xs+xm; ei++) {
+				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VolumetricFractureWellRate_local(&myInjVolumeRateLocal, regv_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
+        myInjVolumeRate += myInjVolumeRateLocal;
+			}
+		}
+	}
+  ierr = MPI_Allreduce(&myInjVolumeRate,&InjectedVolume,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+  scale = well->Qw/InjectedVolume;
+  ierr = VecScale(RegV,scale);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx->daScal,RegV,&regv_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
