@@ -801,7 +801,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   }
   for (c = 0; c < ctx->numRectangularCracks; c++) {
     if (ctx->vfprop.atnum == 1) {
-      ierr = VFRectangularCrackBuildVAT2(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
+      ierr = VFRectangularCrackBuildVAT1(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
     } else {
       ierr = VFRectangularCrackBuildVAT2(fields->V,&(ctx->rectangularcrack[c]),ctx);CHKERRQ(ierr);
     }
