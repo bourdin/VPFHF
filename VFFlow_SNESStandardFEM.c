@@ -595,16 +595,14 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
 				ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K1_local,ADD_VALUES);CHKERRQ(ierr);
         ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,K2_local,ADD_VALUES);CHKERRQ(ierr);
         if(ctx->FractureFlowCoupling){
-//          ierr = VF_MatDFractureFlowCoupling_local(KD_local,&ctx->e3D,ek,ej,ei,u_array,v_array);CHKERRQ(ierr);
-          ierr = VF_MatDFractureFlowCoupling_local1(KD_local,&ctx->e3D,ek,ej,ei,w_array[ek][ej][ei],v_array);CHKERRQ(ierr);
+          ierr = VF_MatDFractureFlowCoupling_local(KD_local,&ctx->e3D,ek,ej,ei,w_array[ek][ej][ei],v_array);CHKERRQ(ierr);
           for (l = 0; l < nrow*nrow; l++) {
             K1_local[l] = theta/(12.*mu)*timestepsize*KD_local[l];
             K2_local[l] = -1.*(1.-theta)/(12.*mu)*timestepsize*KD_local[l];
           }
           ierr = MatSetValuesStencil(K,nrow,row,nrow,row,K1_local,ADD_VALUES);CHKERRQ(ierr);
           ierr = MatSetValuesStencil(Krhs,nrow,row,nrow,row,K2_local,ADD_VALUES);CHKERRQ(ierr);
-//          ierr = VF_RHSFractureFlowCoupling_local(RHS_local,&ctx->e3D,ek,ej,ei,u_array,v_array,u_old_array,v_old_array);
-          ierr = VF_RHSFractureFlowCoupling_local1(RHS_local,&ctx->e3D,ek,ej,ei,w_array[ek][ej][ei],v_array,w_old_array[ek][ej][ei]);
+          ierr = VF_RHSFractureFlowCoupling_local(RHS_local,&ctx->e3D,ek,ej,ei,w_array[ek][ej][ei],v_array,w_old_array[ek][ej][ei]);
             for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
               for (j = 0; j < ctx->e3D.nphiy; j++) {
                 for (i = 0; i < ctx->e3D.nphix; i++,l++) {

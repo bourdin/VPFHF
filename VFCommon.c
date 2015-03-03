@@ -807,16 +807,15 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
     }
     ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
   }
+  Vec LocalWRate;
+  ierr = VecDuplicate(ctx->RegFracWellFlowRate,&LocalWRate);CHKERRQ(ierr);
   ierr = VecSet(ctx->RegFracWellFlowRate,0.0);CHKERRQ(ierr);
   for (c = 0; c < ctx->numfracWells; c++) {
-    if(ctx->vfprop.atnum == 1){
-      ierr = VFRegDiracDeltaFunction(ctx->RegFracWellFlowRate,&ctx->fracwell[c],&(ctx->pennycrack[c]),ctx,fields->V);CHKERRQ(ierr);
-    }
-    else {
-      ierr = VFRegDiracDeltaFunction(ctx->RegFracWellFlowRate,&ctx->fracwell[c],&(ctx->pennycrack[c]),ctx,fields->V);CHKERRQ(ierr);
-    }
+    ierr = VecSet(LocalWRate,0.0);CHKERRQ(ierr);
+    ierr = VFRegDiracDeltaFunction(LocalWRate,&ctx->fracwell[c],&(ctx->pennycrack[c]),&(ctx->rectangularcrack[c]),ctx,fields->V);CHKERRQ(ierr);
+    ierr = VecAXPY(ctx->RegFracWellFlowRate,1.0,LocalWRate);CHKERRQ(ierr);
   }
-  
+  ierr = VecDestroy(&LocalWRate);CHKERRQ(ierr);
   /*
    Create optional wells
    */
