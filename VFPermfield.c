@@ -2889,12 +2889,6 @@ extern PetscErrorCode VF_ComputeRegularizedFracturePressure(VFCtx *ctx, VFFields
 	PetscFunctionReturn(0);
 }
 
-
-
-
-
-
-
 #undef __FUNCT__
 #define __FUNCT__ "GradV3D_local"
 extern PetscErrorCode GradV3D_local(PetscReal ***grad_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
