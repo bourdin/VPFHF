@@ -342,11 +342,6 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
   PetscReal           lx,ly,lz;
   PetscReal           BBmin[3],BBmax[3];
   PetscReal           thickness;
-  PetscReal           myInjVolumeRateLocal = 0.,myInjVolumeRate = 0.;
-	PetscReal           hx,hy,hz;
-	PetscInt            ek, ej, ei;
-	PetscReal           scale = 1.,InjectedVolume;
-  
   
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -442,10 +437,46 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
       }
     }
   }
+  ierr = DMDAVecRestoreArray(ctx->daScal,RegV,&regv_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "VFRegRateScalingFactor"
+extern PetscErrorCode VFRegRateScalingFactor(PetscReal *InjectedVolume, Vec Rate, Vec V, VFCtx *ctx)
+{
+	PetscErrorCode  ierr;
+	PetscInt		    ek, ej, ei;
+	PetscInt		    xs,xm,nx;
+	PetscInt		    ys,ym,ny;
+	PetscInt		    zs,zm,nz;
+	PetscReal		    hx,hy,hz;
+	PetscReal       ****coords_array;
+	PetscReal       ***regrate_array;
+	Vec             regrate_local;
+	PetscReal       ***v_array;
+	Vec             v_local;
+	PetscReal       myInjVolumeRateLocal = 0.,myInjVolumeRate = 0.;
+  
+  PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  InjectedVolume = 0.;
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	
+	ierr = DMGetLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScal,V,INSERT_VALUES,v_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScal,V,INSERT_VALUES,v_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
+  
+  ierr = DMGetLocalVector(ctx->daScal,&regrate_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScal,Rate,INSERT_VALUES,regrate_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScal,Rate,INSERT_VALUES,regrate_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,regrate_local,&regrate_array);CHKERRQ(ierr);
+  
+	*InjectedVolume = 0.;
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -453,16 +484,18 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
 				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
 				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-				ierr = VolumetricFractureWellRate_local(&myInjVolumeRateLocal, regv_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
+				ierr = VolumetricFractureWellRate_local(&myInjVolumeRateLocal, regrate_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
         myInjVolumeRate += myInjVolumeRateLocal;
 			}
 		}
 	}
-  ierr = MPI_Allreduce(&myInjVolumeRate,&InjectedVolume,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
-  scale = well->Qw/InjectedVolume;
-  ierr = VecScale(RegV,scale);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArray(ctx->daScal,RegV,&regv_array);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArray(ctx->daScal,V,&v_array);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
+	ierr = MPI_Allreduce(&myInjVolumeRate,InjectedVolume,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+  
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
+  
+  ierr = DMDAVecRestoreArray(ctx->daScal,regrate_local,&regrate_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daScal,&regrate_local);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
 }

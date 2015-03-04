@@ -93,6 +93,7 @@ int main(int argc,char **argv)
         pw = ctx.PressureWork/ctx.CrackVolume;
         errVP = PetscAbs((pw-pw_old)/pw);
         ierr = PetscPrintf(PETSC_COMM_WORLD," Time step %i, U-P-V-loop alt min step %i, U_P_V_ERROR = %e \t pw = %e \n",ctx.timestep,altminit,errVP, pw);CHKERRQ(ierr);
+        ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
       }
       while (errVP >= ctx.altmintol  && altminit <= ctx.altminmaxit);
     ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
