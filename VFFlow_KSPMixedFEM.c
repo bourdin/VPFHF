@@ -2752,22 +2752,13 @@ extern PetscErrorCode VF_RHSFractureFlowCoupling_local(PetscReal *K_local,VFCart
   }
   for (eg = 0; eg < e->ng; eg++){
     dv_mag_elem[eg] = sqrt((pow(dv_elem[0][eg],2))+(pow(dv_elem[1][eg],2))+(pow(dv_elem[2][eg],2)));
-    for(c = 0; c < 3; c++){
-      dv_elem[c][eg] = dv_elem[c][eg]/dv_mag_elem[eg];
-    }
-    if((PetscIsInfOrNanReal(dv_elem[0][eg])) || (PetscIsInfOrNanReal(dv_elem[1][eg])) || (PetscIsInfOrNanReal(dv_elem[2][eg])) )
-    {
-      dv_elem[0][eg] = dv_elem[1][eg] = dv_elem[2][eg] = dv_mag_elem[eg] = 0;
-    }
   }
   for (l = 0,k = 0; k < e->nphiz; k++) {
     for (j = 0; j < e->nphiy; j++) {
       for (i = 0; i < e->nphix; i++,l++) {
         K_local[l] = 0.;
         for (eg = 0; eg < e->ng; eg++) {
-          for(c = 0; c < 3; c++){
-            K_local[l] += (w-w_old)*e->phi[k][j][i][eg]*(pow(dv_mag_elem[eg],1))*e->weight[eg];
-          }
+          K_local[l] += (w-w_old)*e->phi[k][j][i][eg]*dv_mag_elem[eg]*e->weight[eg];
         }
       }
     }
