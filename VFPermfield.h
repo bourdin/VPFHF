@@ -12,18 +12,13 @@
 */
 
 extern PetscErrorCode VFCheckVolumeBalance(PetscReal *ModulusVolume, PetscReal *DivVolume, PetscReal *SurfVolume, PetscReal *SumWellRate,PetscReal *SumSourceRate,PetscReal *VolStrainVolume,VFCtx *ctx, VFFields *fields);
-extern PetscErrorCode TrialFunctionCompute(PetscReal *FunctionValue, VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode VolumetricFunction_local(PetscReal *Function_local, PetscReal ***pmult_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
 extern PetscErrorCode CellToNodeInterpolation(Vec node_vec,Vec cell_vec,VFCtx *ctx);
 extern PetscErrorCode VolumetricCrackOpening(PetscReal *CrackVolume, VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode VolumetricCrackOpening3D_local(PetscReal *CrackVolume_local, PetscReal ***volcrackopening_array, PetscReal ****displ_array, PetscReal ***vfield_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
-extern PetscErrorCode VolumetricCrackOpeningCC(PetscReal *CrackVolume, VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode VolumetricCrackOpening3D_localCC(PetscReal *CrackVolume_local, PetscReal ***volcrackopening_array, PetscReal ***udotn_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
-extern PetscErrorCode PermeabilityUpDate(VFCtx *ctx, VFFields *fields);
-extern PetscErrorCode Permeabilityfield(PetscReal *COD_local, PetscReal ***volcrackopening_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement2D *e, FACE face);
 extern PetscErrorCode VolumetricLeakOffRate_local(PetscReal *LeakoffRate_local, PetscReal ***volleakoffrate_array, PetscReal ****q_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
 extern PetscErrorCode VolumetricLeakOffRate(PetscReal *LeakOffRate, VFCtx *ctx, VFFields *fields);
-extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode SourceVolume_local(PetscReal *SrcVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e,PetscReal ***src_array,PetscReal ***v_array);
 extern PetscErrorCode DivergenceVolume_local(PetscReal *DivVolume_local,PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e,PetscReal ****vel_array,PetscReal ***v_array);
 extern PetscErrorCode SurfaceFluxVolume_local(PetscReal *mysurfVolumeLocal,PetscInt ek, PetscInt ej, PetscInt ei, FACE face, VFCartFEElement2D *e, PetscReal ****vel_array, PetscReal ***v_array);
@@ -37,21 +32,10 @@ extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode VolumetricFractureWellRate(PetscReal *InjectedVolume, VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode VF_ComputeRegularizedFracturePressure_local(PetscReal ***press_c_array,  PetscReal ***press_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
 extern PetscErrorCode VF_ComputeRegularizedFracturePressure(VFCtx *ctx, VFFields *fields);
-
-extern PetscErrorCode VolumetricCrackOpening3D_localNewCC(PetscReal ***volcrackopening_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
-
-extern PetscErrorCode VolumetricCrackOpeningNewCC(VFCtx *ctx, VFFields *fields);
-
-extern PetscErrorCode ComputeUcdotGradVlocal(PetscReal *cod, PetscReal *v_elem, PetscReal *grad,PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s);
 extern PetscErrorCode IntegrateUcdotGradVlocal(PetscReal *w_ave, PetscReal *cod, VFCartFEElement1D *e);
-
-
-extern PetscErrorCode VolumetricCrackOpeningNewCC1(VFCtx *ctx, VFFields *fields);
-extern PetscErrorCode VolumetricCrackOpeningNewCC2(VFCtx *ctx, VFFields *fields);
-extern PetscErrorCode ComputeUcdotGradVlocal1(PetscReal *cod, PetscReal *v_elem, PetscReal *grad, PetscReal *n_elem, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s);
-
-extern PetscErrorCode IntegrateUcdotGradVlocal1(PetscReal *w_ave, PetscReal *cod, VFCartFEElement1D *e);
-
-extern PetscErrorCode GradV3D_local(PetscReal ***grad_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
+extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields);
+extern PetscErrorCode ComputeUcdotGradVlocal1(PetscReal *cod, PetscReal *v_elem, PetscReal *n_elem, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s);
+extern PetscErrorCode VolumeFromWidth(PetscReal *CrackVolume, VFCtx *ctx, VFFields *fields);
+extern PetscErrorCode VolumeFromWidth_local(PetscReal *CrackVolume_local, PetscReal w, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
 
 #endif

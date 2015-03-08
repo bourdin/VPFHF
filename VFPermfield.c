@@ -226,69 +226,9 @@ extern PetscErrorCode VF_IntegrateDisplacement_local(Vec Uv,Vec Uc,VFCtx *ctx)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VolumetricCrackOpening3D_localNewCC"
-extern PetscErrorCode VolumetricCrackOpening3D_localNewCC(PetscReal ***volcrackopening_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
+#define __FUNCT__ "ComputeUcdotGradVlocal"
+extern PetscErrorCode ComputeUcdotGradVlocal(PetscReal *cod, PetscReal *v_elem, PetscReal *n_elem, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s)
 {
-	PetscErrorCode ierr;
-	PetscInt		i, j, k, c;
-	PetscInt		eg;
-  PetscReal   *n_elem[3],*dv_mag_elem;
-  PetscReal   *u_elem[3],*dv_elem[3];
-	PetscReal		element_vol = 0;
-  
-	PetscFunctionBegin;
-  ierr = PetscMalloc6(e->ng,&dv_elem[0],
-                      e->ng,&dv_elem[1],
-                      e->ng,&dv_elem[2],
-                      e->ng,&u_elem[0],
-                      e->ng,&u_elem[1],
-                      e->ng,&u_elem[2]);CHKERRQ(ierr);
-  ierr = PetscMalloc4(e->ng,&n_elem[0],e->ng,&n_elem[1],e->ng,&n_elem[2],e->ng,&dv_mag_elem);CHKERRQ(ierr);
-	for (eg = 0; eg < e->ng; eg++){
-    for(c = 0; c < 3; c++){
-      dv_elem[c][eg] = 0;
-      u_elem[c][eg] = 0;
-    }
-    dv_mag_elem[eg] = 0;
-	}
-	for (eg = 0; eg < e->ng; eg++) {
-		for (k = 0; k < e->nphiz; k++) {
-			for (j = 0; j < e->nphiy; j++) {
-				for (i = 0; i < e->nphix; i++) {
-          for (c = 0; c < 3; c++){
-            dv_elem[c][eg] += v_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][c][eg];
-            u_elem[c][eg] += u_array[ek+k][ej+j][ei+i][c] * e->phi[k][j][i][eg];
-          }
-				}
-			}
-		}
-	}
-	volcrackopening_array[ek][ej][ei] = 0.;
-	for(eg = 0; eg < e->ng; eg++){
-    element_vol += e->weight[eg];
-    for (c = 0; c < 3; c++){
-      volcrackopening_array[ek][ej][ei] += u_elem[c][eg]*dv_elem[c][eg]*e->weight[eg];
-    }
-	}
-  volcrackopening_array[ek][ej][ei] = volcrackopening_array[ek][ej][ei]/element_vol;
-  
-  ierr = PetscFree6(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2]);CHKERRQ(ierr);
-  ierr = PetscFree4(n_elem[0],n_elem[1],n_elem[2],dv_mag_elem);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-
-
-
-
-
-
-
-#undef __FUNCT__
-#define __FUNCT__ "ComputeUcdotGradVlocal1"
-extern PetscErrorCode ComputeUcdotGradVlocal1(PetscReal *cod, PetscReal *v_elem, PetscReal *grad, PetscReal *n_elem, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s)
-{
-  PetscErrorCode ierr;
 	PetscInt        k, j, i;
 	PetscInt        c;
 	PetscReal       dv_elem[3],u_elem[3];
@@ -312,7 +252,6 @@ extern PetscErrorCode ComputeUcdotGradVlocal1(PetscReal *cod, PetscReal *v_elem,
       }
     }
   }
-  
   dv_mag_elem = sqrt((pow(dv_elem[0],2))+(pow(dv_elem[1],2))+(pow(dv_elem[2],2)));
   for(c = 0; c < 3; c++){
     n_elem[c] = dv_elem[c]/dv_mag_elem;
@@ -328,336 +267,9 @@ extern PetscErrorCode ComputeUcdotGradVlocal1(PetscReal *cod, PetscReal *v_elem,
   PetscFunctionReturn(0);
 }
 
-
-
-
-
-
-
-
-
-
-
 #undef __FUNCT__
-#define __FUNCT__ "VolumetricCrackOpeningNewCC2"
-extern PetscErrorCode VolumetricCrackOpeningNewCC2(VFCtx *ctx, VFFields *fields)
-{
-	PetscErrorCode  ierr;
-	PetscInt		    ek, ej, ei,i,j,k;
-	PetscInt		    xs,xm,nx;
-	PetscInt		    ys,ym,ny;
-	PetscInt		    zs,zm,nz;
-	PetscReal		    hx,hy,hz;
-	PetscReal       ****coords_array;
-	PetscReal       ****u_array;
-	Vec             u_local;
-	PetscReal       ***v_array;
-	Vec             v_local;
-	PetscReal       grad_cc[3] = {0,0,0};
-	PetscReal       coorda_array[3];
-	PetscReal       coordb_array[3];
-	PetscReal       coordc_array[3];
-  Vec             w_local;
-	PetscReal       ***w_array;
-  PetscReal       len;
-  PetscReal       cod[2] = {0,0}, lc, cod_in;
-  PetscReal		    hwx,hwy,hwz;
-  PetscInt		    ekk, ejj, eii;
-	PetscInt		    ek1, ej1, ei1,c;
-  PetscReal       ave_V;
-  PetscReal       thickness;
-  Vec             pmult_local;
-	PetscReal       ***pmult_array;
-  
-  
-  Vec             GradElem;
-  Vec             grad_local;
-  PetscReal       ****grad_array;
-  
-  Vec             VElem;
-  Vec             velem_local;
-	PetscReal       ***velem_array;
-  Vec             perm_local;
-	PetscReal       ****perm_array;
-  Vec             CellVolCrackOpening;
-  Vec             VolCrackOpening_local;
-	PetscReal       ***volcrackopening_array;
-  PetscReal       myCrackVolumeLocal;
-  PetscReal       lcx = 0, lcy = 0, lcz = 0;
-  
-  
-  
-  Vec             GradV;
-  Vec             gradv_local;
-  PetscReal       ***gradv_array;
-  
-  PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  
-	ierr = DMGetLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
-  
-	ierr = DMGetLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-  
-  ierr = DMCreateGlobalVector(ctx->daScalCell,&VElem);CHKERRQ(ierr);
-  ierr = VecSet(VElem,0.0);CHKERRQ(ierr);
-	ierr = DMGetLocalVector(ctx->daScalCell,&velem_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScalCell,VElem,INSERT_VALUES,velem_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScalCell,VElem,INSERT_VALUES,velem_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScalCell,velem_local,&velem_array);CHKERRQ(ierr);
-  
-  
-  ierr = DMCreateGlobalVector(ctx->daVectCell,&GradElem);CHKERRQ(ierr);
-  ierr = VecSet(GradElem,0.0);CHKERRQ(ierr);
-	ierr = DMGetLocalVector(ctx->daVectCell,&grad_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daVectCell,GradElem,INSERT_VALUES,grad_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daVectCell,GradElem,INSERT_VALUES,grad_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVectCell,grad_local,&grad_array);CHKERRQ(ierr);
-  
-  ierr = VecSet(fields->vfperm,0.0);CHKERRQ(ierr);
-  ierr = DMGetLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
-  
-  ierr = DMCreateGlobalVector(ctx->daScalCell,&CellVolCrackOpening);CHKERRQ(ierr);
-  ierr = VecSet(CellVolCrackOpening,0.0);CHKERRQ(ierr);
-	ierr = DMGetLocalVector(ctx->daScalCell,&VolCrackOpening_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScalCell,CellVolCrackOpening,INSERT_VALUES,VolCrackOpening_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScalCell,CellVolCrackOpening,INSERT_VALUES,VolCrackOpening_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScalCell,VolCrackOpening_local,&volcrackopening_array);CHKERRQ(ierr);
-  
-  ierr = DMCreateGlobalVector(ctx->daScalCell,&GradV);CHKERRQ(ierr);
-  ierr = VecSet(GradV,0.0);CHKERRQ(ierr);
-	ierr = DMGetLocalVector(ctx->daScalCell,&gradv_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScalCell,GradV,INSERT_VALUES,gradv_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScalCell,GradV,INSERT_VALUES,gradv_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScalCell,gradv_local,&gradv_array);CHKERRQ(ierr);
-  
-	for (ek = zs; ek < zs+zm; ek++) {
-		for (ej = ys; ej < ys+ym; ej++) {
-			for (ei = xs; ei < xs+xm; ei++) {
-        perm_array[ek][ej][ei][0] = grad_array[ek][ej][ei][0] = 0;
-        perm_array[ek][ej][ei][1] = grad_array[ek][ej][ei][1] = 0;
-        perm_array[ek][ej][ei][2] = grad_array[ek][ej][ei][2] = 0;
-				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
-				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
-				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        hwx = hx/2.;
-        hwy = hy/2.;
-        hwz = hz/2.;
-        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-        ierr = CartFEElement3DInit(&ctx->s3D,hwx,hwy,hwz,hx,hy,hz);CHKERRQ(ierr);
-        ierr = VF_ComputeCellCenterVGradient_local(&velem_array[ek][ej][ei],grad_cc, v_array, ek, ej, ei, &ctx->s3D);
-        ierr = GradV3D_local(gradv_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
-        ierr = VolumetricCrackOpening3D_local(&myCrackVolumeLocal, volcrackopening_array, u_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
-        if(velem_array[ek][ej][ei] < 1.0 && velem_array[ek][ej][ei] > 0.0){
-          perm_array[ek][ej][ei][0] = grad_array[ek][ej][ei][0] = grad_cc[0];
-          perm_array[ek][ej][ei][1] = grad_array[ek][ej][ei][1] = grad_cc[1];
-          perm_array[ek][ej][ei][2] = grad_array[ek][ej][ei][2] = grad_cc[2];
-        }
-			}
-		}
-  }
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  
-  
-  ierr = DMDAVecRestoreArray(ctx->daScalCell,gradv_local,&gradv_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScalCell,&gradv_local);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalBegin(ctx->daScalCell,gradv_local,ADD_VALUES,GradV);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daScalCell,gradv_local,ADD_VALUES,GradV);CHKERRQ(ierr);
-  
-  
-  ierr = VecSet(fields->theta,0.);CHKERRQ(ierr);
-	ierr = CellToNodeInterpolation(fields->theta,GradV,ctx); CHKERRQ(ierr);
-  ierr = VecDestroy(&GradV);CHKERRQ(ierr);
-  
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
-  
-  ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
-  
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVectCell,grad_local,&grad_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daVectCell,&grad_local);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalBegin(ctx->daVectCell,grad_local,ADD_VALUES,GradElem);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daVectCell,grad_local,ADD_VALUES,GradElem);CHKERRQ(ierr);
-  
-  
-  ierr = DMDAVecRestoreArray(ctx->daScalCell,velem_local,&velem_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScalCell,&velem_local);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalBegin(ctx->daScalCell,velem_local,ADD_VALUES,VElem);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daScalCell,velem_local,ADD_VALUES,VElem);CHKERRQ(ierr);
-  
-  
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalBegin(ctx->daVFperm,perm_local,ADD_VALUES,fields->vfperm);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daVFperm,perm_local,ADD_VALUES,fields->vfperm);CHKERRQ(ierr);
-  
-  ierr = DMDAVecRestoreArray(ctx->daScalCell,VolCrackOpening_local,&volcrackopening_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScalCell,&VolCrackOpening_local);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalBegin(ctx->daScalCell,VolCrackOpening_local,ADD_VALUES,CellVolCrackOpening);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daScalCell,VolCrackOpening_local,ADD_VALUES,CellVolCrackOpening);CHKERRQ(ierr);
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  ierr = DMGetLocalVector(ctx->daScalCell,&velem_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScalCell,VElem,INSERT_VALUES,velem_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScalCell,VElem,INSERT_VALUES,velem_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScalCell,velem_local,&velem_array);CHKERRQ(ierr);
-  
-  ierr = VecSet(fields->vfperm,0.0);CHKERRQ(ierr);
-  ierr = DMGetLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
-  
-  ierr = DMGetLocalVector(ctx->daScalCell,&VolCrackOpening_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScalCell,CellVolCrackOpening,INSERT_VALUES,VolCrackOpening_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScalCell,CellVolCrackOpening,INSERT_VALUES,VolCrackOpening_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScalCell,VolCrackOpening_local,&volcrackopening_array);CHKERRQ(ierr);
-  
-  for (ek = zs; ek < zs+zm; ek++) {
-		for (ej = ys; ej < ys+ym; ej++) {
-			for (ei = xs; ei < xs+xm; ei++) {
-          if(velem_array[ek][ej][ei] < 1.0 && velem_array[ek][ej][ei] > 0.0){
-          lcx = 0;
-          i = ei;
-          perm_array[ek][ej][ei][0] = 0;
-          cod[0] = volcrackopening_array[ek][ej][ei];
-          while(lcx < ctx->WidthIntLenght){
-            i++;
-            cod[1] = volcrackopening_array[ek][ej][i];
-            perm_array[ek][ej][ei][0] += (cod[0]+cod[1])/2.*hx;;
-            lcx = hx*(i-ei);
-            cod[0] = cod[1];
-          }
-          lcx = 0;
-          i = ei;
-          cod[0] = volcrackopening_array[ek][ej][ei];
-          while(lcx < ctx->WidthIntLenght){
-            i--;
-            cod[1] = volcrackopening_array[ek][ej][i];
-            perm_array[ek][ej][ei][0] += (cod[0]+cod[1])/2.*hx;
-            lcx = hx*(ei-i);
-            cod[0] = cod[1];
-          }
-          lcz = 0;
-          k = ek;
-          perm_array[ek][ej][ei][2] = 0;
-          cod[0] = volcrackopening_array[ek][ej][ei];
-          while(lcz < ctx->WidthIntLenght){
-            k++;
-            cod[1] = volcrackopening_array[k][ej][ei];
-            perm_array[ek][ej][ei][2] += (cod[0]+cod[1])/2.*hz;
-            lcz = hz*(k-ek);
-            cod[0] = cod[1];
-          }
-          lcz = 0;
-          k = ek;
-          cod[0] = volcrackopening_array[ek][ej][ei];
-          while(lcz < ctx->WidthIntLenght){
-            k--;
-            cod[1] = volcrackopening_array[k][ej][ei];
-            perm_array[ek][ej][ei][2] += (cod[0]+cod[1])/2.*hz;
-            lcz = hz*(ek-k);                                                                                                                                                        
-            cod[0] = cod[1];
-          }
-        }
-			}
-		}
-  }
-  ierr = DMDAVecRestoreArray(ctx->daScalCell,VolCrackOpening_local,&volcrackopening_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScalCell,&VolCrackOpening_local);CHKERRQ(ierr);
-  
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalBegin(ctx->daVFperm,perm_local,ADD_VALUES,fields->vfperm);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daVFperm,perm_local,ADD_VALUES,fields->vfperm);CHKERRQ(ierr);
-  
-  ierr = DMDAVecRestoreArray(ctx->daScalCell,velem_local,&velem_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScalCell,&velem_local);CHKERRQ(ierr);
-  
-  ierr = VecSet(fields->pmult,0.);CHKERRQ(ierr);
-  ierr = VecCopy(VElem,fields->pmult);CHKERRQ(ierr);
-  
-  ierr = VecSet(fields->pmult,0.);CHKERRQ(ierr);
-  ierr = VecCopy(CellVolCrackOpening,fields->pmult);CHKERRQ(ierr);
-  
-  
-  ierr = VecSet(fields->velocity,0.);CHKERRQ(ierr);
-  ierr = CellToNodeInterpolation(fields->velocity,GradElem,ctx); CHKERRQ(ierr);
-  
-  
-  ierr = VecDestroy(&VElem);CHKERRQ(ierr);
-  ierr = VecDestroy(&GradElem);CHKERRQ(ierr);
-  
-  ierr = VecDestroy(&CellVolCrackOpening);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#undef __FUNCT__
-#define __FUNCT__ "VolumetricCrackOpeningNewCC1"
-extern PetscErrorCode VolumetricCrackOpeningNewCC1(VFCtx *ctx, VFFields *fields)
+#define __FUNCT__ "UpdateFractureWidth"
+extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
 {
 	PetscErrorCode  ierr;
 	PetscInt		    ek, ej, ei;
@@ -685,16 +297,12 @@ extern PetscErrorCode VolumetricCrackOpeningNewCC1(VFCtx *ctx, VFFields *fields)
   PetscInt		    ekk, ejj, eii;
 	PetscInt		    ek1, ej1, ei1,c;
   PetscReal       ave_V;
-  PetscReal       thickness;
   Vec             pmult_local;
 	PetscReal       ***pmult_array;
-  PetscReal       grad_loc[3];
   Vec             V;
   Vec             U;
   Vec             coordinates;
-  Vec             coordinates1;
   Vec             coords_local;
-  
   PetscReal       coords1[3];
 	PetscReal       coords2[3];
 	PetscReal       tlent1;
@@ -755,7 +363,7 @@ extern PetscErrorCode VolumetricCrackOpeningNewCC1(VFCtx *ctx, VFFields *fields)
         w_array[ek][ej][ei] = 0;
         len = sqrt(pow(grad_cc[0]*hx,2)+pow(grad_cc[1]*hy,2)+pow(grad_cc[2]*hz,2))/20;
         if(ave_V < 1.0 && ave_V > 0.0){
-          ierr = ComputeUcdotGradVlocal(&cod[0], &ave_V, grad_cc, u_array, v_array, ek, ej, ei, &ctx->s3D);
+          ierr = ComputeUcdotGradVlocal(&cod[0], &ave_V, n_cc, u_array, v_array, ek, ej, ei, &ctx->s3D);
           cod_in = cod[0];
           coorda_array[0] = coordb_array[0] = coordc_array[0] = (coords_array[ek][ej][ei+1][0]+coords_array[ek][ej][ei][0])/2.;
           coorda_array[1] = coordb_array[1] = coordc_array[1] = (coords_array[ek][ej+1][ei][1]+coords_array[ek][ej][ei][1])/2.;
@@ -786,8 +394,7 @@ extern PetscErrorCode VolumetricCrackOpeningNewCC1(VFCtx *ctx, VFFields *fields)
             hwy = coordc_array[1]-coords_array[ekk][ejj][eii][1];
             hwz = coordc_array[2]-coords_array[ekk][ejj][eii][2];
             ierr = CartFEElement3DInit(&ctx->s3D,hwx,hwy,hwz,hx,hy,hz);CHKERRQ(ierr);
-            ierr = ComputeUcdotGradVlocal1(&cod[1], &ave_V, grad_cc, n_cc, u_array, v_array, ekk, ejj, eii, &ctx->s3D);
-
+            ierr = ComputeUcdotGradVlocal(&cod[1], &ave_V, n_cc, u_array, v_array, ekk, ejj, eii, &ctx->s3D);
             ierr = VFCartFEElement1DInit(&ctx->e1D,len);CHKERRQ(ierr);
             ierr = IntegrateUcdotGradVlocal(&w_array[ek][ej][ei],cod, &ctx->e1D);            
             if((n_cc[0] == 0) && (n_cc[1] == 0) && (n_cc[2] == 0)){
@@ -843,7 +450,7 @@ extern PetscErrorCode VolumetricCrackOpeningNewCC1(VFCtx *ctx, VFFields *fields)
             hwy = coordc_array[1]-coords_array[ekk][ejj][eii][1];
             hwz = coordc_array[2]-coords_array[ekk][ejj][eii][2];
             ierr = CartFEElement3DInit(&ctx->s3D,hwx,hwy,hwz,hx,hy,hz);CHKERRQ(ierr);
-            ierr = ComputeUcdotGradVlocal1(&cod[1], &ave_V, grad_cc, n_cc, u_array, v_array, ekk, ejj, eii, &ctx->s3D);
+            ierr = ComputeUcdotGradVlocal(&cod[1], &ave_V, n_cc, u_array, v_array, ekk, ejj, eii, &ctx->s3D);
             ierr = VFCartFEElement1DInit(&ctx->e1D,len);CHKERRQ(ierr);
             ierr = IntegrateUcdotGradVlocal(&w_array[ek][ej][ei],cod, &ctx->e1D);            
             if((n_cc[0] == 0) && (n_cc[1] == 0) && (n_cc[2] == 0)){
@@ -904,243 +511,6 @@ extern PetscErrorCode VolumetricCrackOpeningNewCC1(VFCtx *ctx, VFFields *fields)
   PetscFunctionReturn(0);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#undef __FUNCT__
-#define __FUNCT__ "VolumetricCrackOpeningNewCC"
-extern PetscErrorCode VolumetricCrackOpeningNewCC(VFCtx *ctx, VFFields *fields)
-{
-	PetscErrorCode  ierr;
-	PetscInt		    ek, ej, ei;
-	PetscInt		    xs,xm,nx;
-	PetscInt		    ys,ym,ny;
-	PetscInt		    zs,zm,nz;
-	PetscInt		    xs1,xm1;
-	PetscInt		    ys1,ym1;
-	PetscInt		    zs1,zm1;
-	PetscReal		    hx,hy,hz;
-	PetscReal       ****coords_array;
-	PetscReal       ****u_array;
-	Vec             u_local;
-	PetscReal       ***v_array;
-	Vec             v_local;
-	PetscReal       grad_cc[3];
-	PetscReal       coorda_array[3];
-	PetscReal       coordb_array[3];
-	PetscReal       coordc_array[3];
-  Vec             w_local;
-	PetscReal       ***w_array;
-  PetscReal       len;
-  PetscReal       cod[2] = {0,0}, lc, cod_in;
-  PetscReal		    hwx,hwy,hwz;
-  PetscInt		    ekk, ejj, eii;
-	PetscInt		    ek1, ej1, ei1,c;
-  PetscReal       ave_V;
-  PetscReal       thickness;
-  Vec             pmult_local;
-	PetscReal       ***pmult_array;
-  PetscReal       grad_loc[3];
-  Vec             V;
-  Vec             U;
-  Vec             coordinates;
-  Vec             coordinates1;
-  Vec             coords_local;
-
-  PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daWScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DMDAGetCorners(ctx->daWScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = DMDAGetGhostCorners(ctx->daWScalCell,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(ctx->daWScal,&V);CHKERRQ(ierr);
-  ierr = VecSet(V,0.0);CHKERRQ(ierr);
-  ierr = VecCopy(fields->V,V);CHKERRQ(ierr);
-  ierr = DMGetLocalVector(ctx->daWScal,&v_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daWScal,V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daWScal,V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daWScal,v_local,&v_array);CHKERRQ(ierr);
-  
-  ierr = DMCreateGlobalVector(ctx->daWVect,&U);CHKERRQ(ierr);
-  ierr = VecSet(U,0.0);CHKERRQ(ierr);
-  ierr = VecCopy(fields->U,U);CHKERRQ(ierr);
-  
-  ierr = DMGetLocalVector(ctx->daWVect,&u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daWVect,U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daWVect,U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daWVect,u_local,&u_array);CHKERRQ(ierr);
-
-  ierr = DMGetCoordinates(ctx->daScal,&coordinates);CHKERRQ(ierr);
-  ierr = DMGetLocalVector(ctx->daWVect,&coords_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daWVect,coordinates,INSERT_VALUES,coords_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daWVect,coordinates,INSERT_VALUES,coords_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daWVect,coords_local,&coords_array);CHKERRQ(ierr);
-
-  ierr = VecSet(fields->widthc,0.);CHKERRQ(ierr);
-  ierr = DMGetLocalVector(ctx->daScalCell,&w_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScalCell,fields->widthc,INSERT_VALUES,w_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScalCell,fields->widthc,INSERT_VALUES,w_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScalCell,w_local,&w_array);CHKERRQ(ierr);
-  
-  ierr = DMGetLocalVector(ctx->daScalCell,&pmult_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScalCell,pmult_local,&pmult_array);CHKERRQ(ierr);
-	for (ek = zs; ek < zs+zm; ek++) {
-		for (ej = ys; ej < ys+ym; ej++) {
-			for (ei = xs; ei < xs+xm; ei++) {
-				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
-				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
-				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-        hwx = hx/2.;
-        hwy = hy/2.;
-        hwz = hz/2.;
-        ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-        ierr = CartFEElement3DInit(&ctx->s3D,hwx,hwy,hwz,hx,hy,hz);CHKERRQ(ierr);
-        ierr = VF_ComputeCellCenterVGradient_local(&ave_V,grad_cc, v_array, ek, ej, ei, &ctx->s3D);
-        w_array[ek][ej][ei] = 0;
-        len = sqrt(pow(grad_cc[0]*hx,2)+pow(grad_cc[1]*hy,2)+pow(grad_cc[2]*hz,2))/20;
-        if(ave_V < 1.0 && ave_V > 0.0){
-          ierr = ComputeUcdotGradVlocal(&cod[0], &ave_V, grad_cc, u_array, v_array, ek, ej, ei, &ctx->s3D);
-          cod_in = cod[0];
-          coorda_array[0] = coordb_array[0] = coordc_array[0] = (coords_array[ek][ej][ei+1][0]+coords_array[ek][ej][ei][0])/2.;
-          coorda_array[1] = coordb_array[1] = coordc_array[1] = (coords_array[ek][ej+1][ei][1]+coords_array[ek][ej][ei][1])/2.;
-          coorda_array[2] = coordb_array[2] = coordc_array[2] = (coords_array[ek+1][ej][ei][2]+coords_array[ek][ej][ei][2])/2.;
-          for(c = 0; c < 3; c++){
-            coordc_array[c] = coordb_array[c]+grad_cc[c]*len;
-          }
-          lc = sqrt((pow(coordc_array[0]-coorda_array[0],2))+(pow(coordc_array[1]-coorda_array[1],2))+(pow(coordc_array[2]-coorda_array[2],2)));
-          while(lc < ctx->WidthIntLenght && ave_V < 1.0){
-           for (ek1 = zs1; ek1 < zs1+zm1; ek1++) {
-              for (ej1 = ys1; ej1 < ys1+ym1; ej1++) {
-                for (ei1 = xs1; ei1 < xs1+xm1; ei1++) {
-                  if(
-                     ((coords_array[ek1][ej1][ei1+1][0] >= coordc_array[0]) && (coords_array[ek1][ej1][ei1][0] <= coordc_array[0] ))    &&
-                     ((coords_array[ek1][ej1+1][ei1][1] >= coordc_array[1]) && (coords_array[ek1][ej1][ei1][1] <= coordc_array[1] ))    &&
-                     ((coords_array[ek1+1][ej1][ei1][2] >= coordc_array[2]) && (coords_array[ek1][ej1][ei1][2] <= coordc_array[2] ))
-                     )
-                  {
-                    ekk = ek1;ejj = ej1;eii = ei1;
-                  }
-                }
-              }
-            }
-            hx = coords_array[ekk][ejj][eii+1][0]-coords_array[ekk][ejj][eii][0];
-            hy = coords_array[ekk][ejj+1][eii][1]-coords_array[ekk][ejj][eii][1];
-            hz = coords_array[ekk+1][ejj][eii][2]-coords_array[ekk][ejj][eii][2];
-            hwx = coordc_array[0]-coords_array[ekk][ejj][eii][0];
-            hwy = coordc_array[1]-coords_array[ekk][ejj][eii][1];
-            hwz = coordc_array[2]-coords_array[ekk][ejj][eii][2];
-            ierr = CartFEElement3DInit(&ctx->s3D,hwx,hwy,hwz,hx,hy,hz);CHKERRQ(ierr);
-            ierr = ComputeUcdotGradVlocal(&cod[1], &ave_V, grad_cc, u_array, v_array, ekk, ejj, eii, &ctx->s3D);
-            ierr = VFCartFEElement1DInit(&ctx->e1D,len);CHKERRQ(ierr);
-            ierr = IntegrateUcdotGradVlocal(&w_array[ek][ej][ei],cod, &ctx->e1D);
-            for(c = 0; c < 3; c++){
-              coordc_array[c] = coordc_array[c]+grad_cc[c]*len;
-            }
-            lc = sqrt((pow(coordc_array[0]-coorda_array[0],2))+(pow(coordc_array[1]-coorda_array[1],2))+(pow(coordc_array[2]-coorda_array[2],2)));
-            cod[0] = cod[1];
-          }          
-          cod[0] = cod_in;
-          for(c = 0; c < 3; c++){
-            coordc_array[c] = coordb_array[c]-grad_cc[c]*len;
-          }
-          lc = sqrt((pow(coordc_array[0]-coorda_array[0],2))+(pow(coordc_array[1]-coorda_array[1],2))+(pow(coordc_array[2]-coorda_array[2],2)));
-          ave_V = 0;
-          while(lc < ctx->WidthIntLenght && ave_V < 1.0){
-            for (ek1 = zs1; ek1 < zs1+zm1; ek1++) {
-              for (ej1 = ys1; ej1 < ys1+ym1; ej1++) {
-                for (ei1 = xs1; ei1 < xs1+xm1; ei1++) {
-                  if(
-                     ((coords_array[ek1][ej1][ei1+1][0] >= coordc_array[0]) && (coords_array[ek1][ej1][ei1][0] <= coordc_array[0] ))    &&
-                     ((coords_array[ek1][ej1+1][ei1][1] >= coordc_array[1]) && (coords_array[ek1][ej1][ei1][1] <= coordc_array[1] ))    &&
-                     ((coords_array[ek1+1][ej1][ei1][2] >= coordc_array[2]) && (coords_array[ek1][ej1][ei1][2] <= coordc_array[2] ))
-                     )
-                  {
-                    ekk = ek1;ejj = ej1;eii = ei1;
-                  }
-                }
-              }
-            }
-            hx = coords_array[ekk][ejj][eii+1][0]-coords_array[ekk][ejj][eii][0];
-            hy = coords_array[ekk][ejj+1][eii][1]-coords_array[ekk][ejj][eii][1];
-            hz = coords_array[ekk+1][ejj][eii][2]-coords_array[ekk][ejj][eii][2];
-            hwx = coordc_array[0]-coords_array[ekk][ejj][eii][0];
-            hwy = coordc_array[1]-coords_array[ekk][ejj][eii][1];
-            hwz = coordc_array[2]-coords_array[ekk][ejj][eii][2];
-            ierr = CartFEElement3DInit(&ctx->s3D,hwx,hwy,hwz,hx,hy,hz);CHKERRQ(ierr);
-            ierr = ComputeUcdotGradVlocal(&cod[1], &ave_V, grad_cc, u_array,v_array, ekk, ejj, eii, &ctx->s3D);
-            ierr = VFCartFEElement1DInit(&ctx->e1D,len);CHKERRQ(ierr);
-            ierr = IntegrateUcdotGradVlocal(&w_array[ek][ej][ei],cod, &ctx->e1D);
-            for(c = 0; c < 3; c++){
-              coordc_array[c] = coordc_array[c]-grad_cc[c]*len;
-            }
-            lc = sqrt((pow(coordc_array[0]-coorda_array[0],2))+(pow(coordc_array[1]-coorda_array[1],2))+(pow(coordc_array[2]-coorda_array[2],2)));
-            cod[0] = cod[1];
-          }
-        }
-        pmult_array[ek][ej][ei] = pow(w_array[ek][ej][ei],3)/12.;        
-			}
-		}
-  }
-  ierr = DMDAVecRestoreArrayDOF(ctx->daWVect,coords_local,&coords_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daWVect,&coords_local);CHKERRQ(ierr);
-  
-  ierr = DMDAVecRestoreArray(ctx->daScalCell,w_local,&w_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScalCell,&w_local);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalBegin(ctx->daScalCell,w_local,ADD_VALUES,fields->widthc);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daScalCell,w_local,ADD_VALUES,fields->widthc);CHKERRQ(ierr);
-  
-  ierr = DMDAVecRestoreArrayDOF(ctx->daWVect,u_local,&u_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daWVect,&u_local);CHKERRQ(ierr);
-
-  ierr = DMDAVecRestoreArray(ctx->daWScal,v_local,&v_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daWScal,&v_local);CHKERRQ(ierr);
-  
-  ierr = VecSet(fields->width,0.);CHKERRQ(ierr);
-  ierr = CellToNodeInterpolation(fields->width,fields->widthc,ctx); CHKERRQ(ierr);
-  
-	ierr = DMDAVecRestoreArray(ctx->daScalCell,pmult_local,&pmult_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScalCell,&pmult_local);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalBegin(ctx->daScalCell,pmult_local,INSERT_VALUES,fields->pmult);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daScalCell,pmult_local,INSERT_VALUES,fields->pmult);CHKERRQ(ierr);
-    
-  ierr = VecDestroy(&U);CHKERRQ(ierr);
-  ierr = VecDestroy(&V);CHKERRQ(ierr);
-
-//  ierr = VecSet(fields->theta,0.);CHKERRQ(ierr);
-//  ierr = CellToNodeInterpolation(fields->theta,fields->pmult,ctx); CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-
 #undef __FUNCT__
 #define __FUNCT__ "IntegrateUcdotGradVlocal"
 extern PetscErrorCode IntegrateUcdotGradVlocal(PetscReal *w_ave, PetscReal *cod, VFCartFEElement1D *e)
@@ -1173,7 +543,6 @@ extern PetscErrorCode VF_ComputeCellCenterVGradient_local(PetscReal *ave_v, Pets
   PetscInt        k, j, i;
 	PetscInt        c;
   PetscReal       v_mag;
-  PetscErrorCode ierr;
   
 	PetscFunctionBegin;
   for (c = 0; c < 3; c++){
@@ -1201,49 +570,6 @@ extern PetscErrorCode VF_ComputeCellCenterVGradient_local(PetscReal *ave_v, Pets
     grad_cc[0] = grad_cc[1] = grad_cc[2] = v_mag = 0;
   }
   
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "ComputeUcdotGradVlocal"
-extern PetscErrorCode ComputeUcdotGradVlocal(PetscReal *cod, PetscReal *v_elem, PetscReal *grad, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s)
-{
-  PetscErrorCode ierr;
-	PetscInt        k, j, i;
-	PetscInt        c;
-	PetscReal       n_elem[3],dv_elem[3],u_elem[3];
-  PetscReal       dv_mag_elem = 0;
-  
-	PetscFunctionBegin;
-  *v_elem = 0;
-  for (c = 0; c < 3; c++){
-    n_elem[c] = 0;
-    dv_elem[c] = 0;
-    u_elem[c] = 0;
-  }
-  for (k = 0; k < s->nphiz; k++) {
-    for (j = 0; j < s->nphiy; j++) {
-      for (i = 0; i < s->nphix; i++) {
-        *v_elem += v_array[ek+k][ej+j][ei+i] * s->phi[k][j][i];
-        for (c = 0; c < 3; c++){
-          dv_elem[c] += v_array[ek+k][ej+j][ei+i] * s->dphi[k][j][i][c];
-          u_elem[c] += u_array[ek+k][ej+j][ei+i][c]*s->phi[k][j][i];
-        }
-      }
-    }
-  }
-  dv_mag_elem = sqrt((pow(dv_elem[0],2))+(pow(dv_elem[1],2))+(pow(dv_elem[2],2)));
-  for(c = 0; c < 3; c++){
-    n_elem[c] = dv_elem[c]/dv_mag_elem;
-  }
-  if((PetscIsInfOrNanScalar(n_elem[0])) || (PetscIsInfOrNanScalar(n_elem[1])) || (PetscIsInfOrNanScalar(n_elem[2])))
-  {
-    n_elem[0] = n_elem[1] = n_elem[2] = dv_mag_elem = 0;
-  }
-  *cod = 0;
-  for (c = 0; c < 3; c++){
-    *cod += dv_elem[c]*u_elem[c];
-  }
   PetscFunctionReturn(0);
 }
 
@@ -2063,197 +1389,6 @@ extern PetscErrorCode VolumetricLeakOffRate_local(PetscReal *LeakoffRate_local, 
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "Permeabilityfield"
-extern PetscErrorCode Permeabilityfield(PetscReal *COD_local, PetscReal ***volcrackopening_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement2D *e, FACE face)
-{
-	PetscErrorCode ierr;
-	PetscInt       i,j,k,g;
-	PetscReal		*volopening_loc;
-	
-	PetscFunctionBegin;
-	ierr = PetscMalloc(e->ng*sizeof(PetscReal),&volopening_loc);CHKERRQ(ierr);
-	for (g = 0; g < e->ng; g++){
-		volopening_loc[g] = 0.;
-	}
-	switch (face) {
-		case X0:
-			for (k = 0; k < e->nphiz; k++) {
-				for (j = 0; j < e->nphiy; j++) {
-					for (i = 0; i < e->nphiz; i++) {
-						for (g = 0; g < e->ng; g++) {
-							volopening_loc[g] += e->phi[k][j][i][g] * volcrackopening_array[ek+k][ej+j][ei+i];
-						}
-					}
-				}
-			}
-			break;
-		case Y0:
-			for (k = 0; k < e->nphiy; k++) {
-				for (j = 0; j < e->nphiz; j++) {
-					for (i = 0; i < e->nphix; i++) {
-						for (g = 0; g < e->ng; g++) {
-							volopening_loc[g] += e->phi[k][j][i][g] * volcrackopening_array[ek+k][ej+j][ei+i];
-						}
-					}
-				}
-			}
-			break;
-		case Z0:
-			for (k = 0; k < e->nphiz; k++) {
-				for (j = 0; j < e->nphiy; j++) {
-					for (i = 0; i < e->nphix; i++) {
-						for (g = 0; g < e->ng; g++) {
-							volopening_loc[g] += e->phi[k][j][i][g] * volcrackopening_array[ek+k][ej+j][ei+i];
-						}
-					}
-				}
-			}
-			break;
-		case Z1:
-			break;
-		case Y1:
-			break;
-		case X1:
-			break;
-		default:
-			/*	SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Orientation should be one of X0,X1,Y0,Y1,Z0,Z1\n");	*/
-			break;
-	}
-	*COD_local = 0.;
-	for(g = 0; g < e->ng; g++){
-		*COD_local += e->weight[g] * volopening_loc[g];
-	}
-	ierr = PetscFree(volopening_loc);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SimplePermeabilityUpDate"
-extern PetscErrorCode SimplePermeabilityUpDate(VFCtx *ctx, VFFields *fields)
-{
-	PetscErrorCode  ierr;
-	PetscInt        xs,xm,nx;
-	PetscInt        ys,ym,ny;
-	PetscInt        zs,zm,nz;
-	PetscInt        ek, ej, ei;
-	PetscReal       ****coords_array;
-	PetscReal       ****perm_array;
-	Vec             perm_local;
-	PetscReal       ***v_array;
-	Vec             v_local;
-	PetscInt        k, j, i,c;
-	PetscReal       Ele_v_ave = 0.;
-	
-	PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-	
-	ierr = DMGetLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-	
-	ierr = VecSet(fields->vfperm,0.);CHKERRQ(ierr);
-	ierr = DMGetLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);
-  
-	PetscReal  maxperm = ctx->vfprop.permmax;
-	for (ek = zs; ek < zs+zm; ek++) {
-		for (ej = ys; ej < ys+ym; ej++) {
-			for (ei = xs; ei < xs+xm; ei++) {
-				Ele_v_ave = 0.;
-				for (k = 0; k < 2; k++) {
-					for (j = 0; j < 2; j++) {
-						for (i = 0; i < 2; i++) {
-							Ele_v_ave += v_array[ek+k][ej+j][ei+i];
-						}
-					}
-				}
-				Ele_v_ave = Ele_v_ave/8.;
-				if(Ele_v_ave < 0.) {
-				  for (c = 0; c < 3; c++) {
-				    perm_array[ek][ej][ei][c] = maxperm;
-				  }
-				}
-				else {
-				  for (c = 0; c < 3; c++) {
-				    perm_array[ek][ej][ei][c] = maxperm*(1-Ele_v_ave);
-          }
-        }
-			}
-		}
-	}
-  
-	ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
-	
-	ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalBegin(ctx->daVFperm,perm_local,INSERT_VALUES,fields->vfperm);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daVFperm,perm_local,INSERT_VALUES,fields->vfperm);CHKERRQ(ierr);
-	
-	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TrialFunctionCompute"
-extern PetscErrorCode TrialFunctionCompute(PetscReal *FunctionValue, VFCtx *ctx, VFFields *fields)
-{
-	PetscErrorCode  ierr;
-	PetscInt        xs,xm,nx;
-	PetscInt        ys,ym,ny;
-	PetscInt        zs,zm,nz;
-	PetscInt        ek, ej, ei;
-	PetscReal       hx,hy,hz;
-	PetscReal       ****coords_array;
-	PetscReal       ****u_array;
-	Vec             u_local;
-	PetscReal       ***v_array;
-	Vec             v_local;
-  PetscReal       myFunctionLocal = 0.,myFunction = 0.;
-  
-	PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  
-	ierr = DMGetLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
-	
-	ierr = DMGetLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-  for (ek = zs; ek < zs+zm; ek++) {
-		for (ej = ys; ej < ys+ym; ej++) {
-			for (ei = xs; ei < xs+xm; ei++) {
-				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
-				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
-				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-				ierr = VolumetricFunction_local(&myFunctionLocal, PETSC_NULL, u_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
-        myFunction += myFunctionLocal;
-			}
-		}
-	}
-	ierr = MPI_Allreduce(&myFunction,FunctionValue,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "VolumetricFunction_local"
 extern PetscErrorCode VolumetricFunction_local(PetscReal *Function_local, PetscReal ***value_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
@@ -2305,130 +1440,6 @@ extern PetscErrorCode VolumetricFunction_local(PetscReal *Function_local, PetscR
   ierr = PetscFree6(dv_elem[0],dv_elem[1],dv_elem[2],u_elem[0],u_elem[1],u_elem[2]);CHKERRQ(ierr);
   ierr = PetscFree4(n_elem[0],n_elem[1],n_elem[2],n_mag_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "VF_PermeabilityUpDate"
-extern PetscErrorCode VF_PermeabilityUpDate(VFCtx *ctx, VFFields *fields)
-{
-	PetscErrorCode  ierr;
-	PetscInt        xs,xm,nx;
-	PetscInt        ys,ym,ny;
-	PetscInt        zs,zm,nz;
-	PetscInt        ek, ej, ei;
-	PetscReal       hx,hy,hz;
-	PetscReal       ****coords_array;
-	PetscReal       ***cod_array;
-	Vec             cod_local;
-	PetscReal       ****perm_array;
-	Vec             perm_local;
-	PetscReal       ****u_array;
-	Vec             u_local;
-	PetscReal       ***v_array;
-	Vec             v_local;
-	PetscReal       ***pmult_array;
-	Vec             pmult_local;
-	Vec             COD;
-	PetscReal       myCOD = 0.;
-	PetscInt        k, j, i;
-	PetscReal       Ele_v_ave = 0.;
-	
-	PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  
-	ierr = DMGetLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
-	
-	ierr = DMGetLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-	
-	ierr = DMGetLocalVector(ctx->daScalCell,&pmult_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScalCell,pmult_local,&pmult_array);CHKERRQ(ierr);
-	
-	ierr = VecSet(fields->vfperm,0.);CHKERRQ(ierr);
-	ierr = DMGetLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);
-  
-	ierr = DMCreateGlobalVector(ctx->daScalCell,&COD);CHKERRQ(ierr);
-	ierr = VecSet(COD,0.);CHKERRQ(ierr);
-	ierr = DMGetLocalVector(ctx->daScalCell,&cod_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daScalCell,COD,INSERT_VALUES,cod_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daScalCell,COD,INSERT_VALUES,cod_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArray(ctx->daScalCell,cod_local,&cod_array);CHKERRQ(ierr);
-	for (ek = zs; ek < zs+zm; ek++) {
-		for (ej = ys; ej < ys+ym; ej++) {
-			for (ei = xs; ei < xs+xm; ei++) {
-				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
-				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
-				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
-				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
-				ierr = VolumetricCrackOpening3D_localCC(&myCOD, cod_array, PETSC_NULL, u_array, v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
-			}
-		}
-	}
-  
-	PetscReal  maxperm = 10;
-	PetscReal  minperm = 0.01;
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-perm",&minperm,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-permmax",&maxperm,PETSC_NULL);CHKERRQ(ierr);
-  
-	for (ek = zs; ek < zs+zm; ek++) {
-		for (ej = ys; ej < ys+ym; ej++) {
-			for (ei = xs; ei < xs+xm; ei++) {
-				Ele_v_ave = 0.;
-				for (k = 0; k < 2; k++) {
-					for (j = 0; j < 2; j++) {
-						for (i = 0; i < 2; i++) {
-							Ele_v_ave += v_array[ek+k][ej+j][ei+i];
-						}
-					}
-				}
-				Ele_v_ave = Ele_v_ave/8.;
-        
-				if (Ele_v_ave > 0.2){
-            //                    for(c = 0; c < 2; c++)
-            //                      perm_array[ek][ej][ei][c] = minperm;
-          perm_array[ek][ej][ei][0] = minperm;
-          perm_array[ek][ej][ei][2] = minperm;
-				}
-				else {
-            //                  for(c = 0; c < 2; c++)
-            //                    perm_array[ek][ej][ei][c] = maxperm;
-          perm_array[ek][ej][ei][0] = maxperm;
-          perm_array[ek][ej][ei][2] = maxperm;
-				}
-			}
-		}
-	}
-  
-	ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,u_local,&u_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daVect,&u_local);CHKERRQ(ierr);
-	
-	ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalBegin(ctx->daVFperm,perm_local,INSERT_VALUES,fields->vfperm);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daVFperm,perm_local,INSERT_VALUES,fields->vfperm);CHKERRQ(ierr);
-	
-	ierr = DMDAVecRestoreArray(ctx->daScalCell,pmult_local,&pmult_array);CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(ctx->daScalCell,&pmult_local);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalBegin(ctx->daScalCell,pmult_local,INSERT_VALUES,fields->pmult);CHKERRQ(ierr);
-	ierr = DMLocalToGlobalEnd(ctx->daScalCell,pmult_local,INSERT_VALUES,fields->pmult);CHKERRQ(ierr);
-	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = VecDestroy(&COD);CHKERRQ(ierr);
-	PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -2733,10 +1744,11 @@ extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FA
 extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields)
 {
   PetscErrorCode  ierr;
-	PetscInt		    nx,ny,nz;
+	/*
+  PetscInt		    nx,ny,nz;
   PetscInt        DIM = 3,dim[3];
   Vec             x,y,z;
-  /*
+  
    PetscFunctionBegin;
    ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
    PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -2890,49 +1902,102 @@ extern PetscErrorCode VF_ComputeRegularizedFracturePressure(VFCtx *ctx, VFFields
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "GradV3D_local"
-extern PetscErrorCode GradV3D_local(PetscReal ***grad_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
+#define __FUNCT__ "VolumeFromWidth"
+extern PetscErrorCode VolumeFromWidth(PetscReal *CrackVolume, VFCtx *ctx, VFFields *fields)
+{
+	PetscErrorCode  ierr;
+	PetscInt		    ek, ej, ei;
+	PetscInt		    xs,xm,nx;
+	PetscInt		    ys,ym,ny;
+	PetscInt		    zs,zm,nz;
+	PetscReal		    hx,hy,hz;
+	PetscReal       ****coords_array;
+	PetscReal       ***v_array;
+	Vec             v_local;
+	PetscReal       myCrackVolumeLocal = 0.,myCrackVolume = 0.;
+  PetscReal      ***w_array;
+  Vec            w_local;
+
+	
+  PetscFunctionBegin;
+  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	
+	ierr = DMGetLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
+	ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
+  
+  ierr = DMGetLocalVector(ctx->daScalCell,&w_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScalCell,fields->widthc,INSERT_VALUES,w_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScalCell,fields->widthc,INSERT_VALUES,w_local);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScalCell,w_local,&w_array);CHKERRQ(ierr);
+  
+	*CrackVolume = 0.;
+	for (ek = zs; ek < zs+zm; ek++) {
+		for (ej = ys; ej < ys+ym; ej++) {
+			for (ei = xs; ei < xs+xm; ei++) {
+				hx = coords_array[ek][ej][ei+1][0]-coords_array[ek][ej][ei][0];
+				hy = coords_array[ek][ej+1][ei][1]-coords_array[ek][ej][ei][1];
+				hz = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
+				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
+				ierr = VolumeFromWidth_local(&myCrackVolumeLocal, w_array[ek][ej][ei], v_array, ek, ej, ei, &ctx->e3D);CHKERRQ(ierr);
+        myCrackVolume += myCrackVolumeLocal;
+			}
+		}
+	}
+	ierr = MPI_Allreduce(&myCrackVolume,CrackVolume,1,MPIU_SCALAR,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
+	
+	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
+  
+  ierr = DMDAVecRestoreArray(ctx->daScalCell,w_local,&w_array);CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(ctx->daScalCell,&w_local);CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
+
+#undef __FUNCT__
+#define __FUNCT__ "VolumeFromWidth_local"
+extern PetscErrorCode VolumeFromWidth_local(PetscReal *CrackVolume_local, PetscReal w, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
 {
 	PetscErrorCode ierr;
 	PetscInt		i, j, k, c;
 	PetscInt		eg;
   PetscReal   *dv_elem[3],*dv_mag_elem;
-  PetscReal		element_vol = 0;
+
   
 	PetscFunctionBegin;
-  ierr = PetscMalloc4(e->ng,&dv_elem[0],e->ng,&dv_elem[1],e->ng,&dv_elem[2],e->ng,&dv_mag_elem);CHKERRQ(ierr);
-	for (eg = 0; eg < e->ng; eg++){
-    for(c = 0; c < 3; c++){
-      dv_elem[c][eg] = 0;
+  ierr = PetscMalloc4(e->ng,&dv_elem[0],
+                      e->ng,&dv_elem[1],
+                      e->ng,&dv_elem[2],
+                      e->ng,&dv_mag_elem);CHKERRQ(ierr);
+  for (eg = 0; eg < e->ng; eg++){
+    for (c = 0; c < 3; c++){
+      dv_elem[c][eg] = 0.;
     }
-    dv_mag_elem[eg] = 0;
-	}
-	for (eg = 0; eg < e->ng; eg++) {
-		for (k = 0; k < e->nphiz; k++) {
-			for (j = 0; j < e->nphiy; j++) {
-				for (i = 0; i < e->nphix; i++) {
-          for (c = 0; c < 3; c++){
+  }
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        for (eg = 0; eg < e->ng; eg++) {
+          for (c= 0; c < 3; c++){
             dv_elem[c][eg] += v_array[ek+k][ej+j][ei+i] * e->dphi[k][j][i][c][eg];
           }
-				}
-			}
-		}
-	}
-  for (eg = 0; eg < e->ng; eg++) {
+        }
+      }
+    }
+  }
+  for (eg = 0; eg < e->ng; eg++){
     dv_mag_elem[eg] = sqrt((pow(dv_elem[0][eg],2))+(pow(dv_elem[1][eg],2))+(pow(dv_elem[2][eg],2)));
   }
-  grad_array[ek][ej][ei] = 0;
+	*CrackVolume_local = 0.;
 	for(eg = 0; eg < e->ng; eg++){
-    for(c = 0; c < 3; c++){
-      grad_array[ek][ej][ei] += dv_mag_elem[eg]*e->weight[eg];
-      element_vol += e->weight[eg];
-    }
+		*CrackVolume_local += w*dv_mag_elem[eg]*e->weight[eg];
 	}
-  
-  grad_array[ek][ej][ei] = grad_array[ek][ej][ei]/element_vol;
-  
-	ierr = PetscFree4(dv_elem[0],dv_elem[1],dv_elem[2],dv_mag_elem);CHKERRQ(ierr);
+  ierr = PetscFree4(dv_elem[0],dv_elem[1],dv_elem[2],dv_mag_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
-
