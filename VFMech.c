@@ -1438,10 +1438,6 @@ extern PetscErrorCode VF_StepU(VFFields *fields,VFCtx *ctx)
   PetscErrorCode      ierr;
   SNESConvergedReason  reason;
   PetscInt            its;
-  PetscReal           f;
-  PetscReal           gnorm;
-  PetscReal           cnorm;
-  PetscReal           xdiff;
   
   PetscFunctionBegin;
   ierr = SNESSolve(ctx->snesU,PETSC_NULL,fields->U);CHKERRQ(ierr);

@@ -1738,13 +1738,13 @@ extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FA
   ierr = DMRestoreLocalVector(dm,&node_local);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
-
+/*
 #undef __FUNCT__
 #define __FUNCT__ "VF_FastFourierTransforms"
 extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields)
 {
   PetscErrorCode  ierr;
-	/*
+	
   PetscInt		    nx,ny,nz;
   PetscInt        DIM = 3,dim[3];
   Vec             x,y,z;
@@ -1778,9 +1778,9 @@ extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields)
    ierr = VecDestroy(&y);CHKERRQ(ierr);
    ierr = VecDestroy(&z);CHKERRQ(ierr);
    ierr = MatDestroy(&ctx->KFFT);CHKERRQ(ierr);
-   PetscFunctionReturn(0);*/
+   PetscFunctionReturn(0);
 }
-
+*/
 #undef __FUNCT__
 #define __FUNCT__ "VF_ComputeRegularizedFracturePressure_local"
 extern PetscErrorCode VF_ComputeRegularizedFracturePressure_local(PetscReal ***press_c_array, PetscReal ***press_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)

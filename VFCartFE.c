@@ -1772,7 +1772,6 @@ extern PetscErrorCode CartFEElement1DCreate(CartFEElement1D *e)
 #define __FUNCT__ "CartFEElement1DInit"
 extern PetscErrorCode CartFEElement1DInit(CartFEElement1D *e,PetscReal x,PetscReal lx)
 {
-  PetscErrorCode ierr;
   PetscReal       var;
   
   PetscFunctionBegin;

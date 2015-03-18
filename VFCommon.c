@@ -614,7 +614,6 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   
   PetscInt       x_nprocs,y_nprocs,z_nprocs,*olx,*oly,*olz;
   const PetscInt *lx1,*ly1,*lz1;
-  PetscReal      *l,lx,ly,lz;
 
   PetscFunctionBegin;
   fields->numfields = 19;
