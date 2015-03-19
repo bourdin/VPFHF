@@ -408,10 +408,10 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
           dist =    sqrt((x[0] - x0[0]) * (x[0] - x0[0]) +
                          (x[1] - x0[1]) * (x[1] - x0[1]));
           if(dist <= thickness/2.){
-            regv_array[k][j][i] += well->Qw/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*lz);
+            regv_array[k][j][i] = well->Qw/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*lz);
           }
           else {
-            regv_array[k][j][i] += well->Qw*exp(-(dist-thickness/2.)/ctx->vfprop.epsilon)/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*lz);
+            regv_array[k][j][i] = well->Qw*exp(-(dist-thickness/2.)/ctx->vfprop.epsilon)/(2.*PETSC_PI*pow(ctx->vfprop.epsilon,2)*lz);
           }
         }
       }

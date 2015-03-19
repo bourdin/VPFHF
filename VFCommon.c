@@ -806,18 +806,6 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
     }
     ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
   }
-  Vec LocalWRate;
-  PetscReal InjVolrate, scale;
-  ierr = VecDuplicate(ctx->RegFracWellFlowRate,&LocalWRate);CHKERRQ(ierr);
-  ierr = VecSet(ctx->RegFracWellFlowRate,0.0);CHKERRQ(ierr);
-  for (c = 0; c < ctx->numfracWells; c++) {
-    ierr = VecSet(LocalWRate,0.0);CHKERRQ(ierr);
-    ierr = VFRegDiracDeltaFunction(LocalWRate,&ctx->fracwell[c],&(ctx->pennycrack[c]),&(ctx->rectangularcrack[c]),ctx,fields->V);CHKERRQ(ierr);
-    ierr = VFRegRateScalingFactor(&InjVolrate,LocalWRate,fields->V,ctx);CHKERRQ(ierr);
-    scale = ctx->fracwell[c].Qw/InjVolrate;
-    ierr = VecAXPY(ctx->RegFracWellFlowRate,scale,LocalWRate);CHKERRQ(ierr);
-  }
-  ierr = VecDestroy(&LocalWRate);CHKERRQ(ierr);
   /*
    Create optional wells
    */
@@ -832,6 +820,21 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   
   ierr        = VecCopy(fields->VIrrev,fields->V);CHKERRQ(ierr);
   ctx->fields = fields;
+  
+  Vec LocalWRate;
+  PetscReal InjVolrate, scale = 0;
+  ierr = VecDuplicate(ctx->RegFracWellFlowRate,&LocalWRate);CHKERRQ(ierr);
+  ierr = VecSet(ctx->RegFracWellFlowRate,0.0);CHKERRQ(ierr);
+  for (c = 0; c < ctx->numfracWells; c++) {
+    ierr = VecSet(LocalWRate,0.0);CHKERRQ(ierr);
+    ierr = VFRegDiracDeltaFunction(LocalWRate,&ctx->fracwell[c],&(ctx->pennycrack[c]),&(ctx->rectangularcrack[c]),ctx,fields->V);CHKERRQ(ierr);
+    scale +=  ctx->fracwell[c].Qw;
+    ierr = VecAXPY(ctx->RegFracWellFlowRate,1.,LocalWRate);CHKERRQ(ierr);
+  }
+  ierr = VFRegRateScalingFactor(&InjVolrate,ctx->RegFracWellFlowRate,fields->V,ctx);CHKERRQ(ierr);
+  scale =  scale/InjVolrate;
+  ierr = VecScale(ctx->RegFracWellFlowRate,scale);CHKERRQ(ierr);
+  ierr = VecDestroy(&LocalWRate);CHKERRQ(ierr);
   
   ierr = DMDAGetBoundingBox(ctx->daScal,BBmin,BBmax);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,&x_nprocs,&y_nprocs,&z_nprocs,
