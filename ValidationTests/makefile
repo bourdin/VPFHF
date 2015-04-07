@@ -133,7 +133,7 @@ test38: test38.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test38a: test38a.o ${RELPATH_VFOBJ} chkopts
-        -@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
+	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test39: test39.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
@@ -544,14 +544,15 @@ runtest38: test38
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
+
 runtest38a: test38a
-        @echo "Running " $@
-        -@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 1';\
-        echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-        ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
-        if (${DIFF} -B results/$@.out $@.out) then true; \
-        else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
-        ${RM} -f $@.out
+	@echo "Running " $@
+	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 1';\
+	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	if (${DIFF} -B results/$@.out $@.out) then true; \
+	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
+	${RM} -f $@.out
 
 runtest39: test39
 	@echo "Running " $@
