@@ -1,9 +1,9 @@
 include ../makefile.include	
 CFLAGS=-I..
 
-all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test16a test16b test17 test18 test19 test20 test21 test22 test23 test24 test25 test26  test27 test28 test29 test30 test31 test32 test33 test34 test34 test35 test36 test37 test38 test39 test40 test41 test42 test43 test44 test45 test46 test47 test48 test49 test50 test51 test52 test53
+all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test16a test16b test17 test18 test19 test20 test21 test22 test23 test24 test25 test26  test27 test28 test29 test30 test31 test32 test33 test34 test34 test35 test36 test37 test38 test38a test39 test40 test41 test42 test43 test44 test45 test46 test47 test48 test49 test50 test51 test52 test53
  
-test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17 runtest18 runtest19 runtest20 runtest21 runtest2 runtest23 runtest24 runtest25 runtest26 runtest27 runtest28  runtest29 runtest30 runtest31 runtest32 runtest33 runtest34 runtest35 runtest36 runtest37 runtest38 runtest39 runtest40 runtest41 runtest42 runtest43 runtest44 runtest45 runtest46 runtest47 runtest48 runtest49 runtest50 runtest51 runtest52 runtest53
+test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest17 runtest18 runtest19 runtest20 runtest21 runtest2 runtest23 runtest24 runtest25 runtest26 runtest27 runtest28  runtest29 runtest30 runtest31 runtest32 runtest33 runtest34 runtest35 runtest36 runtest37 runtest38 runtest38a runtest39 runtest40 runtest41 runtest42 runtest43 runtest44 runtest45 runtest46 runtest47 runtest48 runtest49 runtest50 runtest51 runtest52 runtest53
 
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
@@ -131,6 +131,9 @@ test37: test37.o ${RELPATH_VFOBJ} chkopts
 
 test38: test38.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
+
+test38a: test38a.o ${RELPATH_VFOBJ} chkopts
+        -@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
 
 test39: test39.o ${RELPATH_VFOBJ} chkopts
 	-@${CLINKER} -o $@ $@.o ${RELPATH_VFOBJ} ${PETSC_TAO_LIB}
@@ -541,6 +544,15 @@ runtest38: test38
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
+runtest38a: test38a
+        @echo "Running " $@
+        -@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 1';\
+        echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
+        ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+        if (${DIFF} -B results/$@.out $@.out) then true; \
+        else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
+        ${RM} -f $@.out
+
 runtest39: test39
 	@echo "Running " $@
 	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 1';\
@@ -659,6 +671,6 @@ runtest53: test53
 	${RM} -f $@.out
 
 clean::
-	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test16a test16b test17 test18 test19 test20 test21 test22 test23 test24 test25 test26 test27 test28 test29 test30 test31 test32 test33 test34 test35 test36 test37 test38 test39 test40 test41 test42 test43 test44 test46 test47 test48 test49 test50 test51 test52 test53
+	-rm -f test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test16a test16b test17 test18 test19 test20 test21 test22 test23 test24 test25 test26 test27 test28 test29 test30 test31 test32 test33 test34 test35 test36 test37 test38 test38a test39 test40 test41 test42 test43 test44 test46 test47 test48 test49 test50 test51 test52 test53
 	-rm -f runtest*
 	-rm -f TEST*
