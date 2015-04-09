@@ -866,10 +866,6 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscMemcpy(oly,ly1,y_nprocs*sizeof(*oly));CHKERRQ(ierr);
   ierr = PetscMemcpy(olz,lz1,z_nprocs*sizeof(*olz));CHKERRQ(ierr);
   
-  olx[x_nprocs-1]--;
-  oly[y_nprocs-1]--;
-  olz[z_nprocs-1]--;
-  
   bx = (BBmax[0]-BBmin[0])/(nx-1);
   by = (BBmax[1]-BBmin[1])/(ny-1);
   bz = (BBmax[2]-BBmin[2])/(nz-1);
@@ -913,13 +909,16 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   st = ctx->WidthIntLenght/(res);
   if(ctx->flowsolver != FLOWSOLVER_NONE){
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
-                      DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,st,
-                      PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daWScal);CHKERRQ(ierr);
+                      DMDA_STENCIL_BOX,nx,ny,nz,x_nprocs,y_nprocs,z_nprocs,1,st+1,
+                      olx,oly,olz,&ctx->daWScal);CHKERRQ(ierr);
   
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
-                      DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,st,
-                      PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daWVect);CHKERRQ(ierr);
+                      DMDA_STENCIL_BOX,nx,ny,nz,x_nprocs,y_nprocs,z_nprocs,3,st+1,
+                      olx,oly,olz,&ctx->daWVect);CHKERRQ(ierr);
   
+  olx[x_nprocs-1]--;
+  oly[y_nprocs-1]--;
+  olz[z_nprocs-1]--;
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,st,
                       olx,oly,olz,&ctx->daWScalCell);CHKERRQ(ierr);
