@@ -821,13 +821,25 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr        = VecCopy(fields->VIrrev,fields->V);CHKERRQ(ierr);
   ctx->fields = fields;
   
+  
+  
+  
+  
+  
+  
   Vec LocalWRate;
   PetscReal InjVolrate, scale = 0;
   ierr = VecDuplicate(ctx->RegFracWellFlowRate,&LocalWRate);CHKERRQ(ierr);
   ierr = VecSet(ctx->RegFracWellFlowRate,0.0);CHKERRQ(ierr);
   for (c = 0; c < ctx->numfracWells; c++) {
+    if(ctx->fracwell[c].fractype == PENNY){
+      thickness = ctx->pennycrack[ctx->fracwell[c].wellfracindex].thickness;
+    }
+    else{
+      thickness = ctx->rectangularcrack[ctx->fracwell[c].wellfracindex].thickness;
+    }
     ierr = VecSet(LocalWRate,0.0);CHKERRQ(ierr);
-    ierr = VFRegDiracDeltaFunction(LocalWRate,&ctx->fracwell[c],&(ctx->pennycrack[c]),&(ctx->rectangularcrack[c]),ctx,fields->V);CHKERRQ(ierr);
+    ierr = VFRegDiracDeltaFunction(LocalWRate,&ctx->fracwell[c],fields->V,thickness,ctx);CHKERRQ(ierr);
     scale +=  ctx->fracwell[c].Qw;
     ierr = VecAXPY(ctx->RegFracWellFlowRate,1.,LocalWRate);CHKERRQ(ierr);
   }
@@ -858,12 +870,6 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   oly[y_nprocs-1]--;
   olz[z_nprocs-1]--;
   
-  if(ctx->pennycrack[0].thickness > ctx->rectangularcrack[0].thickness){
-    thickness = ctx->pennycrack[0].thickness;
-  }
-  else{
-    thickness = ctx->rectangularcrack[0].thickness;
-  }
   bx = (BBmax[0]-BBmin[0])/(nx-1);
   by = (BBmax[1]-BBmin[1])/(ny-1);
   bz = (BBmax[2]-BBmin[2])/(nz-1);
@@ -902,7 +908,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
       res = bz;
     }
   }
-  ctx->WidthIntLenght = 1.5*(thickness+2*ctx->vfprop.epsilon);
+  ctx->WidthIntLenght = (3+3*ctx->vfprop.epsilon);
   
   st = ctx->WidthIntLenght/(res);
   if(ctx->flowsolver != FLOWSOLVER_NONE){
