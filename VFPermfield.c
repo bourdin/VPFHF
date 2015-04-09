@@ -306,30 +306,21 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
 	PetscReal       tlent1;
 	PetscReal       tlent2;
   PetscReal       n_cc[3] = {0,0,0};
-  Vec             V;
-  Vec             U;
-
   
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daWScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daWScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAGetGhostCorners(ctx->daWScalCell,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
-  
-  ierr = DMCreateGlobalVector(ctx->daWScal,&V);CHKERRQ(ierr);
-  ierr = VecSet(V,0.0);CHKERRQ(ierr);
-  ierr = VecCopy(fields->V,V);CHKERRQ(ierr);
+
   ierr = DMGetLocalVector(ctx->daWScal,&v_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daWScal,V,INSERT_VALUES,v_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daWScal,V,INSERT_VALUES,v_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daWScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daWScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daWScal,v_local,&v_array);CHKERRQ(ierr);
   
-  ierr = DMCreateGlobalVector(ctx->daWVect,&U);CHKERRQ(ierr);
-  ierr = VecSet(U,0.0);CHKERRQ(ierr);
-  ierr = VecCopy(fields->U,U);CHKERRQ(ierr);
   ierr = DMGetLocalVector(ctx->daWVect,&u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(ctx->daWVect,U,INSERT_VALUES,u_local);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(ctx->daWVect,U,INSERT_VALUES,u_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(ctx->daWVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(ctx->daWVect,fields->U,INSERT_VALUES,u_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daWVect,u_local,&u_array);CHKERRQ(ierr);
   
   ierr = DMGetCoordinates(ctx->daScal,&coordinates);CHKERRQ(ierr);
@@ -506,9 +497,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
 	ierr = DMLocalToGlobalBegin(ctx->daScalCell,pmult_local,INSERT_VALUES,fields->pmult);CHKERRQ(ierr);
 	ierr = DMLocalToGlobalEnd(ctx->daScalCell,pmult_local,INSERT_VALUES,fields->pmult);CHKERRQ(ierr);
   
-  ierr = VecDestroy(&U);CHKERRQ(ierr);
-  ierr = VecDestroy(&V);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
+PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
