@@ -832,7 +832,12 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
     ierr = VecAXPY(ctx->RegFracWellFlowRate,1.,LocalWRate);CHKERRQ(ierr);
   }
   ierr = VFRegRateScalingFactor(&InjVolrate,ctx->RegFracWellFlowRate,fields->V,ctx);CHKERRQ(ierr);
-  scale =  scale/InjVolrate;
+  if(scale == 0){
+    scale = 0.;
+  }
+  else{
+    scale =  scale/InjVolrate;
+  }
   ierr = VecScale(ctx->RegFracWellFlowRate,scale);CHKERRQ(ierr);
   ierr = VecDestroy(&LocalWRate);CHKERRQ(ierr);
   
@@ -906,7 +911,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
                       PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daWScal);CHKERRQ(ierr);
   
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
-                      DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,st+1,
+                      DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,st,
                       PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daWVect);CHKERRQ(ierr);
   
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
