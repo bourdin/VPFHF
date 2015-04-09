@@ -102,11 +102,15 @@ typedef enum {
 	RATE
 } WellConstraint;
 
-
 typedef enum {
 	INJECTOR,
 	PRODUCER
 } WellType;
+
+typedef enum {
+  PENNY,
+	RECT
+} WellInFrac;
 
 typedef enum {
 	FRACTURE,
@@ -156,6 +160,8 @@ typedef struct {
 	PetscReal		   rw;
 	WellConstraint condition;
 	WellType		   type;
+  PetscInt       wellfracindex;
+  WellInFrac     fractype;
 	/*
 	 PetscReal    rate;
 	 BCTYPE       BCV;

@@ -15,6 +15,6 @@ extern PetscErrorCode VFWellSetName(VFWell *well,const char name[]);
 extern PetscErrorCode VFDistanceToWell(PetscReal *d,PetscReal *x,VFWell *well);
 extern PetscErrorCode VFWellBuildVAT2(Vec V,VFWell *well,VFCtx *ctx);
 extern PetscErrorCode VFWellBuildVAT1(Vec V,VFWell *well,VFCtx *ctx);
-extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack *crack,VFRectangularCrack *rcrack,VFCtx *ctx, Vec V);
+extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well, Vec V,PetscReal thickness,VFCtx *ctx);
 extern PetscErrorCode VFRegRateScalingFactor(PetscReal *InjectedVolume, Vec Rate, Vec V, VFCtx *ctx);
 #endif /* VFWELL_H */

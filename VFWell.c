@@ -18,6 +18,13 @@ static const char *WellType_Name[] = {
 	0
 };
 
+static const char *VFWellInFracName[] = {
+	"PENNY",
+	"RECT",
+	"",
+	0
+};
+
 #undef __FUNCT__
 #define __FUNCT__ "VFWellGet"
 /*
@@ -44,7 +51,8 @@ extern PetscErrorCode VFWellGet(const char prefix[],VFWell *well)
     ierr = PetscOptionsReal("-rw","\n\t well radius","",well->rw,&well->rw,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsEnum("-constraint","\n\t\n\t well constraint type","",WellConstraint_Name,(PetscEnum)well->condition,(PetscEnum*)&well->condition,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsEnum("-type","\n\t\n\t well type","",WellType_Name,(PetscEnum)well->type,(PetscEnum*)&well->type,PETSC_NULL);CHKERRQ(ierr);
-    
+    ierr = PetscOptionsInt("-wellfracindex","\n\t well-to-fracture index","",well->wellfracindex,&well->wellfracindex,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsEnum("-wellinfrac","\n\t\n\t well-in fractype","",VFWellInFracName,(PetscEnum)well->fractype,(PetscEnum*)&well->fractype,PETSC_NULL);CHKERRQ(ierr);
 	  /*
      ierr = PetscOptionsEnum("-bcV","\n\t boundary condition on V field","",BCTYPE_NAME,(PetscEnum)well->BCV,(PetscEnum*)&(well->BCV),PETSC_NULL);CHKERRQ(ierr);
      */
@@ -331,7 +339,7 @@ extern PetscErrorCode VFFakeWellBuildVAT2(VFWell *well,VFCtx *ctx)
 
 #undef __FUNCT__
 #define __FUNCT__ "VFRegDiracDeltaFunction"
-extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack *crack,VFRectangularCrack *rcrack,VFCtx *ctx, Vec V)
+extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well, Vec V,PetscReal thickness,VFCtx *ctx)
 {
   PetscErrorCode      ierr;
   PetscInt            i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
@@ -341,7 +349,6 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
   PetscReal           dist;
   PetscReal           lx,ly,lz;
   PetscReal           BBmin[3],BBmax[3];
-  PetscReal           thickness;
   
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -355,12 +362,7 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well,VFPennyCrack
   lz = BBmax[2]-BBmin[2];
 	ly = BBmax[1]-BBmin[1];
 	lx = BBmax[0]-BBmin[0];
-  
-  if(crack->thickness > rcrack->thickness)
-    thickness = crack->thickness;
-  else
-    thickness = rcrack->thickness;
-  
+
   for (i = 0; i < 3; i++) x0[i] = well->coords[i];
   
   if(nx == 2){
