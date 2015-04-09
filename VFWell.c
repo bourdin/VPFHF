@@ -21,6 +21,7 @@ static const char *WellType_Name[] = {
 static const char *VFWellInFracName[] = {
 	"PENNY",
 	"RECT",
+  "VFWellInFracName",
 	"",
 	0
 };
@@ -83,9 +84,9 @@ extern PetscErrorCode VFWellCreate(VFWell *well)
   well->Qw = 0.;
   well->rw = 0.;
   well->Pw = 0.;
-  /*
-   well->BCV = NONE;
-   */
+  well->wellfracindex = 0;
+  well->fractype = PENNY;
+
   PetscFunctionReturn(0);
 }
 
