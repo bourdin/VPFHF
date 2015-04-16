@@ -29,6 +29,8 @@
 -fracw0_constraint Rate 
 -fracw0_type injector 
 -fracw0_Qw 5e-1 
+-fracw0_wellfracindex 0
+-fracw0_wellinfrac penny
 -pressurize
 -unilateral none
 -flowsolver FLOWSOLVER_snesstandarDFEM 

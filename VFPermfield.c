@@ -312,7 +312,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daWScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAGetGhostCorners(ctx->daWScalCell,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
-
+  
   ierr = DMGetLocalVector(ctx->daWScal,&v_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalBegin(ctx->daWScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daWScal,fields->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
@@ -362,8 +362,9 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
           for(c = 0; c < 3; c++){
             coordc_array[c] = coordb_array[c]+grad_cc[c]*len;
           }
+          n_cc[2] = n_cc[1] = n_cc[0] = 0;
           lc = sqrt((pow(coordc_array[0]-coorda_array[0],2))+(pow(coordc_array[1]-coorda_array[1],2))+(pow(coordc_array[2]-coorda_array[2],2)));
-          while(lc < ctx->WidthIntLenght && ave_V < 1.0){
+          while(lc < ctx->WidthIntLenght && ave_V < 1.0 && (grad_cc[0]*n_cc[0]+grad_cc[1]*n_cc[1]+grad_cc[2]*n_cc[2] >= 0.)){
             for (ek1 = zs1; ek1 < zs1+zm1; ek1++) {
               for (ej1 = ys1; ej1 < ys1+ym1; ej1++) {
                 for (ei1 = xs1; ei1 < xs1+xm1; ei1++) {
@@ -387,7 +388,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             ierr = CartFEElement3DInit(&ctx->s3D,hwx,hwy,hwz,hx,hy,hz);CHKERRQ(ierr);
             ierr = ComputeUcdotGradVlocal(&cod[1], &ave_V, n_cc, u_array, v_array, ekk, ejj, eii, &ctx->s3D);
             ierr = VFCartFEElement1DInit(&ctx->e1D,len);CHKERRQ(ierr);
-            ierr = IntegrateUcdotGradVlocal(&w_array[ek][ej][ei],cod, &ctx->e1D);            
+            ierr = IntegrateUcdotGradVlocal(&w_array[ek][ej][ei],cod, &ctx->e1D);
             if((n_cc[0] == 0) && (n_cc[1] == 0) && (n_cc[2] == 0)){
               n_cc[0] = grad_cc[0];
               n_cc[1] = grad_cc[1];
@@ -399,19 +400,22 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             }
             tlent1 = sqrt((pow(coords1[0]-coorda_array[0],2))+(pow(coords1[1]-coorda_array[1],2))+(pow(coords1[2]-coorda_array[2],2)));
             tlent2 = sqrt((pow(coords2[0]-coorda_array[0],2))+(pow(coords2[1]-coorda_array[1],2))+(pow(coords2[2]-coorda_array[2],2)));
-
+            
             if(tlent1 > tlent2){
               lc += sqrt((pow(coordc_array[0]-coords1[0],2))+(pow(coordc_array[1]-coords1[1],2))+(pow(coordc_array[2]-coords1[2],2)));
               for(c = 0; c < 3; c++)
                 coordc_array[c] = coords1[c];
+              n_cc[c] = n_cc[c];
             }
             else{
               lc += sqrt((pow(coordc_array[0]-coords2[0],2))+(pow(coordc_array[1]-coords2[1],2))+(pow(coordc_array[2]-coords2[2],2)));
               for(c = 0; c < 3; c++)
                 coordc_array[c] = coords2[c];
+              n_cc[c] = -1*n_cc[c];
             }
             cod[0] = cod[1];
           }
+          n_cc[2] = n_cc[1] = n_cc[0] = 0;
           lc = 0;
           ave_V = 0;
           cod[0] = cod_in;
@@ -419,7 +423,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             coordc_array[c] = coorda_array[c]-grad_cc[c]*len;
           }
           lc = sqrt((pow(coordc_array[0]-coorda_array[0],2))+(pow(coordc_array[1]-coorda_array[1],2))+(pow(coordc_array[2]-coorda_array[2],2)));
-          while(lc < ctx->WidthIntLenght && ave_V < 1.0){
+          while(lc < ctx->WidthIntLenght && ave_V < 1.0 && (-grad_cc[0]*n_cc[0]-grad_cc[1]*n_cc[1]-grad_cc[2]*n_cc[2] >= 0.)){
             for (ek1 = zs1; ek1 < zs1+zm1; ek1++) {
               for (ej1 = ys1; ej1 < ys1+ym1; ej1++) {
                 for (ei1 = xs1; ei1 < xs1+xm1; ei1++) {
@@ -443,7 +447,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             ierr = CartFEElement3DInit(&ctx->s3D,hwx,hwy,hwz,hx,hy,hz);CHKERRQ(ierr);
             ierr = ComputeUcdotGradVlocal(&cod[1], &ave_V, n_cc, u_array, v_array, ekk, ejj, eii, &ctx->s3D);
             ierr = VFCartFEElement1DInit(&ctx->e1D,len);CHKERRQ(ierr);
-            ierr = IntegrateUcdotGradVlocal(&w_array[ek][ej][ei],cod, &ctx->e1D);            
+            ierr = IntegrateUcdotGradVlocal(&w_array[ek][ej][ei],cod, &ctx->e1D);
             if((n_cc[0] == 0) && (n_cc[1] == 0) && (n_cc[2] == 0)){
               n_cc[0] = grad_cc[0];
               n_cc[1] = grad_cc[1];
@@ -457,13 +461,17 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             tlent2 = sqrt((pow(coords2[0]-coorda_array[0],2))+(pow(coords2[1]-coorda_array[1],2))+(pow(coords2[2]-coorda_array[2],2)));
             if(tlent1 > tlent2){
               lc += sqrt((pow(coordc_array[0]-coords1[0],2))+(pow(coordc_array[1]-coords1[1],2))+(pow(coordc_array[2]-coords1[2],2)));
-              for(c = 0; c < 3; c++)
+              for(c = 0; c < 3; c++){
                 coordc_array[c] = coords1[c];
+                n_cc[c] = n_cc[c];
+              }
             }
             else{
               lc += sqrt((pow(coordc_array[0]-coords2[0],2))+(pow(coordc_array[1]-coords2[1],2))+(pow(coordc_array[2]-coords2[2],2)));
-              for(c = 0; c < 3; c++)
+              for(c = 0; c < 3; c++){
                 coordc_array[c] = coords2[c];
+                n_cc[c] = -1*n_cc[c];
+              }
             }
             cod[0] = cod[1];
           }
@@ -497,7 +505,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
 	ierr = DMLocalToGlobalBegin(ctx->daScalCell,pmult_local,INSERT_VALUES,fields->pmult);CHKERRQ(ierr);
 	ierr = DMLocalToGlobalEnd(ctx->daScalCell,pmult_local,INSERT_VALUES,fields->pmult);CHKERRQ(ierr);
   
-PetscFunctionReturn(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -1728,48 +1736,48 @@ extern PetscErrorCode VF_IntegrateOnBoundary(PetscReal *SumnIntegral,Vec vec, FA
 	PetscFunctionReturn(0);
 }
 /*
-#undef __FUNCT__
-#define __FUNCT__ "VF_FastFourierTransforms"
-extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields)
-{
-  PetscErrorCode  ierr;
-	
-  PetscInt		    nx,ny,nz;
-  PetscInt        DIM = 3,dim[3];
-  Vec             x,y,z;
-  
-   PetscFunctionBegin;
-   ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-   dim[0] = nx; dim[1] = ny; dim[2] = nz;
-   ierr = VecCreate(PETSC_COMM_WORLD,&ctx->FFTIn);CHKERRQ(ierr);
-   ierr = VecSetSizes(ctx->FFTIn,PETSC_DECIDE,nx*ny*nz);CHKERRQ(ierr);
-   ierr = VecSetFromOptions(ctx->FFTIn);CHKERRQ(ierr);
-   ierr = VecDuplicate(ctx->FFTIn,&ctx->FFTOut);CHKERRQ(ierr);
-   //  ierr = PetscObjectSetName((PetscObject)ctx->FFTIn, "Real space vector");CHKERRQ(ierr);
-   //  ierr = PetscObjectSetName((PetscObject)ctx->FFTOut, "Reconstructed vector");CHKERRQ(ierr);
-   
-   ierr = VecCopy(fields->pressure,ctx->FFTIn);CHKERRQ(ierr);
-   ierr = MatCreateFFT(PETSC_COMM_WORLD,DIM,dim,MATFFTW,&ctx->KFFT);CHKERRQ(ierr);
-   ierr = MatGetVecsFFTW(ctx->KFFT,&x,&y,&z);CHKERRQ(ierr);
-   ierr = VecScatterPetscToFFTW(ctx->KFFT,ctx->FFTIn,x);CHKERRQ(ierr);
-   //  Apply FFTW_FORWARD and FFTW_BACKWARD
-   
-   ierr = MatMult(ctx->KFFT,x,y);CHKERRQ(ierr);
-   //    ierr = MatMultTranspose(ctx->KFFT,y,z);CHKERRQ(ierr);
-   ierr = VecScatterFFTWToPetsc(ctx->KFFT,y,ctx->FFTOut);CHKERRQ(ierr);
-   
-   ierr = VecCopy(ctx->FFTOut,fields->theta);CHKERRQ(ierr);
-   
-   ierr = VecDestroy(&ctx->FFTIn);CHKERRQ(ierr);
-   ierr = VecDestroy(&ctx->FFTOut);CHKERRQ(ierr);
-   ierr = VecDestroy(&x);CHKERRQ(ierr);
-   ierr = VecDestroy(&y);CHKERRQ(ierr);
-   ierr = VecDestroy(&z);CHKERRQ(ierr);
-   ierr = MatDestroy(&ctx->KFFT);CHKERRQ(ierr);
-   PetscFunctionReturn(0);
-}
-*/
+ #undef __FUNCT__
+ #define __FUNCT__ "VF_FastFourierTransforms"
+ extern PetscErrorCode VF_FastFourierTransforms(VFCtx *ctx, VFFields *fields)
+ {
+ PetscErrorCode  ierr;
+ 
+ PetscInt		    nx,ny,nz;
+ PetscInt        DIM = 3,dim[3];
+ Vec             x,y,z;
+ 
+ PetscFunctionBegin;
+ ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
+ PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+ dim[0] = nx; dim[1] = ny; dim[2] = nz;
+ ierr = VecCreate(PETSC_COMM_WORLD,&ctx->FFTIn);CHKERRQ(ierr);
+ ierr = VecSetSizes(ctx->FFTIn,PETSC_DECIDE,nx*ny*nz);CHKERRQ(ierr);
+ ierr = VecSetFromOptions(ctx->FFTIn);CHKERRQ(ierr);
+ ierr = VecDuplicate(ctx->FFTIn,&ctx->FFTOut);CHKERRQ(ierr);
+ //  ierr = PetscObjectSetName((PetscObject)ctx->FFTIn, "Real space vector");CHKERRQ(ierr);
+ //  ierr = PetscObjectSetName((PetscObject)ctx->FFTOut, "Reconstructed vector");CHKERRQ(ierr);
+ 
+ ierr = VecCopy(fields->pressure,ctx->FFTIn);CHKERRQ(ierr);
+ ierr = MatCreateFFT(PETSC_COMM_WORLD,DIM,dim,MATFFTW,&ctx->KFFT);CHKERRQ(ierr);
+ ierr = MatGetVecsFFTW(ctx->KFFT,&x,&y,&z);CHKERRQ(ierr);
+ ierr = VecScatterPetscToFFTW(ctx->KFFT,ctx->FFTIn,x);CHKERRQ(ierr);
+ //  Apply FFTW_FORWARD and FFTW_BACKWARD
+ 
+ ierr = MatMult(ctx->KFFT,x,y);CHKERRQ(ierr);
+ //    ierr = MatMultTranspose(ctx->KFFT,y,z);CHKERRQ(ierr);
+ ierr = VecScatterFFTWToPetsc(ctx->KFFT,y,ctx->FFTOut);CHKERRQ(ierr);
+ 
+ ierr = VecCopy(ctx->FFTOut,fields->theta);CHKERRQ(ierr);
+ 
+ ierr = VecDestroy(&ctx->FFTIn);CHKERRQ(ierr);
+ ierr = VecDestroy(&ctx->FFTOut);CHKERRQ(ierr);
+ ierr = VecDestroy(&x);CHKERRQ(ierr);
+ ierr = VecDestroy(&y);CHKERRQ(ierr);
+ ierr = VecDestroy(&z);CHKERRQ(ierr);
+ ierr = MatDestroy(&ctx->KFFT);CHKERRQ(ierr);
+ PetscFunctionReturn(0);
+ }
+ */
 #undef __FUNCT__
 #define __FUNCT__ "VF_ComputeRegularizedFracturePressure_local"
 extern PetscErrorCode VF_ComputeRegularizedFracturePressure_local(PetscReal ***press_c_array, PetscReal ***press_array, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e)
@@ -1906,7 +1914,7 @@ extern PetscErrorCode VolumeFromWidth(PetscReal *CrackVolume, VFCtx *ctx, VFFiel
 	PetscReal       myCrackVolumeLocal = 0.,myCrackVolume = 0.;
   PetscReal      ***w_array;
   Vec            w_local;
-
+  
 	
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
@@ -1957,7 +1965,7 @@ extern PetscErrorCode VolumeFromWidth_local(PetscReal *CrackVolume_local, PetscR
 	PetscInt		i, j, k, c;
 	PetscInt		eg;
   PetscReal   *dv_elem[3],*dv_mag_elem;
-
+  
   
 	PetscFunctionBegin;
   ierr = PetscMalloc4(e->ng,&dv_elem[0],
