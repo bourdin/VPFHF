@@ -48,7 +48,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscMalloc(ctx->nlayer * sizeof(VFMatProp),&ctx->matprop);CHKERRQ(ierr);
   ierr = VFMatPropGet(ctx->matprop,ctx->nlayer);CHKERRQ(ierr);
   ierr = VFResPropGet(&ctx->resprop);CHKERRQ(ierr);
-  ierr = VFMatPropFieldsInitialize(ctx, ctx->matprop);
+  //ierr = VFMatPropFieldsInitialize(ctx, ctx->matprop);
 
   if (ctx->printhelp) PetscFunctionReturn(0);
 
@@ -541,24 +541,6 @@ extern PetscErrorCode VFMatPropGet(VFMatProp *matprop,PetscInt n)
     matprop[i].lambda = matprop[i].E * matprop[i].nu / (1. + matprop[i].nu) / (1. - 2. * matprop[i].nu);
     matprop[i].mu     = matprop[i].E / (1. + matprop[i].nu) * .5;
   }
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "VFMatPropFieldsInitialize"
-/*
- VFMatPropFieldsInitialize: Creates material property fields
- */
-extern PetscErrorCode VFMatPropFieldsInitialize(VFCtx *ctx, VFMatProp *matprop)
-{
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-
-  ierr = DMCreateGlobalVector(ctx->daScalCell,&matprop->VecGc);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) matprop->VecGc,"Critical Energy Release Rate");CHKERRQ(ierr);
-  ierr = VecSet(matprop->VecGc,matprop->Gc);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 

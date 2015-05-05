@@ -175,44 +175,6 @@ extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VFPennyNFBuildVAT2"
-/*
- VFPennyNFBuildVAT2:  Build the penny-shaped Natural Fracture (no fracture toughness zone)
- */
-extern PetscErrorCode VFPennyNFBuildVAT2(VFPennyCrack *crack,VFCtx *ctx)
-{
-  PetscErrorCode ierr;
-  PetscInt       ei,ej,ek,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-  PetscReal      ****coords_array;
-  PetscReal      ***Gc_array;
-  PetscReal      x[3];
-  PetscReal      dist;
-
-  PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-
-  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-
-  ierr = DMDAVecGetArray(ctx->daScalCell,ctx->matprop->VecGc,&Gc_array);CHKERRQ(ierr);
-  for (ek = zs; ek < zs+zm; ek++) {
-    for (ej = ys; ej < ys+ym; ej++)
-      for (ei = xs; ei < xs+xm; ei++) {
-        x[2] = coords_array[ek][ej][ei][2];
-        x[1] = coords_array[ek][ej][ei][1];
-        x[0] = coords_array[ek][ej][ei][0];
-        ierr = VFDistanceToPennyCrack(&dist,x,crack);CHKERRQ(ierr);
-        if (dist <= crack->thickness/2.) Gc_array[ek][ej][ei] = 1.e-9;
-      }
-  }
-  ierr = DMDAVecRestoreArray(ctx->daScalCell,ctx->matprop->VecGc,&Gc_array);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-
-#undef __FUNCT__
 #define __FUNCT__ "VFPennyCrackBuildVAT1"
 /*
  VFPennyCrackBuildVAT1:  Build the V-field associated with the array of penny-shaped cracks
