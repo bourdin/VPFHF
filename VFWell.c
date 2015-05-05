@@ -299,46 +299,6 @@ extern PetscErrorCode VFWellBuildVAT2(Vec V,VFWell *well,VFCtx *ctx)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VFFakeWellBuildVAT2"
-/*
- (no fracture toughness zone)
- */
-extern PetscErrorCode VFFakeWellBuildVAT2(VFWell *well,VFCtx *ctx)
-{
-  PetscErrorCode      ierr;
-  PetscInt            ei,ej,ek,nx,ny,nz,xs,xm,ys,ym,zs,zm;
-  PetscReal       ****coords_array;
-  PetscReal        ***Gc_array;
-  PetscReal           x[3];
-  PetscReal           dist;
-  
-  PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  
-  ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  
-  ierr = DMDAVecGetArray(ctx->daScalCell,ctx->matprop->VecGc,&Gc_array);CHKERRQ(ierr);
-  for (ek = zs; ek < zs+zm; ek++) {
-    for (ej = ys; ej < ys+ym; ej++) {
-      for (ei = xs; ei < xs+xm; ei++) {
-        x[2] = coords_array[ek][ej][ei][2];
-        x[1] = coords_array[ek][ej][ei][1];
-        x[0] = coords_array[ek][ej][ei][0];
-        ierr = VFDistanceToWell(&dist,x,well);CHKERRQ(ierr);
-        if(dist <= ctx->well->rw*2.0){
-          Gc_array[ek][ej][ei] = 1.e-9;
-        }
-      }
-    }
-  }
-  ierr = DMDAVecRestoreArray(ctx->daScalCell,ctx->matprop->VecGc,&Gc_array);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "VFRegDiracDeltaFunction"
 extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well, Vec V,PetscReal thickness,VFCtx *ctx)
 {

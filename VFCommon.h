@@ -73,7 +73,7 @@ typedef struct {
 	Vec             phi;        /* porosity                        */
 	Vec             Ks;         /* Bulk modulus of rock            */
 	Vec             Kw;         /* Modulus of liquid               */
-	Vec             VecGc;      /* Fracture toughness              */
+	//Vec             VecGc;      /* Fracture toughness              */
 	PetscReal       Cp;		      /* Specific heat capacity          */
 } VFMatProp; //change them to Vec later
 
@@ -398,6 +398,5 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields);
 extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char nodalName[], const char cellName[]);
 
 extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx);
-extern PetscErrorCode VFMatPropFieldsInitialize(VFCtx *ctx, VFMatProp *matprop);
 
 #endif /* VFCOMMON_H */

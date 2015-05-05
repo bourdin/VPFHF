@@ -834,7 +834,7 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatP
   PetscInt       xs,xm,nx;
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
-  PetscInt       nval,*n;
+  PetscInt       nval,n=3;
   PetscInt       ek,ej,ei,c,i;
   PetscReal      ****perm_array;
   PetscBool      flg;
@@ -843,9 +843,9 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatP
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  flowprop->Kf           = 1.;
-  flowprop->Ks           = 1.;
-  flowprop->phi           = 1.;
+  flowprop->Kf    = 1.;
+  flowprop->Ks    = 1.;
+  flowprop->phi   = 1.;
   flowprop->beta  = 1;                                          /*flow rate conversion constant*/
   flowprop->gamma = 1;                                          /*pressure conversion constant*/
   flowprop->alpha = 1;                                          /*volume conversion constatnt*/
@@ -863,9 +863,9 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatP
   {
     ierr = PetscMalloc(3 * sizeof(PetscReal),&k);CHKERRQ(ierr);
     for (i = 0; i < 3; i++) k[i] = 1.;
-    nval = 3;
+    nval = n;
     ierr = PetscOptionsRealArray("-k","\n\t X,Y & Z components of permeability (default 1.), comma separated","",k,&nval,&flg);CHKERRQ(ierr);
-    if (nval != 3 && nval != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-k",nval,__FUNCT__);
+    if (nval != n && nval != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-k",nval,__FUNCT__);
     ierr = DMDAVecGetArrayDOF(ctx->daVFperm,fields->vfperm,&perm_array);CHKERRQ(ierr);
     for (ek = zs; ek < zs+zm; ek++){
       for (ej = ys; ej < ys+ym; ej++){
