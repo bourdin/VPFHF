@@ -50,6 +50,7 @@ int main(int argc,char **argv)
   PetscReal      targetVol;
   PetscBool      debug=PETSC_FALSE;
   PetscBool      saveall=PETSC_FALSE;
+  int            i;
   
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
@@ -88,8 +89,10 @@ int main(int argc,char **argv)
   ierr  = VecSet(U_s,0.0);CHKERRQ(ierr);
   ierr  = VecSet(U_1,0.0);CHKERRQ(ierr);
   
-  ctx.matprop[0].beta  = 0.;
-  ctx.matprop[0].alpha = 0.;
+  for (i=0;i< ctx.nlayer;i++){
+    ctx.matprop[i].beta  = 0.;
+    ctx.matprop[i].alpha = 0.;
+  }
   ctx.timevalue        = 0;
   
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++) {
