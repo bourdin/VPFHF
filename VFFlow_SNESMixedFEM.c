@@ -58,7 +58,7 @@ extern PetscErrorCode FormSNESIFunction(SNES snes,Vec VelnPress,Vec Func,void *u
 	
 	PetscFunctionBegin;
 	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
-	theta = ctx->flowprop.theta;
+	theta = ctx->theta;
 	one_minus_theta = (1.-theta);
 	ierr = VecDuplicate(ctx->RHSVelP,&VecRHS);CHKERRQ(ierr);
 	ierr = VecCopy(ctx->RHSVelP,VecRHS);CHKERRQ(ierr);

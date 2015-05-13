@@ -9,20 +9,9 @@ static const char banner[] = "\n\nVF:\nNumerical implementation of the variation
 typedef struct {
 	PetscReal   mu;             /* Fluid viscosity              */
 	PetscReal   rho;            /* Fluid density                */
-	PetscReal   phi;            /* porosity */
-	PetscReal   cf;             /* Fluid compressibility        */
-	PetscReal   M_inv;
-	PetscReal   beta;           /* Conversion constant          */
-	PetscReal   gamma;          /* Conversion parameter         */
-	PetscReal   alpha;          /* Conversion parameter         */
-	PetscReal   theta;          /* Time parameter               */
-	PetscReal   timestepsize;   /* Time step size               */
 	PetscReal   g[3];
 	PetscReal   Cp;			        /* Specific heat capacity       */
 	PetscReal   Kf;             /* Modulus of liquid            */
-	PetscReal   Ks;             /* Modulus of solid            */
-	PetscReal   alphabiot;      /* Biot's coeficient            */
-	PetscReal   K_dr;           /* Undrained bulk modulus       */
 } VFFlowProp;
 
 
@@ -70,9 +59,8 @@ typedef struct {
 	PetscReal       Gc;         /* Fracture toughness              */
 	PetscReal       beta;       /* Biot's constant                 */
 	PetscReal       rho;        /* density                         */
-	Vec             phi;        /* porosity                        */
-	Vec             Ks;         /* Bulk modulus of rock            */
-	Vec             Kw;         /* Modulus of liquid               */
+	PetscReal       phi;        /* porosity                        */
+	PetscReal       Ks;         /* Bulk modulus of rock            */
 	//Vec             VecGc;      /* Fracture toughness              */
 	PetscReal       Cp;		      /* Specific heat capacity          */
 } VFMatProp; //change them to Vec later
@@ -373,6 +361,9 @@ typedef struct {
   PetscReal           WidthIntLenght;
   DM                  daWScal;
   DM                  daWVect;
+  PetscReal           theta;          /* Time descritization parameter               */
+  Vec                 M_inv;
+  Vec                 K_dr;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

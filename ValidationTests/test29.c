@@ -3,9 +3,9 @@
  (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
 ./test29 -n 51,51,2 -l 1,1,0.01 -m_inv 1 -ts_dt 0.005 -ts_max_steps 20 -flowsolver FLOWSOLVER_tsMIXEDFEM
-./test29 -n 51,51,2 -l 1,1,0.01 -m_inv 1 -maxtimestep 20 -flowsolver FLOWSOLVER_snesMIXEDFEM -timestepsize 0.005
+./test29 -n 51,51,2 -l 1,1,0.01 -m_inv 1 -maxtimestep 20 -flowsolver FLOWSOLVER_snesMIXEDFEM -timevalue 0.005
  
-./test29 -n 51,51,2 -l 1,1,0.01 -maxtimestep 20 -flowsolver FLOWSOLVER_snesstandardFEM -m_inv 1 -maxtimestep 20 -flowsolver FLOWSOLVER_snesstandarDFEM -P_X0_BC FIXED -P_X1_BC FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -theta 1 -deltat 0.005 -maxtimestep 20 -theta 1 -k 1,1,1 -g 0,0,0 -rhof 0. -mu 1 
+./test29 -n 51,51,2 -l 1,1,0.01 -maxtimestep 20 -flowsolver FLOWSOLVER_snesstandardFEM -m_inv 1 -maxtimestep 20 -flowsolver FLOWSOLVER_snesstandarDFEM -P_X0_BC FIXED -P_X1_BC FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -theta 1 -timevalue 0.005 -maxtimestep 20 -theta 1 -kx 1. -ky 1. -kz 1 -g 0,0,0 -rhof 0. -mu 1 
 
  */
 

@@ -1,6 +1,7 @@
 -l 5,1,1 
 -n 51,2,5
 -flowsolver FLOWSOLVER_snesstandardFEM 
+-flowsolver FLOWSOLVER_snesmixedFEM 
 -E 1 
 -m_inv 0
 -nu 0.2 
@@ -8,11 +9,14 @@
 -beta 1
 -rhof 1
 -mu 1
--k 1,1,1
--m_inv 0
+-kx 1
+-ky 1
+-kz 1
+-kf 1e+310
+-ks 1e+310
 -g 0,0,0
 -maxtimestep 1002 
--deltat 0.01 
+-timevalue 0.01 
 -resflowmechcoupling fixedstress 
 -stress -1.
 -Q_X0_BC_0 FIXED

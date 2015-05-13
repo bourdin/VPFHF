@@ -31,7 +31,7 @@ extern PetscErrorCode FEMTSFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 	ierr = PetscObjectSetName((PetscObject)ctx->PFunct,"RHS of FEM TS flow solver");CHKERRQ(ierr);
 
 	ierr = BCPInit(&ctx->bcP[0],ctx);
-	ierr = GetFlowProp(&ctx->flowprop,&ctx->resprop,ctx->matprop,ctx,fields);CHKERRQ(ierr);
+	ierr = GetFlowProp(&ctx->flowprop,&ctx->resprop,ctx->matprop,ctx,fields,ctx->nlayer);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
 
@@ -73,7 +73,7 @@ extern PetscErrorCode FlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 	ierr = TSSetRHSFunction(ctx->tsP,PETSC_NULL,FormFunction_P,ctx);CHKERRQ(ierr);
   
 	ierr = TSSetSolution(ctx->tsP,fields->pressure);CHKERRQ(ierr);
-	ierr = TSSetInitialTimeStep(ctx->tsP,ctx->current_time,ctx->flowprop.timestepsize);CHKERRQ(ierr);
+	ierr = TSSetInitialTimeStep(ctx->tsP,ctx->current_time,ctx->timevalue);CHKERRQ(ierr);
     ierr = TSSetDuration(ctx->tsP,ctx->maxtimestep,ctx->timevalue);CHKERRQ(ierr);
    
 	ierr = TSMonitorSet(ctx->tsP,FEMTSMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -168,6 +168,8 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	PetscReal      ***source_array;
 	Vec            source_local;
 	PetscReal      hwx,hwy,hwz;
+  PetscReal      ***m_inv_array;
+  Vec            m_inv_local;
 	
 	PetscFunctionBegin;
 	ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -188,6 +190,11 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMGlobalToLocalEnd(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);	
 
+  ierr = DMGetLocalVector(ctx->daScalCell,&m_inv_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScalCell,ctx->M_inv,INSERT_VALUES,m_inv_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScalCell,ctx->M_inv,INSERT_VALUES,m_inv_local);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScalCell,m_inv_local,&m_inv_array);CHKERRQ(ierr);
+
 	ierr = PetscMalloc2(nrow*nrow,&K_local,nrow*nrow,&Klhs_local);CHKERRQ(ierr);
 	ierr = PetscMalloc2(nrow,&RHS_local,nrow,&row);CHKERRQ(ierr);
 	
@@ -199,7 +206,7 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 				
-				ierr = VFFlow_FEM_MatMPAssembly3D_local(Klhs_local,&ctx->flowprop,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);			
+				ierr = VFFlow_FEM_MatMPAssembly3D_local(Klhs_local,&ctx->flowprop,ek,ej,ei,m_inv_array[ek][ej][ei],&ctx->e3D);CHKERRQ(ierr);
                 ierr = VFFlow_FEM_MatKPAssembly3D_local(K_local,&ctx->flowprop,perm_array,ek,ej,ei,&ctx->e3D);					
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -297,6 +304,9 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 
+  ierr = DMDAVecRestoreArray(ctx->daScalCell,m_inv_local,&m_inv_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScalCell,&m_inv_local);CHKERRQ(ierr);
+  
 	ierr = PetscFree2(K_local,Klhs_local);CHKERRQ(ierr);
 	ierr = PetscFree2(RHS_local,row);CHKERRQ(ierr);
 	PetscFunctionReturn(0);

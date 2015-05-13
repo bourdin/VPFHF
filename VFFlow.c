@@ -90,7 +90,7 @@ extern PetscErrorCode FlowSolverInitialize(VFCtx *ctx,VFFields *fields)
 
   PetscFunctionBegin;
     
-	ierr = GetFlowProp(&ctx->flowprop,&ctx->resprop,ctx->matprop,ctx,fields);CHKERRQ(ierr);
+	ierr = GetFlowProp(&ctx->flowprop,&ctx->resprop,ctx->matprop,ctx,fields,ctx->nlayer);CHKERRQ(ierr);
   
   ierr = DMCreateMatrix(ctx->daScal,&ctx->KP);CHKERRQ(ierr);
   ierr = MatSetOption(ctx->KP,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);
@@ -670,17 +670,14 @@ extern PetscErrorCode VFFlow_FEM_MatKPAssembly3D_local(PetscReal *Mat_local,VFFl
    VFFlow_FEM_MassMatPAssembly3D_local
 */
 
-extern PetscErrorCode VFFlow_FEM_MatMPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscInt ek,PetscInt ej,PetscInt ei,VFCartFEElement3D *e)
+extern PetscErrorCode VFFlow_FEM_MatMPAssembly3D_local(PetscReal *Mat_local,VFFlowProp *flowprop,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ACoef_P,VFCartFEElement3D *e)
 {
   PetscInt  g,i1,i2,j1,j2,k1,k2,l;
-  PetscReal ACoef_P;
 
   PetscFunctionBegin;
 /*
   The following properties should be changed to a function of pressure and temperature (and saturation for multi-phase)
 */
-  ACoef_P = flowprop->M_inv;
-
   for (l = 0,k1 = 0; k1 < e->nphiz; k1++){
     for (j1 = 0; j1 < e->nphiy; j1++) {
       for (i1 = 0; i1 < e->nphix; i1++){
@@ -703,12 +700,10 @@ extern PetscErrorCode Flow_Vecg_FEM(PetscReal *Kg_local,VFCartFEElement3D *e,Pet
 {
         PetscInt  i,j,k,l;
         PetscInt  eg;
-        PetscReal beta_c,mu,rho,gamma_c,gx,gy,gz;
+        PetscReal mu,rho,gx,gy,gz;
         PetscReal kx,ky,kz,kxy,kxz,kyz;
         
         PetscFunctionBegin;
-        beta_c  = flowpropty.beta;
-        gamma_c = flowpropty.gamma;
         rho     = flowpropty.rho;
         mu      = flowpropty.mu;
         gx      = flowpropty.g[0];
@@ -728,7 +723,7 @@ extern PetscErrorCode Flow_Vecg_FEM(PetscReal *Kg_local,VFCartFEElement3D *e,Pet
                                 Kg_local[l] = 0.;
                                 for (eg = 0; eg < e->ng; eg++) {
                                         /* Need to multiply by the permability when it is available*/
-                                        Kg_local[l] += -0.5*rho*gamma_c*beta_c/mu*((kx*gx+kxy*gy+kxz*gz)*e->dphi[k][j][i][0][eg]
+                                        Kg_local[l] += -0.5*rho/mu*((kx*gx+kxy*gy+kxz*gz)*e->dphi[k][j][i][0][eg]
                                                                                                                            +(kxy*gx+ky*gy+kyz*gz)*e->dphi[k][j][i][1][eg]
                                                                                                                            +(kxz*gx+kyz*gy+kz*gz)*e->dphi[k][j][i][2][eg])*e->weight[eg];
                                 }
@@ -744,12 +739,10 @@ extern PetscErrorCode VecApplySourceTerms_FEM(PetscReal *Ks_local,PetscReal ***s
 {
         PetscErrorCode ierr;
         PetscInt       i,j,k,l;
-        PetscReal      alpha_c;
         PetscReal      *loc_source;
         PetscInt       eg;
         
         PetscFunctionBegin;
-        alpha_c = ctx->flowprop.alpha;
         ierr   = PetscMalloc(e->ng*sizeof(PetscReal),&loc_source);CHKERRQ(ierr);
         
         for (eg = 0; eg < e->ng; eg++) loc_source[eg] = 0.;
@@ -768,7 +761,7 @@ extern PetscErrorCode VecApplySourceTerms_FEM(PetscReal *Ks_local,PetscReal ***s
                         for (i = 0; i < e->nphix; i++,l++) {
                                 Ks_local[l] = 0.;
                                 for (eg = 0; eg < e->ng; eg++) {
-                                        Ks_local[l] += -loc_source[eg]*e->phi[k][j][i][eg]*e->weight[eg]/alpha_c;
+                                        Ks_local[l] += -loc_source[eg]*e->phi[k][j][i][eg]*e->weight[eg];
                                 }
                         }
                 }
@@ -827,51 +820,86 @@ extern PetscErrorCode FEMSNESMonitor(SNES snes,PetscInt its,PetscReal fnorm,void
 
 #undef __FUNCT__
 #define __FUNCT__ "GetFlowProp"
-extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatProp *matprop,VFCtx *ctx,VFFields *fields)
+extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatProp *matprop,VFCtx *ctx,VFFields *fields,PetscInt n)
 {
   
   PetscErrorCode ierr;
   PetscInt       xs,xm,nx;
   PetscInt       ys,ym,ny;
   PetscInt       zs,zm,nz;
-  PetscInt       nval,n=3;
+  PetscInt       nval;
   PetscInt       ek,ej,ei,c,i;
   PetscReal      ****perm_array;
-  PetscBool      flg;
-  PetscReal      *k,*g;
+  Vec            perm_local;
+  PetscReal      ***m_inv_array;
+  Vec            m_inv_local;
+  PetscReal      ***k_dr_array;
+  Vec            k_dr_local;
+  PetscReal      *kx,*ky,*kz,*g,*prop;
 
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
+  ierr = PetscMalloc(n * sizeof(PetscReal),&prop);CHKERRQ(ierr);
+  ierr = PetscMalloc(n * sizeof(PetscReal),&kx);CHKERRQ(ierr);
+  ierr = PetscMalloc(n * sizeof(PetscReal),&ky);CHKERRQ(ierr);
+  ierr = PetscMalloc(n * sizeof(PetscReal),&kz);CHKERRQ(ierr);
+  ierr = PetscMalloc(3 * sizeof(PetscReal),&g);CHKERRQ(ierr);
   flowprop->Kf    = 1.;
-  flowprop->Ks    = 1.;
-  flowprop->phi   = 1.;
-  flowprop->beta  = 1;                                          /*flow rate conversion constant*/
-  flowprop->gamma = 1;                                          /*pressure conversion constant*/
-  flowprop->alpha = 1;                                          /*volume conversion constatnt*/
-  flowprop->Cp    = 1.;                                         /*Liquid specific heat capacity*/
-  flowprop->cf    = 1.;                                         /*compressibility in psi^{-1}*/
-  flowprop->alphabiot = 	matprop[0].beta;
-  if(nx == 2 || ny == 2 || nz == 2){
-    flowprop->K_dr = (1-matprop[0].nu)*matprop[0].E/((1+matprop[0].nu)*(1-2*matprop[0].nu));
-    flowprop->K_dr = matprop[0].E/(2*(1+matprop[0].nu)*(1-2*matprop[0].nu));
+  flowprop->Cp    = 1.;                                         
+  for(i = 0; i < n; i++){
+    if(nx == 2 || ny == 2 || nz == 2){
+      prop[i] = (1-matprop[i].nu)*matprop[i].E/((1+matprop[i].nu)*(1-2*matprop[i].nu));
+      prop[i] = matprop[i].E/(2*(1+matprop[i].nu)*(1-2*matprop[i].nu));
+    }
+    else{
+      prop[i] = matprop[i].E/(3*(1-2*matprop[i].nu));
+    }
   }
-  else{
-    flowprop->K_dr = matprop[0].E/(3*(1-2*matprop[0].nu));
+  ierr = DMGetLocalVector(ctx->daScalCell,&k_dr_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScalCell,ctx->K_dr,INSERT_VALUES,k_dr_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScalCell,ctx->K_dr,INSERT_VALUES,k_dr_local);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScalCell,k_dr_local,&k_dr_array);CHKERRQ(ierr);
+  for (ek = zs; ek < zs+zm; ek++){
+    for (ej = ys; ej < ys+ym; ej++){
+      for (ei = xs; ei < xs+xm; ei++){
+        k_dr_array[ek][ej][ei] = prop[ctx->layer[ek]];
+      }
+    }
   }
+  ierr = DMDAVecRestoreArray(ctx->daScalCell,k_dr_local,&k_dr_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScalCell,&k_dr_local);CHKERRQ(ierr);
+	ierr = DMLocalToGlobalBegin(ctx->daScalCell,k_dr_local,INSERT_VALUES,ctx->K_dr);CHKERRQ(ierr);
+	ierr = DMLocalToGlobalEnd(ctx->daScalCell,k_dr_local,INSERT_VALUES,ctx->K_dr);CHKERRQ(ierr);
+
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF: flow property options:","");CHKERRQ(ierr);
   {
-    ierr = PetscMalloc(3 * sizeof(PetscReal),&k);CHKERRQ(ierr);
-    for (i = 0; i < 3; i++) k[i] = 1.;
     nval = n;
-    ierr = PetscOptionsRealArray("-k","\n\t X,Y & Z components of permeability (default 1.), comma separated","",k,&nval,&flg);CHKERRQ(ierr);
-    if (nval != n && nval != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-k",nval,__FUNCT__);
-    ierr = DMDAVecGetArrayDOF(ctx->daVFperm,fields->vfperm,&perm_array);CHKERRQ(ierr);
+    for (i = 0; i < n; i++) kx[i] = 1.;
+    ierr = PetscOptionsRealArray("-kx","\n\t Comma seperated X-component of permeability (default 1.)","",kx,&nval,PETSC_NULL);CHKERRQ(ierr);
+    if (nval != n && nval != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-kx",nval,__FUNCT__);
+    
+    nval = n;
+    for (i = 0; i < n; i++) ky[i] = 1.;
+    ierr = PetscOptionsRealArray("-ky","\n\t Comma seperated Y-component of permeability (default 1.)","",ky,&nval,PETSC_NULL);CHKERRQ(ierr);
+    if (nval != n && nval != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-ky",nval,__FUNCT__);
+    
+    nval = n;
+    for (i = 0; i < n; i++) kz[i] = 1.;
+    ierr = PetscOptionsRealArray("-kz","\n\t Comma seperated Z-component of permeability (default 1.)","",kz,&nval,PETSC_NULL);CHKERRQ(ierr);
+    if (nval != n && nval != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-kz",nval,__FUNCT__);
+    
+    ierr = DMGetLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
+    ierr = DMGlobalToLocalBegin(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
+    ierr = DMGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
     for (ek = zs; ek < zs+zm; ek++){
       for (ej = ys; ej < ys+ym; ej++){
         for (ei = xs; ei < xs+xm; ei++){
           for (c = 0; c < 3; c++){
-            perm_array[ek][ej][ei][c] = k[c];
+            perm_array[ek][ej][ei][0] = kx[ctx->layer[ek]];
+            perm_array[ek][ej][ei][1] = ky[ctx->layer[ek]];
+            perm_array[ek][ej][ei][2] = kz[ctx->layer[ek]];
           }
           for (c = 3; c < 6; c++){
             perm_array[ek][ej][ei][c] = 0.;
@@ -879,34 +907,52 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatP
         }
       }
     }
-    ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,fields->vfperm,&perm_array);CHKERRQ(ierr);
-    ierr = PetscFree(k);CHKERRQ(ierr);
-    ierr = PetscMalloc(3 * sizeof(PetscReal),&g);CHKERRQ(ierr);
-    for (i = 0; i < 3; i++) g[i] = 0.;
-    ierr = PetscOptionsRealArray("-g","\n\t X,Y & Z components of gravity (default 0.), comma separated","",g,&nval,&flg);CHKERRQ(ierr);
-    if (nval != 3 && nval != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n",n,"-k",nval,__FUNCT__);
-    for (c = 0; c < 3; c++){
-      flowprop->g[0]  = g[c];
-    }
-    ierr = PetscFree(g);CHKERRQ(ierr);
-    flowprop->theta        = 1.;
-    ierr = PetscOptionsReal("-theta","\n\tTime parameter ","",flowprop->theta,&flowprop->theta,PETSC_NULL);CHKERRQ(ierr);
-    flowprop->phi        = 0.;
-    ierr = PetscOptionsReal("-phi","\n\tPorosity ","",flowprop->phi,&flowprop->phi,PETSC_NULL);CHKERRQ(ierr);
-    flowprop->Ks        = 1.;
-    ierr = PetscOptionsReal("-Ks","\n\tRock modulus ","",flowprop->Ks,&flowprop->Ks,PETSC_NULL);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
+    ierr = DMRestoreLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
+    ierr = DMLocalToGlobalBegin(ctx->daVFperm,perm_local,INSERT_VALUES,fields->vfperm);CHKERRQ(ierr);
+    ierr = DMLocalToGlobalEnd(ctx->daVFperm,perm_local,INSERT_VALUES,fields->vfperm);CHKERRQ(ierr);
+    
     flowprop->Kf        = 1.;
     ierr = PetscOptionsReal("-Kf","\n\tLiquid modulus ","",flowprop->Kf,&flowprop->Kf,PETSC_NULL);CHKERRQ(ierr);
-    flowprop->M_inv        = flowprop->phi/flowprop->Kf+(flowprop->alphabiot-flowprop->phi)/flowprop->Ks;
-    ierr = PetscOptionsReal("-m_inv","\n\tRock compressibility ","",flowprop->M_inv,&flowprop->M_inv,PETSC_NULL);CHKERRQ(ierr);
-    flowprop->timestepsize = 1;
-    ierr = PetscOptionsReal("-deltat","\n\tTime step size compressibility ","",flowprop->timestepsize,&flowprop->timestepsize,PETSC_NULL);CHKERRQ(ierr);
+    for(i = 0; i < n; i++){
+      prop[i] = matprop[i].phi/flowprop->Kf+(matprop[i].beta-matprop[i].phi)/matprop[i].Ks;
+    }
+    ierr = DMGetLocalVector(ctx->daScalCell,&m_inv_local);CHKERRQ(ierr);
+    ierr = DMGlobalToLocalBegin(ctx->daScalCell,ctx->M_inv,INSERT_VALUES,m_inv_local);CHKERRQ(ierr);
+    ierr = DMGlobalToLocalEnd(ctx->daScalCell,ctx->M_inv,INSERT_VALUES,m_inv_local);CHKERRQ(ierr);
+    ierr = DMDAVecGetArray(ctx->daScalCell,m_inv_local,&m_inv_array);CHKERRQ(ierr);
+    for (ek = zs; ek < zs+zm; ek++){
+      for (ej = ys; ej < ys+ym; ej++){
+        for (ei = xs; ei < xs+xm; ei++){
+          m_inv_array[ek][ej][ei] = prop[ctx->layer[ek]];
+        }
+      }
+    }
+    ierr = DMDAVecRestoreArray(ctx->daScalCell,m_inv_local,&m_inv_array);CHKERRQ(ierr);
+    ierr = DMRestoreLocalVector(ctx->daScalCell,&m_inv_local);CHKERRQ(ierr);
+    ierr = DMLocalToGlobalBegin(ctx->daScalCell,m_inv_local,INSERT_VALUES,ctx->M_inv);CHKERRQ(ierr);
+    ierr = DMLocalToGlobalEnd(ctx->daScalCell,m_inv_local,INSERT_VALUES,ctx->M_inv);CHKERRQ(ierr);
+
     flowprop->mu    = 1.;
     ierr = PetscOptionsReal("-mu","\n\tFluid viscosity ","",flowprop->mu,&flowprop->mu,PETSC_NULL);CHKERRQ(ierr);
     
     flowprop->rho    = 1.;
     ierr = PetscOptionsReal("-rhof","\n\tFluid density ","", flowprop->rho,&flowprop->rho,PETSC_NULL);CHKERRQ(ierr);
+    
+    for (i = 0; i < 3; i++) g[i] = 0.;
+    nval = 3;
+    ierr = PetscOptionsRealArray("-g","\n\t X,Y & Z components of gravity (default 0.), comma separated","",g,&nval,PETSC_NULL);CHKERRQ(ierr);
+    if (nval != 3 && nval != 0) SETERRQ3(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting 3 values for option %s, got only %i in %s\n","-k",nval,__FUNCT__);
+    for (c = 0; c < 3; c++){
+      flowprop->g[0]  = g[c];
+    }
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  ierr = PetscFree(kx);CHKERRQ(ierr);
+  ierr = PetscFree(ky);CHKERRQ(ierr);
+  ierr = PetscFree(kz);CHKERRQ(ierr);
+  ierr = PetscFree(prop);CHKERRQ(ierr);
+  ierr = PetscFree(g);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }

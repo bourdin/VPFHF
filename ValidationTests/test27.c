@@ -2,8 +2,8 @@
  test27.c: 3D KSP. Flow problem with source term [pressure = 1/(3*pi^2)*cos(pi*x)*cos(pi*y)*cos(pi*z)]. All pressure boundary condition
  (c) 2012-2014 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
- mpiexec -np 2 ./test27 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESSTANDARDFEM -M_inv 0 -P_X0_BC FIXED -P_X1_BC FIXED -P_Y0_BC FIXED -P_Y1_BC FIXED -P_Z0_BC FIXED -P_Z1_BC FIXED -k 1,1,1 -g 0,0,0 -rhof 0. -mu 1
- ./test25 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_TSMIXEDFEM
+ mpiexec -np 2 ./test27 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESSTANDARDFEM -M_inv 0 -P_X0_BC FIXED -P_X1_BC FIXED -P_Y0_BC FIXED -P_Y1_BC FIXED -P_Z0_BC FIXED -P_Z1_BC FIXED -kx 1. -ky 1. -kz 1 -g 0,0,0 -rhof 0. -mu 1
+ ./test27 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_TSMIXEDFEM
 
  */
 
@@ -74,7 +74,7 @@ int main(int argc,char **argv)
     /*Initialization Set initial flow field values. This case is zero. This will have to be called an initialization function*/
     for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
-      ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
+//      ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
       ierr = VF_StepP(&fields,&ctx);
       ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);

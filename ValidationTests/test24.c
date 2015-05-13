@@ -4,7 +4,7 @@
  
  ./test24 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESMIXEDFEM
  ./test24 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_tSMIXEDFEM
- ./test24 -n 11,11,11 -l 1,1,1 -m_inv 0 -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -k 1,1,1 -g 0,0,0 -rhof 0. -mu 1
+ mpiexec -np 4 ./test24 -n 11,11,11 -l 1,1,1 -ks 1e+310 -kf 1e+310 -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -kx 1. -ky 1. -kz 1. -g 0,0,0 -rhof 0. -mu 1
  
  */
 
@@ -101,7 +101,7 @@ int main(int argc,char **argv)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1_NORM = %f \n 2_norm = %f \n inf_norm = %f \n",norm_1, norm_2,norm_inf);CHKERRQ(ierr);
   }
   
-  ierr = VF_FastFourierTransforms(&ctx,&fields);
+//  ierr = VF_FastFourierTransforms(&ctx,&fields);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);

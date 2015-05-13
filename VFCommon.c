@@ -170,6 +170,12 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->maxtimevalue = 1.;
     ierr              = PetscOptionsReal("-maxtimevalue","\n\tMaximum timevalue","",ctx->maxtimevalue,&ctx->maxtimevalue,PETSC_NULL);CHKERRQ(ierr);
 
+    ctx->timevalue = 1.;
+    ierr              = PetscOptionsReal("-timevalue","\n\t timevalue","",ctx->timevalue,&ctx->timevalue,PETSC_NULL);CHKERRQ(ierr);
+
+    ctx->theta = 1.;
+    ierr              = PetscOptionsReal("-theta","\n\t time descritization paramater","",ctx->theta,&ctx->theta,PETSC_NULL);CHKERRQ(ierr);
+    
     nopt = 6;
     ierr = PetscOptionsRealArray("-BCpres", "\n\tPressure at Boundaries.\n\t (PX0,PX1,PY0,PY1,PZ0,PZ1) negative value if natural BC","",buffer,&nopt,PETSC_NULL);CHKERRQ(ierr);
     if (nopt > 6 && !ctx->printhelp) SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the Pressure BC, got %i in %s\n",nopt,__FUNCT__);
@@ -242,7 +248,6 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   ctx->timestep  = 1;
-  ctx->timevalue = 0.;
   PetscFunctionReturn(0);
 }
 
@@ -486,6 +491,8 @@ extern PetscErrorCode VFMatPropGet(VFMatProp *matprop,PetscInt n)
   PetscReal      beta  = 1.e-4;            /* Normalized by E (MPa) assuming E=10,000 MPa */
   PetscReal      Cp    = 1.;
   PetscReal      rho   = 1.;
+  PetscReal      Ks   = 1.;
+  PetscReal      phi   = 1.;
   int            i;
 
   PetscFunctionBegin;
@@ -521,10 +528,22 @@ extern PetscErrorCode VFMatPropGet(VFMatProp *matprop,PetscInt n)
     ierr = PetscOptionsRealArray("-beta","\n\tComma separated list of Biot constants","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-beta",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].beta = prop[i];
+    
+    nopt = n;
+    for (i = 0; i < n; i++) prop[i] = Ks;
+    ierr = PetscOptionsRealArray("-ks","\n\tComma separated list of rock bulk modulus","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-ks",nopt,__FUNCT__);
+    for (i=0; i< n; i++) matprop[i].Ks = prop[i];
+    
+    nopt = n;
+    for (i = 0; i < n; i++) prop[i] = phi;
+    ierr = PetscOptionsRealArray("-phi","\n\tComma separated list of rock porosity","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-ks",nopt,__FUNCT__);
+    for (i=0; i< n; i++) matprop[i].phi = prop[i];
 
     nopt = n;
     for (i = 0; i < n; i++) prop[i] = rho;
-    ierr = PetscOptionsRealArray("-rho","\n\tComma separated list of reservoir densities","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-rhos","\n\tComma separated list of reservoir densities","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-rho",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].rho = prop[i];
 
@@ -766,6 +785,14 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daScalCell,&ctx->widthc_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->widthc_old,"Average cell width (old)");CHKERRQ(ierr);
   ierr = VecSet(ctx->widthc_old,0.);CHKERRQ(ierr);
+  
+  ierr = DMCreateGlobalVector(ctx->daScalCell,&ctx->M_inv);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->M_inv,"Inverse Biot's Modulus");CHKERRQ(ierr);
+  ierr = VecSet(ctx->M_inv,0.);CHKERRQ(ierr);
+  
+  ierr = DMCreateGlobalVector(ctx->daScalCell,&ctx->K_dr);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject) ctx->K_dr,"Drained modulus");CHKERRQ(ierr);
+  ierr = VecSet(ctx->K_dr,0.);CHKERRQ(ierr);
   
   /*
    Create optional penny-shaped and rectangular cracks
@@ -1299,7 +1326,9 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&fields->width);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->widthc);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->widthc_old);CHKERRQ(ierr);
-  
+  ierr = VecDestroy(&ctx->M_inv);CHKERRQ(ierr);
+  ierr = VecDestroy(&ctx->K_dr);CHKERRQ(ierr);
+
   ierr = PetscFree(ctx->fracwell);CHKERRQ(ierr);
   ierr = PetscFree(ctx->well);CHKERRQ(ierr);
 
