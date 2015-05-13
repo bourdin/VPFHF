@@ -52,7 +52,7 @@ extern PetscErrorCode FEMSNESFlowSolverInitialize(VFCtx *ctx, VFFields *fields)
 
 	ierr = BCPInit(&ctx->bcP[0],ctx);
 
-	ierr = GetFlowProp(&ctx->flowprop,&ctx->resprop,ctx->matprop,ctx,fields);CHKERRQ(ierr);
+	ierr = GetFlowProp(&ctx->flowprop,&ctx->resprop,ctx->matprop,ctx,fields,ctx->nlayer);CHKERRQ(ierr);
 //	ierr = SETFlowBC(&ctx->bcP[0],&ctx->bcQ[0],ctx->flowcase);CHKERRQ(ierr);	// Currently BCpres is a PetscOption received from command line. Also done in test35
 //	ierr = SETBoundaryTerms_P(ctx,fields);CHKERRQ(ierr); // Set fields.pressure according to BC & IC
 	PetscFunctionReturn(0);
@@ -163,11 +163,13 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 	PetscReal      time_theta,time_one_minus_theta;	
 	PetscReal      hwx,hwy,hwz;
 	MatStructure   flg;
+  PetscReal      ***m_inv_array;
+  Vec            m_inv_local;
 	
 	PetscFunctionBegin;
 	flg = SAME_NONZERO_PATTERN;
-	theta = ctx->flowprop.theta;
-	timestepsize = ctx->flowprop.timestepsize;
+	theta = ctx->theta;
+	timestepsize = ctx->timevalue;
 	time_theta = theta * timestepsize;
 	time_one_minus_theta = -1.*(1.-theta)*timestepsize;
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -187,7 +189,11 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 	ierr = DMGetLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalBegin(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daVFperm,ctx->Perm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);	
+	ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
+  ierr = DMGetLocalVector(ctx->daScalCell,&m_inv_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScalCell,ctx->M_inv,INSERT_VALUES,m_inv_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScalCell,ctx->M_inv,INSERT_VALUES,m_inv_local);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScalCell,m_inv_local,&m_inv_array);CHKERRQ(ierr);
 	ierr = PetscMalloc2(nrow*nrow,&K_local,nrow*nrow,&M_local);CHKERRQ(ierr);
 	ierr = PetscMalloc2(nrow,&RHS_local,nrow,&row);CHKERRQ(ierr);
 	for (ek = zs; ek < zs+zm; ek++) {
@@ -198,7 +204,7 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 				hz   = coords_array[ek+1][ej][ei][2]-coords_array[ek][ej][ei][2];
 				ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
 
-				ierr = VFFlow_FEM_MatMPAssembly3D_local(M_local,&ctx->flowprop,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);
+				ierr = VFFlow_FEM_MatMPAssembly3D_local(M_local,&ctx->flowprop,ek,ej,ei,m_inv_array[ek][ej][ei],&ctx->e3D);CHKERRQ(ierr);
         ierr = VFFlow_FEM_MatKPAssembly3D_local(K_local,&ctx->flowprop,perm_array,ek,ej,ei,&ctx->e3D);CHKERRQ(ierr);			
 				for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
 					for (j = 0; j < ctx->e3D.nphiy; j++) {
@@ -306,6 +312,9 @@ extern PetscErrorCode FormSNESMatricesnVector_P(Mat Kneu,Mat Kalt,Vec RHS,VFCtx 
 	
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 
+  ierr = DMDAVecRestoreArray(ctx->daScalCell,m_inv_local,&m_inv_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScalCell,&m_inv_local);CHKERRQ(ierr);
+  
 	ierr = PetscFree2(K_local,M_local);CHKERRQ(ierr);
 	ierr = PetscFree2(RHS_local,row);CHKERRQ(ierr);	
 	ierr = MatDestroy(&M);CHKERRQ(ierr);
@@ -325,8 +334,8 @@ extern PetscErrorCode FormSNESIFunction_P(SNES snes,Vec pressure,Vec Func,void *
 	
 	PetscFunctionBegin;
 	ierr = VecSet(Func,0.0);CHKERRQ(ierr);
-	timestepsize = ctx->flowprop.timestepsize;
-	theta = ctx->flowprop.theta;
+	timestepsize = ctx->timevalue;
+	theta = ctx->theta;
 	dt_dot_theta = timestepsize*theta;
 	dt_dot_one_minus_theta = timestepsize*(1.-theta);
 	ierr = VecDuplicate(ctx->RHSP,&VecRHS);CHKERRQ(ierr);

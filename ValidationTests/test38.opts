@@ -1,6 +1,8 @@
 -n 101,2,101 
 -l 50,1,50 
--k 1e-16,1e-16,1e-16
+-kx 1e-16
+-ky 1e-16
+-kz 1e-16
 -phi 0.2
 -Ks 2
 -Kf 0.125
@@ -11,7 +13,7 @@
 -rhof 1.0
 -g 0,0,0
 -maxtimestep 3000 
--deltat 0.5  
+-timevalue 0.5  
 -eta 1e-8 
 -Gc 5e-6
 -theta 1.

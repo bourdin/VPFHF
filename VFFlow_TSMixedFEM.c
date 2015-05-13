@@ -354,22 +354,20 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	Vec            perm_local;
 	PetscReal      hx,hy,hz;
 	PetscReal      *KA_local,*KB_local,*KD_local,*KBTrans_local,*Klhs_local;
-	PetscReal      alpha_c;
 	PetscInt       nrow = ctx->e3D.nphix*ctx->e3D.nphiy*ctx->e3D.nphiz;
 	MatStencil     *row,*row1;
 	PetscReal      ***source_array;
 	Vec            source_local;
-	PetscReal      M_inv;
 	FACE           face;
 	PetscReal      ***prebc_array;
 	Vec            prebc_local;
 	PetscReal      hwx, hwy, hwz;	
 	PetscReal      ***v_array;
 	Vec            v_local;
+  PetscReal      ***m_inv_array;
+  Vec            m_inv_local;
 
 	PetscFunctionBegin;
-	M_inv     = ctx->flowprop.M_inv;
-	alpha_c = ctx->flowprop.alpha;
 	ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 		// This line ensures that the number of cells is one less than the number of nodes. Force processing of cells to stop once the second to the last node is processed 
@@ -396,6 +394,10 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMGlobalToLocalBegin(ctx->daScal,ctx->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daScal,ctx->V,INSERT_VALUES,v_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
+  ierr = DMGetLocalVector(ctx->daScalCell,&m_inv_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(ctx->daScalCell,ctx->M_inv,INSERT_VALUES,m_inv_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd(ctx->daScalCell,ctx->M_inv,INSERT_VALUES,m_inv_local);CHKERRQ(ierr);
+  ierr = DMDAVecGetArray(ctx->daScalCell,m_inv_local,&m_inv_array);CHKERRQ(ierr);
 	ierr = PetscMalloc5(nrow*nrow,&KA_local,
 						nrow*nrow,&KB_local,
 						nrow*nrow,&KD_local,
@@ -414,7 +416,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 				/*	This computes the local contribution of the global A matrix	*/
         ierr = VF_MatA_local(Klhs_local,&ctx->e3D,ek,ej,ei,v_array);CHKERRQ(ierr);
 				for (l = 0; l < nrow*nrow; l++) {
-					Klhs_local[l] = -1.*M_inv*Klhs_local[l]/alpha_c;
+					Klhs_local[l] = -1.*m_inv_array[ek][ej][ei]*Klhs_local[l];
 				}
 				for (c = 0; c < veldof; c++) {
           ierr = Flow_MatA(KA_local,&ctx->e3D,ek,ej,ei,c,&ctx->flowprop,perm_array,v_array);CHKERRQ(ierr);
@@ -626,6 +628,8 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
 	ierr = DMRestoreLocalVector(ctx->daScal,&prebc_local);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx->daScal,v_local,&v_array);CHKERRQ(ierr);
 	ierr = DMRestoreLocalVector(ctx->daScal,&v_local);CHKERRQ(ierr);
+  ierr = DMDAVecRestoreArray(ctx->daScalCell,m_inv_local,&m_inv_array);CHKERRQ(ierr);
+  ierr = DMRestoreLocalVector(ctx->daScalCell,&m_inv_local);CHKERRQ(ierr);
 	ierr = PetscFree5(KA_local,KB_local,KD_local,KBTrans_local,Klhs_local);CHKERRQ(ierr);
 	ierr = PetscFree3(RHS_local,row,row1);CHKERRQ(ierr);
 

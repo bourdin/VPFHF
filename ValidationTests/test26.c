@@ -2,7 +2,7 @@
  test26.c: 3D KSP. Flow problem with source term [pressure = 1/(3*pi^2)*cos(pi*x)*cos(pi*y)*cos(pi*z)]. All velocity boundary condition
  (c) 2012-2014 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
-mpiexec ./test26 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -k 1,1,1 -g 0,0,0 -rhof 0. -mu 1
+mpiexec ./test26 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -kx 1. -ky 1. -kz 1 -g 0,0,0 -rhof 0. -mu 1
  ./test26 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_TSMIXEDFEM
  
  */
@@ -74,7 +74,6 @@ int main(int argc,char **argv)
   else{
     for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
-      ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
       ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
       ierr = VF_StepP(&fields,&ctx);
       ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);

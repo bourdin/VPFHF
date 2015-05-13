@@ -135,7 +135,7 @@ extern PetscErrorCode FormSNESHeatIFunction(SNES snes,Vec T,Vec Func,void *user)
 	Vec             VecRHS;
 	
 	PetscFunctionBegin;
-	theta = ctx->flowprop.theta;
+	theta = ctx->theta;
 	one_minus_theta = (1.-theta);
 	
 	ierr = VecDuplicate(ctx->RHST,&VecRHS);CHKERRQ(ierr);
@@ -189,8 +189,8 @@ extern PetscErrorCode FormHeatMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
 	Vec            v_local;
 	
 	PetscFunctionBegin;
-	timestepsize = ctx->flowprop.timestepsize;	
-	theta = ctx->flowprop.theta;
+	timestepsize = ctx->timevalue;
+	theta = ctx->theta;
 	rho_liq_array = ctx->flowprop.rho;
 	Cp_liq_array = ctx->flowprop.Cp;
 	rho_sol_array = ctx->matprop[0].rho;
