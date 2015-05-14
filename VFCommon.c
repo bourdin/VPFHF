@@ -913,9 +913,9 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
       res = bz;
     }
   }
-  ctx->WidthIntLenght = (3+3*ctx->vfprop.epsilon);
+  ctx->WidthIntLenght = (3*ctx->vfprop.epsilon);
   
-  st = ctx->WidthIntLenght/(res);
+  st = ctx->WidthIntLenght/(res)+3;
   if(ctx->flowsolver != FLOWSOLVER_NONE){
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,x_nprocs,y_nprocs,z_nprocs,1,st+1,
