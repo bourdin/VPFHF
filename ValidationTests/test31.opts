@@ -18,7 +18,7 @@
 -maxtimestep 1002 
 -timevalue 0.01 
 -resflowmechcoupling fixedstress 
--stress -1.
+-F -2.5
 -Q_X0_BC_0 FIXED
 -Q_X1_BC_0 FIXED
 -Q_Y0_BC_1 FIXED
