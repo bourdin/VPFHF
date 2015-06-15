@@ -227,24 +227,22 @@ extern PetscErrorCode VF_IntegrateDisplacement_local(Vec Uv,Vec Uc,VFCtx *ctx)
 
 #undef __FUNCT__
 #define __FUNCT__ "ComputeUcdotGradVlocal"
-extern PetscErrorCode ComputeUcdotGradVlocal(PetscReal *cod, PetscReal *v_elem, PetscReal *n_elem, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s)
+extern PetscErrorCode ComputeUcdotGradVlocal(PetscReal *cod, PetscReal *grad_elem, PetscReal *n_elem, PetscReal ****u_array, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s)
 {
 	PetscInt        k, j, i;
 	PetscInt        c;
 	PetscReal       dv_elem[3],u_elem[3];
   PetscReal       dv_mag_elem = 0;
+  PetscReal       scale = 1.0,value = .0
   
 	PetscFunctionBegin;
   for (c = 0; c < 3; c++){
-    *v_elem = 0;
-    n_elem[c] = 0;
     dv_elem[c] = 0;
     u_elem[c] = 0;
   }
   for (k = 0; k < s->nphiz; k++) {
     for (j = 0; j < s->nphiy; j++) {
       for (i = 0; i < s->nphix; i++) {
-        *v_elem += v_array[ek+k][ej+j][ei+i] * s->phi[k][j][i];
         for (c = 0; c < 3; c++){
           dv_elem[c] += v_array[ek+k][ej+j][ei+i] * s->dphi[k][j][i][c];
           u_elem[c] += u_array[ek+k][ej+j][ei+i][c]*s->phi[k][j][i];
@@ -260,9 +258,14 @@ extern PetscErrorCode ComputeUcdotGradVlocal(PetscReal *cod, PetscReal *v_elem, 
   {
     n_elem[0] = n_elem[1] = n_elem[2] = dv_mag_elem = 0;
   }
+  
+  value = sqrt(grad_elem[0]*n_elem[0]+grad_elem[1]*n_elem[1]+grad_elem[2]*n_elem[2]);
+  if(value < 0.9999){
+    scale = 1.;
+  }
   *cod = 0;
   for (c = 0; c < 3; c++){
-    *cod += dv_elem[c]*u_elem[c];
+    *cod += scale*dv_elem[c]*u_elem[c];
   }
   PetscFunctionReturn(0);
 }
@@ -350,11 +353,12 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
         hwz = hz/2.;
         ierr = VFCartFEElement3DInit(&ctx->e3D,hx,hy,hz);CHKERRQ(ierr);
         ierr = CartFEElement3DInit(&ctx->s3D,hwx,hwy,hwz,hx,hy,hz);CHKERRQ(ierr);
-        ierr = VF_ComputeCellCenterVGradient_local(&ave_V,grad_cc, v_array, ek, ej, ei, &ctx->s3D);
+        ierr = ComputeAverageVlocal(&ave_V, v_array, ek, ej, ei, &ctx->s3D);
+        ierr = ComputeCellCenterGradV_local(grad_cc, v_array, ek, ej, ei, &ctx->s3D);
         w_array[ek][ej][ei] = 0;
         len = sqrt(pow(grad_cc[0]*hx,2)+pow(grad_cc[1]*hy,2)+pow(grad_cc[2]*hz,2))/20;
         if(ave_V < 1.0 && ave_V > 0.0){
-          ierr = ComputeUcdotGradVlocal(&cod[0], &ave_V, n_cc, u_array, v_array, ek, ej, ei, &ctx->s3D);
+          ierr = ComputeUcdotGradVlocal(&cod[0], grad_cc, n_cc, u_array, v_array, ek, ej, ei, &ctx->s3D);
           cod_in = cod[0];
           coorda_array[0] = coordb_array[0] = coordc_array[0] = (coords_array[ek][ej][ei+1][0]+coords_array[ek][ej][ei][0])/2.;
           coorda_array[1] = coordb_array[1] = coordc_array[1] = (coords_array[ek][ej+1][ei][1]+coords_array[ek][ej][ei][1])/2.;
@@ -386,7 +390,8 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             hwy = coordc_array[1]-coords_array[ekk][ejj][eii][1];
             hwz = coordc_array[2]-coords_array[ekk][ejj][eii][2];
             ierr = CartFEElement3DInit(&ctx->s3D,hwx,hwy,hwz,hx,hy,hz);CHKERRQ(ierr);
-            ierr = ComputeUcdotGradVlocal(&cod[1], &ave_V, n_cc, u_array, v_array, ekk, ejj, eii, &ctx->s3D);
+            ierr = ComputeAverageVlocal(&ave_V, v_array, ekk, ejj, eii, &ctx->s3D);
+            ierr = ComputeUcdotGradVlocal(&cod[1], grad_cc, n_cc, u_array, v_array, ekk, ejj, eii, &ctx->s3D);
             ierr = VFCartFEElement1DInit(&ctx->e1D,len);CHKERRQ(ierr);
             ierr = IntegrateUcdotGradVlocal(&w_array[ek][ej][ei],cod, &ctx->e1D);
             if((n_cc[0] == 0) && (n_cc[1] == 0) && (n_cc[2] == 0)){
@@ -445,7 +450,8 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             hwy = coordc_array[1]-coords_array[ekk][ejj][eii][1];
             hwz = coordc_array[2]-coords_array[ekk][ejj][eii][2];
             ierr = CartFEElement3DInit(&ctx->s3D,hwx,hwy,hwz,hx,hy,hz);CHKERRQ(ierr);
-            ierr = ComputeUcdotGradVlocal(&cod[1], &ave_V, n_cc, u_array, v_array, ekk, ejj, eii, &ctx->s3D);
+            ierr = ComputeAverageVlocal(&ave_V, v_array, ekk, ejj, eii, &ctx->s3D);
+            ierr = ComputeUcdotGradVlocal(&cod[1], grad_cc, n_cc, u_array, v_array, ekk, ejj, eii, &ctx->s3D);
             ierr = VFCartFEElement1DInit(&ctx->e1D,len);CHKERRQ(ierr);
             ierr = IntegrateUcdotGradVlocal(&w_array[ek][ej][ei],cod, &ctx->e1D);
             if((n_cc[0] == 0) && (n_cc[1] == 0) && (n_cc[2] == 0)){
@@ -475,9 +481,9 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             }
             cod[0] = cod[1];
           }
-        }
-        if(w_array[ek][ej][ei] < 0){
-          w_array[ek][ej][ei] = 0;
+          if(w_array[ek][ej][ei] < 0){
+            w_array[ek][ej][ei] = 0;
+          }
         }
         pmult_array[ek][ej][ei] = pow(w_array[ek][ej][ei],3)/12.;
 			}
@@ -509,6 +515,24 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "ComputeAverageVlocal"
+extern PetscErrorCode ComputeAverageVlocal(PetscReal *v_elem, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s)
+{
+	PetscInt        k, j, i;
+  
+	PetscFunctionBegin;
+  *v_elem = 0;
+  for (k = 0; k < s->nphiz; k++) {
+    for (j = 0; j < s->nphiy; j++) {
+      for (i = 0; i < s->nphix; i++) {
+        *v_elem += v_array[ek+k][ej+j][ei+i] * s->phi[k][j][i];
+      }
+    }
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "IntegrateUcdotGradVlocal"
 extern PetscErrorCode IntegrateUcdotGradVlocal(PetscReal *w_ave, PetscReal *cod, VFCartFEElement1D *e)
 {
@@ -534,8 +558,8 @@ extern PetscErrorCode IntegrateUcdotGradVlocal(PetscReal *w_ave, PetscReal *cod,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "VF_ComputeCellCenterVGradient_local"
-extern PetscErrorCode VF_ComputeCellCenterVGradient_local(PetscReal *ave_v, PetscReal *grad_cc, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s)
+#define __FUNCT__ "ComputeCellCenterGradV_local"
+extern PetscErrorCode ComputeCellCenterGradV_local(PetscReal *grad_cc, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s)
 {
   PetscInt        k, j, i;
 	PetscInt        c;
@@ -545,11 +569,9 @@ extern PetscErrorCode VF_ComputeCellCenterVGradient_local(PetscReal *ave_v, Pets
   for (c = 0; c < 3; c++){
     grad_cc[c] = 0;
   }
-  *ave_v = 0;
   for (k = 0; k < s->nphiz; k++) {
     for (j = 0; j < s->nphiy; j++) {
       for (i = 0; i < s->nphix; i++) {
-        *ave_v += v_array[ek+k][ej+j][ei+i] * s->phi[k][j][i];
         for (c = 0; c < 3; c++){
           grad_cc[c] += v_array[ek+k][ej+j][ei+i] * s->dphi[k][j][i][c];
         }
@@ -566,7 +588,6 @@ extern PetscErrorCode VF_ComputeCellCenterVGradient_local(PetscReal *ave_v, Pets
   {
     grad_cc[0] = grad_cc[1] = grad_cc[2] = v_mag = 0;
   }
-  
   PetscFunctionReturn(0);
 }
 

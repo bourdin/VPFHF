@@ -1,12 +1,11 @@
 /*
- test36.c: 1D. Flow problem with source term = 1 and Homogeneous pressure boundary conditions on all sides. Analytical solution is p = x(x-1)/2
- (c) 2010-2012 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
- 
- make clean;make test36;clear
-./test36 -n 101,2,101 -l 1,0.01,1  -E 17 -0 -nu 0.2 -npc 1 -pc0_r 0.2 -pc0_center 0.5,0.005,0.5 -epsilon 0.04 -pc0_theta 0 -pc0_phi 0. -pc0_thickness 0.025 -atnum 1 -Gc 5e6
- 
- 
- */
+ *  test38.c: 2D/3D. Coupled reservoir and fracture flow example.
+ *   (c) 2012-2014 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
+ *
+ *    ./test38 -options_file test38.opts
+ *     ./test38 -options_file test38_1.opts  -U_snes_monitor   -u_ksp_monitor -alpha 0 -beta 0 -insitumin 0,0,0,0,0,0 -insitumax 0,0,0,0,0,0 -eta 1.e-3 -unilateral nocompression
+ *
+ *      */
 
 #include "petsc.h"
 #include "VFCartFE.h"
@@ -22,172 +21,93 @@ VFFields            fields;
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
-{	
+{
 	PetscErrorCode  ierr;
-	PetscViewer		viewer;
-	PetscViewer     logviewer;
-	char			filename[FILENAME_MAX];
-	PetscInt		i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm,ite;
-	PetscReal		BBmin[3],BBmax[3];
-	PetscReal		****coords_array;
-	PetscReal		hx,hy,hz;
-	PetscReal		lx,ly,lz;
-  PetscInt    xs1,xm1,ys1,ym1,zs1,zm1;
-  PetscReal      ****bcu_array;
-  PetscReal      ****u_array;
-
-
+	PetscViewer     viewer,volviewer;
+	char            filename[FILENAME_MAX];
+  PetscReal       errVP=1e+10;
+  Vec             Pold,Vold;
+  PetscReal       pmax;
+  PetscReal       InjVolrate, Q_inj;
+  PetscReal       crackvolume_old = 0;
+  PetscReal       vol,vol1,vol2,vol3,vol4,vol5;
+  PetscReal       p = 1e-6;
+  PetscInt        altminit = 0;
+  PetscReal       pw = 0,pw_old = 0;
+  PetscReal       ini_pressure;
+  PetscReal       volume;
+  PetscReal       errV=1e+10;
+  Vec             U_1,P_1;
+  
+  
+  
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
-	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-	ierr = VecSet(fields.U,0.);CHKERRQ(ierr);
-	ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
-	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = VecSet(fields.BCU,0.0);CHKERRQ(ierr);
-  ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
-  
-  
-  
-  
-
-
-  
-	lz = BBmax[2]-BBmin[2];
-	ly = BBmax[1]-BBmin[1];
-	lx = BBmax[0]-BBmin[0];
-	hx = lx/(nx-1);
-	hy = ly/(nx-1);
-	hz = lz/(nz-1);
-  for(k = zs; k < zs+zm; k++){
-    for (j = ys; j < ys+ym; j++) {
-      for (i = xs; i < xs+xm; i++) {
-        if(k == 0){
-          bcu_array[k][j][i][2] = -0.1;
-          bcu_array[k][j][i][0] = -0.;
-        }
-        if(k == nz-1){
-          bcu_array[k][j][i][2] = 0.5;
-          bcu_array[k][j][i][0] = 0.;
-        }
-      }
-    }
-  }
-  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.BCU,&bcu_array);CHKERRQ(ierr);
-/*      Mechanical model settings       */
-	for (i = 0; i < 6; i++) {
-		ctx.bcV[0].face[i] = NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].face[i] = NONE;
-		}
-	}
-	for (i = 0; i < 12; i++) {
-		ctx.bcV[0].edge[i] = NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].edge[i] = NONE;
-		}
-	}
-	for (i = 0; i < 8; i++) {
-		ctx.bcV[0].vertex[i] = NONE;
-		for (j = 0; j < 3; j++) {
-			ctx.bcU[j].vertex[i] = NONE;
-		}
-	}
-  ctx.bcU[0].face[X0]= ZERO;
-  ctx.bcU[1].face[X0]= ZERO;
-  
-  ctx.bcU[0].face[X1]= ZERO;
-  ctx.bcU[1].face[X1]= ZERO;
-  
-  
-  ctx.bcU[0].face[Z0]= ZERO;
-  ctx.bcU[1].face[Z0]= ZERO;
-  ctx.bcU[2].face[Z0]= FIXED;
-  
-  ctx.bcU[0].face[Z1]= ZERO;
-  ctx.bcU[1].face[Z1]= ZERO;
-  ctx.bcU[2].face[Z1]= FIXED;
-
-  ctx.bcU[1].face[Y0]= ZERO;
-  ctx.bcU[1].face[Y1]= ZERO;
-  
-  ctx.bcV[0].face[Z0] = ONE;
-  ctx.bcV[0].face[Z1] = ONE;
-  
-	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-  ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.thetaRef,0.0);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressure,0);CHKERRQ(ierr);
-  ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
-  
+  ctx.FlowDisplCoupling = PETSC_TRUE;
+  ctx.ResFlowMechCoupling = FIXEDSTRESS;
+  ctx.hasInsitu        = PETSC_FALSE;
+  ctx.FractureFlowCoupling = PETSC_TRUE;
+  ctx.hasFluidSources = PETSC_FALSE;
+  ctx.hasFlowWells = PETSC_TRUE;
+  ierr = VecDuplicate(fields.pressure,&Pold);CHKERRQ(ierr);
+  ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
+  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
+  ierr = PetscViewerSetType(viewer,PETSCVIEWERASCII);CHKERRQ(ierr);
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.pres",ctx.prefix);CHKERRQ(ierr);
+  ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(viewer,"Time step \t Timestepsize \t TotalTime \t Pressure \t MaxPressure \t TotVolumeInj  \t FracVolume \t SurfaceEnergy \t ElasticEnergy \t PressureWork \t TotalEnergy\n");CHKERRQ(ierr);
+  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&volviewer);CHKERRQ(ierr);
+  ierr = PetscViewerSetType(volviewer,PETSCVIEWERASCII);CHKERRQ(ierr);
+  ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.vol",ctx.prefix);CHKERRQ(ierr);
+  ierr = PetscViewerFileSetName(volviewer,filename);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(volviewer,"Time step \t Timestepsize \t TotalTime \t Pressure \t MaxPressure \t VolumeInj  \t FracVolume \t ModVolume \t StrainVolume \t SurfFlux \t VolBalance \t LeakOffVolume \t Volume4rmW \n");CHKERRQ(ierr);
+  ierr = VolumetricFractureWellRate(&InjVolrate,&ctx,&fields);CHKERRQ(ierr);
+  Q_inj = InjVolrate;
+  ierr = PetscPrintf(PETSC_COMM_WORLD," \n\n INITIALIZATION TO COMPUTE INITIAL PRESSURE TO CREATE FRACTURE WITH INITIAL VOLUME AT INJECTION RATE = %e ......\n",InjVolrate);CHKERRQ(ierr);
+  p = 0;
   ctx.timestep = 0;
+  ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
+  
+  ierr = VecDuplicate(fields.U,&U_1);CHKERRQ(ierr);
+  ierr = VecDuplicate(fields.pressure,&P_1);CHKERRQ(ierr);
+  ctx.hasInsitu        = PETSC_TRUE;
+
+  ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
+  ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-  ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
+  ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
+  ierr = UpdateFractureWidth(&ctx,&fields);CHKERRQ(ierr);
+  ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," Initial fracture pressure =  %e  Initial fracture volume = %e \n ",p,ctx.CrackVolume);CHKERRQ(ierr);
+  
+  
+//  
+  ctx.hasInsitu        = PETSC_TRUE;
+//  ierr  = VecSet(fields.pressure,0.);CHKERRQ(ierr);
+//  ierr = PetscPrintf(PETSC_COMM_WORLD,"     Solving for U_s");CHKERRQ(ierr);
+//  ierr = VF_StepU(&fields,&ctx);
+//  ierr = VF_StepV(&fields,&ctx);
+//  ierr = VF_StepU(&fields,&ctx);
+//  
+//  
+//  ierr = UpdateFractureWidth(&ctx,&fields);CHKERRQ(ierr);
+//  ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"Fracture Volume = %e\n",ctx.CrackVolume);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD," CrackVolume =  %e \n ",ctx.CrackVolume);CHKERRQ(ierr);
 
-  ctx.timestep = 1;
-
-  ierr = VolumetricCrackOpeningNewCC(&ctx,&fields);CHKERRQ(ierr);
-  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-
-  ctx.timestep = 2;
-
-  ierr = VolumetricCrackOpeningNewCC1(&ctx,&fields);CHKERRQ(ierr);
-  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   
-  ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.U,&u_array);CHKERRQ(ierr);
-  for(k = zs; k < zs+zm; k++){
-    for (j = ys; j < ys+ym; j++) {
-      for (i = xs; i < xs+xm; i++) {
-        u_array[k][j][i][0] += -0.;
-        u_array[k][j][i][2] += 1.;
-      }
-    }
-  }
-  
-  ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx.daVect,fields.U,&u_array);CHKERRQ(ierr);
-  
-  ctx.timestep = 3;
 
-  ierr = VolumetricCrackOpeningNewCC(&ctx,&fields);CHKERRQ(ierr);
-  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-  
-  ctx.timestep = 4;
-  
-  ierr = VolumetricCrackOpeningNewCC1(&ctx,&fields);CHKERRQ(ierr);
-  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-  
-  ctx.bcU[2].face[Z0]= ZERO;
-  ctx.bcU[2].face[Z1]= ZERO;
-  ierr = VecSet(fields.pressure,1e-3);CHKERRQ(ierr);
-  ctx.hasCrackPressure = PETSC_TRUE;
-  ierr = VecSet(fields.theta,0.0);CHKERRQ(ierr);
-
-  ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
-
-  ctx.timestep = 5;
-
-  ierr = VolumetricCrackOpeningNewCC(&ctx,&fields);CHKERRQ(ierr);
-  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-
-  ctx.timestep = 6;
-
-  ierr = VolumetricCrackOpeningNewCC1(&ctx,&fields);CHKERRQ(ierr);
-  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-  
-  ctx.timestep = 7;
-  ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
-  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-  
-  
+  ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  ierr = VecDestroy(&Vold);CHKERRQ(ierr);
+	ierr = VecDestroy(&Pold);CHKERRQ(ierr);
+  ierr = VecDestroy(&U_1);CHKERRQ(ierr);
+  ierr = VecDestroy(&P_1);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
 }
+
 
