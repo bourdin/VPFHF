@@ -913,7 +913,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
       res = bz;
     }
   }
-  ctx->WidthIntLenght = (3*res+3*ctx->vfprop.epsilon);
+  ctx->WidthIntLenght = (3*res+4*ctx->vfprop.epsilon);
   
   st = ctx->WidthIntLenght/(res);
   if(ctx->flowsolver != FLOWSOLVER_NONE){
