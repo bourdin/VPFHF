@@ -233,7 +233,7 @@ extern PetscErrorCode ComputeUcdotGradVlocal(PetscReal *cod, PetscReal *grad_ele
 	PetscInt        c;
 	PetscReal       dv_elem[3],u_elem[3];
   PetscReal       dv_mag_elem = 0;
-  PetscReal       scale = 1.0,value = .0
+  PetscReal       scale = 1.0,value = .0;
   
 	PetscFunctionBegin;
   for (c = 0; c < 3; c++){
