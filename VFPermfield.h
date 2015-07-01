@@ -38,5 +38,6 @@ extern PetscErrorCode ComputeUcdotGradVlocal(PetscReal *cod, PetscReal *grad_ele
 extern PetscErrorCode VolumeFromWidth(PetscReal *CrackVolume, VFCtx *ctx, VFFields *fields);
 extern PetscErrorCode VolumeFromWidth_local(PetscReal *CrackVolume_local, PetscReal w, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, VFCartFEElement3D *e);
 extern PetscErrorCode ComputeAverageVlocal(PetscReal *v_elem, PetscReal ***v_array, PetscInt ek, PetscInt ej, PetscInt ei, CartFEElement3D *s);
+extern PetscErrorCode UpdatePermeablitysingMultipliers(VFCtx *ctx, VFFields *fields);
 
 #endif

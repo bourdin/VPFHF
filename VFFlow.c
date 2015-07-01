@@ -836,6 +836,8 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatP
   PetscReal      ***k_dr_array;
   Vec            k_dr_local;
   PetscReal      *kx,*ky,*kz,*g,*prop;
+  Vec             pmult_local;
+	PetscReal       ***pmult_array;
 
   PetscFunctionBegin;
   ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
@@ -874,6 +876,8 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatP
 
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF: flow property options:","");CHKERRQ(ierr);
   {
+    ctx->pmult_vtol  = 0.2;
+    ierr             = PetscOptionsReal("-pmultvtol","\n\t v-field tolerance for permeability multiplier","",ctx->pmult_vtol,&ctx->pmult_vtol,PETSC_NULL);CHKERRQ(ierr);
     nval = n;
     for (i = 0; i < n; i++) kx[i] = 1.;
     ierr = PetscOptionsRealArray("-kx","\n\t Comma seperated X-component of permeability (default 1.)","",kx,&nval,PETSC_NULL);CHKERRQ(ierr);
@@ -889,13 +893,20 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatP
     ierr = PetscOptionsRealArray("-kz","\n\t Comma seperated Z-component of permeability (default 1.)","",kz,&nval,PETSC_NULL);CHKERRQ(ierr);
     if (nval != n && nval != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-kz",nval,__FUNCT__);
     
+    ierr = DMGetLocalVector(ctx->daScalCell,&pmult_local);CHKERRQ(ierr);
+    ierr = DMGlobalToLocalBegin(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
+    ierr = DMGlobalToLocalEnd(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
+    ierr = DMDAVecGetArray(ctx->daScalCell,pmult_local,&pmult_array);CHKERRQ(ierr);
+
     ierr = DMGetLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
     ierr = DMGlobalToLocalBegin(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
     ierr = DMGlobalToLocalEnd(ctx->daVFperm,fields->vfperm,INSERT_VALUES,perm_local);CHKERRQ(ierr);
     ierr = DMDAVecGetArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
+    
     for (ek = zs; ek < zs+zm; ek++){
       for (ej = ys; ej < ys+ym; ej++){
         for (ei = xs; ei < xs+xm; ei++){
+          pmult_array[ek][ej][ei] = ctx->vfprop.permmult;
           for (c = 0; c < 3; c++){
             perm_array[ek][ej][ei][0] = kx[ctx->layer[ek]];
             perm_array[ek][ej][ei][1] = ky[ctx->layer[ek]];
@@ -907,10 +918,17 @@ extern PetscErrorCode GetFlowProp(VFFlowProp *flowprop,VFResProp *resprop,VFMatP
         }
       }
     }
+    
+    ierr = DMDAVecRestoreArray(ctx->daScalCell,pmult_local,&pmult_array);CHKERRQ(ierr);
+    ierr = DMRestoreLocalVector(ctx->daScalCell,&pmult_local);CHKERRQ(ierr);
+    ierr = DMLocalToGlobalBegin(ctx->daScalCell,pmult_local,INSERT_VALUES,fields->pmult);CHKERRQ(ierr);
+    ierr = DMLocalToGlobalEnd(ctx->daScalCell,pmult_local,INSERT_VALUES,fields->pmult);CHKERRQ(ierr);
+
     ierr = DMDAVecRestoreArrayDOF(ctx->daVFperm,perm_local,&perm_array);CHKERRQ(ierr);
     ierr = DMRestoreLocalVector(ctx->daVFperm,&perm_local);CHKERRQ(ierr);
     ierr = DMLocalToGlobalBegin(ctx->daVFperm,perm_local,INSERT_VALUES,fields->vfperm);CHKERRQ(ierr);
     ierr = DMLocalToGlobalEnd(ctx->daVFperm,perm_local,INSERT_VALUES,fields->vfperm);CHKERRQ(ierr);
+    ierr = VecCopy(fields->vfperm,ctx->Perm);CHKERRQ(ierr);
     
     flowprop->Kf        = 1.;
     ierr = PetscOptionsReal("-Kf","\n\tLiquid modulus ","",flowprop->Kf,&flowprop->Kf,PETSC_NULL);CHKERRQ(ierr);

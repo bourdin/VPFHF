@@ -73,6 +73,7 @@ typedef struct {
 	PetscReal        atCv;
 	PetscReal        irrevtol;
 	PetscReal        permmax;
+	PetscReal        permmult;
 	/*
 	 permmax should be moved to resprop
 	 */
@@ -364,6 +365,7 @@ typedef struct {
   PetscReal           theta;          /* Time descritization parameter               */
   Vec                 M_inv;
   Vec                 K_dr;
+  PetscReal           pmult_vtol;          /* v threshold for pmult              */
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
