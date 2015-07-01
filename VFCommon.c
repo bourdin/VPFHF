@@ -451,8 +451,10 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
     vfprop->PCeta    = vfprop->eta;
     ierr             = PetscOptionsReal("-PCeta","\n\tArtificial stiffness of cracks in preconditioner","",vfprop->PCeta,&vfprop->PCeta,PETSC_NULL);CHKERRQ(ierr);
     ierr             = PetscOptionsReal("-irrevtol","\n\tThreshold on v below which fracture irreversibility is enforced","",vfprop->irrevtol,&vfprop->irrevtol,PETSC_NULL);CHKERRQ(ierr);
+    vfprop->permmult  = 1.;
+    ierr             = PetscOptionsReal("-pmult","\n\tPermeability multiplier of cracks (achieved at  v < v_thresh)","",vfprop->permmult,&vfprop->permmult,PETSC_NULL);CHKERRQ(ierr);
     vfprop->permmax  = 5.;
-    ierr             = PetscOptionsReal("-permmax","\n\tPermeability multiplier of cracks (achieved at  v=0.)","",vfprop->permmax,&vfprop->permmax,PETSC_NULL);CHKERRQ(ierr);
+    ierr             = PetscOptionsReal("-permmax","\n\tMaximum permeability for cracks (achieved at  v=0.)","",vfprop->permmax,&vfprop->permmax,PETSC_NULL);CHKERRQ(ierr);
     vfprop->atnum    = 2;
     ierr = PetscOptionsInt("-atnum", "\n\t Ambrosio Tortorelli variant", "", vfprop->atnum, &vfprop->atnum, PETSC_NULL);CHKERRQ(ierr);
     switch (vfprop->atnum ) {
@@ -794,6 +796,9 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) ctx->K_dr,"Drained modulus");CHKERRQ(ierr);
   ierr = VecSet(ctx->K_dr,0.);CHKERRQ(ierr);
   
+  ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
+  ierr = VecSet(ctx->Perm,1.0);CHKERRQ(ierr);
+  
   /*
    Create optional penny-shaped and rectangular cracks
    */
@@ -916,7 +921,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ctx->WidthIntLenght = (3*res+4*ctx->vfprop.epsilon);
   
   st = ctx->WidthIntLenght/(res);
-  if(ctx->flowsolver != FLOWSOLVER_NONE){
+  if(ctx->flowsolver != FLOWSOLVER_NONE && ctx->FractureFlowCoupling == PETSC_TRUE){
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,x_nprocs,y_nprocs,z_nprocs,1,st+1,
                       olx,oly,olz,&ctx->daWScal);CHKERRQ(ierr);
@@ -1288,6 +1293,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&fields->PresBCArray);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->PresBCArray);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->VelBCArray);CHKERRQ(ierr);
+  ierr = VecDestroy(&ctx->Perm);CHKERRQ(ierr);
 
   ierr = VecDestroy(&ctx->HeatSource);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->HeatFluxBCArray);CHKERRQ(ierr);
