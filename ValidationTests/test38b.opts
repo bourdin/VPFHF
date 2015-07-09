@@ -34,6 +34,9 @@
 -w0_type injector 
 -w0_Qw 5e-1 
 -pressurize
+-poroelasticity
+-resflowmechcoupling fixedstress 
+-flowwells
 -unilateral none
 -flowsolver FLOWSOLVER_snesstandarDFEM 
 -insitumax 0,0,0,0,0,0

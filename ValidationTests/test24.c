@@ -2,9 +2,9 @@
  test24.c: 3D KSP. Flow problem with source term [pressure = sin(2*pi*x)*sin(2*pi*y)*sin(2(pi*z)]. All normal velocity boundary condition.
  (c) 2012-2014 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
- ./test24 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESMIXEDFEM
- ./test24 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_tSMIXEDFEM
- mpiexec -np 4 ./test24 -n 11,11,11 -l 1,1,1 -ks 1e+310 -kf 1e+310 -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -kx 1. -ky 1. -kz 1. -g 0,0,0 -rhof 0. -mu 1
+ ./test24 -n 11,11,11 -l 1,1,1 -uniformfluidsources -flowsolver FLOWSOLVER_SNESMIXEDFEM
+ ./test24 -n 11,11,11 -l 1,1,1 -m_inv 0 -uniformfluidsources -flowsolver -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_tSMIXEDFEM
+ mpiexec -np 4 ./test24 -n 11,11,11 -l 1,1,1 -ks 1e+310 -kf 1e+310 -uniformfluidsources -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -kx 1. -ky 1. -kz 1. -g 0,0,0 -rhof 0. -mu 1
  
  */
 
@@ -37,9 +37,6 @@ int main(int argc,char **argv)
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-  ctx.FlowDisplCoupling = PETSC_FALSE;
-	ctx.hasFluidSources = PETSC_TRUE;
-	ctx.hasFlowWells = PETSC_FALSE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);

@@ -2,11 +2,11 @@
  test28.c: 1D. Flow problem with source term = 1 and Homogeneous pressure boundary conditions on all sides. Analytical solution is p = x(x-1)/2
  (c) 2012-2014 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
- ./test28 -n 51,11,2 -l 1,1,0.01 -m_inv 10 -maxtimestep 20 -flowsolver FLOWSOLVER_snesMIXEDFEM -P_X0_BC FIXED -P_X1_BC FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -theta 1 -timevalue 1 -maxtimestep 20
+ ./test28 -n 51,11,2 -l 1,1,0.01 -uniformfluidsources -m_inv 10 -maxtimestep 20 -flowsolver FLOWSOLVER_snesMIXEDFEM -P_X0_BC FIXED -P_X1_BC FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -theta 1 -timevalue 1 -maxtimestep 20
 
- ./test28 -n 51,11,2 -l 1,1,0.01 -m_inv 10 -maxtimestep 20 -flowsolver FLOWSOLVER_snesstandarDFEM -P_X0_BC FIXED -P_X1_BC FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -theta 1 -timevalue 1 -maxtimestep 20 -kx 1. -ky 1. -kz 1 -g 0,0,0 -rhof 0. -mu 1 -theta 1.
+ ./test28 -n 51,11,2 -l 1,1,0.01 -uniformfluidsources -m_inv 10 -maxtimestep 20 -flowsolver FLOWSOLVER_snesstandarDFEM -P_X0_BC FIXED -P_X1_BC FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -theta 1 -timevalue 1 -maxtimestep 20 -kx 1. -ky 1. -kz 1 -g 0,0,0 -rhof 0. -mu 1 -theta 1.
  
- ./test28 -n 51,51,2 -l 1,1,0.01 -m_inv 10 -ts_dt 1 -ts_max_steps 20 -flowsolver FLOWSOLVER_tsMIXEDFEM -P_X0_BC FIXED -P_X1_BC FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -theta 1 -timevalue 1 -maxtimestep 20
+ ./test28 -n 51,51,2 -l 1,1,0.01 -uniformfluidsources -m_inv 10 -ts_dt 1 -ts_max_steps 20 -flowsolver FLOWSOLVER_tsMIXEDFEM -P_X0_BC FIXED -P_X1_BC FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -theta 1 -timevalue 1 -maxtimestep 20
  */
 
 #include "petsc.h"
@@ -31,11 +31,7 @@ int main(int argc,char **argv)
 
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ctx.FlowDisplCoupling = PETSC_FALSE;
-	ctx.hasFluidSources = PETSC_TRUE;
-	ctx.hasFlowWells = PETSC_FALSE;
 	ierr = VecSet(ctx.Source,1.);CHKERRQ(ierr);
-
   if(ctx.flowsolver == FLOWSOLVER_TSMIXEDFEM || ctx.flowsolver == FLOWSOLVER_TS){
 /*  	ctx.maxtimestep = 20;
     ctx.maxtimevalue = 100.;

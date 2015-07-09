@@ -37,11 +37,7 @@ int main(int argc,char **argv)
   ierr = DMCreateGlobalVector(ctx.daScal,&V_hold);CHKERRQ(ierr);
   ierr = VecDuplicate(fields.pressure,&error);
   ierr = VecDuplicate(fields.pressure,&PreIteSol);
-  ctx.hasFlowWells = PETSC_FALSE;
-	ctx.hasFluidSources = PETSC_FALSE;
   ctx.hasInsitu        = PETSC_TRUE;
-  ctx.FlowDisplCoupling = PETSC_TRUE;
-	ctx.hasCrackPressure = PETSC_FALSE;
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ctx.timestep = 0;
   ierr = PetscPrintf(PETSC_COMM_WORLD,"  Computing initial time step solution\n");CHKERRQ(ierr);

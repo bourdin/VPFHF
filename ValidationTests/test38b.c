@@ -36,13 +36,6 @@ int main(int argc,char **argv)
 
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ctx.FlowDisplCoupling = PETSC_TRUE;
-  ctx.ResFlowMechCoupling = FIXEDSTRESS;
-  ctx.hasInsitu        = PETSC_TRUE;
-  ctx.FractureFlowCoupling = PETSC_FALSE;
-  ctx.hasFluidSources = PETSC_FALSE;
-  ctx.hasFlowWells = PETSC_TRUE;
-
   ctx.timestep = 0;
   ierr = VecDuplicate(fields.pressure,&Pold);CHKERRQ(ierr);
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);

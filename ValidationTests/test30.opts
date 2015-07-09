@@ -6,6 +6,7 @@
 -kx 2e-13 
 -ky 2e-13 
 -kz 2e-13 
+-poroelasticity
 -resflowmechcoupling fixedstress  
 -beta 0.79
 -phi 0.79

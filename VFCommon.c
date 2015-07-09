@@ -107,9 +107,20 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
 
     ctx->flowsolver = FLOWSOLVER_NONE;
     ierr          = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);  
+
+    
+    ctx->FlowDisplCoupling = PETSC_FALSE;
+    ierr                  = PetscOptionsBool("-poroelasticity","\n\t Geomechanics (coupled reservoir flow and deformation)","",ctx->FlowDisplCoupling,&ctx->FlowDisplCoupling,PETSC_NULL);CHKERRQ(ierr);
     ctx->ResFlowMechCoupling = FIXEDSTRESS;
     ierr          = PetscOptionsEnum("-resflowmechcoupling","\n\tRes flow mech coupling","",ResFlowMechCouplingName,(PetscEnum)ctx->ResFlowMechCoupling,(PetscEnum*)&ctx->ResFlowMechCoupling,PETSC_NULL);CHKERRQ(ierr);
     ctx->heatsolver = HEATSOLVER_SNESFEM;
+    ctx->FractureFlowCoupling = PETSC_FALSE;
+    ierr                  = PetscOptionsBool("-coupledfracflowmodel","\n\tCoupled fracture and resservoir flow model","",ctx->FractureFlowCoupling,&ctx->FractureFlowCoupling,PETSC_NULL);CHKERRQ(ierr);
+    ctx->hasFluidSources = PETSC_FALSE;
+    ierr                  = PetscOptionsBool("-uniformfluidsources","\n\t Uniform fluid sources","",ctx->hasFluidSources,&ctx->hasFluidSources,PETSC_NULL);CHKERRQ(ierr);
+    ctx->hasFlowWells = PETSC_FALSE;
+    ierr                  = PetscOptionsBool("-flowwells","\n\t Fluid wells","",ctx->hasFlowWells,&ctx->hasFlowWells,PETSC_NULL);CHKERRQ(ierr);
+
     ierr            = PetscOptionsEnum("-heatsolver","\n\tHeat solver","",VFHeatSolverName,(PetscEnum)ctx->heatsolver,(PetscEnum*)&ctx->heatsolver,PETSC_NULL);CHKERRQ(ierr);
     ctx->mechsolver = FRACTURE;
     ierr            = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,PETSC_NULL);CHKERRQ(ierr);
@@ -921,7 +932,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ctx->WidthIntLenght = (3*res+4*ctx->vfprop.epsilon);
   
   st = ctx->WidthIntLenght/(res);
-  if(ctx->flowsolver != FLOWSOLVER_NONE && ctx->FractureFlowCoupling == PETSC_TRUE){
+  if(ctx->FractureFlowCoupling == PETSC_TRUE){
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,x_nprocs,y_nprocs,z_nprocs,1,st+1,
                       olx,oly,olz,&ctx->daWScal);CHKERRQ(ierr);

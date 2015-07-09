@@ -43,12 +43,6 @@ int main(int argc,char **argv)
   
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ctx.FlowDisplCoupling = PETSC_TRUE;
-  ctx.ResFlowMechCoupling = FIXEDSTRESS;
-  ctx.hasInsitu        = PETSC_FALSE;
-  ctx.FractureFlowCoupling = PETSC_TRUE;
-  ctx.hasFluidSources = PETSC_FALSE;
-  ctx.hasFlowWells = PETSC_TRUE;
   ierr = VecDuplicate(fields.pressure,&Pold);CHKERRQ(ierr);
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
   ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);

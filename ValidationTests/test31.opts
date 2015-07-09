@@ -1,7 +1,7 @@
 -l 5,1,1 
 -n 51,2,5
 -flowsolver FLOWSOLVER_snesstandardFEM 
--flowsolver FLOWSOLVER_snesmixedFEM 
+#-flowsolver FLOWSOLVER_snesmixedFEM 
 -E 1 
 -m_inv 0
 -nu 0.2 
@@ -17,6 +17,7 @@
 -g 0,0,0
 -maxtimestep 1002 
 -timevalue 0.01 
+-poroelasticity
 -resflowmechcoupling fixedstress 
 -F -2.5
 -Q_X0_BC_0 FIXED

@@ -2,8 +2,9 @@
  test26.c: 3D KSP. Flow problem with source term [pressure = 1/(3*pi^2)*cos(pi*x)*cos(pi*y)*cos(pi*z)]. All velocity boundary condition
  (c) 2012-2014 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
-mpiexec ./test26 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -kx 1. -ky 1. -kz 1 -g 0,0,0 -rhof 0. -mu 1
- ./test26 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_TSMIXEDFEM
+mpiexec ./test26 -n 11,11,11 -l 1,1,1 -uniformfluidsources -flowsolver FLOWSOLVER_SNESstandarDFEM -Q_X0_BC_0 FIXED -Q_X1_BC_0 FIXED -Q_Y0_BC_1 FIXED -Q_Y1_BC_1 FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -kx 1. -ky 1. -kz 1 -g 0,0,0 -rhof 0. -mu 1
+ 
+ ./test26 -n 11,11,11 -l 1,1,1 -m_inv 0 -uniformfluidsources -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_TSMIXEDFEM
  
  */
 
@@ -36,8 +37,6 @@ int main(int argc,char **argv)
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-	ctx.hasFluidSources = PETSC_TRUE;
-	ctx.hasFlowWells = PETSC_FALSE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.VelBCArray,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
@@ -47,7 +46,6 @@ int main(int argc,char **argv)
 	for (k = zs; k < zs+zm; k++) {
 		for (j = ys; j < ys+ym; j++) {
 			for (i = xs; i < xs+xm; i++) {
-        
         velbc_array[k][j][i][0] = 1./ctx.flowprop.mu*(sin(PETSC_PI*coords_array[k][j][i][0]/lx)*cos(PETSC_PI*coords_array[k][j][i][1]/ly)*cos(PETSC_PI*coords_array[k][j][i][2]/lz)-ctx.flowprop.rho*ctx.flowprop.g[0])/(3.*PETSC_PI);
 				velbc_array[k][j][i][1] = 1./ctx.flowprop.mu*(cos(PETSC_PI*coords_array[k][j][i][0]/lx)*sin(PETSC_PI*coords_array[k][j][i][1]/ly)*cos(PETSC_PI*coords_array[k][j][i][2]/lz)-ctx.flowprop.rho*ctx.flowprop.g[1])/(3.*PETSC_PI);
 				velbc_array[k][j][i][2] = 1./ctx.flowprop.mu*(cos(PETSC_PI*coords_array[k][j][i][0]/lx)*cos(PETSC_PI*coords_array[k][j][i][1]/ly)*sin(PETSC_PI*coords_array[k][j][i][2]/lz)-ctx.flowprop.rho*ctx.flowprop.g[2])/(3.*PETSC_PI);
