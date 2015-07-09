@@ -37,11 +37,7 @@ int main(int argc,char **argv)
   
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ctx.hasFlowWells = PETSC_FALSE;
-	ctx.hasFluidSources = PETSC_FALSE;
   ctx.hasInsitu        = PETSC_FALSE;
-  ctx.FlowDisplCoupling = PETSC_TRUE;
-	ctx.hasCrackPressure = PETSC_FALSE;
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
   lz = BBmax[2]-BBmin[2];
 	ly = BBmax[1]-BBmin[1];

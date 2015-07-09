@@ -39,12 +39,7 @@ int main(int argc,char **argv)
 
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ctx.FlowDisplCoupling = PETSC_TRUE;
-  ctx.ResFlowMechCoupling = FIXEDSTRESS;
   ctx.hasInsitu        = PETSC_TRUE;
-  ctx.FractureFlowCoupling = PETSC_TRUE;
-  ctx.hasFluidSources = PETSC_FALSE;
-  ctx.hasFlowWells = PETSC_TRUE;
   ierr = VecDuplicate(fields.pressure,&Pold);CHKERRQ(ierr);
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
   ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
@@ -115,9 +110,9 @@ int main(int argc,char **argv)
     ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,fields.U,&ctx);CHKERRQ(ierr);
     ierr = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
     ctx.TotalEnergy   = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork + ctx.SurfaceEnergy;
-    ierr = PetscViewerASCIIPrintf(viewer,"%d \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,ctx.flowprop.timestepsize,ctx.timestep*ctx.flowprop.timestepsize,pw,pmax,ctx.flowprop.timestepsize*Q_inj,ctx.CrackVolume,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
+    ierr = PetscViewerASCIIPrintf(viewer,"%d \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,ctx.timevalue,ctx.timestep*ctx.timevalue,pw,pmax,ctx.timevalue*Q_inj,ctx.CrackVolume,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
     ierr = VF_ComputeRegularizedFracturePressure(&ctx,&fields);
-    ierr = PetscViewerASCIIPrintf(volviewer,"%d \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,ctx.flowprop.timestepsize,ctx.timestep*ctx.flowprop.timestepsize,pw,pmax,ctx.flowprop.timestepsize*Q_inj,ctx.CrackVolume,vol,vol5,vol2,vol+vol5+vol2+ctx.CrackVolume-crackvolume_old,ctx.flowprop.timestepsize*ctx.LeakOffRate,volume);CHKERRQ(ierr);
+    ierr = PetscViewerASCIIPrintf(volviewer,"%d \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,ctx.timevalue,ctx.timestep*ctx.timevalue,pw,pmax,ctx.timevalue*Q_inj,ctx.CrackVolume,vol,vol5,vol2,vol+vol5+vol2+ctx.CrackVolume-crackvolume_old,ctx.timevalue*ctx.LeakOffRate,volume);CHKERRQ(ierr);
     crackvolume_old = ctx.CrackVolume;
     ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 	}

@@ -2,8 +2,9 @@
  test25.c: 3D KSP. Flow problem with source term [pressure = sin(2*pi*x)*sin(2*pi*y)*sin(2(pi*z)]. All pressure boundary condition.
  (c) 2012-2014 Chukwudi Chukwudozie cchukw1@tigers.lsu.edu
  
- mpiexec -np 2 ./test25 -n 11,11,11 -l 1,1,1 -flowsolver FLOWSOLVER_SNESSTANDARDFEM -M_inv 0 -P_X0_BC FIXED -P_X1_BC FIXED -P_Y0_BC FIXED -P_Y1_BC FIXED -P_Z0_BC FIXED -P_Z1_BC FIXED -kx 1. -ky 1. -kz 1. -g 0,0,0 -rhof 0. -mu 1
- ./test25 -n 11,11,11 -l 1,1,1 -m_inv 0 -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_TSMIXEDFEM
+ mpiexec -np 2 ./test25 -n 11,11,11 -l 1,1,1 -uniformfluidsources -flowsolver FLOWSOLVER_SNESSTANDARDFEM -M_inv 0 -P_X0_BC FIXED -P_X1_BC FIXED -P_Y0_BC FIXED -P_Y1_BC FIXED -P_Z0_BC FIXED -P_Z1_BC FIXED -kx 1. -ky 1. -kz 1. -g 0,0,0 -rhof 0. -mu 1
+ 
+ ./test25 -n 11,11,11 -l 1,1,1 -m_inv 0 -uniformfluidsources -ts_type beuler -ts_dt 1 -ts_max_steps 2 -flowsolver FLOWSOLVER_TSMIXEDFEM
 
  */
 
@@ -37,8 +38,6 @@ int main(int argc,char **argv)
 					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-	ctx.hasFluidSources = PETSC_TRUE;
-	ctx.hasFlowWells = PETSC_FALSE;
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);	
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);

@@ -34,6 +34,11 @@
 -fracw0_wellfracindex 0
 -fracw0_wellinfrac penny
 -pressurize
+-poroelasticity
+-resflowmechcoupling fixedstress 
+-coupledfracflowmodel
+#-uniformfluidsources
+-flowwells
 -unilateral none
 -flowsolver FLOWSOLVER_snesstandarDFEM 
 -insitumax -0.000,0,-0.000,0,0,0
