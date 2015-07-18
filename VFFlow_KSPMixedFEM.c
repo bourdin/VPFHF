@@ -513,6 +513,10 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
   Vec            m_inv_local;
   PetscReal      ***k_dr_array;
   Vec            k_dr_local;
+  PetscInt       w_no = 0;
+  PetscInt       w_no1 = 0;
+  PetscInt       w_no2 = 0;
+
   
   PetscFunctionBegin;
   theta = ctx->theta;
@@ -901,10 +905,25 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
       }
     }
   }
-  PetscInt  w_no = 0;
-  PetscInt  w_no1 = 0;
   if(ctx->hasFlowWells){
-    while(w_no < ctx->numWells){
+    for(w_no = 0; w_no < ctx->numWells; w_no++){
+      w_no1 = 0;
+      w_no2 = 0;
+      for (ek = zs; ek < zs+zm; ek++) {
+        for (ej = ys; ej < ys+ym; ej++) {
+          for (ei = xs; ei < xs+xm; ei++) {
+            if(
+               ((coords_array[ek][ej][ei+1][0] >= ctx->well[w_no].coords[0]) && (coords_array[ek][ej][ei][0] <= ctx->well[w_no].coords[0] ))    &&
+               ((coords_array[ek][ej+1][ei][1] >= ctx->well[w_no].coords[1]) && (coords_array[ek][ej][ei][1] <= ctx->well[w_no].coords[1] ))    &&
+               ((coords_array[ek+1][ej][ei][2] >= ctx->well[w_no].coords[2]) && (coords_array[ek][ej][ei][2] <= ctx->well[w_no].coords[2] ))
+               )
+            {
+              w_no1++;
+            }
+          }
+        }
+      }
+      ierr = MPI_Allreduce(&w_no1,&w_no2,1,MPIU_INT,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
       for (ek = zs; ek < zs+zm; ek++) {
         for (ej = ys; ej < ys+ym; ej++) {
           for (ei = xs; ei < xs+xm; ei++) {
@@ -927,11 +946,11 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
                   for (j = 0; j < ctx->e3D.nphiy; j++) {
                     for (i = 0; i < ctx->e3D.nphix; i++,l++) {
                       if(ctx->well[w_no].type == INJECTOR){
-                        RHS_array[ek+k][ej+j][ei+i][3] -= timestepsize*RHS_local[l];
+                        RHS_array[ek+k][ej+j][ei+i][3] -= timestepsize*RHS_local[l]/w_no2;
                       }
                       else if(ctx->well[w_no].type == PRODUCER)
                       {
-                        RHS_array[ek+k][ej+j][ei+i][3] -= -timestepsize*RHS_local[l];
+                        RHS_array[ek+k][ej+j][ei+i][3] -= -timestepsize*RHS_local[l]/w_no2;
                       }
                     }
                   }
@@ -939,12 +958,11 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
               }
               else if(ctx->well[w_no].condition == PRESSURE){
               }
-              w_no1++;
+              /* No implementation for pressure boundary condition*/
             }
           }
         }
       }
-      ierr = MPI_Allreduce(&w_no1,&w_no,1,MPIU_INT,MPI_SUM,PETSC_COMM_WORLD);CHKERRQ(ierr);
     }
   }
   ierr = MatAssemblyBegin(Krhs,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
