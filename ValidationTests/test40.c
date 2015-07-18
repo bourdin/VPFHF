@@ -28,9 +28,9 @@
  
  ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 0.50001,0.50001,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type pRoducer -m_inv 0 -flowsolver FLOWSOLVER_tsMIXEDFEM -ts_dt 1 -ts_max_steps 1
  
- ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 0.50001,0.50001,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type pRoducer -m_inv 0 -flowsolver FLOWSOLVER_kspMIXEDFEM
+./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timevalue 1 -theta 1 -nw 2 -w0_coords 0.5,0.5,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type producer -flowsolver FLOWSOLVER_snesStandarDFEM -ks 1e+30 -kf 1e+30 -flowwells -P_X0_BC FIXED -P_X1_BC FIXED -P_Y0_BC FIXED -P_Y1_BC FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED -w1_coords 0.5,0.75,0.5 -w1_Qw 1 -w1_constraint Rate -w1_rw 0.1 -w1_type producer 
  
- ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timestepsize 1 -theta 1 -nw 1 -w0_coords 0.5,0.5,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type producer -m_inv 0 -flowsolver FLOWSOLVER_SNESMIXEDFEM
+ ./test40  -n 101,101,2 -l 1,1,1 -maxtimestep 1 timevalue 1 -theta 1 -nw 1 -w0_coords 0.5,0.5,0.5 -w0_Qw 1 -w0_constraint Rate -w0_rw 0.1 -w0_type producer -flowsolver FLOWSOLVER_snesStandarDFEM -ks 1e+30 -kf 1e+30 -flowwells -P_X0_BC FIXED -P_X1_BC FIXED -P_Y0_BC FIXED -P_Y1_BC FIXED -Q_Z0_BC_2 FIXED -Q_Z1_BC_2 FIXED
  */
 
 #include "petsc.h"
@@ -38,6 +38,7 @@
 #include "VFCommon.h"
 #include "VFMech.h"
 #include "VFFlow.h"
+#include "VFPermfield.h"
 
 VFCtx               ctx;
 VFFields            fields;
@@ -47,94 +48,25 @@ VFFields            fields;
 int main(int argc,char **argv)
 {
   PetscErrorCode  ierr;
-  PetscViewer    viewer;
-  PetscViewer     logviewer;
-  char      filename[FILENAME_MAX];
-  PetscInt    i,j,k,c,nx,ny,nz,xs,xm,ys,ym,zs,zm;
+  PetscInt     i,j,k,nx,ny,nz,xs,xm,ys,ym,zs,zm;
   PetscReal    BBmin[3],BBmax[3];
   PetscReal    ***presbc_array;
-  PetscReal    ***src_array;
   PetscReal    ****coords_array;
-  PetscReal    hx,hy,hz;
-  PetscReal    gx,gy,gz;
-  PetscReal    lx,ly,lz;
-  PetscReal    gamma, beta, rho, mu;
   PetscReal    pi,dist;
   PetscReal    ***pre_array;
-  PetscReal   ****perm_array;
-  PetscInt    xs1,xm1,ys1,ym1,zs1,zm1;
-  PetscReal   vol,vol1,vol2,vol3,vol4,vol5;
+  PetscInt     xs1,xm1,ys1,ym1,zs1,zm1;
+  PetscReal    vol,vol1,vol2,vol3,vol4,vol5;
 
-  
-  
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-  ctx.fractureflowsolver = FRACTUREFLOWSOLVER_NONE;
-  ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
-  ierr = VecSet(ctx.PresBCArray,0.);CHKERRQ(ierr);
-  ierr = VecSet(ctx.VelBCArray,0.);CHKERRQ(ierr);
-  ierr = VecSet(ctx.Source,0.);CHKERRQ(ierr);
-  ctx.hasFlowWells = PETSC_TRUE;
-  ctx.hasFluidSources = PETSC_FALSE;
   ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
-  ierr = DMDAVecGetArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
-  ierr = DMDAVecGetArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);
-  for (k = zs1; k < zs1+zm1; k++) {
-    for (j = ys1; j < ys1+ym1; j++) {
-      for (i = xs1; i < xs1+xm1; i++) {
-        perm_array[k][j][i][0] = 1;
-        perm_array[k][j][i][1] = 1;
-        perm_array[k][j][i][2] = 0.;
-        perm_array[k][j][i][3] = 0.;
-        perm_array[k][j][i][4] = 0.;
-        perm_array[k][j][i][5] = 0.;
-      }
-    }
-  }
-  for (k = zs1; k < zs1+zm1; k++) {
-    for (j = ys1; j < ys1+ym1; j++) {
-      for (i = xs1; i < xs1+xm1; i++) {
-        if((j == ny/2 || j == ny/2-1) && ( i > nx/8 && i < 8*nx/10)){
-          perm_array[k][j][i][0] = 1.;
-          perm_array[k][j][i][1] = 1.;
-        }
-      }
-    }
-  }
   pi = 6.*asin(0.5);
-  rho = ctx.flowprop.rho;
-  mu = ctx.flowprop.mu;
-  beta = ctx.flowprop.beta;
-  gamma = ctx.flowprop.gamma;
-  for (i = 0; i < 6; i++) {
-    ctx.bcP[0].face[i] = NONE;
-    for (c = 0; c < 3; c++) {
-      ctx.bcQ[c].face[i] = NONE;
-    }
-  }
-  for (i = 0; i < 12; i++) {
-    ctx.bcP[0].edge[i] = NONE;
-    for (c = 0; c < 3; c++) {
-      ctx.bcQ[c].edge[i] = NONE;
-    }
-  }
-  for (i = 0; i < 8; i++) {
-    ctx.bcP[0].vertex[i] = NONE;
-    for (c = 0; c < 3; c++) {
-      ctx.bcQ[c].vertex[i] = NONE;
-    }
-  }
-  for (i = 0; i < 4; i++) {
-    ctx.bcP[0].face[i] = FIXED;
-  }
-  ctx.bcQ[2].face[Z0] = FIXED;
-  ctx.bcQ[2].face[Z1] = FIXED;
   for (k = zs; k < zs+zm; k++) {
     for (j = ys; j < ys+ym; j++) {
       for (i = xs; i < xs+xm; i++) {
@@ -161,19 +93,12 @@ int main(int argc,char **argv)
       }
     }
   }
-  ierr = DMDAVecRestoreArray(ctx.daScal,ctx.Source,&src_array);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(ctx.daScal,ctx.PresBCArray,&presbc_array);CHKERRQ(ierr);
-  ierr = DMDAVecRestoreArrayDOF(ctx.daVFperm,fields.vfperm,&perm_array);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
-  ctx.maxtimestep = 1;
-  ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
   for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
     
     ierr = VF_StepP(&fields,&ctx);
-    ierr = FieldsH5Write(&ctx,&fields);
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   
   ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"\n modulus_volume = %g\n",vol);CHKERRQ(ierr);
@@ -207,7 +132,7 @@ int main(int argc,char **argv)
   }
   ierr = DMDAVecRestoreArray(ctx.daScal,fields.pressure,&pre_array);CHKERRQ(ierr);
   ++ctx.timestep;
-  ierr = FieldsH5Write(&ctx,&fields);
+  ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
 
   ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
