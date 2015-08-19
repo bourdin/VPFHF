@@ -318,7 +318,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
   PetscReal       mag[3] = {0.,0.,0};
   PetscReal       thickness = 0;
   PetscReal       val1 = 0, val2 = 0, val3 = 0, val4 = 0, val5 = 0, val6 = 0;  
-  PetscReal       one_eps = 1.0;
+  PetscReal       one_eps = 0.99;
   PetscReal       vhold;
   PetscReal       n_occ[3] = {0,0,0};
 
