@@ -2787,3 +2787,42 @@ extern PetscErrorCode VF_RHSFractureFlowCoupling_local(PetscReal *K_local,VFCart
   ierr = PetscFree4(dv_elem[0],dv_elem[1],dv_elem[2],dv_mag_elem);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "RemoveModulusEffect"
+extern PetscErrorCode RemoveModulusEffect(PetscReal *Ks_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***pressdiff_array,PetscReal ***v_array)
+{
+  PetscErrorCode ierr;
+  PetscInt       i,j,k,l;
+  PetscReal      *pressdiff_elem, *v_elem;
+  PetscInt       eg;
+  
+  PetscFunctionBegin;
+  ierr = PetscMalloc2(e->ng,&pressdiff_elem,e->ng,&v_elem);CHKERRQ(ierr);
+  for (eg = 0; eg < e->ng; eg++){
+    pressdiff_elem[eg] = 0.;
+    v_elem[eg] = 0.;
+  }
+  for (k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++) {
+        for (eg = 0; eg < e->ng; eg++) {
+          pressdiff_elem[eg] += pressdiff_array[ek+k][ej+j][ei+i]*e->phi[k][j][i][eg];
+          v_elem[eg] += v_array[ek+k][ej+j][ei+i] * e->phi[k][j][i][eg];
+        }
+      }
+    }
+  }
+  for (l = 0,k = 0; k < e->nphiz; k++) {
+    for (j = 0; j < e->nphiy; j++) {
+      for (i = 0; i < e->nphix; i++,l++) {
+        Ks_local[l] = 0.;
+        for (eg = 0; eg < e->ng; eg++) {
+          Ks_local[l] += pressdiff_elem[eg]*e->phi[k][j][i][eg]*(1.0-pow(v_elem[eg],2))*e->weight[eg];
+        }
+      }
+    }
+  }
+  ierr = PetscFree2(pressdiff_elem,v_elem);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}

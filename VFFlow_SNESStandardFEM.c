@@ -670,6 +670,14 @@ extern PetscErrorCode VF_FormFlowStandardFEMMatricesnVectors(Mat K,Mat Krhs,Vec 
             }
           }
         }
+        ierr = RemoveModulusEffect(RHS_local,&ctx->e3D,ek,ej,ei,pressure_diff_array,v_array);
+        for (l = 0,k = 0; k < ctx->e3D.nphiz; k++) {
+          for (j = 0; j < ctx->e3D.nphiy; j++) {
+            for (i = 0; i < ctx->e3D.nphix; i++,l++) {
+              RHS_array[ek+k][ej+j][ei+i] += m_inv_array[ek][ej][ei]*RHS_local[l];
+            }
+          }
+        }
         if (ei == 0) {
           /*            					 Face X0  */
 					face = X0;

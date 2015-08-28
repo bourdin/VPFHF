@@ -1,10 +1,10 @@
 /*
- *  VFPermfield.c
- *   Compute the total crack opening displacement (crack volume) by integrating u.\nabla v
- *    over the entire domain
- *
- *      (c) 2012 - 2014 	Chukwudozie, LSU, B. Bourdin, LSU
- *       */
+ VFPermfield.c
+ Compute the total crack opening displacement (crack volume) by integrating u.\nabla v
+ over the entire domain
+ 
+ (c) 2012 - 2014 	Chukwudozie, LSU, B. Bourdin, LSU
+ */
 #include "petsc.h"
 #include "VFCartFE.h"
 #include "VFCommon.h"
@@ -231,7 +231,6 @@ extern PetscErrorCode ComputeUcdotGradVlocal(PetscReal *cod, PetscReal *grad_ele
 	PetscInt        c;
 	PetscReal       dv_elem[3],u_elem[3];
   PetscReal       dv_mag_elem = 0;
-  PetscReal       scale = 1.0,value = .0;
   
 	PetscFunctionBegin;
   for (c = 0; c < 3; c++){
@@ -256,14 +255,9 @@ extern PetscErrorCode ComputeUcdotGradVlocal(PetscReal *cod, PetscReal *grad_ele
   {
     n_elem[0] = n_elem[1] = n_elem[2] = dv_mag_elem = 0;
   }
-  
-  value = sqrt(grad_elem[0]*n_elem[0]+grad_elem[1]*n_elem[1]+grad_elem[2]*n_elem[2]);
-  if(value < 0.9999){
-    scale = 1.;
-  }
   *cod = 0;
   for (c = 0; c < 3; c++){
-    *cod += scale*dv_elem[c]*u_elem[c];
+    *cod += dv_elem[c]*u_elem[c];
   }
   PetscFunctionReturn(0);
 }
@@ -307,28 +301,8 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
 	PetscReal       tlent1;
 	PetscReal       tlent2;
   PetscReal       n_cc[3] = {0,0,0};
-  PetscReal       aVe_n[3] = {0,0,0};
-  PetscReal       aVe_n1[3] = {0,0,0};
-  PetscReal       length_atzero = 0;
-  PetscReal       coord4angle[3]= {0,0,0};
-	PetscReal       coord4angle1[3]= {0,0,0};
-  PetscReal       angle[3] = {0,0,0};
-  PetscReal       angle1[3] = {0,0,0};
-  PetscReal       angle2[3] = {0,0,0};
-  PetscReal       mag[3] = {0.,0.,0};
-  PetscReal       thickness = 0;
-  PetscReal       val1 = 0, val2 = 0, val3 = 0, val4 = 0, val5 = 0, val6 = 0;
-  PetscReal       one_eps = 0.99;
-  PetscReal       vhold;
-  PetscReal       n_occ[3] = {0,0,0};
   
   PetscFunctionBegin;
-  if(ctx->pennycrack[0].thickness > ctx->rectangularcrack[0].thickness){
-    thickness = ctx->pennycrack[0].thickness;
-  }
-  else{
-    thickness = ctx->rectangularcrack[0].thickness;
-  }
   ierr = DMDAGetInfo(ctx->daWScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
                      PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daWScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -375,7 +349,6 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
         ierr = ComputeCellCenterGradV_local(grad_cc, v_array, ek, ej, ei, &ctx->s3D);
         w_array[ek][ej][ei] = 0;
         len = sqrt(pow(grad_cc[0]*hx,2)+pow(grad_cc[1]*hy,2)+pow(grad_cc[2]*hz,2))/20;
-        length_atzero = 0;
         if(ave_V < 1.0 && ave_V > 0.0){
           ierr = ComputeUcdotGradVlocal(&cod[0], grad_cc, n_cc, u_array, v_array, ek, ej, ei, &ctx->s3D);
           cod_in = cod[0];
@@ -387,7 +360,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
           }
           n_cc[2] = n_cc[1] = n_cc[0] = 0;
           lc = sqrt((pow(coordc_array[0]-coorda_array[0],2))+(pow(coordc_array[1]-coorda_array[1],2))+(pow(coordc_array[2]-coorda_array[2],2)));
-          while(lc < ctx->WidthIntLenght && ave_V < one_eps && (grad_cc[0]*n_cc[0]+grad_cc[1]*n_cc[1]+grad_cc[2]*n_cc[2] >= 0.)){
+          while(lc < ctx->WidthIntLenght && ave_V < 1.0 && (grad_cc[0]*n_cc[0]+grad_cc[1]*n_cc[1]+grad_cc[2]*n_cc[2] >= 0.)){
             for (ek1 = zs1; ek1 < zs1+zm1; ek1++) {
               for (ej1 = ys1; ej1 < ys1+ym1; ej1++) {
                 for (ei1 = xs1; ei1 < xs1+xm1; ei1++) {
@@ -402,9 +375,6 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
                 }
               }
             }
-            for(c = 0; c < 3; c++){
-              n_occ[c] = n_cc[c];
-            }
             hx = coords_array[ekk][ejj][eii+1][0]-coords_array[ekk][ejj][eii][0];
             hy = coords_array[ekk][ejj+1][eii][1]-coords_array[ekk][ejj][eii][1];
             hz = coords_array[ekk+1][ejj][eii][2]-coords_array[ekk][ejj][eii][2];
@@ -417,10 +387,9 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             ierr = VFCartFEElement1DInit(&ctx->e1D,len);CHKERRQ(ierr);
             ierr = IntegrateUcdotGradVlocal(&w_array[ek][ej][ei],cod, &ctx->e1D);
             if((n_cc[0] == 0) && (n_cc[1] == 0) && (n_cc[2] == 0)){
-              for(c = 0; c < 3; c++){
-                n_cc[c] = n_occ[c];
-              }
-              length_atzero += len;
+              n_cc[0] = grad_cc[0];
+              n_cc[1] = grad_cc[1];
+              n_cc[2] = grad_cc[2];
             }
             for(c = 0; c < 3; c++){
               coords1[c] = coordc_array[c]+n_cc[c]*len;
@@ -444,10 +413,6 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             }
             cod[0] = cod[1];
           }
-          for(c = 0; c < 3; c++){
-            aVe_n[c] = n_cc[c];
-            coord4angle[c] = coordc_array[c];
-          }
           n_cc[2] = n_cc[1] = n_cc[0] = 0;
           lc = 0;
           ave_V = 0;
@@ -456,7 +421,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             coordc_array[c] = coorda_array[c]-grad_cc[c]*len;
           }
           lc = sqrt((pow(coordc_array[0]-coorda_array[0],2))+(pow(coordc_array[1]-coorda_array[1],2))+(pow(coordc_array[2]-coorda_array[2],2)));
-          while(lc < ctx->WidthIntLenght && ave_V < one_eps && (-grad_cc[0]*n_cc[0]-grad_cc[1]*n_cc[1]-grad_cc[2]*n_cc[2] >= 0.)){
+          while(lc < ctx->WidthIntLenght && ave_V < 1.0 && (-grad_cc[0]*n_cc[0]-grad_cc[1]*n_cc[1]-grad_cc[2]*n_cc[2] >= 0.)){
             for (ek1 = zs1; ek1 < zs1+zm1; ek1++) {
               for (ej1 = ys1; ej1 < ys1+ym1; ej1++) {
                 for (ei1 = xs1; ei1 < xs1+xm1; ei1++) {
@@ -471,9 +436,6 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
                 }
               }
             }
-            for(c = 0; c < 3; c++){
-              n_occ[c] = n_cc[c];
-            }
             hx = coords_array[ekk][ejj][eii+1][0]-coords_array[ekk][ejj][eii][0];
             hy = coords_array[ekk][ejj+1][eii][1]-coords_array[ekk][ejj][eii][1];
             hz = coords_array[ekk+1][ejj][eii][2]-coords_array[ekk][ejj][eii][2];
@@ -486,10 +448,9 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             ierr = VFCartFEElement1DInit(&ctx->e1D,len);CHKERRQ(ierr);
             ierr = IntegrateUcdotGradVlocal(&w_array[ek][ej][ei],cod, &ctx->e1D);
             if((n_cc[0] == 0) && (n_cc[1] == 0) && (n_cc[2] == 0)){
-              for(c = 0; c < 3; c++){
-                n_cc[c] = n_occ[c];
-              }
-              length_atzero += len;
+              n_cc[0] = grad_cc[0];
+              n_cc[1] = grad_cc[1];
+              n_cc[2] = grad_cc[2];
             }
             for(c = 0; c < 3; c++){
               coords1[c] = coordc_array[c]+n_cc[c]*len;
@@ -513,25 +474,6 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             }
             cod[0] = cod[1];
           }
-          for(c = 0; c < 3; c++){
-            aVe_n1[c] = n_cc[c];
-          }
-          val1 = sqrt(PetscAbs(aVe_n[0]*aVe_n1[0]+aVe_n[1]*aVe_n1[1]+aVe_n[2]*aVe_n1[2]));
-          
-          /*
-           mag[0] = sqrt(pow(angle[0],2)+pow(angle[1],2)+pow(angle[2],2));
-           mag[1] = sqrt(pow(angle1[0],2)+pow(angle1[1],2)+pow(angle1[2],2));
-           mag[2] = sqrt(pow(angle2[0],2)+pow(angle2[1],2)+pow(angle2[2],2));
-           
-           for(c = 0; c < 3;c++){
-           angle[c] = angle[c]/mag[0];
-           angle1[c] = angle1[c]/mag[1];
-           angle2[c] = angle2[c]/mag[2];
-           }
-           val1 = sqrt(PetscAbs(aVe_n[0]*aVe_n1[0]+aVe_n[1]*aVe_n1[1]+aVe_n[2]*aVe_n1[2]));
-           val2 = sqrt(PetscAbs(angle[0]*angle1[0]+angle[1]*angle1[1]+angle[2]*angle1[2]));
-           val3 = sqrt(PetscAbs(grad_cc[0]*angle2[0]+grad_cc[1]*angle2[1]+grad_cc[2]*angle2[2]));
-           */
           if(w_array[ek][ej][ei] < 0){
             w_array[ek][ej][ei] = 0;
           }
