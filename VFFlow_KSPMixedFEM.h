@@ -62,5 +62,7 @@ extern PetscErrorCode VF_MatApplyFracturePressureBC_local(PetscReal *K_ele,VFCar
 
 extern PetscErrorCode VF_MatDFractureFlowCoupling_local(PetscReal *Kd_ele,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal w,PetscReal ***v_array);
 extern PetscErrorCode VF_RHSFractureFlowCoupling_local(PetscReal *K_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal w,PetscReal ***v_array,PetscReal w_old);
+extern PetscErrorCode RemoveModulusEffect(PetscReal *Ks_local,VFCartFEElement3D *e,PetscInt ek,PetscInt ej,PetscInt ei,PetscReal ***pressdiff_array,PetscReal ***v_array);
+
 
 #endif /* VFFLOW_MIXEDFEM_H */

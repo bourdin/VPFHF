@@ -65,4 +65,8 @@
 -U_Z1_2 0
 -altminmaxit 300
 -altmintol 5e-3
--FlowstSnes_pc_type hypre 
+-FlowstSnes_pc_type hypre
+-FlowstSnes_pc_hypre_boomeramg_strong_threshold 0.7
+-FlowstSnes_pc_hypre_type boomeramg
+-FlowstSnes_pc_hypre_boomeramg_max_iter 500
+-Flowstsnes_ksp_type cg
