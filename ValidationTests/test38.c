@@ -86,21 +86,21 @@ int main(int argc,char **argv)
         ierr = VecCopy(fields.pressure,Pold);CHKERRQ(ierr);
         ierr = VF_StepP(&fields,&ctx);
         ierr = VF_StepU(&fields,&ctx);
-    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
         ierr = UpdateFractureWidth(&ctx,&fields);CHKERRQ(ierr);
         ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
         ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,fields.U,&ctx);CHKERRQ(ierr);
         pw = ctx.PressureWork/ctx.CrackVolume;
         errVP = PetscAbs((pw-pw_old)/pw);
-        ierr = PetscPrintf(PETSC_COMM_WORLD," Time step %i, U-P-V-loop alt min step %i, U_P_V_ERROR = %e \t pw = %e; vol(udotv) = %e\n",ctx.timestep,altminit,errVP, pw,ctx.CrackVolume);CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD," Time step %i, U-P-loop alt min step %i, U_P_ERROR = %e \t pw = %e; vol(udotv) = %e\n",ctx.timestep,altminit,errVP, pw,ctx.CrackVolume);CHKERRQ(ierr);
         }
       while (errVP >= ctx.altmintol  && altminit <= ctx.altminmaxit);
        ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
        ierr = VF_StepV(&fields,&ctx);
        ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
        ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
+       ierr = PetscPrintf(PETSC_COMM_WORLD," V_ERROR = %e \n",errV);CHKERRQ(ierr);
      }
-     while(errV >= ctx.altmintol  && altminit <= ctx.altminmaxit);
+     while(errV >= 10*ctx.altmintol  && altminit <= ctx.altminmaxit);
 
     ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
     ierr = VolumeFromWidth(&volume, &ctx, &fields);CHKERRQ(ierr);
