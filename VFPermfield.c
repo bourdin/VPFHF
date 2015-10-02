@@ -2029,11 +2029,9 @@ extern PetscErrorCode UpdatePermeablitysingMultipliers(VFCtx *ctx, VFFields *fie
         ierr = CartFEElement3DInit(&ctx->s3D,hx/2.,hy/2.,hz/2.,hx,hy,hz);CHKERRQ(ierr);
         ierr = ComputeAverageVlocal(&ave_V, v_array, ek, ej, ei, &ctx->s3D);
         if(ave_V < ctx->pmult_vtol){
-          if(ave_V < ctx->vfprop.irrevtol){
-            perm_array[ek][ej][ei][0] = perm1_array[ek][ej][ei][0]*pmult_array[ek][ej][ei];
-            perm_array[ek][ej][ei][1] = perm1_array[ek][ej][ei][1]*pmult_array[ek][ej][ei];
-            perm_array[ek][ej][ei][2] = perm1_array[ek][ej][ei][2]*pmult_array[ek][ej][ei];
-          }
+          perm_array[ek][ej][ei][0] = perm1_array[ek][ej][ei][0]*pmult_array[ek][ej][ei];
+          perm_array[ek][ej][ei][1] = perm1_array[ek][ej][ei][1]*pmult_array[ek][ej][ei];
+          perm_array[ek][ej][ei][2] = perm1_array[ek][ej][ei][2]*pmult_array[ek][ej][ei];
         }
       }
     }
