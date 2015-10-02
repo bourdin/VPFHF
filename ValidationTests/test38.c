@@ -100,7 +100,7 @@ int main(int argc,char **argv)
        ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
        ierr = PetscPrintf(PETSC_COMM_WORLD," V_ERROR = %e \n",errV);CHKERRQ(ierr);
      }
-     while(errV >= 10*ctx.altmintol  && altminit <= ctx.altminmaxit);
+     while(errV >= ctx.altmintol  && altminit <= ctx.altminmaxit);
 
     ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
     ierr = VolumeFromWidth(&volume, &ctx, &fields);CHKERRQ(ierr);
