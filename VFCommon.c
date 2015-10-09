@@ -929,6 +929,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
       res = bz;
     }
   }
+  ctx->IntLenghtRes = res;
   ctx->WidthIntLenght = (3*res+4*ctx->vfprop.epsilon);
   
   st = ctx->WidthIntLenght/(res);

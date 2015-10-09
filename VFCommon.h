@@ -366,6 +366,7 @@ typedef struct {
   Vec                 M_inv;
   Vec                 K_dr;
   PetscReal           pmult_vtol;          /* v threshold for pmult              */
+  PetscReal           IntLenghtRes;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

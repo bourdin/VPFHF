@@ -82,12 +82,11 @@ int main(int argc,char **argv)
   ierr = VecSet(ctx.pressure_old,ini_pressure);CHKERRQ(ierr);
   for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nPROCESSING STEP %i ........................................................... \n",ctx.timestep);CHKERRQ(ierr);
-    altminitv = 1;
+    altminit = 1;
     errVP  = 1e+10;
     do{
       ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
       ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
-      altminit = 1;
       do
       {
         pw_old = pw;
@@ -118,7 +117,6 @@ int main(int argc,char **argv)
 
         ierr = PetscPrintf(PETSC_COMM_WORLD,"     Solving for U_s");CHKERRQ(ierr);
         ierr = VF_StepU(&fields,&ctx);
-        ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 
         ctx.hasCrackPressure = PETSC_TRUE;
         ctx.hasInsitu        = PETSC_FALSE;
@@ -144,7 +142,6 @@ int main(int argc,char **argv)
         ierr = VecCopy(fields.U,fields.BCU);CHKERRQ(ierr);
         ierr = VF_StepU(&fields,&ctx);
         
-        ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
         ierr = UpdateFractureWidth(&ctx,&fields);CHKERRQ(ierr);
         ierr = VolumetricCrackOpening(&ctx.CrackVolume,&ctx,&fields);CHKERRQ(ierr);
         ierr = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,fields.U,&ctx);CHKERRQ(ierr);
@@ -153,15 +150,14 @@ int main(int argc,char **argv)
         ierr = PetscPrintf(PETSC_COMM_WORLD," Time step %i, U-P loop alt min step %i, U_P ERROR = %e \t pw = %e; vol(udotv) = %e\n",ctx.timestep,altminit,errVP, pw,ctx.CrackVolume);CHKERRQ(ierr);
         altminit++;
       }
-      while (errVP >= ctx.altmintol  && altminit <= ctx.altminmaxit);
+      while (errVP >= ctx.altmintol);
       ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
       ierr = VF_StepV(&fields,&ctx);
       ierr = VecAXPY(Vold,-1.,fields.V);CHKERRQ(ierr);
       ierr = VecNorm(Vold,NORM_INFINITY,&errV);CHKERRQ(ierr);
       ierr = PetscPrintf(PETSC_COMM_WORLD," V loop alt min step %i, V_ERROR = %e \n",altminitv,errV);CHKERRQ(ierr);
-      altminitv++;
     }
-    while(errV >= ctx.altmintol  && altminitv <= ctx.altminmaxit);
+    while(errV >= ctx.altmintol  && altminit <= ctx.altminmaxit);
     
     ierr = VolumetricLeakOffRate(&ctx.LeakOffRate,&ctx,&fields);CHKERRQ(ierr);
     ierr = VolumeFromWidth(&volume, &ctx, &fields);CHKERRQ(ierr);
