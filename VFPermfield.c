@@ -349,7 +349,6 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
         ierr = ComputeAverageVlocal(&ave_V, v_array, ek, ej, ei, &ctx->s3D);
         ierr = ComputeCellCenterGradV_local(grad_cc, v_array, ek, ej, ei, &ctx->s3D);
         w_array[ek][ej][ei] = 0;
-//        len = sqrt(pow(grad_cc[0]*hx,2)+pow(grad_cc[1]*hy,2)+pow(grad_cc[2]*hz,2))/5;
         if(ave_V < 1.0 && ave_V > 0.0){
           ierr = ComputeUcdotGradVlocal(&cod[0], grad_cc, n_cc, u_array, v_array, ek, ej, ei, &ctx->s3D);
           cod_in = cod[0];
