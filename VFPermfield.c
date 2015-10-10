@@ -334,7 +334,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
 	ierr = DMGlobalToLocalBegin(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScalCell,pmult_local,&pmult_array);CHKERRQ(ierr);
-  len = ctx->IntLenghtRes;
+        len = ctx->IntLengthRes;
 	for (ek = zs; ek < zs+zm; ek++) {
 		for (ej = ys; ej < ys+ym; ej++) {
 			for (ei = xs; ei < xs+xm; ei++) {
@@ -360,7 +360,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
           }
           n_cc[2] = n_cc[1] = n_cc[0] = 0;
           lc = sqrt((pow(coordc_array[0]-coorda_array[0],2))+(pow(coordc_array[1]-coorda_array[1],2))+(pow(coordc_array[2]-coorda_array[2],2)));
-          while(lc < ctx->WidthIntLenght && ave_V < 1.0 && (grad_cc[0]*n_cc[0]+grad_cc[1]*n_cc[1]+grad_cc[2]*n_cc[2] >= 0.)){
+          while(lc < ctx->WidthIntLength && ave_V < 1.0 && (grad_cc[0]*n_cc[0]+grad_cc[1]*n_cc[1]+grad_cc[2]*n_cc[2] >= 0.)){
             for (ek1 = zs1; ek1 < zs1+zm1; ek1++) {
               for (ej1 = ys1; ej1 < ys1+ym1; ej1++) {
                 for (ei1 = xs1; ei1 < xs1+xm1; ei1++) {
@@ -421,7 +421,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             coordc_array[c] = coorda_array[c]-grad_cc[c]*len;
           }
           lc = sqrt((pow(coordc_array[0]-coorda_array[0],2))+(pow(coordc_array[1]-coorda_array[1],2))+(pow(coordc_array[2]-coorda_array[2],2)));
-          while(lc < ctx->WidthIntLenght && ave_V < 1.0 && (-grad_cc[0]*n_cc[0]-grad_cc[1]*n_cc[1]-grad_cc[2]*n_cc[2] >= 0.)){
+          while(lc < ctx->WidthIntLength && ave_V < 1.0 && (-grad_cc[0]*n_cc[0]-grad_cc[1]*n_cc[1]-grad_cc[2]*n_cc[2] >= 0.)){
             for (ek1 = zs1; ek1 < zs1+zm1; ek1++) {
               for (ej1 = ys1; ej1 < ys1+ym1; ej1++) {
                 for (ei1 = xs1; ei1 < xs1+xm1; ei1++) {

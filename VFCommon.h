@@ -359,14 +359,14 @@ typedef struct {
   VFCartFEElement1D    e1D;
   Vec widthc_old;
   DM                  daWScalCell;
-  PetscReal           WidthIntLenght;
+  PetscReal           WidthIntLength;
   DM                  daWScal;
   DM                  daWVect;
   PetscReal           theta;          /* Time descritization parameter               */
   Vec                 M_inv;
   Vec                 K_dr;
   PetscReal           pmult_vtol;          /* v threshold for pmult              */
-  PetscReal           IntLenghtRes;
+  PetscReal           IntLengthRes;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);
