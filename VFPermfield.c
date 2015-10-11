@@ -348,8 +348,8 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
         ierr = ComputeAverageVlocal(&ave_V, v_array, ek, ej, ei, &ctx->s3D);
         ierr = ComputeCellCenterGradV_local(grad_cc, v_array, ek, ej, ei, &ctx->s3D);
         w_array[ek][ej][ei] = 0;
+        len = sqrt(pow(grad_cc[0]*hx,2)+pow(grad_cc[1]*hy,2)+pow(grad_cc[2]*hz,2))/20;
         if(ave_V < 1.0 && ave_V > 0.0){
-          len = ctx->IntLengthRes;
           ierr = ComputeUcdotGradVlocal(&cod[0], grad_cc, n_cc, u_array, v_array, ek, ej, ei, &ctx->s3D);
           cod_in = cod[0];
           coorda_array[0] = coordb_array[0] = coordc_array[0] = (coords_array[ek][ej][ei+1][0]+coords_array[ek][ej][ei][0])/2.;
@@ -360,7 +360,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
           }
           n_cc[2] = n_cc[1] = n_cc[0] = 0;
           lc = sqrt((pow(coordc_array[0]-coorda_array[0],2))+(pow(coordc_array[1]-coorda_array[1],2))+(pow(coordc_array[2]-coorda_array[2],2)));
-          while(lc < ctx->WidthIntLength && ave_V < 1.0 && (grad_cc[0]*n_cc[0]+grad_cc[1]*n_cc[1]+grad_cc[2]*n_cc[2] >= 0.)){
+          while(lc < ctx->WidthIntLenght && ave_V < 1.0 && (grad_cc[0]*n_cc[0]+grad_cc[1]*n_cc[1]+grad_cc[2]*n_cc[2] >= 0.)){
             for (ek1 = zs1; ek1 < zs1+zm1; ek1++) {
               for (ej1 = ys1; ej1 < ys1+ym1; ej1++) {
                 for (ei1 = xs1; ei1 < xs1+xm1; ei1++) {
@@ -421,7 +421,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             coordc_array[c] = coorda_array[c]-grad_cc[c]*len;
           }
           lc = sqrt((pow(coordc_array[0]-coorda_array[0],2))+(pow(coordc_array[1]-coorda_array[1],2))+(pow(coordc_array[2]-coorda_array[2],2)));
-          while(lc < ctx->WidthIntLength && ave_V < 1.0 && (-grad_cc[0]*n_cc[0]-grad_cc[1]*n_cc[1]-grad_cc[2]*n_cc[2] >= 0.)){
+          while(lc < ctx->WidthIntLenght && ave_V < 1.0 && (-grad_cc[0]*n_cc[0]-grad_cc[1]*n_cc[1]-grad_cc[2]*n_cc[2] >= 0.)){
             for (ek1 = zs1; ek1 < zs1+zm1; ek1++) {
               for (ej1 = ys1; ej1 < ys1+ym1; ej1++) {
                 for (ei1 = xs1; ei1 < xs1+xm1; ei1++) {
