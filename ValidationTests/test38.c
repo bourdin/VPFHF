@@ -37,7 +37,7 @@ int main(int argc,char **argv)
   PetscReal       ini_pressure;
   PetscReal       volume;
   PetscReal       errV=1e+10;
-
+  PetscReal       time_shutin=1e+10;
 
 
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
@@ -62,21 +62,25 @@ int main(int argc,char **argv)
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
-  ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
+  ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);/*
   ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
   ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);
-  ierr = UpdateFractureWidth(&ctx,&fields);CHKERRQ(ierr);
+  ierr = UpdateFractureWidth(&ctx,&fields);CHKERRQ(ierr);*/
   ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD," Initial fracture pressure =  %e  Initial fracture volume = %e \n ",p,ctx.CrackVolume);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   ini_pressure = 0.0;
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-ini_pressure",&ini_pressure,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(PETSC_NULL,"-shut_in_time",&time_shutin,PETSC_NULL);CHKERRQ(ierr);
   ierr = VecSet(ctx.PresBCArray,ini_pressure);CHKERRQ(ierr);
   ierr = VecSet(ctx.pressure_old,ini_pressure);CHKERRQ(ierr);
    for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nPROCESSING STEP %i ........................................................... \n",ctx.timestep);CHKERRQ(ierr);
       altminit = 1;
       errVP  = 1e+10;
+     if (ctx.timestep*ctx.timevalue >= time_shutin ){
+       ierr = VecSet(ctx.RegFracWellFlowRate,0.0);CHKERRQ(ierr);
+     }
      do{
       do
       {
