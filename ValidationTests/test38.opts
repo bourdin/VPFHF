@@ -16,7 +16,7 @@
 -timevalue 0.5  
 -shut_in_time 40.
 -eta 1e-8 
--Gc 5e-6
+-Gc 5e-4
 -theta 1.
 -ini_pressure 0.0
 -atnum 1 

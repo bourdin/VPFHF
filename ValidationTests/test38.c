@@ -74,9 +74,6 @@ int main(int argc,char **argv)
 	ierr = PetscOptionsGetReal(PETSC_NULL,"-shut_in_time",&time_shutin,PETSC_NULL);CHKERRQ(ierr);
   ierr = VecSet(ctx.PresBCArray,ini_pressure);CHKERRQ(ierr);
   ierr = VecSet(ctx.pressure_old,ini_pressure);CHKERRQ(ierr);
-  ierr = VecCopy(fields.U,ctx.U_old);CHKERRQ(ierr);
-  ierr = VecCopy(fields.V,ctx.V_old);CHKERRQ(ierr);
-  ierr = VecSet(ctx.widthc_old,0.0);CHKERRQ(ierr);
    for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nPROCESSING STEP %i ........................................................... \n",ctx.timestep);CHKERRQ(ierr);
       altminit = 1;
