@@ -84,9 +84,8 @@ int main(int argc,char **argv)
   ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
   ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
   ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
-  ierr = VecCopy(fields.U,ctx.U_old);CHKERRQ(ierr);
-  ierr = VecCopy(fields.V,ctx.V_old);CHKERRQ(ierr);
   ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
+  
   ierr = PetscPrintf(PETSC_COMM_WORLD,"  COMPUTING TIME EVOLUTION OF SUBSEQUENT DEFORMATION STAGES..................\n");CHKERRQ(ierr);
   ctx.bcQ[0].face[X0] = NONE;
   ctx.bcQ[0].face[X1] = NONE;
