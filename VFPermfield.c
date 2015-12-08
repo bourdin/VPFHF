@@ -424,9 +424,10 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             }
             else{
               lc += sqrt((pow(coordc_array[0]-coords2[0],2))+(pow(coordc_array[1]-coords2[1],2))+(pow(coordc_array[2]-coords2[2],2)));
-              for(c = 0; c < 3; c++)
+              for(c = 0; c < 3; c++){
                 coordc_array[c] = coords2[c];
-              n_cc[c] = -1*n_cc[c];
+                n_cc[c] = -1*n_cc[c];
+              }
             }
             cod[0] = cod[1];
           }
