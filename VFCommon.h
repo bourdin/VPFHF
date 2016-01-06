@@ -366,6 +366,8 @@ typedef struct {
   Vec                 M_inv;
   Vec                 K_dr;
   PetscReal           pmult_vtol;          /* v threshold for pmult              */
+  PetscReal           width_tol;          /* tolerance for tip removal              */
+  PetscBool           removeTipEffect;
 } VFCtx;
 
 extern PetscErrorCode VFCtxGet(VFCtx *ctx);

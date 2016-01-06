@@ -105,9 +105,14 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ctx->verbose = 0;
     ierr         = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
 
+    ctx->removeTipEffect = PETSC_FALSE;
+    ierr                  = PetscOptionsBool("-removetipeffect","\n\t Remove effect of fracture tip on width computation","",ctx->removeTipEffect,&ctx->removeTipEffect,PETSC_NULL);CHKERRQ(ierr);
+    
+    ctx->width_tol = 0.1;
+    ierr            = PetscOptionsReal("-widthremoval_tol","\n\tTolerance for removal of tip effect","",ctx->width_tol,&ctx->width_tol,PETSC_NULL);CHKERRQ(ierr);
+    
     ctx->flowsolver = FLOWSOLVER_NONE;
-    ierr          = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);  
-
+    ierr          = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
     
     ctx->FlowDisplCoupling = PETSC_FALSE;
     ierr                  = PetscOptionsBool("-poroelasticity","\n\t Geomechanics (coupled reservoir flow and deformation)","",ctx->FlowDisplCoupling,&ctx->FlowDisplCoupling,PETSC_NULL);CHKERRQ(ierr);
