@@ -69,6 +69,7 @@ int main(int argc,char **argv)
     ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Time step %i. Targeting injected volume of %g\n",ctx.timestep,targetVol);CHKERRQ(ierr);
     ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
+    altminit = 1;
     do {
       p = po*ctx.timestep;
       ierr  = PetscPrintf(PETSC_COMM_WORLD,"  Time step %i, alt min step %i with pressure %g\n",ctx.timestep,altminit,p);CHKERRQ(ierr);
