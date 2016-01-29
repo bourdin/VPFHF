@@ -1,0 +1,35 @@
+#PETSc Option Table entries:
+-altminmaxit 1000
+-altmintol 1e-4
+-epsilon .64
+-eta 1e-8
+-nlayer 1
+-nu 0
+-gc .8
+-beta .0
+-ini_pressure 1e-2
+-insitumax -0.,0,0.,0,0,0
+-insitumin -0.,0,0.,0,0,0
+-l 8,.008,8.
+-maxtimestep 100
+-n 51,2,51
+-npc 1
+-p runtest16
+-pc0_R .5
+-pc0_center 4.,.004,4.
+-pc0_phi 90.
+-pc0_theta 0.
+-pc0_thickness .2
+-U_Y0_BC_1 ZERO
+-U_Y1_BC_1 ZERO
+-U_X0Y0Z0_BC_0 ZERO
+-U_X0Y0Z0_BC_1 ZERO
+-U_X1Y0Z0_BC_2 ZERO
+-V_X0_BC ONE 
+-V_X1_BC ONE 
+-V_Z0_BC ONE 
+-V_Z1_BC ONE
+-unilateral none
+-atnum 1
+#End of PETSc Option Table entries
+
