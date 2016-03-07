@@ -6,19 +6,15 @@
 -widthremoval_tol 0.1
 -eta 1e-8 
 -Gc 100
--po 0.1
 -atnum 1 
 -epsilon 1 
 -npc 1 
 -pc0_thickness 0.5
--pc0_r 3.0 
--pc0_theta 0 
--pc0_phi 45  
+-pc0_r 300.0 
+-pc0_theta 90 
+-pc0_phi 0  
 -pc0_center 25,0.5,25 
--pressurize
 -coupledfracflowmodel
--V_X0_BC ONE 
--V_X1_BC ONE 
 -V_Z0_BC ONE 
 -V_Z1_BC ONE
 -U_Y0_BC_1 ZERO
@@ -27,9 +23,9 @@
 -U_X1_BC_0 FIXED
 -U_Z0_BC_2 FIXED
 -U_Z1_BC_2 FIXED
--U_X0_0 0.3
--U_X1_0 0.3
--U_Z0_2 0.1
+-U_X0_0 0.
+-U_X1_0 0.
+-U_Z0_2 -0.1
 -U_Z1_2 0.1
 -altminmaxit 300
 -altmintol 5e-3
