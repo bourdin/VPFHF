@@ -347,7 +347,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
 	ierr = DMGlobalToLocalEnd(ctx->daScalCell,fields->widthc,INSERT_VALUES,w_local);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx->daScalCell,w_local,&w_array);CHKERRQ(ierr);
 
-  ierr = VecSet(fields->pmult,0.);CHKERRQ(ierr);
+  ierr = VecSet(fields->pmult,1.);CHKERRQ(ierr);
   ierr = DMGetLocalVector(ctx->daScalCell,&pmult_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalBegin(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
 	ierr = DMGlobalToLocalEnd(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
@@ -368,7 +368,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
         for(c = 0; c < 3; c++){
           ref_cc[c] = n_cc[c];
         }
-        len = sqrt(pow(n_cc[0]*hx,2)+pow(n_cc[1]*hy,2)+pow(n_cc[2]*hz,2))/5;
+        len = sqrt(pow(n_cc[0]*hx,2)+pow(n_cc[1]*hy,2)+pow(n_cc[2]*hz,2))/20;
         if(ave_V < 1.0 && ave_V > 0.0){ 
           gradx[0] = grad_cc[0];
           grady[0] = grad_cc[1];
@@ -533,7 +533,10 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
             gradz[0] = grad_cc[2];
           }
           while(lc < ctx->WidthIntLenght-len && ave_V < vlim && (-ref_cc[0]*n_cc[0]-ref_cc[1]*n_cc[1]-ref_cc[2]*n_cc[2] >= 0.));
-          pmult_array[ek][ej][ei] = value = sqrt( pow(valuex,2)+pow(valuey,2)+pow(valuez,2));
+            value = sqrt( pow(valuex,2)+pow(valuey,2)+pow(valuez,2));
+          if(value > ctx->width_tol){
+            pmult_array[ek][ej][ei] = 0.;
+          }
         }
         if(w_array[ek][ej][ei] < 0.0){
           w_array[ek][ej][ei] = 0;
