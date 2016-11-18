@@ -1,0 +1,16 @@
+-n 501,2,91
+-l 5.,0.01,0.9
+-eta 1e-8
+-atnum 2
+-epsilon 0.01
+-nlayer 3
+-layersep 0.4,0.5
+-Gc 4.,0.2,4.
+-E 40.,40.,40.
+-no_seed 0
+-nu 0.25,0.01,0.25
+-max_timestep 50
+-bcUx 0.05
+-bcUz 0
+-p case1 > ./output.run
+

@@ -117,7 +117,7 @@ int main(int argc,char **argv)
 	ierr = VecDestroy(&V);CHKERRQ(ierr);
 	ierr = DMDAVecGetArray(ctx.daScal,fields.V,&v_array);CHKERRQ(ierr);
 	/*Initializing seed points*/
-	ierr = PetscMalloc2(no_seed,PetscInt,&seed_array_z,no_seed,PetscInt,&seed_array_x);CHKERRQ(ierr);
+	ierr = PetscMalloc2(no_seed,&seed_array_z,no_seed,&seed_array_x);CHKERRQ(ierr);
 	seedz_start = seedx_start = 2;
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-seedz_start",&seedz_start,PETSC_NULL);CHKERRQ(ierr);
 	ierr = PetscOptionsGetInt(PETSC_NULL,"-seedx_start",&seedx_start,PETSC_NULL);CHKERRQ(ierr);
@@ -287,7 +287,7 @@ int main(int argc,char **argv)
 		ctx.ElasticEnergy = 0;
 		ctx.InsituWork    = 0;
 		ctx.PressureWork  = 0.;
-		ierr              = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,&fields,&ctx);CHKERRQ(ierr);
+		ierr              = VF_UEnergy3D(&ctx.ElasticEnergy,&ctx.InsituWork,&ctx.PressureWork,fields.U,&ctx);CHKERRQ(ierr);
 		ierr              = VF_VEnergy3D(&ctx.SurfaceEnergy,&fields,&ctx);CHKERRQ(ierr);
 		ctx.TotalEnergy = ctx.ElasticEnergy-ctx.InsituWork-ctx.PressureWork;
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy:            %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
@@ -300,14 +300,8 @@ int main(int argc,char **argv)
 		}
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"Total Mechanical energy:  %e\n",ctx.ElasticEnergy-InsituWork-ctx.PressureWork);CHKERRQ(ierr);
 		ierr = VolumetricCrackOpening(&ctx.CrackVolume, &ctx, &fields);CHKERRQ(ierr);   
-		switch (ctx.fileformat) {
-			case FILEFORMAT_HDF5:
-				ierr = FieldsH5Write(&ctx,&fields);
-				break;
-			case FILEFORMAT_BIN:
-				ierr = FieldsBinaryWrite(&ctx,&fields);
-				break;
-		}
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
+
 		altminit = 1;
 //		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n###################################################################\n");CHKERRQ(ierr);
 //		ierr = PetscPrintf(PETSC_COMM_WORLD,"#        VF crack volume change = %f\t      \n",ctx.CrackVolume);CHKERRQ(ierr);
