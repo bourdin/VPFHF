@@ -1,6 +1,6 @@
 /*
  test16a.c: Solves for the displacement and v-field in a volume loaded line crack in 2d (Sneddon 2D)
- (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2018 Blaise Bourdin bourdin@lsu.edu
  test16a -options_file test16a.opts is a small but relevant example
  */
 
@@ -34,16 +34,18 @@ int main(int argc,char **argv)
   
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(NULL,"-prestol",&prestol,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(NULL,"-debug",&debug,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(NULL,"-saveall",&saveall,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,NULL,"-prestol",&prestol,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,NULL,"-debug",&debug,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,NULL,"-saveall",&saveall,NULL);CHKERRQ(ierr);
   /*
    Overwrite ctx.maxtimestep with something more reasonable
    */
   ctx.maxtimestep = 150;
-  ierr            = PetscOptionsGetInt(NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
   po = 0.0001;
-  ierr = PetscOptionsGetReal(NULL,"-ini_pressure",&po,NULL);CHKERRQ(ierr);  
+  targetVol = 0.;
+  p = 0.;
+  ierr = PetscOptionsGetInt(NULL,NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,NULL,"-ini_pressure",&po,NULL);CHKERRQ(ierr);  
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);

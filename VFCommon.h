@@ -4,7 +4,7 @@
  VFCommon.h
  (c) 2010-2013 Blaise Bourdin bourdin@lsu.edu
  */
-static const char banner[] = "\n\nVF:\nNumerical implementation of the variational approach to fracture.\n(c) 2010-2012 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu\n\n";
+static const char banner[] = "\n\nVF:\nNumerical implementation of the variational approach to fracture.\n(c) 2010-2018 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu\n\n";
 
 typedef struct {
 	PetscReal   mu;             /* Fluid viscosity              */
@@ -61,22 +61,18 @@ typedef struct {
 	PetscReal       rho;        /* density                         */
 	PetscReal       phi;        /* porosity                        */
 	PetscReal       Ks;         /* Bulk modulus of rock            */
-	//Vec             VecGc;      /* Fracture toughness              */
-	PetscReal       Cp;		      /* Specific heat capacity          */
+	PetscReal       Cp;		    /* Specific heat capacity          */
 } VFMatProp; //change them to Vec later
 
 typedef struct {
 	PetscReal        epsilon;
 	PetscReal        eta;
 	PetscReal        PCeta;
-  PetscInt         atnum;
+    PetscInt         atnum;
 	PetscReal        atCv;
 	PetscReal        irrevtol;
 	PetscReal        permmax;
 	PetscReal        permmult;
-	/*
-	 permmax should be moved to resprop
-	 */
 } VFProp;
 
 
@@ -274,7 +270,6 @@ typedef struct {
 	Vec                 RHST;
 	Vec                 HeatFunct;
 	Vec                 RHSTpre;
-//	VFBC                bcq[3];
 	SNES                snesT;
 	Vec                 HeatBC;
 	/*
