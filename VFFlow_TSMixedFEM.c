@@ -66,15 +66,15 @@ extern PetscErrorCode MixedFlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 	ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
 	ierr = VecSet(ctx->Perm,0.0);CHKERRQ(ierr);
 	ierr = VecCopy(fields->vfperm,ctx->Perm);CHKERRQ(ierr);
-	ierr = TSSetIFunction(ctx->tsVelP,PETSC_NULL,FormIFunction,ctx);CHKERRQ(ierr);
+	ierr = TSSetIFunction(ctx->tsVelP,NULL,FormIFunction,ctx);CHKERRQ(ierr);
   ierr = TSSetIJacobian(ctx->tsVelP,ctx->JacVelP,ctx->JacVelP,FormIJacobian,ctx);CHKERRQ(ierr);
-	ierr = TSSetRHSFunction(ctx->tsVelP,PETSC_NULL,FormFunction,ctx);CHKERRQ(ierr);
+	ierr = TSSetRHSFunction(ctx->tsVelP,NULL,FormFunction,ctx);CHKERRQ(ierr);
 	ierr = TSSetSolution(ctx->tsVelP,fields->VelnPress);CHKERRQ(ierr);
 	ierr = TSSetInitialTimeStep(ctx->tsVelP,0.0,ctx->timevalue);CHKERRQ(ierr);
   ierr = TSSetDuration(ctx->tsVelP,ctx->maxtimestep,ctx->maxtimevalue);CHKERRQ(ierr);
 //	ierr = FormInitialSolution(fields->VelnPress,fields->FlowBCArray,&ctx->bcFlow[0],ctx);CHKERRQ(ierr);
 //	if (ctx->verbose > 1) {
-		ierr = TSMonitorSet(ctx->tsVelP,MixedFEMTSMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+		ierr = TSMonitorSet(ctx->tsVelP,MixedFEMTSMonitor,NULL,NULL);CHKERRQ(ierr);
 //	}	
 	ierr = TSSetFromOptions(ctx->tsVelP);CHKERRQ(ierr);	
   ierr = TSSolve(ctx->tsVelP,fields->VelnPress);CHKERRQ(ierr);
@@ -107,10 +107,10 @@ extern PetscErrorCode MixedFlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,fields->VelnPress,&VelnPress_array);CHKERRQ(ierr);	
 	ierr = VecDestroy(&ctx->Perm);CHKERRQ(ierr);
-  ierr = VecMin(fields->velocity,PETSC_NULL,&Velmin);CHKERRQ(ierr);
-	ierr = VecMax(fields->velocity,PETSC_NULL,&Velmax);CHKERRQ(ierr);
-  ierr = VecMin(fields->pressure,PETSC_NULL,&Pmin);CHKERRQ(ierr);
-	ierr = VecMax(fields->pressure,PETSC_NULL,&Pmax);CHKERRQ(ierr);
+  ierr = VecMin(fields->velocity,NULL,&Velmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->velocity,NULL,&Velmax);CHKERRQ(ierr);
+  ierr = VecMin(fields->pressure,NULL,&Pmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->pressure,NULL,&Pmax);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      Velocity min / max:     %e %e\n",Velmin,Velmax);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      Pressure min / max:     %e %e\n",Pmin,Pmax);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
@@ -126,8 +126,8 @@ extern PetscErrorCode MixedFEMTSMonitor(TS ts,PetscInt timestep,PetscReal timeva
 
 	PetscFunctionBegin;
 	ierr = VecNorm(VelnPress,NORM_1,&norm);CHKERRQ(ierr);
-	ierr = VecMax(VelnPress,PETSC_NULL,&vmax);CHKERRQ(ierr);
-	ierr = VecMin(VelnPress,PETSC_NULL,&vmin);CHKERRQ(ierr);
+	ierr = VecMax(VelnPress,NULL,&vmax);CHKERRQ(ierr);
+	ierr = VecMin(VelnPress,NULL,&vmin);CHKERRQ(ierr);
 	ierr = PetscObjectGetComm((PetscObject)ts,&comm);CHKERRQ(ierr);
 	ierr = PetscPrintf(comm,"timestep %D: time %G, solution norm %G, max %G, min %G\n",timestep,timevalue,norm,vmax,vmin);CHKERRQ(ierr);		
 	PetscFunctionReturn(0);
@@ -202,8 +202,8 @@ extern PetscErrorCode MatApplyTSVelocityBC(Mat K,Mat Klhs,VFBC *bcQ)
 	
 	PetscFunctionBegin;
   ierr = MatGetDM(K,&da);CHKERRQ(ierr);
-	ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
+					   NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	for (c = 0; c < dof; c++){
 		if (xs == 0       && bcQ[c].face[X0] == FIXED)             numBC += ym * zm;
@@ -328,8 +328,8 @@ extern PetscErrorCode MatApplyTSVelocityBC(Mat K,Mat Klhs,VFBC *bcQ)
 		}
 		
 	}
-	ierr = MatZeroRowsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
-	ierr = MatZeroRowsStencil(Klhs,numBC,row,zero,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = MatZeroRowsStencil(K,numBC,row,one,NULL,NULL);CHKERRQ(ierr);
+	ierr = MatZeroRowsStencil(Klhs,numBC,row,zero,NULL,NULL);CHKERRQ(ierr);
 	ierr = PetscFree(row);CHKERRQ(ierr);
 	PetscFunctionReturn(0);
 }
@@ -371,7 +371,7 @@ extern PetscErrorCode FormTSMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
   PetscInt       w_no2 = 0;
 
 	PetscFunctionBegin;
-	ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx->daScalCell,NULL,&nx,&ny,&nz,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 		// This line ensures that the number of cells is one less than the number of nodes. Force processing of cells to stop once the second to the last node is processed 
 	ierr = MatZeroEntries(K);CHKERRQ(ierr);
@@ -668,7 +668,7 @@ extern PetscErrorCode VecApplyTSVelocityBC(Vec RHS,Vec BCV, VFBC *bcQ,VFCtx *ctx
 	PetscReal		****RHS_array;
 	
 	PetscFunctionBegin;
-	ierr = DMDAGetInfo(ctx->daFlow,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx->daFlow,&dim,&nx,&ny,&nz,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,BCV,&velbc_array);CHKERRQ(ierr); 	
 	ierr = DMDAVecGetArrayDOF(ctx->daFlow,RHS,&RHS_array);CHKERRQ(ierr); 	
@@ -901,7 +901,7 @@ extern PetscErrorCode FormInitialSolution(Vec VelnPress,Vec VelnPressBV, VFBC *b
 	
 	PetscFunctionBegin;
   ierr = VecGetDM(VelnPress,&da);CHKERRQ(ierr);
-	ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(da,VelnPress,&IniSol_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(da,VelnPressBV,&UnPre_array);CHKERRQ(ierr);

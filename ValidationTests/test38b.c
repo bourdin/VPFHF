@@ -43,7 +43,7 @@ int main(int argc,char **argv)
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   ini_pressure = 0.0;
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-ini_pressure",&ini_pressure,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-ini_pressure",&ini_pressure,NULL);CHKERRQ(ierr);
   ierr = VecSet(ctx.PresBCArray,ini_pressure);CHKERRQ(ierr);
   ierr = VecSet(ctx.pressure_old,ini_pressure);CHKERRQ(ierr);
   
@@ -89,7 +89,7 @@ int main(int argc,char **argv)
     ierr = VecCopy(fields.V,ctx.V_old);CHKERRQ(ierr);
     ierr = VecCopy(fields.widthc,ctx.widthc_old);CHKERRQ(ierr);
     ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
-    ierr = VecMax(fields.pressure,PETSC_NULL,&pmax);CHKERRQ(ierr);
+    ierr = VecMax(fields.pressure,NULL,&pmax);CHKERRQ(ierr);
     ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 	}
   ierr = VecDestroy(&Vold);CHKERRQ(ierr);

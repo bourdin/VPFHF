@@ -34,16 +34,16 @@ int main(int argc,char **argv)
   
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-prestol",&prestol,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(PETSC_NULL,"-debug",&debug,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(PETSC_NULL,"-saveall",&saveall,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,"-prestol",&prestol,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,"-debug",&debug,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,"-saveall",&saveall,NULL);CHKERRQ(ierr);
   /*
    Overwrite ctx.maxtimestep with something more reasonable
    */
   ctx.maxtimestep = 150;
-  ierr            = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
+  ierr            = PetscOptionsGetInt(NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
   po = 0.0001;
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-ini_pressure",&po,PETSC_NULL);CHKERRQ(ierr);  
+  ierr = PetscOptionsGetReal(NULL,"-ini_pressure",&po,NULL);CHKERRQ(ierr);  
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);

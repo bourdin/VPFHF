@@ -22,12 +22,12 @@ int main(int argc,char **argv)
   FILE                *file;
   
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\nh5xfer: ","");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,NULL,"\nh5xfer: ","");CHKERRQ(ierr);
   {
     maxstep = 1000;
-    ierr = PetscOptionsInt("-n","maximum number of time steps to convert\t","",maxstep,&maxstep,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsInt("-n","maximum number of time steps to convert\t","",maxstep,&maxstep,NULL);CHKERRQ(ierr);
     ierr = PetscSNPrintf(prefix,FILENAME_MAX,"TEST");CHKERRQ(ierr);
-    ierr = PetscOptionsString("-p","file prefix","",prefix,prefix,PETSC_MAX_PATH_LEN-1,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsString("-p","file prefix","",prefix,prefix,PETSC_MAX_PATH_LEN-1,NULL);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
@@ -39,11 +39,12 @@ int main(int argc,char **argv)
   //ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   
   //ierr = DMDAGetReducedDA(daScal,1,&daVect);CHKERRQ(ierr);
-  ierr = DMDAGetInfo(daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                    PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                    NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,
 						DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,
-						PETSC_NULL,PETSC_NULL,PETSC_NULL,&daVect);CHKERRQ(ierr);
+						NULL,NULL,NULL,&daVect);CHKERRQ(ierr);
+  ierr = DMSetUp(daVect);CHKERRQ(ierr);
   /* 
     Create Vecs from DA
   */

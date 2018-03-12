@@ -43,7 +43,7 @@ int main(int argc,char **argv)
 	ly = BBmax[1]-BBmin[1];
 	lx = BBmax[0]-BBmin[0];
   F = -2.5;
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-F",&F,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-F",&F,NULL);CHKERRQ(ierr);
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetType(viewer,PETSCVIEWERASCII);CHKERRQ(ierr);
@@ -79,7 +79,7 @@ int main(int argc,char **argv)
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n inf_norm = %f \n",norm_inf);CHKERRQ(ierr);
   }
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
-  ierr = VecMax(fields.pressure,PETSC_NULL,&pressure);CHKERRQ(ierr);
+  ierr = VecMax(fields.pressure,NULL,&pressure);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(viewer,"%e \t %e \t %e \n",ctx.timestep*ctx.timevalue,displ,pressure);CHKERRQ(ierr);
   ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
   ierr = VecCopy(ctx.RHSVelP,ctx.RHSVelPpre);CHKERRQ(ierr);
@@ -136,7 +136,7 @@ int main(int argc,char **argv)
     ierr = VecCopy(fields.pressure,ctx.pressure_old);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHSP,ctx.RHSPpre);CHKERRQ(ierr);
     if(ctx.timestep % 50 == 0){
-      ierr = VecMax(fields.pressure,PETSC_NULL,&pressure);CHKERRQ(ierr);
+      ierr = VecMax(fields.pressure,NULL,&pressure);CHKERRQ(ierr);
       ierr = PetscViewerASCIIPrintf(viewer,"%e \t %e \t %e \n",ctx.timestep*ctx.timevalue,displ,pressure);CHKERRQ(ierr);
     }
   }

@@ -42,18 +42,18 @@ int main(int argc,char **argv)
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-q",&q,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-maxvol",&maxvol,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-q",&q,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(NULL,"-orientation",&orientation,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-maxvol",&maxvol,NULL);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx.daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+					   NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daScal,BBmin,BBmax);CHKERRQ(ierr);	
   /*
     Overwrite ctx.maxtimestep with something more reasonable
   */
 	ctx.maxtimestep = 150;
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
 	q = maxvol / ctx.maxtimestep;
 	
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
@@ -85,7 +85,7 @@ int main(int argc,char **argv)
 	}
 	/*Initializing the v-field*/
   /*
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-nrc",&ctx.numRectangularCracks,PETSC_NULL);CHKERRQ(ierr);	
+	ierr = PetscOptionsGetInt(NULL,"-nrc",&ctx.numRectangularCracks,NULL);CHKERRQ(ierr);	
 	ierr = PetscMalloc(ctx.numRectangularCracks*sizeof(VFRectangularCrack),&ctx.rectangularcrack);CHKERRQ(ierr);
 	for (i = 0; i < ctx.numRectangularCracks; i++) {
 		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);
@@ -99,7 +99,7 @@ int main(int argc,char **argv)
 
 	}
 	
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-npc",&ctx.numPennyCracks,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(NULL,"-npc",&ctx.numPennyCracks,NULL);CHKERRQ(ierr);
 	ierr = PetscMalloc(ctx.numPennyCracks*sizeof(VFPennyCrack),&ctx.pennycrack);CHKERRQ(ierr);
 	for (i = 0; i < ctx.numPennyCracks; i++) {
 		ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"pc%d_",i);CHKERRQ(ierr);

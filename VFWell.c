@@ -40,22 +40,22 @@ extern PetscErrorCode VFWellGet(const char prefix[],VFWell *well)
   PetscFunctionBegin;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,prefix,"\n\nVF: well description:","");CHKERRQ(ierr);
   {
-    ierr = PetscOptionsString("-name","\n\twell name","",well->name,well->name,sizeof(well->name),PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsString("-name","\n\twell name","",well->name,well->name,sizeof(well->name),NULL);CHKERRQ(ierr);
     nval = 3;
-    ierr = PetscOptionsRealArray("-top","\n\twell top coordinates (comma separated).","",well->top,&nval,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-top","\n\twell top coordinates (comma separated).","",well->top,&nval,NULL);CHKERRQ(ierr);
     nval = 3;
-    ierr = PetscOptionsRealArray("-bottom","\n\t well bottom coordinates  (comma separated).","",well->bottom,&nval,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-bottom","\n\t well bottom coordinates  (comma separated).","",well->bottom,&nval,NULL);CHKERRQ(ierr);
     nval = 3;
-    ierr = PetscOptionsRealArray("-coords","\n\t well x, y & z coordinates  (comma separated).","",well->coords,&nval,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-Qw","\n\t well flow rate","",well->Qw,&well->Qw,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-Pw","\n\t well bottomhole pressure","",well->Pw,&well->Pw,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-rw","\n\t well radius","",well->rw,&well->rw,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsEnum("-constraint","\n\t\n\t well constraint type","",WellConstraint_Name,(PetscEnum)well->condition,(PetscEnum*)&well->condition,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsEnum("-type","\n\t\n\t well type","",WellType_Name,(PetscEnum)well->type,(PetscEnum*)&well->type,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsInt("-wellfracindex","\n\t well-to-fracture index","",well->wellfracindex,&well->wellfracindex,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsEnum("-wellinfrac","\n\t\n\t well-in fractype","",VFWellInFracName,(PetscEnum)well->fractype,(PetscEnum*)&well->fractype,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-coords","\n\t well x, y & z coordinates  (comma separated).","",well->coords,&nval,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-Qw","\n\t well flow rate","",well->Qw,&well->Qw,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-Pw","\n\t well bottomhole pressure","",well->Pw,&well->Pw,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-rw","\n\t well radius","",well->rw,&well->rw,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsEnum("-constraint","\n\t\n\t well constraint type","",WellConstraint_Name,(PetscEnum)well->condition,(PetscEnum*)&well->condition,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsEnum("-type","\n\t\n\t well type","",WellType_Name,(PetscEnum)well->type,(PetscEnum*)&well->type,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsInt("-wellfracindex","\n\t well-to-fracture index","",well->wellfracindex,&well->wellfracindex,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsEnum("-wellinfrac","\n\t\n\t well-in fractype","",VFWellInFracName,(PetscEnum)well->fractype,(PetscEnum*)&well->fractype,NULL);CHKERRQ(ierr);
 	  /*
-     ierr = PetscOptionsEnum("-bcV","\n\t boundary condition on V field","",BCTYPE_NAME,(PetscEnum)well->BCV,(PetscEnum*)&(well->BCV),PETSC_NULL);CHKERRQ(ierr);
+     ierr = PetscOptionsEnum("-bcV","\n\t boundary condition on V field","",BCTYPE_NAME,(PetscEnum)well->BCV,(PetscEnum*)&(well->BCV),NULL);CHKERRQ(ierr);
      */
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
@@ -217,8 +217,8 @@ extern PetscErrorCode VFWellBuildVAT1(Vec V,VFWell *well,VFCtx *ctx)
   PetscReal           dist;
   
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
@@ -270,8 +270,8 @@ extern PetscErrorCode VFWellBuildVAT2(Vec V,VFWell *well,VFCtx *ctx)
   PetscReal           dist;
   
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
@@ -312,8 +312,8 @@ extern PetscErrorCode VFRegDiracDeltaFunction(Vec RegV,VFWell *well, Vec V,Petsc
   PetscReal           BBmin[3],BBmax[3];
   
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAGetBoundingBox(ctx->daVect,BBmin,BBmax);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,RegV,&regv_array);CHKERRQ(ierr);
@@ -424,8 +424,8 @@ extern PetscErrorCode VFRegRateScalingFactor(PetscReal *InjectedVolume, Vec Rate
 	PetscReal       myInjVolumeRateLocal = 0.,myInjVolumeRate = 0.;
   
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScalCell,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
 	

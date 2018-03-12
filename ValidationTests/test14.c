@@ -42,15 +42,15 @@ int main(int argc,char **argv)
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 
-  ierr            = PetscOptionsGetReal(PETSC_NULL,"-length",&length,PETSC_NULL);CHKERRQ(ierr);
+  ierr            = PetscOptionsGetReal(NULL,"-length",&length,NULL);CHKERRQ(ierr);
   pinc            = 1e-6;
-  ierr            = PetscOptionsGetReal(PETSC_NULL,"-pinc",&pinc,PETSC_NULL);CHKERRQ(ierr);
+  ierr            = PetscOptionsGetReal(NULL,"-pinc",&pinc,NULL);CHKERRQ(ierr);
   pinit            = 0.;
-  ierr            = PetscOptionsGetReal(PETSC_NULL,"-pinit",&pinit,PETSC_NULL);CHKERRQ(ierr);
+  ierr            = PetscOptionsGetReal(NULL,"-pinit",&pinit,NULL);CHKERRQ(ierr);
   ctx.maxtimestep = 1;
-  ierr            = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-  ierr            = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                                PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr            = PetscOptionsGetInt(NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
+  ierr            = DMDAGetInfo(ctx.daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                                NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 

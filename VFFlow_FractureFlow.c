@@ -33,10 +33,10 @@ extern PetscErrorCode MixedFractureFlowSolverInitialize(VFCtx *ctx, VFFields *fi
   /*
   Moving this into VFCtxGet since it is an attribute of VFCtx
   If we split VFCtx into VFFlowCtx, VFMechCtx , and VFHeatCtx, it will have to go into VFFlow.c
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,NULL,"","");CHKERRQ(ierr);
   {
     ctx->units    = UnitaryUnits;
-    ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",VFUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,PETSC_NULL);CHKERRQ(ierr);
+    ierr          = PetscOptionsEnum("-flowunits","\n\tFlow solver","",VFUnitName,(PetscEnum)ctx->units,(PetscEnum*)&ctx->units,NULL);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   */
@@ -126,9 +126,9 @@ extern PetscErrorCode MixedFracFlowSNESSolve(VFCtx *ctx,VFFields *fields)
   ierr = SNESSetFunction(ctx->snesFracVelP,ctx->FracResidual,FormFracSNESIFunction,ctx);CHKERRQ(ierr);
   ierr = SNESSetJacobian(ctx->snesFracVelP,ctx->JacFracVelP,ctx->JacFracVelP,FormFracSNESIJacobian,ctx);CHKERRQ(ierr);
   if (ctx->verbose > 1) {
-    ierr = SNESMonitorSet(ctx->snesFracVelP,FEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+    ierr = SNESMonitorSet(ctx->snesFracVelP,FEMSNESMonitor,NULL,NULL);CHKERRQ(ierr);
   }
-  ierr = SNESSolve(ctx->snesFracVelP,PETSC_NULL,fields->fracVelnPress);CHKERRQ(ierr);
+  ierr = SNESSolve(ctx->snesFracVelP,NULL,fields->fracVelnPress);CHKERRQ(ierr);
   ierr = SNESGetConvergedReason(ctx->snesFracVelP,&reason);CHKERRQ(ierr);
   if (reason < 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] Fracture snesVelP diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
@@ -136,8 +136,8 @@ extern PetscErrorCode MixedFracFlowSNESSolve(VFCtx *ctx,VFFields *fields)
     ierr = SNESGetIterationNumber(ctx->snesFracVelP,&its);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD," Fracture snesVelP converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
   }
-  ierr = VecMin(fields->fracVelnPress,PETSC_NULL,&VelPmin);CHKERRQ(ierr);
-  ierr = VecMax(fields->fracVelnPress,PETSC_NULL,&VelPmax);CHKERRQ(ierr);
+  ierr = VecMin(fields->fracVelnPress,NULL,&VelPmin);CHKERRQ(ierr);
+  ierr = VecMax(fields->fracVelnPress,NULL,&VelPmax);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"     fracture VelP min / max:     %e %e\n",VelPmin,VelPmax);CHKERRQ(ierr);
   ierr = VecCopy(ctx->RHSFracVelP,ctx->RHSFracVelPpre);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -269,7 +269,7 @@ extern PetscErrorCode FormFracMatricesnVector(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx,
   gz     = ctx->flowprop.g[2];
   Kw     = ctx->flowprop.Kw;
   
-  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScalCell,NULL,&nx,&ny,&nz,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = MatZeroEntries(K);CHKERRQ(ierr);
   ierr = MatZeroEntries(Klhs);CHKERRQ(ierr);
