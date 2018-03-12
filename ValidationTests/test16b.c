@@ -1,4 +1,9 @@
-/* 
+/*
+ test16b.c: Solves for the displacement and v-field in a volume loaded line crack in 2d (Sneddon 2D)
+            uses a linesearch to determine the pressure of the penny crack subject to external pressure
+
+ (c) 2010-2018 Blaise Bourdin bourdin@lsu.edu
+               Erwan Tanne    erwan.tanne@gmail.com
 
 Example
 
@@ -31,7 +36,6 @@ srun  test16b -n 100,100,2 -l  -l 1,1,.1 -E 1 -nu 0 -U_snes_monitor -p test16b  
 
 ---------------------------------------------------------------------------------------------
 
-Modified by Erwan Tanne (erwan.tanne@gmail.com) , include a secant method to determine the pressure of the penny crack subject to external pressure
 
 Remarks, 
 -Do not works well for vol min equal to zero
@@ -61,12 +65,6 @@ int main(int argc,char **argv)
   char           filename[FILENAME_MAX],filenameC[FILENAME_MAX];
   PetscReal      p;
   PetscReal      Tol=0.01;
-  /*
-  new variables, 
-  pa , vol_a  ,   U_a
-  pb , vol_b  ,   U_b
-  P  , vol    ,   U_s
-  */
   PetscReal      pa,pb,pc;
   PetscInt       k_secant=0;
   PetscReal      p_old;
@@ -84,16 +82,16 @@ int main(int argc,char **argv)
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(NULL,"-maxvol",&maxvol,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(NULL,"-minvol",&minvol,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(NULL,"-prestol",&prestol,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(NULL,"-debug",&debug,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(NULL,"-saveall",&saveall,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,NULL,"-maxvol",&maxvol,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,NULL,"-minvol",&minvol,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,NULL,"-prestol",&prestol,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,NULL,"-debug",&debug,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,NULL,"-saveall",&saveall,NULL);CHKERRQ(ierr);
   /*
     Overwrite ctx.maxtimestep with something more reasonable
   */
   ctx.maxtimestep = 150;
-  ierr            = PetscOptionsGetInt(NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
+  ierr            = PetscOptionsGetInt(NULL,NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
   flowrate        = (maxvol - minvol) / (ctx.maxtimestep-1);
 
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);

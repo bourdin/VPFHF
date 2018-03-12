@@ -362,7 +362,7 @@ runtest16: test16
 
 runtest16a: test16a
 	@echo "Running " $@
-	-@ARGS='-options_file test16.opts';\
+	-@ARGS='-options_file test16a.opts';\
 	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
 	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
