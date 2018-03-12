@@ -70,8 +70,8 @@ int main(int argc,char **argv)
   ierr = PetscPrintf(PETSC_COMM_WORLD," Initial fracture pressure =  %e  Initial fracture volume = %e \n ",p,ctx.CrackVolume);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   ini_pressure = 0.0;
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-ini_pressure",&ini_pressure,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-shut_in_time",&time_shutin,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-ini_pressure",&ini_pressure,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-shut_in_time",&time_shutin,NULL);CHKERRQ(ierr);
   ierr = VecSet(ctx.PresBCArray,ini_pressure);CHKERRQ(ierr);
   ierr = VecSet(ctx.pressure_old,ini_pressure);CHKERRQ(ierr);
    for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
@@ -117,7 +117,7 @@ int main(int argc,char **argv)
     ierr = VecCopy(fields.V,ctx.V_old);CHKERRQ(ierr);
     ierr = VecCopy(fields.widthc,ctx.widthc_old);CHKERRQ(ierr);
     ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
-    ierr = VecMax(fields.pressure,PETSC_NULL,&pmax);CHKERRQ(ierr);
+    ierr = VecMax(fields.pressure,NULL,&pmax);CHKERRQ(ierr);
     ctx.ElasticEnergy = 0;
     ctx.InsituWork    = 0;
     ctx.PressureWork  = 0.;

@@ -52,17 +52,17 @@ int main(int argc,char **argv)
 	ctx.maxtimestep = 10;
 	p_conv = 1e-6;
 
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-radius",&radius,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-p_conv",&p_conv,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-pinit",&p,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-volinit",&volinit,PETSC_NULL);CHKERRQ(ierr);		
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-rate",&q,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetRealArray(PETSC_NULL,"-center",&center[0],&nopts,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr); 	
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-orientation",&orientation,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-radius",&radius,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-p_conv",&p_conv,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-pinit",&p,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-volinit",&volinit,NULL);CHKERRQ(ierr);		
+	ierr = PetscOptionsGetReal(NULL,"-rate",&q,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetRealArray(NULL,"-center",&center[0],&nopts,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsGetInt(NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr); 	
+	ierr = PetscOptionsGetInt(NULL,"-orientation",&orientation,NULL);CHKERRQ(ierr);
 	
-	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-					           PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx.daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+					           NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daScal,BBmin,BBmax);CHKERRQ(ierr);
 	

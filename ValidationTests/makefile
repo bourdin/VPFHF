@@ -1,12 +1,13 @@
 include ../makefile.include	
 CFLAGS=-I..
+NP=2
 
 all: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16 test16a test16b test17 test18 test19 test20 test21 test22 test23 test24 test25 test26  test27 test28 test29 test30 test31 test32 test33 test34 test34 test35 test36 test36a test37 test38 test38a test39 test40 test41 test42 test43 test44 test45 test46 test47 test48 test49 test50 test51 test52 test53
  
 test: runtest1 runtest2 runtest3 runtest4 runtest5 runtest6 runtest7 runtest8 runtest9 runtest10 runtest11 runtest12 test13 runtest14 runtest15 runtest16 runtest16a runtest17 runtest18 runtest19 runtest20 runtest21 runtest2 runtest23 runtest24 runtest25 runtest26 runtest27 runtest28  runtest29 runtest30 runtest31 runtest32 runtest33 runtest34 runtest35 runtest36 runtest36a runtest37 runtest38 runtest38a runtest38b runtest39 runtest40 runtest41 runtest42 runtest43 runtest44 runtest45 runtest46 runtest47 runtest48 runtest49 runtest50 runtest51 runtest52 runtest53
 
-include ${PETSC_DIR}/conf/variables
-include ${PETSC_DIR}/conf/rules
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
 
 
 RELPATH_VFOBJ = $(VFOBJ:%=../%)
@@ -194,45 +195,45 @@ temp: temp.o ${RELPATH_VFOBJ} chkopts
 
 runtest1: test1
 	@echo "Running " $@
-	-@ARGS=' -n 101,5,5 -l 10,1,1  -nu 0 -epsilon 0.5 -eta 1e-8 -gc .1 -maxtimestep 11 -maxtimevalue 4 -atnum 1 -V_X0_BC ONE -U_X0_BC_0 FIXED -U_X0_0 -1. -U_X0_BC_1 ZERO -U_X0_BC_2 ZERO -V_X1_BC ONE -U_X1_BC_0 FIXED -U_X1_0 1. -U_X1_BC_1 ZERO -U_X1_BC_2 ZERO  -verbose 1 -alpha 0 -beta 0 -pressure 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	-@ARGS=' -n 101,5,5 -l 10,1,1  -nu 0 -epsilon 0.5 -eta 1e-8 -gc .1 -altmintol 1.e-3 -maxtimestep 11 -maxtimevalue 4 -atnum 1 -V_X0_BC ONE -U_X0_BC_0 FIXED -U_X0_0 -1. -U_X0_BC_1 ZERO -U_X0_BC_2 ZERO -V_X1_BC ONE -U_X1_BC_0 FIXED -U_X1_0 1. -U_X1_BC_1 ZERO -U_X1_BC_2 ZERO  -verbose 1 -alpha 0 -beta 0 -pressure 0';\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest2: test2
 	@echo "Running " $@
-	-@ARGS='-n 41,81,6 -l 1,2,.25 -length .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	-@ARGS='-n 41,81,6 -l 1,2,.25 -length .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8 -altmintol 1.e-3 ';\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest2-large: test2
 	@echo "Running " $@
-	-@ARGS='-n 161,321,6 -l 4,8,.25 -length .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 4 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	-@ARGS='-n 161,321,6 -l 4,8,.25 -length .4 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8 -altmintol 1.e-3 ';\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest3: test3
 	@echo "Running" $@
-	-@ARGS='-n 41,41,6 -l 2,2,.25 -length .4 -orientation 1 -nu 0 -eta 1e-8' ;\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	-@ARGS='-n 41,41,6 -l 2,2,.25 -length .4 -orientation 1 -nu 0 -eta 1e-8 -altmintol 1.e-3 ' ;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest4: test4
 	@echo "Running " $@
-	-@ARGS='-n 81,81,6 -l 2,2,.25 -length .4 -orientation 3 -nu 0 -epsilon ${EPSILON} -eta 1e-8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	-@ARGS='-n 81,81,6 -l 2,2,.25 -length .4 -orientation 3 -nu 0 -epsilon ${EPSILON} -eta 1e-8 -altmintol 1.e-3 ';\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -240,9 +241,9 @@ runtest4: test4
 runtest5: test5
 	@echo "Running " $@
 	-@for or in 0 1 2 3 4 5; do \
-	ARGS="-n 21,21,21 -l 1,1,1 -nu 0 -epsilon .05 -eta 1e-8 -orientation $$or";\
-	echo "Running " ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or ;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
+	ARGS="-n 21,21,21 -l 1,1,1 -nu 0 -epsilon .05 -eta 1e-8 -orientation $$or -altmintol 1.e-3 ";\
+	echo "Running " ${MPIEXEC} -n ${NP}./$< $${ARGS} -p $@-$$or ;\
+	${MPIEXEC} -n ${NP}./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
 	if (${DIFF} -B results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@-$$or.out;\
@@ -251,9 +252,9 @@ runtest5: test5
 runtest6: test6
 	@echo "Running " $@
 	-@for or in 0 1 2; do \
-	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -orientation $$or";\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
+	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -orientation $$or -altmintol 1.e-3 ";\
+	echo ${MPIEXEC} -n ${NP}./$< $${ARGS} -p $@-$$or;\
+	${MPIEXEC} -n ${NP}./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
 	if (${DIFF} -B results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@-$$or.out;\
@@ -262,8 +263,8 @@ runtest6: test6
 runtest7: test7
 	@echo "Running " $@
 	-@for or in 0 1 2; do \
-	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -orientation $$or";\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
+	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -orientation $$or -altmintol 1.e-3 ";\
+	${MPIEXEC} -n ${NP}./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
 	if (${DIFF} -B  results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@-$$or.out;\
@@ -271,27 +272,27 @@ runtest7: test7
 
 runtest8: test8
 	@echo "Running " $@
-	-@ARGS='-n 41,41,81 -l 1,1,2 -radius .75 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	-@ARGS='-n 41,41,81 -l 1,1,2 -radius .75 -orientation 3 -nu 0 -epsilon 0.05 -eta 1e-8 -altmintol 1.e-3 ';\
+	echo ${MPIEXEC} -n ${NP}./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP}./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest8-large: test8
 	@echo "Running " $@
-	-@ARGS='-n 81,81,161 -l 1,1,2 -radius .75 -orientation 3 -nu 0.3 -epsilon 0.025 -eta 1e-8';\
-	echo ${MPIEXEC} -n 8 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	-@ARGS='-n 81,81,161 -l 1,1,2 -radius .75 -orientation 3 -nu 0.3 -epsilon 0.025 -eta 1e-8 -altmintol 1.e-3 ';\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP}./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest9: test9
 	@echo "Running " $@
-	-@ARGS='-n 51,2,51 -l 4,0.01,4 -epsilon .16 -npc 1 -pc0_center 2,.005,2 -pc0_r .2 -pc0_theta 0 -pc0_phi 45 -pc0_thickness 0.2 -pc0_name -orientation 2';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	-@ARGS='-n 51,2,51 -l 4,0.01,4 -epsilon .16 -npc 1 -pc0_center 2,.005,2 -pc0_r .2 -pc0_theta 0 -pc0_phi 45 -pc0_thickness 0.2 -pc0_name -orientation 2 -altmintol 1.e-3  ';\
+	echo ${MPIEXEC} -n ${NP}./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP}./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -299,8 +300,8 @@ runtest9: test9
 runtest10: test10
 	@echo "Running " $@
 	-@for or in 0; do \
-	-@ARGS='-n 51,2,51 -l 4,0.01,4 -epsilon .16 -npc 1 -pc0_center 2,.005,2 -pc0_r .2 -pc0_theta 0 -pc0_phi 45 -pc0_thickness 0.2 -pc0_name -orientation 2';\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
+	-@ARGS='-n 51,2,51 -l 4,0.01,4 -epsilon .16 -npc 1 -pc0_center 2,.005,2 -pc0_r .2 -pc0_theta 0 -pc0_phi 45 -pc0_thickness 0.2 -pc0_name -orientation 2 -altmintol 1.e-3 ';\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
 	if (${DIFF} -B  results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@-$$or.out;\
@@ -308,44 +309,44 @@ runtest10: test10
 
 runtest11: test11
 	@echo "Running " $@
-	-@ARGS='-n 41,41,6 -l 2,2,.25 -length .4 -nu 0 -epsilon .05 -eta 1e-8 -pinc 1e-6 -maxtimestep 1000 -Gc 4.e-9';\
-	echo ${MPIEXEC} -n 8 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 8 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	-@ARGS='-n 41,41,6 -l 2,2,.25 -length .4 -nu 0 -epsilon .05 -eta 1e-8 -pinc 1e-6 -maxtimestep 1000 -Gc 4.e-9 -altmintol 1.e-3 ';\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@-$$or.out;\
 
 runtest12: test12
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8 -altmintol 1.e-3 ';\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest13: test13
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -length .4 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ > $@.out 2>&1;\
+	-@ARGS='-n 21,21,21 -l 1,1,1 -length .4 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8 -altmintol 1.e-3 ';\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ > $@.out 2>&1;\
 	if (${DIFF} -I '^#' results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest14: test14
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8 -altmintol 1.e-3 ';\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 
 runtest15: test15
 	@echo "Running " $@
-	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	-@ARGS='-n 21,21,21 -l 1,1,1 -height .1 -length .1 -orientation 1 -nu 0 -epsilon 0.05 -eta 1e-8 -altmintol 1.e-3 ';\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -353,8 +354,8 @@ runtest15: test15
 runtest16: test16
 	@echo "Running " $@
 	-@ARGS='-options_file test16.opts';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -362,8 +363,8 @@ runtest16: test16
 runtest16a: test16a
 	@echo "Running " $@
 	-@ARGS='-options_file test16.opts';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -371,8 +372,8 @@ runtest16a: test16a
 runtest17: test17
 	@echo "Running " $@
 	-@ARGS='-n 21,21,21 -l 1,1,1 -length 1. -length1 .5 -orientation 2 -nu 0 -epsilon 0.05 -eta 1e-8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -380,8 +381,8 @@ runtest17: test17
 runtest18: test18
 	@echo "Running " $@
 	-@ARGS='-n 41,41,41 -l 4,4,4 -epsilon .2 -npc 1 -pc0_center 2,2,2 -pc0_r .2 -pc0_theta 0 -pc0_phi 45 -pc0_thickness 0.2 -pc0_name -orientation 2';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -390,7 +391,7 @@ runtest19: test19
 	@echo "Running " $@
 	-@for or in 0; do \
 	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -length .2 -orientation $$or";\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
 	if (${DIFF} -B  results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@-$$or.out;\
@@ -400,7 +401,7 @@ runtest20: test20
 	@echo "Running " $@
 	-@for or in 0; do \
 	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -length .2 -orientation $$or";\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
 	if (${DIFF} -B  results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@-$$or.out;\
@@ -410,7 +411,7 @@ runtest21: test21
 	@echo "Running " $@
 	-@for or in 0; do \
 	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -length .2 -orientation $$or";\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
 	if (${DIFF} -B  results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@-$$or.out;\
@@ -420,7 +421,7 @@ runtest23: test23
 	@echo "Running " $@
 	-@for or in 0; do \
 	ARGS="-n 21,21,21 -l 1,1,1 -nu 0.3 -length .2 -orientation $$or";\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@-$$or | grep -v -e '      \#' > $@-$$or.out 2>&1;\
 	if (${DIFF} -B  results/$@-$$or.out $@-$$or.out) then echo "\t$<-$$or succeeded\n========================================="; \
 	else echo ${PWD} ; echo "\tPossible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@-$$or.out;\
@@ -429,8 +430,8 @@ runtest23: test23
 runtest24: test24
 	@echo "Running " $@
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0 -velp_pc_type jacobi';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then echo "\t$< succeeded\n========================================="; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -439,8 +440,8 @@ runtest24: test24
 runtest25: test25
 	@echo "Running " $@
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0 -velp_pc_type jacobi';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -448,8 +449,8 @@ runtest25: test25
 runtest26: test26
 	@echo "Running " $@
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0 -velp_pc_type jacobi';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -457,8 +458,8 @@ runtest26: test26
 runtest27: test27
 	@echo "Running " $@
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0 -velp_pc_type jacobi';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -466,8 +467,8 @@ runtest27: test27
 runtest28: test28
 	@echo "Running " $@
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -475,8 +476,8 @@ runtest28: test28
 runtest29: test29
 	@echo "Running " $@
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -484,8 +485,8 @@ runtest29: test29
 runtest30: test30
 	@echo "Running " $@
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -493,8 +494,8 @@ runtest30: test30
 runtest31: test31
 	@echo "Running " $@
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -502,8 +503,8 @@ runtest31: test31
 runtest32: test32
 	@echo "Running " $@
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -511,8 +512,8 @@ runtest32: test32
 runtest33: test33
 	@echo "Running " $@
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -520,8 +521,8 @@ runtest33: test33
 runtest34: test34
 	@echo "Running " $@
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -529,8 +530,8 @@ runtest34: test34
 runtest35: test35
 	@echo "Running " $@
 	-@ARGS='-n 11,11,11 -l 1.,1.,1. -m_inv 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -538,8 +539,8 @@ runtest35: test35
 runtest36: test36
 	@echo "Running " $@
 	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -547,8 +548,8 @@ runtest36: test36
 runtest36a: test36a
 	@echo "Running " $@
 	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -556,8 +557,8 @@ runtest36a: test36a
 runtest37: test37
 	@echo "Running " $@
 	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 1';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -565,8 +566,8 @@ runtest37: test37
 runtest38: test38
 	@echo "Running " $@
 	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 1';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -575,8 +576,8 @@ runtest38: test38
 runtest38a: test38a
 	@echo "Running " $@
 	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 1';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -584,8 +585,8 @@ runtest38a: test38a
 runtest38b: test38b
 	@echo "Running " $@
 	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 1';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -593,8 +594,8 @@ runtest38b: test38b
 runtest39: test39
 	@echo "Running " $@
 	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 1';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -602,8 +603,8 @@ runtest39: test39
 runtest40: test40
 	@echo "Running " $@
 	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -611,8 +612,8 @@ runtest40: test40
 runtest41: test41
 	@echo "Running " $@
 	-@ARGS='-n 11,11,2 -l 1.,1.,0.01 -m_inv 0';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -620,8 +621,8 @@ runtest41: test41
 runtest42: test42
 	@echo "Running " $@
 	-@ARGS='-n 21,5,2 -l 1.,0.4,0.01';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -629,71 +630,71 @@ runtest42: test42
 runtest43: test43
 	@echo "Running " $@
 	-@ARGS='-n 21,5,2 -l 1.,0.4,0.01';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 runtest44: test44
 	@echo "Running " $@
 	-@ARGS='-n 21,5,2 -l 1.,0.4,0.01';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 runtest46: test46
 	@echo "Running " $@
 	-@ARGS='-n 21,21,2 -l 1.,1,0.01 -theta 1 -timestep 0.05 -maxtimestep 150 -cond 0.01';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 runtest47: test47
 	@echo "Running " $@
 	-@ARGS='-n 21,21,2 -l 1.,1,0.01 -theta 1 -timestep 0.05 -maxtimestep 150 -condx 0.01 -condy 0.01 -velx 0.8 -vely 0.8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 runtest48: test48
 	@echo "Running " $@
 	-@ARGS='-n 21,21,2 -l 1.,1,0.01 -theta 1 -timestep 0.05 -maxtimestep 150 -condx 0.01 -condy 0.01 -velx 0.8 -vely 0.8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 runtest49: test49
 	@echo "Running " $@
 	-@ARGS='-n 21,21,2 -l 1.,1,0.01 -theta 1 -timestep 0.05 -maxtimestep 150 -condx 0.01 -condy 0.01 -velx 0.8 -vely 0.8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 runtest50: test50
 	@echo "Running " $@
 	-@ARGS='-n 21,21,2 -l 1.,1,0.01 -theta 1 -timestep 0.05 -maxtimestep 150 -condx 0.01 -condy 0.01 -velx 0.8 -vely 0.8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 runtest51: test51
 	@echo "Running " $@
 	-@ARGS='-n 21,21,2 -l 1.,1,0.01 -theta 1 -timestep 0.05 -maxtimestep 150 -condx 0.01 -condy 0.01 -velx 0.8 -vely 0.8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
 runtest52: test52
 	@echo "Running " $@
 	-@ARGS='-n 21,21,2 -l 1.,1,0.01 -theta 1 -timestep 0.05 -maxtimestep 150 -condx 0.01 -condy 0.01 -velx 0.8 -vely 0.8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out
@@ -701,8 +702,8 @@ runtest52: test52
 runtest53: test53
 	@echo "Running " $@
 	-@ARGS='-n 21,21,2 -l 1.,1,0.01 -theta 1 -timestep 0.05 -maxtimestep 150 -condx 0.01 -condy 0.01 -velx 0.8 -vely 0.8';\
-	echo ${MPIEXEC} -n 2 ./$< $${ARGS} -p $@;\
-	${MPIEXEC} -n 2 ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
+	echo ${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@;\
+	${MPIEXEC} -n ${NP} ./$< $${ARGS} -p $@ | grep -v -e '      \#' > $@.out 2>&1;\
 	if (${DIFF} -B results/$@.out $@.out) then true; \
 	else echo ${PWD} ; echo "Possible problem with with $<, diffs above \n========================================="; fi;\
 	${RM} -f $@.out

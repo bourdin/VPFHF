@@ -68,15 +68,15 @@ extern PetscErrorCode FlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 	ierr = TSSetProblemType(ctx->tsP,TS_LINEAR);CHKERRQ(ierr);
 	ierr = TSSetType(ctx->tsP,TSBEULER);CHKERRQ(ierr);	
 	
-	ierr = TSSetIFunction(ctx->tsP,PETSC_NULL,FormIFunction_P,ctx);CHKERRQ(ierr);
+	ierr = TSSetIFunction(ctx->tsP,NULL,FormIFunction_P,ctx);CHKERRQ(ierr);
     ierr = TSSetIJacobian(ctx->tsP,ctx->JacP,ctx->JacP,FormIJacobian_P,ctx);CHKERRQ(ierr);
-	ierr = TSSetRHSFunction(ctx->tsP,PETSC_NULL,FormFunction_P,ctx);CHKERRQ(ierr);
+	ierr = TSSetRHSFunction(ctx->tsP,NULL,FormFunction_P,ctx);CHKERRQ(ierr);
   
 	ierr = TSSetSolution(ctx->tsP,fields->pressure);CHKERRQ(ierr);
 	ierr = TSSetInitialTimeStep(ctx->tsP,ctx->current_time,ctx->timevalue);CHKERRQ(ierr);
     ierr = TSSetDuration(ctx->tsP,ctx->maxtimestep,ctx->timevalue);CHKERRQ(ierr);
    
-	ierr = TSMonitorSet(ctx->tsP,FEMTSMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = TSMonitorSet(ctx->tsP,FEMTSMonitor,NULL,NULL);CHKERRQ(ierr);
 	ierr = TSSetFromOptions(ctx->tsP);CHKERRQ(ierr);	
 
     ierr = TSSolve(ctx->tsP,fields->pressure);CHKERRQ(ierr);
@@ -98,8 +98,8 @@ extern PetscErrorCode FEMTSMonitor(TS ts,PetscInt timestep,PetscReal timevalue,V
 
 	PetscFunctionBegin;
 	ierr = VecNorm(pressure,NORM_1,&norm);CHKERRQ(ierr);
-	ierr = VecMax(pressure,PETSC_NULL,&vmax);CHKERRQ(ierr);
-	ierr = VecMin(pressure,PETSC_NULL,&vmin);CHKERRQ(ierr);
+	ierr = VecMax(pressure,NULL,&vmax);CHKERRQ(ierr);
+	ierr = VecMin(pressure,NULL,&vmin);CHKERRQ(ierr);
 	ierr = PetscObjectGetComm((PetscObject)ts,&comm);CHKERRQ(ierr);
 	ierr = PetscPrintf(comm,"timestep %D: time %G, solution norm %G, max %G, min %G\n",timestep,timevalue,norm,vmax,vmin);CHKERRQ(ierr);
 		
@@ -172,7 +172,7 @@ extern PetscErrorCode FormTSMatricesnVector_P(Mat K,Mat Klhs,Vec RHS,VFCtx *ctx)
   Vec            m_inv_local;
 	
 	PetscFunctionBegin;
-	ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx->daScalCell,NULL,&nx,&ny,&nz,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = MatZeroEntries(K);CHKERRQ(ierr);
 	ierr = MatZeroEntries(Klhs);CHKERRQ(ierr);

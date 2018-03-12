@@ -84,16 +84,16 @@ int main(int argc,char **argv)
 
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-maxvol",&maxvol,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-minvol",&minvol,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-prestol",&prestol,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(PETSC_NULL,"-debug",&debug,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(PETSC_NULL,"-saveall",&saveall,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,"-maxvol",&maxvol,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,"-minvol",&minvol,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,"-prestol",&prestol,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,"-debug",&debug,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,"-saveall",&saveall,NULL);CHKERRQ(ierr);
   /*
     Overwrite ctx.maxtimestep with something more reasonable
   */
   ctx.maxtimestep = 150;
-  ierr            = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
+  ierr            = PetscOptionsGetInt(NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
   flowrate        = (maxvol - minvol) / (ctx.maxtimestep-1);
 
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);

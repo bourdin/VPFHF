@@ -45,8 +45,8 @@ int main(int argc,char **argv)
 	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
 	ctx.flowsolver = HEATSOLVER_SNESFEM;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx.daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+					   NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	ierr = VecSet(fields.velocity,0.);CHKERRQ(ierr);
@@ -65,10 +65,10 @@ int main(int argc,char **argv)
   ierr = DMDAVecGetArray(ctx.daScal,fields.theta,&T_array);CHKERRQ(ierr);
 
 	
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-condx",&kx,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-condy",&ky,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-velx",&ux,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-vely",&uy,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-condx",&kx,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-condy",&ky,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-velx",&ux,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-vely",&uy,NULL);CHKERRQ(ierr);
 	ctx.hasHeatSources = PETSC_FALSE;
 	ctx.flowprop.theta = 1.;
 	ctx.flowprop.timestepsize = 1.;
@@ -128,11 +128,11 @@ int main(int argc,char **argv)
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.HeatFluxBCArray,&heatfluxbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.HeatSource,&heatsrc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-theta",&ctx.flowprop.theta,NULL);CHKERRQ(ierr);
 
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-timestepsize",&ctx.flowprop.timestepsize,NULL);CHKERRQ(ierr);
 	ctx.maxtimestep = 1;
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
   
   ctx.timestep = 0;
   ierr = FieldsH5Write(&ctx,&fields);

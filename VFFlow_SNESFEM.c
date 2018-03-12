@@ -94,9 +94,9 @@ extern PetscErrorCode FlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = SNESSetFunction(ctx->snesP,ctx->PFunct,FormSNESIFunction_P,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesP,ctx->JacP,ctx->JacP,FormSNESIJacobian_P,ctx);CHKERRQ(ierr);
 	if (ctx->verbose > 1) {
-	  ierr = SNESMonitorSet(ctx->snesP,FEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	  ierr = SNESMonitorSet(ctx->snesP,FEMSNESMonitor,NULL,NULL);CHKERRQ(ierr);
 	}
-    ierr = SNESSolve(ctx->snesP,PETSC_NULL,fields->pressure);CHKERRQ(ierr);
+    ierr = SNESSolve(ctx->snesP,NULL,fields->pressure);CHKERRQ(ierr);
     ierr = VecCopy(ctx->RHSP,ctx->RHSPpre);CHKERRQ(ierr);	
 
 	ierr = SNESGetConvergedReason(ctx->snesP,&reason);CHKERRQ(ierr);
@@ -107,8 +107,8 @@ extern PetscErrorCode FlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"      snesP converged in %d iterations %d.\n",(int)its,(int)reason);CHKERRQ(ierr);
 	}
 	
-	ierr = VecMin(fields->pressure,PETSC_NULL,&Pmin);CHKERRQ(ierr);
-	ierr = VecMax(fields->pressure,PETSC_NULL,&Pmax);CHKERRQ(ierr);
+	ierr = VecMin(fields->pressure,NULL,&Pmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->pressure,NULL,&Pmax);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      P min / max:     %e %e\n",Pmin,Pmax);CHKERRQ(ierr);	
 	
 	ierr = VecDestroy(&ctx->Perm);CHKERRQ(ierr);

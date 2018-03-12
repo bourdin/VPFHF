@@ -91,9 +91,9 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = SNESSetFunction(ctx->snesVelP,ctx->FlowFunct,FormSNESIFunction,ctx);CHKERRQ(ierr);
     ierr = SNESSetJacobian(ctx->snesVelP,ctx->JacVelP,ctx->JacVelP,FormSNESIJacobian,ctx);CHKERRQ(ierr);
 	if (ctx->verbose > 1) {
-		ierr = SNESMonitorSet(ctx->snesVelP,FEMSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+		ierr = SNESMonitorSet(ctx->snesVelP,FEMSNESMonitor,NULL,NULL);CHKERRQ(ierr);
 	}
-    ierr = SNESSolve(ctx->snesVelP,PETSC_NULL,fields->VelnPress);CHKERRQ(ierr);
+    ierr = SNESSolve(ctx->snesVelP,NULL,fields->VelnPress);CHKERRQ(ierr);
 	ierr = SNESGetConvergedReason(ctx->snesVelP,&reason);CHKERRQ(ierr);
 	if (reason < 0) {
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"[ERROR] snes_MixedFlowSolver diverged with reason %d\n",(int)reason);CHKERRQ(ierr);
@@ -118,10 +118,10 @@ extern PetscErrorCode MixedFlowFEMSNESSolve(VFCtx *ctx,VFFields *fields)
 	ierr = DMDAVecRestoreArray(ctx->daScal,fields->pressure,&Press_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daVect,fields->velocity,&vel_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,fields->VelnPress,&VelnPress_array);CHKERRQ(ierr);
-  ierr = VecMin(fields->velocity,PETSC_NULL,&Velmin);CHKERRQ(ierr);
-	ierr = VecMax(fields->velocity,PETSC_NULL,&Velmax);CHKERRQ(ierr);
-  ierr = VecMin(fields->pressure,PETSC_NULL,&Pmin);CHKERRQ(ierr);
-	ierr = VecMax(fields->pressure,PETSC_NULL,&Pmax);CHKERRQ(ierr);
+  ierr = VecMin(fields->velocity,NULL,&Velmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->velocity,NULL,&Velmax);CHKERRQ(ierr);
+  ierr = VecMin(fields->pressure,NULL,&Pmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->pressure,NULL,&Pmax);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      Velocity min / max:     %e %e\n",Velmin,Velmax);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      Pressure min / max:     %e %e\n",Pmin,Pmax);CHKERRQ(ierr);
 	PetscFunctionReturn(0);

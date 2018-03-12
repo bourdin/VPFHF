@@ -767,12 +767,12 @@ extern PetscErrorCode ResidualApplyDirichletBC(Vec residual,Vec U,Vec BCU,VFBC *
     ierr = PetscMalloc(sizeof(PetscReal ***),&BCU_array);CHKERRQ(ierr);
     ierr = PetscMalloc(sizeof(PetscReal ***),&U_array);CHKERRQ(ierr);
     ierr = DMDAVecGetArrayDOF(da,residual,&residual_array[0]);CHKERRQ(ierr);
-    ierr = DMDAVecGetArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
-    ierr = DMDAVecGetArrayDOF(da,U,&U_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOFRead(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOFRead(da,U,&U_array[0]);CHKERRQ(ierr);
   } else {
     ierr = DMDAVecGetArrayDOF(da,residual,&residual_array);CHKERRQ(ierr);
-    ierr = DMDAVecGetArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
-    ierr = DMDAVecGetArrayDOF(da,U,&U_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOFRead(da,BCU,&BCU_array);CHKERRQ(ierr);
+    ierr = DMDAVecGetArrayDOFRead(da,U,&U_array);CHKERRQ(ierr);
   }
   
   for (c = 0;c < dof;c++) {
@@ -984,15 +984,15 @@ extern PetscErrorCode ResidualApplyDirichletBC(Vec residual,Vec U,Vec BCU,VFBC *
   
   if (dim == 2) {
     ierr = DMDAVecRestoreArrayDOF(da,residual,&residual_array[0]);CHKERRQ(ierr);
-    ierr = DMDAVecRestoreArrayDOF(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
-    ierr = DMDAVecRestoreArrayDOF(da,U,&U_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOFRead(da,BCU,&BCU_array[0]);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOFRead(da,U,&U_array[0]);CHKERRQ(ierr);
     ierr = PetscFree(residual_array);CHKERRQ(ierr);
     ierr = PetscFree(BCU_array);CHKERRQ(ierr);
     ierr = PetscFree(U_array);CHKERRQ(ierr);
   } else {
     ierr = DMDAVecRestoreArrayDOF(da,residual,&residual_array);CHKERRQ(ierr);
-    ierr = DMDAVecRestoreArrayDOF(da,BCU,&BCU_array);CHKERRQ(ierr);
-    ierr = DMDAVecRestoreArrayDOF(da,U,&U_array);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOFRead(da,BCU,&BCU_array);CHKERRQ(ierr);
+    ierr = DMDAVecRestoreArrayDOFRead(da,U,&U_array);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }

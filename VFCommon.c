@@ -40,7 +40,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscPrintf(PETSC_COMM_WORLD,"      ##########################################################\n\n\n");CHKERRQ(ierr);
 #endif
 
-  ierr = PetscLogBegin();CHKERRQ(ierr);
+  ierr = PetscLogDefaultBegin();CHKERRQ(ierr);
   ierr = VFCtxGet(ctx);CHKERRQ(ierr);
   ierr = VFGeometryInitialize(ctx);CHKERRQ(ierr);
   ierr = VFPropGet(&ctx->vfprop);CHKERRQ(ierr);
@@ -66,11 +66,11 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
    */
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.txt",ctx->prefix,0);CHKERRQ(ierr);
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&optionsviewer);CHKERRQ(ierr);
-  ierr = PetscOptionsView(optionsviewer);CHKERRQ(ierr);
+  ierr = PetscOptionsView(NULL,optionsviewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&optionsviewer);CHKERRQ(ierr);
 
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Option table:\n");CHKERRQ(ierr);
-  ierr = PetscOptionsView(PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+  ierr = PetscOptionsView(NULL,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 
   ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.ener",ctx->prefix);CHKERRQ(ierr);
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&ctx->energyviewer);CHKERRQ(ierr);
@@ -100,35 +100,35 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
   /*
    Get options and register help message
    */
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF: general options:","");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,NULL,"\n\nVF: general options:","");CHKERRQ(ierr);
   {
     ctx->verbose = 0;
-    ierr         = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,PETSC_NULL);CHKERRQ(ierr);
+    ierr         = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,NULL);CHKERRQ(ierr);
 
     ctx->removeTipEffect = PETSC_FALSE;
-    ierr                  = PetscOptionsBool("-removetipeffect","\n\t Remove effect of fracture tip on width computation","",ctx->removeTipEffect,&ctx->removeTipEffect,PETSC_NULL);CHKERRQ(ierr);
+    ierr                  = PetscOptionsBool("-removetipeffect","\n\t Remove effect of fracture tip on width computation","",ctx->removeTipEffect,&ctx->removeTipEffect,NULL);CHKERRQ(ierr);
     
     ctx->width_tol = 0.1;
-    ierr            = PetscOptionsReal("-widthremoval_tol","\n\tTolerance for removal of tip effect","",ctx->width_tol,&ctx->width_tol,PETSC_NULL);CHKERRQ(ierr);
+    ierr            = PetscOptionsReal("-widthremoval_tol","\n\tTolerance for removal of tip effect","",ctx->width_tol,&ctx->width_tol,NULL);CHKERRQ(ierr);
     
     ctx->flowsolver = FLOWSOLVER_NONE;
-    ierr          = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,PETSC_NULL);CHKERRQ(ierr);
+    ierr          = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,NULL);CHKERRQ(ierr);
     
     ctx->FlowDisplCoupling = PETSC_FALSE;
-    ierr                  = PetscOptionsBool("-poroelasticity","\n\t Geomechanics (coupled reservoir flow and deformation)","",ctx->FlowDisplCoupling,&ctx->FlowDisplCoupling,PETSC_NULL);CHKERRQ(ierr);
+    ierr                  = PetscOptionsBool("-poroelasticity","\n\t Geomechanics (coupled reservoir flow and deformation)","",ctx->FlowDisplCoupling,&ctx->FlowDisplCoupling,NULL);CHKERRQ(ierr);
     ctx->ResFlowMechCoupling = FIXEDSTRESS;
-    ierr          = PetscOptionsEnum("-resflowmechcoupling","\n\tRes flow mech coupling","",ResFlowMechCouplingName,(PetscEnum)ctx->ResFlowMechCoupling,(PetscEnum*)&ctx->ResFlowMechCoupling,PETSC_NULL);CHKERRQ(ierr);
+    ierr          = PetscOptionsEnum("-resflowmechcoupling","\n\tRes flow mech coupling","",ResFlowMechCouplingName,(PetscEnum)ctx->ResFlowMechCoupling,(PetscEnum*)&ctx->ResFlowMechCoupling,NULL);CHKERRQ(ierr);
     ctx->heatsolver = HEATSOLVER_SNESFEM;
     ctx->FractureFlowCoupling = PETSC_FALSE;
-    ierr                  = PetscOptionsBool("-coupledfracflowmodel","\n\tCoupled fracture and resservoir flow model","",ctx->FractureFlowCoupling,&ctx->FractureFlowCoupling,PETSC_NULL);CHKERRQ(ierr);
+    ierr                  = PetscOptionsBool("-coupledfracflowmodel","\n\tCoupled fracture and resservoir flow model","",ctx->FractureFlowCoupling,&ctx->FractureFlowCoupling,NULL);CHKERRQ(ierr);
     ctx->hasFluidSources = PETSC_FALSE;
-    ierr                  = PetscOptionsBool("-uniformfluidsources","\n\t Uniform fluid sources","",ctx->hasFluidSources,&ctx->hasFluidSources,PETSC_NULL);CHKERRQ(ierr);
+    ierr                  = PetscOptionsBool("-uniformfluidsources","\n\t Uniform fluid sources","",ctx->hasFluidSources,&ctx->hasFluidSources,NULL);CHKERRQ(ierr);
     ctx->hasFlowWells = PETSC_FALSE;
-    ierr                  = PetscOptionsBool("-flowwells","\n\t Fluid wells","",ctx->hasFlowWells,&ctx->hasFlowWells,PETSC_NULL);CHKERRQ(ierr);
+    ierr                  = PetscOptionsBool("-flowwells","\n\t Fluid wells","",ctx->hasFlowWells,&ctx->hasFlowWells,NULL);CHKERRQ(ierr);
 
-    ierr            = PetscOptionsEnum("-heatsolver","\n\tHeat solver","",VFHeatSolverName,(PetscEnum)ctx->heatsolver,(PetscEnum*)&ctx->heatsolver,PETSC_NULL);CHKERRQ(ierr);
+    ierr            = PetscOptionsEnum("-heatsolver","\n\tHeat solver","",VFHeatSolverName,(PetscEnum)ctx->heatsolver,(PetscEnum*)&ctx->heatsolver,NULL);CHKERRQ(ierr);
     ctx->mechsolver = FRACTURE;
-    ierr            = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,PETSC_NULL);CHKERRQ(ierr);
+    ierr            = PetscOptionsEnum("-mechsolver","\n\tType of simulation","",VFMechSolverName,(PetscEnum)ctx->mechsolver,(PetscEnum*)&ctx->mechsolver,NULL);CHKERRQ(ierr);
     ctx->hasInsitu  = PETSC_FALSE;
     nopt            = 6;
     ierr            = PetscMalloc(nopt * sizeof(PetscReal),&buffer);CHKERRQ(ierr);
@@ -153,65 +153,65 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
      Move to geometry
      */
     ctx->nlayer      = 1;
-    ierr             = PetscOptionsInt("-nlayer","\n\tNumber of layers","",ctx->nlayer,&ctx->nlayer,PETSC_NULL);CHKERRQ(ierr);
+    ierr             = PetscOptionsInt("-nlayer","\n\tNumber of layers","",ctx->nlayer,&ctx->nlayer,NULL);CHKERRQ(ierr);
     nopt             = ctx->nlayer-1;
     ierr             = PetscMalloc((ctx->nlayer+1) * sizeof(PetscReal),&ctx->layersep);CHKERRQ(ierr);
     ctx->layersep[0] = -1e+30;
     ctx->layersep[1] = 0.;
-    ierr             = PetscOptionsRealArray("-layersep","\n\tComma separated list of (nlayer-1) layer interfaces","",&ctx->layersep[1],&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr             = PetscOptionsRealArray("-layersep","\n\tComma separated list of (nlayer-1) layer interfaces","",&ctx->layersep[1],&nopt,NULL);CHKERRQ(ierr);
     if (ctx->nlayer !=1 && nopt != ctx->nlayer-1 && !ctx->printhelp) SETERRQ3(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i layers separators, got only %i in %s\n",ctx->nlayer+1,nopt,__FUNCT__);
     /*
      end move to geometry
      */
     ierr = PetscSNPrintf(ctx->prefix,FILENAME_MAX,"TEST");CHKERRQ(ierr);
-    ierr = PetscOptionsString("-p","\n\tfile prefix","",ctx->prefix,ctx->prefix,PETSC_MAX_PATH_LEN-1,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsString("-p","\n\tfile prefix","",ctx->prefix,ctx->prefix,PETSC_MAX_PATH_LEN-1,NULL);CHKERRQ(ierr);
 
     /*
       Setting altmintol back to 1.e-4 instead of 1.e-2
       Change it back if we still have convergence issues
     */
     ctx->altmintol  = 1.e-4;
-    ierr            = PetscOptionsReal("-altmintol","\n\tTolerance for alternate minimizations algorithm","",ctx->altmintol,&ctx->altmintol,PETSC_NULL);CHKERRQ(ierr);
+    ierr            = PetscOptionsReal("-altmintol","\n\tTolerance for alternate minimizations algorithm","",ctx->altmintol,&ctx->altmintol,NULL);CHKERRQ(ierr);
     ctx->altminmaxit= 10000;
-    ierr            = PetscOptionsInt("-altminmaxit","\n\tMaximum number of alternate minimizations iterations","",ctx->altminmaxit,&ctx->altminmaxit,PETSC_NULL);CHKERRQ(ierr);
+    ierr            = PetscOptionsInt("-altminmaxit","\n\tMaximum number of alternate minimizations iterations","",ctx->altminmaxit,&ctx->altminmaxit,NULL);CHKERRQ(ierr);
     ctx->unilateral = UNILATERAL_NONE;
-    ierr            = PetscOptionsEnum("-unilateral","\n\tType of unilateral conditions","",VFUnilateralName,(PetscEnum)ctx->unilateral,(PetscEnum*)&ctx->unilateral,PETSC_NULL);CHKERRQ(ierr);
+    ierr            = PetscOptionsEnum("-unilateral","\n\tType of unilateral conditions","",VFUnilateralName,(PetscEnum)ctx->unilateral,(PetscEnum*)&ctx->unilateral,NULL);CHKERRQ(ierr);
     ctx->fileformat = FILEFORMAT_VTK;
-    ierr            = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,PETSC_NULL);CHKERRQ(ierr);
+    ierr            = PetscOptionsEnum("-format","\n\tFileFormat","",VFFileFormatName,(PetscEnum)ctx->fileformat,(PetscEnum*)&ctx->fileformat,NULL);CHKERRQ(ierr);
 
     ctx->maxtimestep  = 1;
-    ierr              = PetscOptionsInt("-maxtimestep","\n\tMaximum number of timestep","",ctx->maxtimestep,&ctx->maxtimestep,PETSC_NULL);CHKERRQ(ierr);
+    ierr              = PetscOptionsInt("-maxtimestep","\n\tMaximum number of timestep","",ctx->maxtimestep,&ctx->maxtimestep,NULL);CHKERRQ(ierr);
     ctx->mintimevalue = 0.;
-    ierr              = PetscOptionsReal("-mintimevalue","\n\tMinimum timevalue","",ctx->mintimevalue,&ctx->mintimevalue,PETSC_NULL);CHKERRQ(ierr);
+    ierr              = PetscOptionsReal("-mintimevalue","\n\tMinimum timevalue","",ctx->mintimevalue,&ctx->mintimevalue,NULL);CHKERRQ(ierr);
     ctx->maxtimevalue = 1.;
-    ierr              = PetscOptionsReal("-maxtimevalue","\n\tMaximum timevalue","",ctx->maxtimevalue,&ctx->maxtimevalue,PETSC_NULL);CHKERRQ(ierr);
+    ierr              = PetscOptionsReal("-maxtimevalue","\n\tMaximum timevalue","",ctx->maxtimevalue,&ctx->maxtimevalue,NULL);CHKERRQ(ierr);
 
     ctx->timevalue = 1.;
-    ierr              = PetscOptionsReal("-timevalue","\n\t timevalue","",ctx->timevalue,&ctx->timevalue,PETSC_NULL);CHKERRQ(ierr);
+    ierr              = PetscOptionsReal("-timevalue","\n\t timevalue","",ctx->timevalue,&ctx->timevalue,NULL);CHKERRQ(ierr);
 
     ctx->theta = 1.;
-    ierr              = PetscOptionsReal("-theta","\n\t time descritization paramater","",ctx->theta,&ctx->theta,PETSC_NULL);CHKERRQ(ierr);
+    ierr              = PetscOptionsReal("-theta","\n\t time descritization paramater","",ctx->theta,&ctx->theta,NULL);CHKERRQ(ierr);
     
     nopt = 6;
-    ierr = PetscOptionsRealArray("-BCpres", "\n\tPressure at Boundaries.\n\t (PX0,PX1,PY0,PY1,PZ0,PZ1) negative value if natural BC","",buffer,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-BCpres", "\n\tPressure at Boundaries.\n\t (PX0,PX1,PY0,PY1,PZ0,PZ1) negative value if natural BC","",buffer,&nopt,NULL);CHKERRQ(ierr);
     if (nopt > 6 && !ctx->printhelp) SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the Pressure BC, got %i in %s\n",nopt,__FUNCT__);
     for (i = 0; i < 6; i++) ctx->BCpres[i]=buffer[i];
 
-    ierr = PetscOptionsRealArray("-BCtheta", "\n\tTemperature at Boundaries.\n\t (TX0,TX1,TY0,TY1,TZ0,TZ1) negative value if natural BC","",buffer,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-BCtheta", "\n\tTemperature at Boundaries.\n\t (TX0,TX1,TY0,TY1,TZ0,TZ1) negative value if natural BC","",buffer,&nopt,NULL);CHKERRQ(ierr);
     if (nopt > 6 && !ctx->printhelp) SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the Temperature BC, got %i in %s\n",nopt,__FUNCT__);
     for (i = 0; i < 6; i++) ctx->BCtheta[i]=buffer[i];
 
     nopt = 3;
     for (i = 0; i < 3; i++) ctx->SrcLoc[i] = 99999;
-    ierr = PetscOptionsIntArray("-SrcLoc","\n\t location of source point","",ctx->SrcLoc,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsIntArray("-SrcLoc","\n\t location of source point","",ctx->SrcLoc,&nopt,NULL);CHKERRQ(ierr);
     if (nopt != 3 && nopt != 0) SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting at most 3 component of SrcLoc, got %i in %s\n",nopt,__FUNCT__);
     ctx->SrcRate          = 0.0;
-    ierr                  = PetscOptionsReal("-SrcRate","\n\tStrength of the source in kg/s","",ctx->SrcRate,&ctx->SrcRate,PETSC_NULL);CHKERRQ(ierr);
+    ierr                  = PetscOptionsReal("-SrcRate","\n\tStrength of the source in kg/s","",ctx->SrcRate,&ctx->SrcRate,NULL);CHKERRQ(ierr);
     ctx->hasCrackPressure = PETSC_FALSE;
-    ierr                  = PetscOptionsBool("-pressurize","\n\tPressurize cracks","",ctx->hasCrackPressure,&ctx->hasCrackPressure,PETSC_NULL);CHKERRQ(ierr);
+    ierr                  = PetscOptionsBool("-pressurize","\n\tPressurize cracks","",ctx->hasCrackPressure,&ctx->hasCrackPressure,NULL);CHKERRQ(ierr);
 
     ctx->numPennyCracks = 0;
-    ierr                = PetscOptionsInt("-npc","\n\tNumber of penny-shaped cracks to insert","",ctx->numPennyCracks,&ctx->numPennyCracks,PETSC_NULL);CHKERRQ(ierr);
+    ierr                = PetscOptionsInt("-npc","\n\tNumber of penny-shaped cracks to insert","",ctx->numPennyCracks,&ctx->numPennyCracks,NULL);CHKERRQ(ierr);
     ierr                = PetscMalloc(ctx->numPennyCracks*sizeof(VFPennyCrack),&ctx->pennycrack);CHKERRQ(ierr);
     for (i = 0; i < ctx->numPennyCracks; i++) {
       ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"pc%d_",i);CHKERRQ(ierr);
@@ -223,7 +223,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     }
 
     ctx->numRectangularCracks = 0;
-    ierr                      = PetscOptionsInt("-nrc","\n\tNumber of rectangular cracks to insert","",ctx->numRectangularCracks,&ctx->numRectangularCracks,PETSC_NULL);CHKERRQ(ierr);
+    ierr                      = PetscOptionsInt("-nrc","\n\tNumber of rectangular cracks to insert","",ctx->numRectangularCracks,&ctx->numRectangularCracks,NULL);CHKERRQ(ierr);
     ierr                      = PetscMalloc(ctx->numRectangularCracks*sizeof(VFRectangularCrack),&ctx->rectangularcrack);CHKERRQ(ierr);
     for (i = 0; i < ctx->numRectangularCracks; i++) {
       ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"rc%d_",i);CHKERRQ(ierr);
@@ -235,7 +235,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     }
 
     ctx->numWells = 0;
-    ierr          = PetscOptionsInt("-nw","\n\tNumber of wells to insert","",ctx->numWells,&ctx->numWells,PETSC_NULL);CHKERRQ(ierr);
+    ierr          = PetscOptionsInt("-nw","\n\tNumber of wells to insert","",ctx->numWells,&ctx->numWells,NULL);CHKERRQ(ierr);
     ierr          = PetscMalloc(ctx->numWells*sizeof(VFWell),&ctx->well);CHKERRQ(ierr);
     for (i = 0; i < ctx->numWells; i++) {
       ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"w%d_",i);CHKERRQ(ierr);
@@ -248,7 +248,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     
 
     ctx->numfracWells = 0;
-    ierr          = PetscOptionsInt("-nfw","\n\tNumber of fracture wells to insert","",ctx->numfracWells,&ctx->numfracWells,PETSC_NULL);CHKERRQ(ierr);
+    ierr          = PetscOptionsInt("-nfw","\n\tNumber of fracture wells to insert","",ctx->numfracWells,&ctx->numfracWells,NULL);CHKERRQ(ierr);
     
     ierr          = PetscMalloc(ctx->numfracWells*sizeof(VFWell),&ctx->fracwell);CHKERRQ(ierr);
     for (i = 0; i < ctx->numfracWells; i++) {
@@ -293,7 +293,7 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   PetscBool      flg;
 
   PetscFunctionBegin;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF-Chevron: geometry options:","");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,NULL,"\n\nVF-Chevron: geometry options:","");CHKERRQ(ierr);
   {
     ierr = PetscMalloc(3 * sizeof(PetscReal),&l);CHKERRQ(ierr);
     for (i = 0; i < 3; i++) l[i] = 1.;
@@ -321,19 +321,24 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
 
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,
-                      PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVect);CHKERRQ(ierr);
+                      NULL,NULL,NULL,&ctx->daVect);CHKERRQ(ierr);
+  ierr = DMSetUp(ctx->daVect);CHKERRQ(ierr);
+
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,
-                      PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daScal);CHKERRQ(ierr);
+                      NULL,NULL,NULL,&ctx->daScal);CHKERRQ(ierr);
+  ierr = DMSetUp(ctx->daScal);CHKERRQ(ierr);
   ierr = DMDASetFieldName(ctx->daScal,0,"");CHKERRQ(ierr);
+
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,4,1,
-                      PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daFlow);CHKERRQ(ierr);
+                      NULL,NULL,NULL,&ctx->daFlow);CHKERRQ(ierr);
+  ierr = DMSetUp(ctx->daFlow);CHKERRQ(ierr);
   
 
   ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,&x_nprocs,&y_nprocs,&z_nprocs,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,NULL,&nx,&ny,&nz,&x_nprocs,&y_nprocs,&z_nprocs,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetOwnershipRanges(ctx->daScal,&lx1,&ly1,&lz1);CHKERRQ(ierr);
   ierr = PetscMalloc(x_nprocs*sizeof(*olx),&olx);CHKERRQ(ierr);
   ierr = PetscMalloc(y_nprocs*sizeof(*oly),&oly);CHKERRQ(ierr);
@@ -352,22 +357,18 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,0,
                       olx,oly,olz,&ctx->daScalCell);CHKERRQ(ierr);
+  ierr = DMSetUp(ctx->daScalCell);CHKERRQ(ierr);
   ierr = DMDASetFieldName(ctx->daScalCell,0,"");CHKERRQ(ierr);
 
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,3,0,
                       olx,oly,olz,&ctx->daVectCell);CHKERRQ(ierr);
+  ierr = DMSetUp(ctx->daVectCell);CHKERRQ(ierr);
   
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,6,0,
                       olx,oly,olz,&ctx->daVFperm);CHKERRQ(ierr);
-
-  /*
-   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
-   DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,6,1,
-   PETSC_NULL,PETSC_NULL,PETSC_NULL,&ctx->daVFperm);CHKERRQ(ierr);
-   */
-
+  ierr = DMSetUp(ctx->daVFperm);CHKERRQ(ierr);
 
   ierr = VFCartFEInit();CHKERRQ(ierr);
   ierr = VFCartFEElement3DCreate(&ctx->e3D);CHKERRQ(ierr);
@@ -457,22 +458,22 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
 
   PetscFunctionBegin;
 
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF: variational fracture model specific options:","");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,NULL,"\n\nVF: variational fracture model specific options:","");CHKERRQ(ierr);
   {
     vfprop->epsilon  = 2.e-1;
     vfprop->eta      = 1.e-5;
     vfprop->irrevtol = 5e-2;
-    ierr             = PetscOptionsReal("-epsilon","\n\tVariational fracture regularization length (start from 4x cell size)","",vfprop->epsilon,&vfprop->epsilon,PETSC_NULL);CHKERRQ(ierr);
-    ierr             = PetscOptionsReal("-eta","\n\tArtificial stiffness of cracks ","",vfprop->eta,&vfprop->eta,PETSC_NULL);CHKERRQ(ierr);
+    ierr             = PetscOptionsReal("-epsilon","\n\tVariational fracture regularization length (start from 4x cell size)","",vfprop->epsilon,&vfprop->epsilon,NULL);CHKERRQ(ierr);
+    ierr             = PetscOptionsReal("-eta","\n\tArtificial stiffness of cracks ","",vfprop->eta,&vfprop->eta,NULL);CHKERRQ(ierr);
     vfprop->PCeta    = vfprop->eta;
-    ierr             = PetscOptionsReal("-PCeta","\n\tArtificial stiffness of cracks in preconditioner","",vfprop->PCeta,&vfprop->PCeta,PETSC_NULL);CHKERRQ(ierr);
-    ierr             = PetscOptionsReal("-irrevtol","\n\tThreshold on v below which fracture irreversibility is enforced","",vfprop->irrevtol,&vfprop->irrevtol,PETSC_NULL);CHKERRQ(ierr);
+    ierr             = PetscOptionsReal("-PCeta","\n\tArtificial stiffness of cracks in preconditioner","",vfprop->PCeta,&vfprop->PCeta,NULL);CHKERRQ(ierr);
+    ierr             = PetscOptionsReal("-irrevtol","\n\tThreshold on v below which fracture irreversibility is enforced","",vfprop->irrevtol,&vfprop->irrevtol,NULL);CHKERRQ(ierr);
     vfprop->permmult  = 1.;
-    ierr             = PetscOptionsReal("-pmult","\n\tPermeability multiplier of cracks (achieved at  v < v_thresh)","",vfprop->permmult,&vfprop->permmult,PETSC_NULL);CHKERRQ(ierr);
+    ierr             = PetscOptionsReal("-pmult","\n\tPermeability multiplier of cracks (achieved at  v < v_thresh)","",vfprop->permmult,&vfprop->permmult,NULL);CHKERRQ(ierr);
     vfprop->permmax  = 5.;
-    ierr             = PetscOptionsReal("-permmax","\n\tMaximum permeability for cracks (achieved at  v=0.)","",vfprop->permmax,&vfprop->permmax,PETSC_NULL);CHKERRQ(ierr);
+    ierr             = PetscOptionsReal("-permmax","\n\tMaximum permeability for cracks (achieved at  v=0.)","",vfprop->permmax,&vfprop->permmax,NULL);CHKERRQ(ierr);
     vfprop->atnum    = 2;
-    ierr = PetscOptionsInt("-atnum", "\n\t Ambrosio Tortorelli variant", "", vfprop->atnum, &vfprop->atnum, PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsInt("-atnum", "\n\t Ambrosio Tortorelli variant", "", vfprop->atnum, &vfprop->atnum, NULL);CHKERRQ(ierr);
     switch (vfprop->atnum ) {
       case 1:
         vfprop->atCv = 2./3.;
@@ -514,60 +515,60 @@ extern PetscErrorCode VFMatPropGet(VFMatProp *matprop,PetscInt n)
   int            i;
 
   PetscFunctionBegin;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"\n\nVF: material properties:","");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,NULL,"\n\nVF: material properties:","");CHKERRQ(ierr);
   {
     ierr = PetscMalloc(n * sizeof(PetscReal),&prop);CHKERRQ(ierr);
     nopt = n;
     for (i = 0; i < n; i++) prop[i] = E;
-    ierr = PetscOptionsRealArray("-E","\n\tComma separated list of Young\'s modulii","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-E","\n\tComma separated list of Young\'s modulii","",prop,&nopt,NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-E",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].E = prop[i];
 
     nopt = n;
     for (i = 0; i < n; i++) prop[i] = nu;
-    ierr = PetscOptionsRealArray("-nu","\n\tComma separated list of Poisson\'s ratio","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-nu","\n\tComma separated list of Poisson\'s ratio","",prop,&nopt,NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-nu",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].nu = prop[i];
 
     nopt = n;
     for (i = 0; i < n; i++) prop[i] = alpha;
-    ierr = PetscOptionsRealArray("-alpha","\n\tComma separated list of linear thermal expansion coefficients","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-alpha","\n\tComma separated list of linear thermal expansion coefficients","",prop,&nopt,NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-alpha",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].alpha = prop[i];
 
     nopt = n;
     for (i = 0; i < n; i++) prop[i] = Gc;
-    ierr = PetscOptionsRealArray("-Gc","\n\tComma separated list of fracture toughness (not critical SIF!)","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-Gc","\n\tComma separated list of fracture toughness (not critical SIF!)","",prop,&nopt,NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-Gc",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].Gc = prop[i];
 
     nopt = n;
     for (i = 0; i < n; i++) prop[i] = beta;
-    ierr = PetscOptionsRealArray("-beta","\n\tComma separated list of Biot constants","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-beta","\n\tComma separated list of Biot constants","",prop,&nopt,NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-beta",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].beta = prop[i];
     
     nopt = n;
     for (i = 0; i < n; i++) prop[i] = Ks;
-    ierr = PetscOptionsRealArray("-ks","\n\tComma separated list of rock bulk modulus","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-ks","\n\tComma separated list of rock bulk modulus","",prop,&nopt,NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-ks",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].Ks = prop[i];
     
     nopt = n;
     for (i = 0; i < n; i++) prop[i] = phi;
-    ierr = PetscOptionsRealArray("-phi","\n\tComma separated list of rock porosity","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-phi","\n\tComma separated list of rock porosity","",prop,&nopt,NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-ks",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].phi = prop[i];
 
     nopt = n;
     for (i = 0; i < n; i++) prop[i] = rho;
-    ierr = PetscOptionsRealArray("-rhos","\n\tComma separated list of reservoir densities","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-rhos","\n\tComma separated list of reservoir densities","",prop,&nopt,NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-rho",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].rho = prop[i];
 
     nopt = n;
     for (i = 0; i < n; i++) prop[i] = Cp;
-    ierr = PetscOptionsRealArray("-Cp","\n\tComma separated list of specific heat capacities","",prop,&nopt,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-Cp","\n\tComma separated list of specific heat capacities","",prop,&nopt,NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-Cp",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].Cp = prop[i];
   }
@@ -593,7 +594,7 @@ extern PetscErrorCode VFResPropGet(VFResProp *resprop)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,PETSC_NULL,"","");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,NULL,"","");CHKERRQ(ierr);
   {
     resprop->perm      = 1.e-1;                    /* Multiply by 1e12 because pressure unit in MPa, viscosity unit in cp, and density is specific density */
     resprop->por       = 0.2;                      /* fraction */
@@ -884,8 +885,8 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&LocalWRate);CHKERRQ(ierr);
   
   ierr = DMDAGetBoundingBox(ctx->daScal,BBmin,BBmax);CHKERRQ(ierr);
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,&x_nprocs,&y_nprocs,&z_nprocs,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,NULL,&nx,&ny,&nz,&x_nprocs,&y_nprocs,&z_nprocs,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   
   ierr = DMDAGetOwnershipRanges(ctx->daScal,&lx1,&ly1,&lz1);CHKERRQ(ierr);
   ierr = PetscMalloc(x_nprocs*sizeof(*olx),&olx);CHKERRQ(ierr);
@@ -941,10 +942,12 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,x_nprocs,y_nprocs,z_nprocs,1,st+1,
                       olx,oly,olz,&ctx->daWScal);CHKERRQ(ierr);
-  
+  ierr = DMSetUp(ctx->daWScal);CHKERRQ(ierr);
+
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,x_nprocs,y_nprocs,z_nprocs,3,st+1,
                       olx,oly,olz,&ctx->daWVect);CHKERRQ(ierr);
+  ierr = DMSetUp(ctx->daWVect);CHKERRQ(ierr);
   
   olx[x_nprocs-1]--;
   oly[y_nprocs-1]--;
@@ -952,6 +955,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,st,
                       olx,oly,olz,&ctx->daWScalCell);CHKERRQ(ierr);
+  ierr = DMSetUp(ctx->daWScalCell);CHKERRQ(ierr);
     
   }
   PetscFunctionReturn(0);
@@ -1016,7 +1020,7 @@ extern PetscErrorCode VFBCInitialize(VFCtx *ctx)
 /*
  VFSolversInitialize: Creates matrices, RHS, solvers
 
- (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
+ (c) 2010-2018 Blaise Bourdin bourdin@lsu.edu
  Keita Yoshioka yoshk@chevron.com
  */
 extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
@@ -1024,7 +1028,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   PetscErrorCode ierr;
   KSP            kspU,kspV;
   PC             pcU,pcV;
-  Vec            lbV,ubV,lbU,ubU;
+  Vec            lbV,ubV;
   Mat            JacV,JacU,JacPCU;
   Vec            residualV,residualU;
   SNESLineSearch lsU;
@@ -1037,12 +1041,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesU);CHKERRQ(ierr);
   ierr = SNESSetDM(ctx->snesU,ctx->daVect);CHKERRQ(ierr);
   ierr = SNESSetOptionsPrefix(ctx->snesU,"U_");CHKERRQ(ierr);
-
-  ierr = DMCreateGlobalVector(ctx->daVect,&lbU);CHKERRQ(ierr);
-  ierr = VecSet(lbU,-1.e+6);CHKERRQ(ierr);
-  ierr = DMCreateGlobalVector(ctx->daVect,&ubU);CHKERRQ(ierr);
-  ierr = VecSet(ubU,1.e+6);CHKERRQ(ierr);
-  ierr = SNESVISetVariableBounds(ctx->snesU,lbU,ubU);CHKERRQ(ierr);
 
   ierr = SNESSetType(ctx->snesU,SNESNEWTONLS);CHKERRQ(ierr);
   ierr = SNESSetTolerances(ctx->snesU,1.e-8,1.e-8,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
@@ -1064,8 +1062,10 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = KSPSetType(kspU,KSPCG);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(kspU);CHKERRQ(ierr);
   ierr = KSPGetPC(kspU,&pcU);CHKERRQ(ierr);
+#ifdef PETSC_HAS_HYPRE
   ierr = PCSetType(pcU,PCHYPRE);CHKERRQ(ierr);
-  ierr = PetscOptionsInsertString("-u_pc_hypre_boomeramg_strong_threshold 0.7 -u_pc_hypre_type boomeramg");CHKERRQ(ierr);
+  ierr = PetscOptionsInsertString(NULL,"-u_pc_hypre_boomeramg_strong_threshold 0.7 -u_pc_hypre_type boomeramg");CHKERRQ(ierr);
+#endif
   ierr = PCSetFromOptions(pcU);CHKERRQ(ierr);
 
   /*
@@ -1074,8 +1074,9 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesV);CHKERRQ(ierr);
   ierr = SNESSetDM(ctx->snesV,ctx->daScal);CHKERRQ(ierr);
   ierr = SNESSetOptionsPrefix(ctx->snesV,"V_");CHKERRQ(ierr);
+  ierr = SNESSetType(ctx->snesV,SNESVINEWTONRSLS);CHKERRQ(ierr);
   if (ctx->verbose > 1) {
-    ierr = SNESMonitorSet(ctx->snesV,VF_VSNESMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+    ierr = SNESMonitorSet(ctx->snesV,VF_VSNESMonitor,NULL,NULL);CHKERRQ(ierr);
   }
 
   ierr = DMCreateGlobalVector(ctx->daScal,&lbV);CHKERRQ(ierr);
@@ -1084,16 +1085,6 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = VecSet(ubV,1.0);CHKERRQ(ierr);
   ierr = SNESVISetVariableBounds(ctx->snesV,lbV,ubV);CHKERRQ(ierr);
   
-  /*
-    I had switched the default line search to basic when
-    having convergence issue. It looks like the real issue was
-    the SNES default tolerances
-  */
-  /*
-  ierr = SNESGetSNESLineSearch(ctx->snesV,&linesearchV);CHKERRQ(ierr);
-  ierr = SNESLineSearchSetType(linesearchV,SNESLINESEARCHBASIC);CHKERRQ(ierr);
-  */
-
   /*
     Setting SNES default tolerance to something a bit more reasonable than the default.
     This may allow us to relax the KSP tol a bit. Will need to investigate in the future
@@ -1137,8 +1128,8 @@ extern PetscErrorCode VFLayerInit(VFCtx *ctx)
   PetscFunctionBegin;
   ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
-  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,PETSC_NULL,PETSC_NULL,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daVect,NULL,NULL,NULL,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = PetscMalloc(nz * sizeof(PetscInt),&ctx->layer);CHKERRQ(ierr);
 
   for (l = 0; l < nz; l++) ctx->layer[l] = 0;
@@ -1364,10 +1355,10 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&optionsviewer);CHKERRQ(ierr);
   ierr = PetscLogView(optionsviewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&optionsviewer);CHKERRQ(ierr);
-  ierr = PetscOptionsAllUsed(&nopts);CHKERRQ(ierr);
+  ierr = PetscOptionsAllUsed(NULL,&nopts);CHKERRQ(ierr);
   if (nopts > 0) {
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nWARNING: \nSome options were unused. Check the command line for typos.\n");CHKERRQ(ierr);
-    ierr = PetscOptionsLeft();CHKERRQ(ierr);
+    ierr = PetscOptionsLeft(NULL);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }

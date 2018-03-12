@@ -53,15 +53,15 @@ int main(int argc,char **argv)
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-no_seed",&no_seed,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-max_timestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-length",&length,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-mode",&mode,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-bcUx",&bc1,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-bcUz",&bc2,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-nc",&nc,PETSC_NULL);CHKERRQ(ierr);
-	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(NULL,"-no_seed",&no_seed,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(NULL,"-max_timestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-length",&length,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(NULL,"-mode",&mode,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-bcUx",&bc1,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-bcUz",&bc2,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(NULL,"-nc",&nc,NULL);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx.daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+					   NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
 	ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
@@ -119,8 +119,8 @@ int main(int argc,char **argv)
 	/*Initializing seed points*/
 	ierr = PetscMalloc2(no_seed,&seed_array_z,no_seed,&seed_array_x);CHKERRQ(ierr);
 	seedz_start = seedx_start = 2;
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-seedz_start",&seedz_start,PETSC_NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetInt(PETSC_NULL,"-seedx_start",&seedx_start,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(NULL,"-seedz_start",&seedz_start,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetInt(NULL,"-seedx_start",&seedx_start,NULL);CHKERRQ(ierr);
 	
 	srand((time(NULL)+1));
 	for(i = 0; i < no_seed; i++){

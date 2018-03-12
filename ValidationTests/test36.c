@@ -31,7 +31,7 @@ int main(int argc,char **argv)
   
   p = 1e-3;
   ctx.timestep = 0;
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-po",&p,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,"-po",&p,NULL);CHKERRQ(ierr);
   ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = VF_StepV(&fields,&ctx);CHKERRQ(ierr);

@@ -18,14 +18,14 @@ extern PetscErrorCode VFPennyCrackGet(const char prefix[],VFPennyCrack *PennyCra
   PetscFunctionBegin;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,prefix,"\n\nVF: Penny-shaped crack description:","");CHKERRQ(ierr);
   {
-    ierr = PetscOptionsString("-name","\n\tPenny-shaped crack name","",PennyCrack->name,PennyCrack->name,sizeof(PennyCrack->name),PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsString("-name","\n\tPenny-shaped crack name","",PennyCrack->name,PennyCrack->name,sizeof(PennyCrack->name),NULL);CHKERRQ(ierr);
     nval = 3;
 
-    ierr = PetscOptionsRealArray("-center","\n\tPenny-shaped crack center of center  (comma separated).","",PennyCrack->center,&nval,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-r","\n\t Penny-shaped crack radius","",PennyCrack->r,&PennyCrack->r,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-theta","\n\t Penny-shaped crack polar angle (in degrees)","",PennyCrack->theta,&PennyCrack->theta,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-phi","\n\t Penny-shaped crack co-latitude (in degrees)","",PennyCrack->phi,&PennyCrack->phi,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-thickness","\n\t Penny-shaped crack thickness","",PennyCrack->thickness,&PennyCrack->thickness,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-center","\n\tPenny-shaped crack center of center  (comma separated).","",PennyCrack->center,&nval,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-r","\n\t Penny-shaped crack radius","",PennyCrack->r,&PennyCrack->r,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-theta","\n\t Penny-shaped crack polar angle (in degrees)","",PennyCrack->theta,&PennyCrack->theta,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-phi","\n\t Penny-shaped crack co-latitude (in degrees)","",PennyCrack->phi,&PennyCrack->phi,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-thickness","\n\t Penny-shaped crack thickness","",PennyCrack->thickness,&PennyCrack->thickness,NULL);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -143,8 +143,8 @@ extern PetscErrorCode VFPennyCrackBuildVAT2(Vec V,VFPennyCrack *crack,VFCtx *ctx
   PetscReal      dist;
 
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
   ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
@@ -192,8 +192,8 @@ extern PetscErrorCode VFPennyCrackBuildVAT1(Vec V,VFPennyCrack *crack,VFCtx *ctx
   PetscReal      dist;
 
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
   ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
@@ -238,10 +238,10 @@ extern PetscErrorCode VFRectangularCrackGet(const char prefix[],VFRectangularCra
   PetscFunctionBegin;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,prefix,"\n\nVF: Rectangular-shaped crack description:","");CHKERRQ(ierr);
   {
-    ierr = PetscOptionsString("-name","\n\tRectangular-shaped crack name","",RectangularCrack->name,RectangularCrack->name,sizeof(RectangularCrack->name),PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsString("-name","\n\tRectangular-shaped crack name","",RectangularCrack->name,RectangularCrack->name,sizeof(RectangularCrack->name),NULL);CHKERRQ(ierr);
     nval = 9;
-    ierr = PetscOptionsRealArray("-corners","\n\tRectangular-shaped crack corners coordinates (x0,y0,z0, x1,y1,z1, x2,y2,z2)  (comma separated).","",RectangularCrack->corners,&nval,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-thickness","\n\tRectangular-shaped crack thickness","",RectangularCrack->thickness,&RectangularCrack->thickness,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-corners","\n\tRectangular-shaped crack corners coordinates (x0,y0,z0, x1,y1,z1, x2,y2,z2)  (comma separated).","",RectangularCrack->corners,&nval,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-thickness","\n\tRectangular-shaped crack thickness","",RectangularCrack->thickness,&RectangularCrack->thickness,NULL);CHKERRQ(ierr);
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -439,8 +439,8 @@ extern PetscErrorCode VFRectangularCrackBuildVAT2(Vec V,VFRectangularCrack *crac
   PetscReal      dist;
 
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
   ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);
@@ -482,8 +482,8 @@ extern PetscErrorCode VFRectangularCrackBuildVAT1(Vec V,VFRectangularCrack *crac
   PetscReal      dist;
 
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
   ierr = DMDAVecGetArrayDOF(ctx->daVect,ctx->coordinates,&coords_array);CHKERRQ(ierr);

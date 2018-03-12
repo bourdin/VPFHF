@@ -62,7 +62,7 @@ int main(int argc,char **argv)
   }
 
   ctx.numCracks = 0;
-  ierr = PetscOptionsInt("-nc","\n\tNumber of penny-shaped cracks to insert","",ctx.numCracks,&ctx.numCracks,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-nc","\n\tNumber of penny-shaped cracks to insert","",ctx.numCracks,&ctx.numCracks,NULL);CHKERRQ(ierr);
   ierr = PetscMalloc(ctx.numCracks*sizeof(VFPennyCrack),&ctx.crack);CHKERRQ(ierr);
   for (i = 0; i < ctx.numCracks; i++) {
     ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"c%d_",i);CHKERRQ(ierr);

@@ -3,8 +3,8 @@ all: VF_Chevron
 include makefile.include	
 
 
-include ${PETSC_DIR}/conf/variables
-include ${PETSC_DIR}/conf/rules
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
 
 .PHONY: Utils test dirs
 
@@ -23,4 +23,5 @@ test:
 	@make -C ${VFDIR}/ValidationTests test
 
 clean::
+	@echo running make clean in ${VFDIR}/ValidationTests
 	@make -C ${VFDIR}/ValidationTests clean

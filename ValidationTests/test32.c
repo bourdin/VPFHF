@@ -49,8 +49,8 @@ int main(int argc,char **argv)
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
 	ctx.flowsolver = FLOWSOLVER_SNESSTANDARDFEM;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
-	ierr = DMDAGetInfo(ctx.daScal,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-					   PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx.daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+					   NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx.daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
 	ierr = DMDAGetBoundingBox(ctx.daVect,BBmin,BBmax);CHKERRQ(ierr);
@@ -179,7 +179,7 @@ int main(int argc,char **argv)
   ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
  /*End of mechanical part of code*/
 
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,"-theta",&ctx.flowprop.theta,NULL);CHKERRQ(ierr);
   ctx.flowprop.timestepsize = 0.;
 
   PetscReal displ_p_tol = 1e-6;
@@ -245,18 +245,18 @@ int main(int argc,char **argv)
   ierr = VecSet(ctx.PresBCArray,0);CHKERRQ(ierr);
   ierr = VecSet(ctx.VelBCArray,0);CHKERRQ(ierr);
 
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,"-m_inv",&ctx.flowprop.M_inv,NULL);CHKERRQ(ierr);
   ctx.flowprop.M_inv = 1.0;
 
   
   ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
   ierr = VecSet(ctx.RHSVelPpre,0.);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-m_inv",&ctx.flowprop.M_inv,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(PETSC_NULL,"-theta",&ctx.flowprop.theta,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,"-m_inv",&ctx.flowprop.M_inv,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,"-theta",&ctx.flowprop.theta,NULL);CHKERRQ(ierr);
   ctx.flowprop.timestepsize = 1.;
-	ierr = PetscOptionsGetReal(PETSC_NULL,"-timestepsize",&ctx.flowprop.timestepsize,PETSC_NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,"-timestepsize",&ctx.flowprop.timestepsize,NULL);CHKERRQ(ierr);
   ctx.maxtimestep = 10;
-  ierr = PetscOptionsGetInt(PETSC_NULL,"-maxtimestep",&ctx.maxtimestep,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetInt(NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
   for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n");CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"      ##########################################################\n");CHKERRQ(ierr);

@@ -1,6 +1,6 @@
 #PETSc Option Table entries:
 -altminmaxit 1000
--altmintol 1e-4
+-altmintol 1e-3
 -epsilon .64
 -eta 1e-8
 -nlayer 1

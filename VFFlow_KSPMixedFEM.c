@@ -80,7 +80,7 @@ extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields)
   ierr = MatMultAdd(ctx->KVelPlhs,ctx->PreFlowFields,VecRHS,VecRHS);CHKERRQ(ierr);
   ierr = VecApplyVelocityBC(VecRHS,ctx->VelBCArray,&ctx->bcQ[0],ctx);CHKERRQ(ierr);
   if (ctx->verbose > 1) {
-    ierr = KSPMonitorSet(ctx->kspVelP,MixedFEMKSPMonitor,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+    ierr = KSPMonitorSet(ctx->kspVelP,MixedFEMKSPMonitor,NULL,NULL);CHKERRQ(ierr);
   }
   ierr = KSPSolve(ctx->kspVelP,VecRHS,fields->VelnPress);CHKERRQ(ierr);
   ierr = KSPGetConvergedReason(ctx->kspVelP,&reason);CHKERRQ(ierr);
@@ -108,10 +108,10 @@ extern PetscErrorCode MixedFlowFEMKSPSolve(VFCtx *ctx,VFFields *fields)
   ierr = DMDAVecRestoreArrayDOF(ctx->daFlow,fields->VelnPress,&VelnPress_array);CHKERRQ(ierr);
   ierr = VecDestroy(&VecRHS);CHKERRQ(ierr);
   ierr = VecDestroy(&vec);CHKERRQ(ierr);
-  ierr = VecMin(fields->velocity,PETSC_NULL,&Velmin);CHKERRQ(ierr);
-	ierr = VecMax(fields->velocity,PETSC_NULL,&Velmax);CHKERRQ(ierr);
-  ierr = VecMin(fields->pressure,PETSC_NULL,&Pmin);CHKERRQ(ierr);
-	ierr = VecMax(fields->pressure,PETSC_NULL,&Pmax);CHKERRQ(ierr);
+  ierr = VecMin(fields->velocity,NULL,&Velmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->velocity,NULL,&Velmax);CHKERRQ(ierr);
+  ierr = VecMin(fields->pressure,NULL,&Pmin);CHKERRQ(ierr);
+	ierr = VecMax(fields->pressure,NULL,&Pmax);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      Velocity min / max:     %e %e\n",Velmin,Velmax);CHKERRQ(ierr);
 	ierr = PetscPrintf(PETSC_COMM_WORLD,"      Pressure min / max:     %e %e\n",Pmin,Pmax);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -127,10 +127,10 @@ extern PetscErrorCode MixedFEMKSPMonitor(KSP ksp,PetscInt its,PetscReal fnorm,vo
   Vec                             solution;
   
   PetscFunctionBegin;
-  ierr = KSPBuildSolution(ksp,PETSC_NULL,&solution);CHKERRQ(ierr);
+  ierr = KSPBuildSolution(ksp,NULL,&solution);CHKERRQ(ierr);
   ierr = VecNorm(solution,NORM_1,&norm);CHKERRQ(ierr);
-  ierr = VecMax(solution,PETSC_NULL,&vmax);CHKERRQ(ierr);
-  ierr = VecMin(solution,PETSC_NULL,&vmin);CHKERRQ(ierr);
+  ierr = VecMax(solution,NULL,&vmax);CHKERRQ(ierr);
+  ierr = VecMin(solution,NULL,&vmin);CHKERRQ(ierr);
   ierr = PetscObjectGetComm((PetscObject)ksp,&comm);CHKERRQ(ierr);
   ierr = PetscPrintf(comm,"ksp_iter_step %D :solution norm = %G, max sol. value  = %G, min sol. value = %G\n",its,norm,vmax,vmin);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -240,7 +240,7 @@ extern PetscErrorCode VecApplyVelocityBC(Vec RHS,Vec BCV, VFBC *bcQ,VFCtx *ctx)
 	PetscReal		****RHS_array;
 	
 	PetscFunctionBegin;
-	ierr = DMDAGetInfo(ctx->daFlow,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+	ierr = DMDAGetInfo(ctx->daFlow,&dim,&nx,&ny,&nz,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
 	ierr = DMDAGetCorners(ctx->daFlow,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daVect,BCV,&velbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx->daFlow,RHS,&RHS_array);CHKERRQ(ierr);
@@ -523,7 +523,7 @@ extern PetscErrorCode FlowMatnVecAssemble(Mat K,Mat Krhs,Vec RHS,VFFields *field
   timestepsize = ctx->timevalue;
   one_minus_theta = -1.*(1.-theta);
   mu     = ctx->flowprop.mu;
-  ierr = DMDAGetInfo(ctx->daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daScalCell,NULL,&nx,&ny,&nz,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = MatZeroEntries(K);CHKERRQ(ierr);
   ierr = MatZeroEntries(Krhs);CHKERRQ(ierr);
@@ -1310,8 +1310,8 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,VFBC *bcQ)
   
   PetscFunctionBegin;
   ierr = MatGetDM(K,&da);CHKERRQ(ierr);
-  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(da,&dim,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(da,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   /*
    Compute the number of boundary nodes on each processor.
@@ -1440,7 +1440,7 @@ extern PetscErrorCode MatApplyKSPVelocityBC(Mat K,Mat Klhs,VFBC *bcQ)
     }
     
   }
-  ierr = MatZeroRowsStencil(K,numBC,row,one,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = MatZeroRowsStencil(K,numBC,row,one,NULL,NULL);CHKERRQ(ierr);
   ierr = PetscFree(row);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

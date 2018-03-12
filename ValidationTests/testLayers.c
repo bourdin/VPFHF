@@ -31,8 +31,8 @@ int main(int argc,char **argv)
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   ierr = DMView(ctx.daScalCell,PETSC_VIEWER_STDOUT_WORLD);
   
-  ierr = DMDAGetInfo(ctx.daScalCell,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx.daScalCell,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx.daScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
 
   ierr = PetscObjectSetName((PetscObject) ctx.fields->pmult,"layer");CHKERRQ(ierr);

@@ -133,8 +133,8 @@ extern PetscErrorCode VFFlow_FEM_MatPAssembly3D(Mat K,Vec RHS,VFFields *fields,V
   PetscReal      ****coords_array;
 
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daVect,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   if (xs+xm == nx) xm--;
   if (ys+ym == ny) ym--;
@@ -305,8 +305,8 @@ extern PetscErrorCode VFFlow_FEM_MatTAssembly3D(Mat K,Vec RHS,VFFields *fields,V
   PetscReal      ****coords_array;
 
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daVect,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   if (xs+xm == nx) xm--;
   if (ys+ym == ny) ym--;
@@ -422,11 +422,11 @@ extern PetscErrorCode VFFlow_FEM(VFCtx *ctx,VFFields *fields)
     ierr = VecView(fields->theta,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   }
   if (ctx->verbose > 0) {
-    ierr = VecMin(fields->pressure,PETSC_NULL,&Pmin);CHKERRQ(ierr);
-    ierr = VecMax(fields->pressure,PETSC_NULL,&Pmax);CHKERRQ(ierr);
+    ierr = VecMin(fields->pressure,NULL,&Pmin);CHKERRQ(ierr);
+    ierr = VecMax(fields->pressure,NULL,&Pmax);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Pmin = %g, Pmax = %g\n",Pmin,Pmax);CHKERRQ(ierr);
-    ierr = VecMin(fields->theta,PETSC_NULL,&Tmin);CHKERRQ(ierr);
-    ierr = VecMax(fields->theta,PETSC_NULL,&Tmax);CHKERRQ(ierr);
+    ierr = VecMin(fields->theta,NULL,&Tmin);CHKERRQ(ierr);
+    ierr = VecMax(fields->theta,NULL,&Tmax);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Tmin = %g, Tmax = %g\n",Tmin,Tmax);CHKERRQ(ierr);
   }
 
@@ -463,8 +463,8 @@ extern PetscErrorCode VFFormIBCondition_Flow(VFCtx *ctx,VFFields *fields)
 
   PetscFunctionBegin;
 
-  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daVect,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,fields->pressure,&pressure_array);
 
@@ -533,8 +533,8 @@ extern PetscErrorCode VFFormInitCondition_Flow(VFCtx *ctx,VFFields *fields)
 
   PetscFunctionBegin;
 
-  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daVect,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScal,fields->pressure,&pressure_array);
 
@@ -583,8 +583,8 @@ extern PetscErrorCode VFFormFunction_Flow(SNES snes,Vec pressure_Vec,Vec F,void 
 
 
 
-  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daVect,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   if (xs+xm == nx) xm--;
   if (ys+ym == ny) ym--;
@@ -694,8 +694,8 @@ extern PetscErrorCode VFFormJacobian_Flow(SNES snes,Vec pressure_Vec,Mat *J,Mat 
   PetscReal      ****coords_array;
 
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daVect,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   if (xs+xm == nx) xm--;
   if (ys+ym == ny) ym--;
@@ -828,7 +828,7 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx,VFFields *fields)
   /* move to VFCommon later? */
 
 
-  ierr = SNESSolve(snes,PETSC_NULL,fields->pressure);CHKERRQ(ierr);
+  ierr = SNESSolve(snes,NULL,fields->pressure);CHKERRQ(ierr);
 
   /* TEST - explicitly calcualte the residual */
 
@@ -845,11 +845,11 @@ extern PetscErrorCode VFFlow_SNES_FEM(VFCtx *ctx,VFFields *fields)
 /*  ierr = VecView(fields->theta,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr); */
   }
   if (ctx->verbose > 0) {
-    ierr = VecMin(fields->pressure,PETSC_NULL,&Pmin);CHKERRQ(ierr);
-    ierr = VecMax(fields->pressure,PETSC_NULL,&Pmax);CHKERRQ(ierr);
+    ierr = VecMin(fields->pressure,NULL,&Pmin);CHKERRQ(ierr);
+    ierr = VecMax(fields->pressure,NULL,&Pmax);CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Pmin = %g, Pmax = %g\n",Pmin,Pmax);CHKERRQ(ierr);
-/*  ierr = VecMin(fields->theta,PETSC_NULL,&Tmin);CHKERRQ(ierr);
-  ierr = VecMax(fields->theta,PETSC_NULL,&Tmax);CHKERRQ(ierr);
+/*  ierr = VecMin(fields->theta,NULL,&Tmin);CHKERRQ(ierr);
+  ierr = VecMax(fields->theta,NULL,&Tmax);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Tmin = %g, Tmax = %g\n",Tmin,Tmax);CHKERRQ(ierr); */
   }
   ierr = SNESGetConvergedReason(snes,&reasonP);CHKERRQ(ierr);
@@ -910,8 +910,8 @@ extern PetscErrorCode VFFormIFunction_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
   ACoef_P   = 1.;fdens*por*(wat_comp+rock_comp);
 
 
-  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daVect,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   if (xs+xm == nx) xm--;
   if (ys+ym == ny) ym--;
@@ -1078,8 +1078,8 @@ extern PetscErrorCode VFFormIJacobian_Flow(TS ts,PetscReal t,Vec pressure_Vec,Ve
   PetscReal      ****coords_array;
 
   PetscFunctionBegin;
-  ierr = DMDAGetInfo(ctx->daVect,PETSC_NULL,&nx,&ny,&nz,PETSC_NULL,PETSC_NULL,PETSC_NULL,
-                     PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(ctx->daVect,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
+                     NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daVect,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   if (xs+xm == nx) xm--;
   if (ys+ym == ny) ym--;
@@ -1195,7 +1195,7 @@ extern PetscErrorCode VFFlow_TS_FEM(VFCtx *ctx,VFFields *fields)
    // test with FD Jacobian
    ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
    ierr = MatCreateSNESMF(snes,&Jmf);CHKERRQ(ierr);
-   ierr = SNESSetJacobian(snes,Jmf,J,SNESDefaultComputeJacobian,PETSC_NULL);CHKERRQ(ierr);
+   ierr = SNESSetJacobian(snes,Jmf,J,SNESDefaultComputeJacobian,NULL);CHKERRQ(ierr);
   
   /*
     Set various TS parameters from user options

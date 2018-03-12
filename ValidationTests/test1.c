@@ -28,7 +28,7 @@ int main(int argc,char **argv)
   ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
   ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
   
-  ierr = PetscOptionsGetReal(NULL,"-pressure",&p,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,NULL,"-pressure",&p,NULL);CHKERRQ(ierr);
   
   ierr = VecDuplicate(fields.V,&Vold);CHKERRQ(ierr);
   ierr = VecCopy(fields.VIrrev,fields.V);CHKERRQ(ierr);
