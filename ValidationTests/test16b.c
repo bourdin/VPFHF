@@ -141,7 +141,7 @@ int main(int argc,char **argv)
     ierr = VecCopy(fields.V,fields.VIrrev);CHKERRQ(ierr);
     
     /*
-    Initialisation pressure for the secant method
+    Initializing pressure for the secant method
     */
 
     pc=p;
@@ -196,7 +196,7 @@ int main(int argc,char **argv)
 
       ctx.hasCrackPressure = PETSC_TRUE;
       ctx.hasInsitu        = PETSC_TRUE;
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"     Solving for Vol_b");CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"     Solving for Vol_b\n");CHKERRQ(ierr);
       ierr = VecSet(fields.pressure,pb);CHKERRQ(ierr);
       ierr = VecCopy(U_b,fields.U);CHKERRQ(ierr);
       ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr); 
@@ -237,7 +237,7 @@ int main(int argc,char **argv)
         while (vol_b==vol_a)
           {
           pb=2*pb;
-          ierr = PetscPrintf(PETSC_COMM_WORLD,"  vol_a==vol_b   Solving for Vol_b");CHKERRQ(ierr);
+          ierr = PetscPrintf(PETSC_COMM_WORLD,"  vol_a==vol_b   Solving for Vol_b\n");CHKERRQ(ierr);
           ierr = VecSet(fields.pressure,pb);CHKERRQ(ierr);
           ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
           ierr = VolumetricCrackOpening(&vol_b,&ctx,&fields);CHKERRQ(ierr);
@@ -252,7 +252,7 @@ int main(int argc,char **argv)
         ierr = VecCopy(U_s,fields.U);CHKERRQ(ierr);
         ierr = VF_StepU(&fields,&ctx);CHKERRQ(ierr);
         ierr = VolumetricCrackOpening(&vol,&ctx,&fields);CHKERRQ(ierr);
-        ierr = PetscPrintf(PETSC_COMM_WORLD,"Dans la boucle p \t %e vol \t %e \n",p,vol);CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD,"       updating pressure: p \t %e vol \t %e \n",p,vol);CHKERRQ(ierr);
         ierr = PetscViewerASCIIPrintf(secant_viewer,"timestep \t %d \t altminit \t %d \t  p \t %e \t vol \t %e \n ",ctx.timestep,altminit,p,vol);CHKERRQ(ierr);
         ierr = VecCopy(fields.U,U_s);CHKERRQ(ierr);
 
@@ -280,7 +280,7 @@ int main(int argc,char **argv)
       ctx.CrackVolume      = targetVol;
       ctx.hasCrackPressure = PETSC_TRUE;
 
-      ierr = PetscPrintf(PETSC_COMM_WORLD,"     Solving for V  ",ctx.CrackVolume);CHKERRQ(ierr);
+      ierr = PetscPrintf(PETSC_COMM_WORLD,"     Solving for V  \n",ctx.CrackVolume);CHKERRQ(ierr);
       ierr = VecCopy(fields.V,Vold);CHKERRQ(ierr);
       ierr = VecSet(fields.pressure,p);CHKERRQ(ierr);
       ierr = VF_StepV(&fields,&ctx);
@@ -311,7 +311,8 @@ int main(int argc,char **argv)
         ctx.TotalEnergy   = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork + ctx.SurfaceEnergy;
 
         ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy: %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
-        ierr = PetscViewerASCIIPrintf(viewer,"%d \t\t %e \t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,targetVol,ctx.CrackVolume,p,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
+        ierr = PetscViewerASCIIPrintf(viewer,"%d \t\t %e \t %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,targetVol,
+                                      ctx.CrackVolume,p,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
         ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ctx.ElasticEnergy,
                                       ctx.InsituWork,ctx.SurfaceEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
       }
@@ -341,7 +342,8 @@ int main(int argc,char **argv)
     ctx.TotalEnergy   = ctx.ElasticEnergy - ctx.InsituWork - ctx.PressureWork + ctx.SurfaceEnergy;
 
     ierr = PetscPrintf(PETSC_COMM_WORLD,"Surface energy: %e\n",ctx.SurfaceEnergy);CHKERRQ(ierr);
-    ierr = PetscViewerASCIIPrintf(viewer,"%d \t\t %e \t  %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,targetVol ,ctx.CrackVolume,p,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
+    ierr = PetscViewerASCIIPrintf(viewer,"%d \t\t %e \t  %e \t %e \t %e \t %e \t %e \t %e\n",ctx.timestep,targetVol,
+                                 ctx.CrackVolume,p,ctx.SurfaceEnergy,ctx.ElasticEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
     ierr = PetscViewerASCIIPrintf(ctx.energyviewer,"%i   \t%e   \t%e   \t%e   \t%e   \t%e\n",ctx.timestep,ctx.ElasticEnergy,
                                   ctx.InsituWork,ctx.SurfaceEnergy,ctx.PressureWork,ctx.TotalEnergy);CHKERRQ(ierr);
   }
