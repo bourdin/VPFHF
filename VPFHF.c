@@ -70,8 +70,8 @@ int main(int argc,char **argv)
   ierr = PetscPrintf(PETSC_COMM_WORLD," Initial fracture pressure =  %e  Initial fracture volume = %e \n ",p,ctx.CrackVolume);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   ini_pressure = 0.0;
-	ierr = PetscOptionsGetReal(NULL,"-ini_pressure",&ini_pressure,NULL);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(NULL,"-shut_in_time",&time_shutin,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,NULL,"-ini_pressure",&ini_pressure,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,NULL,"-shut_in_time",&time_shutin,NULL);CHKERRQ(ierr);
   ierr = VecSet(ctx.PresBCArray,ini_pressure);CHKERRQ(ierr);
   ierr = VecSet(ctx.pressure_old,ini_pressure);CHKERRQ(ierr);
    for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){

@@ -1,0 +1,75 @@
+Copyright (c) 1998-2018, Blaise Bourdin <bourdin@lsu.edu> and contributors
+All rights reserved.
+
+See the CONTRIBUTORS.txt for a list of contributors
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer. 
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those
+of the authors and should not be interpreted as representing official policies, 
+either expressed or implied, of the FreeBSD Project.
+
+In addition to the above license, we cordially ask that any published work derived 
+from this code, or utilizing it references the following published works:
+
+
+@article{Bourdin-Francfort-EtAl-2000a,
+	Author = {Bourdin, B. and Francfort, G.A. and Marigo, J.-J.},
+	Journal = {J. Mech. Phys. Solids},
+	Number = {4},
+	Pages = {797--826},
+	Title = {Numerical experiments in revisited brittle fracture},
+	Volume = {48},
+	Year = {2000}}
+
+@article{Bourdin-Francfort-EtAl-2008b,
+	Author = {Bourdin, B. and Francfort, G.A. and Marigo, J.-J.},
+	Journal = {J. Elasticity},
+	Number = {1-3},
+	Pages = {1--148},
+	Title = {The Variational Approach to Fracture},
+	Volume = {91},
+	Year = {2008}}
+
+@inproceedings{Bourdin-Chukwudozie-EtAl-2012a,
+	Author = {Bourdin, B. and Chukwudozie, C. and Yoshioka, K.},
+	Booktitle = {Proceedings of the 2012 SPE Annual Technical Conference and Exhibition},
+	Title = {A Variational Approach to the Numerical Simulation of Hydraulic Fracturing},
+	Volume = {SPE 159154},
+	Year = {2012}}
+
+@inproceedings{Chukwudozie-Bourdin-EtAl-2013a,
+	Address = {San Francisco, California},
+	Author = {Chukwudozie, C. and Bourdin, B. and Yoshioka, K. and Buchmann, T. and Connolly, P.},
+	Booktitle = {47th U.S. Rock Mechanics/Geomechanics Symposium},
+	Pages = {ARMA-2013-100},
+	Publisher = {American Rock Mechanics Association},
+	Title = {A New Modeling Approach to Natural Fracturing Process},
+	Year = {2013}}
+
+@article{Yoshioka-Bourdin-2016a,
+	Author = {Yoshioka, K. and Bourdin, B.},
+	Journal = {Int. J. Rock Mech. Min.},
+	Pages = {137 - 150},
+	Title = {A variational hydraulic fracturing model coupled to a reservoir simulator},
+	Volume = {88},
+	Year = {2016}}
+

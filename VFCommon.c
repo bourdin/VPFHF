@@ -14,10 +14,10 @@
 #undef __FUNCT__
 #define __FUNCT__ "VFInitialize"
 /*
- VFInitialize: Initialize the VF code. Called by the fortran implementation of VIADAT
+ VFInitialize: Initialize the VF code. 
 
- (c) 2010-2012 Blaise Bourdin bourdin@lsu.edu
- */
+ (c) 2010-2018 Blaise Bourdin bourdin@lsu.edu
+*/
 extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 {
   PetscErrorCode ierr;
@@ -26,7 +26,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
 
   PetscFunctionBegin;
   ctx->printhelp = PETSC_FALSE;
-  ierr = PetscPrintf(PETSC_COMM_WORLD,banner);CHKERRQ(ierr);
+  ierr           = PetscPrintf(PETSC_COMM_WORLD,banner);CHKERRQ(ierr);
 #if defined(PETSC_USE_DEBUG)
   ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\n");CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"      ##########################################################\n");CHKERRQ(ierr);
@@ -57,7 +57,7 @@ extern PetscErrorCode VFInitialize(VFCtx *ctx,VFFields *fields)
   //ierr = VFBCCreate(ctx->bcV,1);CHKERRQ(ierr);
   ierr = VFBCInitialize(ctx);CHKERRQ(ierr);
   ierr = VFSolversInitialize(ctx);CHKERRQ(ierr);
-  
+
   ctx->heatsolver = HEATSOLVER_SNESFEM;
   ierr            = FlowSolverInitialize(ctx,fields);CHKERRQ(ierr);
   ierr            = VF_HeatSolverInitialize(ctx,fields);CHKERRQ(ierr);
@@ -106,25 +106,25 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr         = PetscOptionsInt("-verbose","\n\tDisplay debug informations about the computation\t","",ctx->verbose,&ctx->verbose,NULL);CHKERRQ(ierr);
 
     ctx->removeTipEffect = PETSC_FALSE;
-    ierr                  = PetscOptionsBool("-removetipeffect","\n\t Remove effect of fracture tip on width computation","",ctx->removeTipEffect,&ctx->removeTipEffect,NULL);CHKERRQ(ierr);
-    
+    ierr                 = PetscOptionsBool("-removetipeffect","\n\t Remove effect of fracture tip on width computation","",ctx->removeTipEffect,&ctx->removeTipEffect,NULL);CHKERRQ(ierr);
+
     ctx->width_tol = 0.1;
-    ierr            = PetscOptionsReal("-widthremoval_tol","\n\tTolerance for removal of tip effect","",ctx->width_tol,&ctx->width_tol,NULL);CHKERRQ(ierr);
-    
+    ierr           = PetscOptionsReal("-widthremoval_tol","\n\tTolerance for removal of tip effect","",ctx->width_tol,&ctx->width_tol,NULL);CHKERRQ(ierr);
+
     ctx->flowsolver = FLOWSOLVER_NONE;
-    ierr          = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,NULL);CHKERRQ(ierr);
-    
-    ctx->FlowDisplCoupling = PETSC_FALSE;
-    ierr                  = PetscOptionsBool("-poroelasticity","\n\t Geomechanics (coupled reservoir flow and deformation)","",ctx->FlowDisplCoupling,&ctx->FlowDisplCoupling,NULL);CHKERRQ(ierr);
-    ctx->ResFlowMechCoupling = FIXEDSTRESS;
-    ierr          = PetscOptionsEnum("-resflowmechcoupling","\n\tRes flow mech coupling","",ResFlowMechCouplingName,(PetscEnum)ctx->ResFlowMechCoupling,(PetscEnum*)&ctx->ResFlowMechCoupling,NULL);CHKERRQ(ierr);
-    ctx->heatsolver = HEATSOLVER_SNESFEM;
+    ierr            = PetscOptionsEnum("-flowsolver","\n\tFlow solver","",VFFlowSolverName,(PetscEnum)ctx->flowsolver,(PetscEnum*)&ctx->flowsolver,NULL);CHKERRQ(ierr);
+
+    ctx->FlowDisplCoupling    = PETSC_FALSE;
+    ierr                      = PetscOptionsBool("-poroelasticity","\n\t Geomechanics (coupled reservoir flow and deformation)","",ctx->FlowDisplCoupling,&ctx->FlowDisplCoupling,NULL);CHKERRQ(ierr);
+    ctx->ResFlowMechCoupling  = FIXEDSTRESS;
+    ierr                      = PetscOptionsEnum("-resflowmechcoupling","\n\tRes flow mech coupling","",ResFlowMechCouplingName,(PetscEnum)ctx->ResFlowMechCoupling,(PetscEnum*)&ctx->ResFlowMechCoupling,NULL);CHKERRQ(ierr);
+    ctx->heatsolver           = HEATSOLVER_SNESFEM;
     ctx->FractureFlowCoupling = PETSC_FALSE;
-    ierr                  = PetscOptionsBool("-coupledfracflowmodel","\n\tCoupled fracture and resservoir flow model","",ctx->FractureFlowCoupling,&ctx->FractureFlowCoupling,NULL);CHKERRQ(ierr);
-    ctx->hasFluidSources = PETSC_FALSE;
-    ierr                  = PetscOptionsBool("-uniformfluidsources","\n\t Uniform fluid sources","",ctx->hasFluidSources,&ctx->hasFluidSources,NULL);CHKERRQ(ierr);
-    ctx->hasFlowWells = PETSC_FALSE;
-    ierr                  = PetscOptionsBool("-flowwells","\n\t Fluid wells","",ctx->hasFlowWells,&ctx->hasFlowWells,NULL);CHKERRQ(ierr);
+    ierr                      = PetscOptionsBool("-coupledfracflowmodel","\n\tCoupled fracture and resservoir flow model","",ctx->FractureFlowCoupling,&ctx->FractureFlowCoupling,NULL);CHKERRQ(ierr);
+    ctx->hasFluidSources      = PETSC_FALSE;
+    ierr                      = PetscOptionsBool("-uniformfluidsources","\n\t Uniform fluid sources","",ctx->hasFluidSources,&ctx->hasFluidSources,NULL);CHKERRQ(ierr);
+    ctx->hasFlowWells         = PETSC_FALSE;
+    ierr                      = PetscOptionsBool("-flowwells","\n\t Fluid wells","",ctx->hasFlowWells,&ctx->hasFlowWells,NULL);CHKERRQ(ierr);
 
     ierr            = PetscOptionsEnum("-heatsolver","\n\tHeat solver","",VFHeatSolverName,(PetscEnum)ctx->heatsolver,(PetscEnum*)&ctx->heatsolver,NULL);CHKERRQ(ierr);
     ctx->mechsolver = FRACTURE;
@@ -141,9 +141,8 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     nopt = 6;
     ierr = PetscOptionsRealArray("-insitumax","\n\tIn-situ stresses in the upper z-section, will re-use insitumin if omitted","",buffer,&nopt,&flg);CHKERRQ(ierr);
     if (nopt == 0)
-      for (i = 0; i < 6; i++) {
-        ctx->insitumax[i]=ctx->insitumin[i];
-    } else {
+      for (i = 0; i < 6; i++) ctx->insitumax[i]=ctx->insitumin[i];
+    else {
       if (nopt > 6 && !ctx->printhelp) SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the insitu stresses, got %i in %s\n",nopt,__FUNCT__);
       for (i = 0; i < 6; i++) ctx->insitumax[i]=buffer[i];
     }
@@ -187,11 +186,11 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
     ierr              = PetscOptionsReal("-maxtimevalue","\n\tMaximum timevalue","",ctx->maxtimevalue,&ctx->maxtimevalue,NULL);CHKERRQ(ierr);
 
     ctx->timevalue = 1.;
-    ierr              = PetscOptionsReal("-timevalue","\n\t timevalue","",ctx->timevalue,&ctx->timevalue,NULL);CHKERRQ(ierr);
+    ierr           = PetscOptionsReal("-timevalue","\n\t timevalue","",ctx->timevalue,&ctx->timevalue,NULL);CHKERRQ(ierr);
 
     ctx->theta = 1.;
-    ierr              = PetscOptionsReal("-theta","\n\t time descritization paramater","",ctx->theta,&ctx->theta,NULL);CHKERRQ(ierr);
-    
+    ierr       = PetscOptionsReal("-theta","\n\t time descritization paramater","",ctx->theta,&ctx->theta,NULL);CHKERRQ(ierr);
+
     nopt = 6;
     ierr = PetscOptionsRealArray("-BCpres", "\n\tPressure at Boundaries.\n\t (PX0,PX1,PY0,PY1,PZ0,PZ1) negative value if natural BC","",buffer,&nopt,NULL);CHKERRQ(ierr);
     if (nopt > 6 && !ctx->printhelp) SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting at most 6 component of the Pressure BC, got %i in %s\n",nopt,__FUNCT__);
@@ -245,12 +244,12 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
         ierr = VFWellView(&(ctx->well[i]),PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
       }
     }
-    
+
 
     ctx->numfracWells = 0;
-    ierr          = PetscOptionsInt("-nfw","\n\tNumber of fracture wells to insert","",ctx->numfracWells,&ctx->numfracWells,NULL);CHKERRQ(ierr);
-    
-    ierr          = PetscMalloc(ctx->numfracWells*sizeof(VFWell),&ctx->fracwell);CHKERRQ(ierr);
+    ierr              = PetscOptionsInt("-nfw","\n\tNumber of fracture wells to insert","",ctx->numfracWells,&ctx->numfracWells,NULL);CHKERRQ(ierr);
+
+    ierr = PetscMalloc(ctx->numfracWells*sizeof(VFWell),&ctx->fracwell);CHKERRQ(ierr);
     for (i = 0; i < ctx->numfracWells; i++) {
       ierr = PetscSNPrintf(prefix,PETSC_MAX_PATH_LEN,"fracw%d_",i);CHKERRQ(ierr);
       ierr = VFWellCreate(&(ctx->fracwell[i]));CHKERRQ(ierr);
@@ -263,7 +262,7 @@ extern PetscErrorCode VFCtxGet(VFCtx *ctx)
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
-  ctx->timestep  = 1;
+  ctx->timestep = 1;
   PetscFunctionReturn(0);
 }
 
@@ -322,19 +321,22 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,3,1,
                       NULL,NULL,NULL,&ctx->daVect);CHKERRQ(ierr);
+  ierr = DMSetFromOptions(ctx->daVect);CHKERRQ(ierr);
   ierr = DMSetUp(ctx->daVect);CHKERRQ(ierr);
 
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,1,1,
                       NULL,NULL,NULL,&ctx->daScal);CHKERRQ(ierr);
+  ierr = DMSetFromOptions(ctx->daScal);CHKERRQ(ierr);
   ierr = DMSetUp(ctx->daScal);CHKERRQ(ierr);
   ierr = DMDASetFieldName(ctx->daScal,0,"");CHKERRQ(ierr);
 
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx,ny,nz,PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE,4,1,
                       NULL,NULL,NULL,&ctx->daFlow);CHKERRQ(ierr);
+  ierr = DMSetFromOptions(ctx->daFlow);CHKERRQ(ierr);
   ierr = DMSetUp(ctx->daFlow);CHKERRQ(ierr);
-  
+
 
   ierr = DMDAGetCorners(ctx->daScal,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daScal,NULL,&nx,&ny,&nz,&x_nprocs,&y_nprocs,&z_nprocs,
@@ -357,17 +359,20 @@ extern PetscErrorCode VFGeometryInitialize(VFCtx *ctx)
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,0,
                       olx,oly,olz,&ctx->daScalCell);CHKERRQ(ierr);
+  ierr = DMSetFromOptions(ctx->daScalCell);CHKERRQ(ierr);
   ierr = DMSetUp(ctx->daScalCell);CHKERRQ(ierr);
   ierr = DMDASetFieldName(ctx->daScalCell,0,"");CHKERRQ(ierr);
 
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,3,0,
                       olx,oly,olz,&ctx->daVectCell);CHKERRQ(ierr);
+  ierr = DMSetFromOptions(ctx->daVectCell);CHKERRQ(ierr);
   ierr = DMSetUp(ctx->daVectCell);CHKERRQ(ierr);
-  
+
   ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
                       DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,6,0,
                       olx,oly,olz,&ctx->daVFperm);CHKERRQ(ierr);
+  ierr = DMSetFromOptions(ctx->daVFperm);CHKERRQ(ierr);
   ierr = DMSetUp(ctx->daVFperm);CHKERRQ(ierr);
 
   ierr = VFCartFEInit();CHKERRQ(ierr);
@@ -468,22 +473,22 @@ extern PetscErrorCode VFPropGet(VFProp *vfprop)
     vfprop->PCeta    = vfprop->eta;
     ierr             = PetscOptionsReal("-PCeta","\n\tArtificial stiffness of cracks in preconditioner","",vfprop->PCeta,&vfprop->PCeta,NULL);CHKERRQ(ierr);
     ierr             = PetscOptionsReal("-irrevtol","\n\tThreshold on v below which fracture irreversibility is enforced","",vfprop->irrevtol,&vfprop->irrevtol,NULL);CHKERRQ(ierr);
-    vfprop->permmult  = 1.;
+    vfprop->permmult = 1.;
     ierr             = PetscOptionsReal("-pmult","\n\tPermeability multiplier of cracks (achieved at  v < v_thresh)","",vfprop->permmult,&vfprop->permmult,NULL);CHKERRQ(ierr);
     vfprop->permmax  = 5.;
     ierr             = PetscOptionsReal("-permmax","\n\tMaximum permeability for cracks (achieved at  v=0.)","",vfprop->permmax,&vfprop->permmax,NULL);CHKERRQ(ierr);
     vfprop->atnum    = 2;
-    ierr = PetscOptionsInt("-atnum", "\n\t Ambrosio Tortorelli variant", "", vfprop->atnum, &vfprop->atnum, NULL);CHKERRQ(ierr);
-    switch (vfprop->atnum ) {
-      case 1:
-        vfprop->atCv = 2./3.;
-        break;
-      case 2:
-        vfprop->atCv = .5;
-        break;
-      default:
-        SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: atnum should be 1 or 2, got %i %s\n",vfprop->atnum,__FUNCT__);
-        break;
+    ierr             = PetscOptionsInt("-atnum", "\n\t Ambrosio Tortorelli variant", "", vfprop->atnum, &vfprop->atnum, NULL);CHKERRQ(ierr);
+    switch (vfprop->atnum) {
+    case 1:
+      vfprop->atCv = 2./3.;
+      break;
+    case 2:
+      vfprop->atCv = .5;
+      break;
+    default:
+      SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: atnum should be 1 or 2, got %i %s\n",vfprop->atnum,__FUNCT__);
+      break;
     }
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
@@ -510,7 +515,7 @@ extern PetscErrorCode VFMatPropGet(VFMatProp *matprop,PetscInt n)
   PetscReal      beta  = 1.e-4;            /* Normalized by E (MPa) assuming E=10,000 MPa */
   PetscReal      Cp    = 1.;
   PetscReal      rho   = 1.;
-  PetscReal      Ks   = 1.;
+  PetscReal      Ks    = 1.;
   PetscReal      phi   = 1.;
   int            i;
 
@@ -547,13 +552,13 @@ extern PetscErrorCode VFMatPropGet(VFMatProp *matprop,PetscInt n)
     ierr = PetscOptionsRealArray("-beta","\n\tComma separated list of Biot constants","",prop,&nopt,NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-beta",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].beta = prop[i];
-    
+
     nopt = n;
     for (i = 0; i < n; i++) prop[i] = Ks;
     ierr = PetscOptionsRealArray("-ks","\n\tComma separated list of rock bulk modulus","",prop,&nopt,NULL);CHKERRQ(ierr);
     if (nopt != n && nopt != 0) SETERRQ4(PETSC_COMM_WORLD,PETSC_ERR_USER,"ERROR: Expecting %i values for option %s, got only %i in %s\n",n,"-ks",nopt,__FUNCT__);
     for (i=0; i< n; i++) matprop[i].Ks = prop[i];
-    
+
     nopt = n;
     for (i = 0; i < n; i++) prop[i] = phi;
     ierr = PetscOptionsRealArray("-phi","\n\tComma separated list of rock porosity","",prop,&nopt,NULL);CHKERRQ(ierr);
@@ -630,8 +635,8 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   PetscReal      thickness;
   PetscReal      bx,by,bz,res;
   PetscInt       nx,ny,nz;
-  
-  
+
+
   PetscInt       x_nprocs,y_nprocs,z_nprocs,*olx,*oly,*olz;
   const PetscInt *lx1,*ly1,*lz1;
 
@@ -748,7 +753,7 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->V_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->V_old,"Previous time step v-field");CHKERRQ(ierr);
   ierr = VecSet(ctx->V_old,0.0);CHKERRQ(ierr);
-  
+
   ierr = DMCreateGlobalVector(ctx->daVect,&ctx->U);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->U,"Displacement in ctx");CHKERRQ(ierr);
   ierr = VecSet(ctx->U,0.0);CHKERRQ(ierr);
@@ -756,38 +761,38 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->V);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->V,"Fracture in ctx");CHKERRQ(ierr);
   ierr = VecSet(ctx->V,1.0);CHKERRQ(ierr);
-  
+
   ierr = DMCreateGlobalVector(ctx->daFlow,&ctx->PreFlowFields);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->PreFlowFields,"Previous time step flow fields");CHKERRQ(ierr);
 
-	ierr = DMCreateGlobalVector(ctx->daScal,&ctx->pressure_old);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(ctx->daScal,&ctx->pressure_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->pressure_old,"Previous Pressure");CHKERRQ(ierr);
   ierr = VecSet(ctx->pressure_old,0.);CHKERRQ(ierr);
 
   ierr = DMCreateGlobalVector(ctx->daScal,&ctx->RegFracWellFlowRate);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->RegFracWellFlowRate,"Regularized Fracture Well Flow Rate");CHKERRQ(ierr);
   ierr = VecSet(ctx->RegFracWellFlowRate,0.);CHKERRQ(ierr);
-  
+
   ierr = DMCreateGlobalVector(ctx->daFlow,&fields->VelnPress_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->VelnPress_old,"Previous Velocity and Pressure");CHKERRQ(ierr);
   ierr = VecSet(fields->VelnPress_old,0.0);CHKERRQ(ierr);
-  
+
   ierr = DMCreateGlobalVector(ctx->daVect,&fields->velocity_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->velocity_old,"Previous Fluid Velocity");CHKERRQ(ierr);
   ierr = VecSet(fields->velocity_old,0.0);CHKERRQ(ierr);
-  
+
   ierr = DMCreateGlobalVector(ctx->daVect,&fields->U_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->U_old,"Previous Displacement");CHKERRQ(ierr);
   ierr = VecSet(fields->U_old,0.0);CHKERRQ(ierr);
-  
+
   ierr = DMCreateGlobalVector(ctx->daScal,&fields->V_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->V_old,"Previous Fracture");CHKERRQ(ierr);
   ierr = VecSet(fields->V_old,1.0);CHKERRQ(ierr);
-  
+
   ierr = DMCreateGlobalVector(ctx->daScal,&fields->theta_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->theta_old,"Previous Temperature");CHKERRQ(ierr);
   ierr = VecSet(fields->theta_old,0.);CHKERRQ(ierr);
-  
+
   ierr = DMCreateGlobalVector(ctx->daScal,&fields->pressure_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->pressure_old,"Previous Pressure");CHKERRQ(ierr);
   ierr = VecSet(fields->pressure_old,0.);CHKERRQ(ierr);
@@ -796,26 +801,26 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = PetscObjectSetName((PetscObject) fields->width,"Average width");CHKERRQ(ierr);
   ierr = VecSet(fields->width,0.);CHKERRQ(ierr);
 
-  
+
   ierr = DMCreateGlobalVector(ctx->daScalCell,&fields->widthc);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) fields->widthc,"Average cell width");CHKERRQ(ierr);
   ierr = VecSet(fields->widthc,0.);CHKERRQ(ierr);
-  
+
   ierr = DMCreateGlobalVector(ctx->daScalCell,&ctx->widthc_old);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->widthc_old,"Average cell width (old)");CHKERRQ(ierr);
   ierr = VecSet(ctx->widthc_old,0.);CHKERRQ(ierr);
-  
+
   ierr = DMCreateGlobalVector(ctx->daScalCell,&ctx->M_inv);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->M_inv,"Inverse Biot's Modulus");CHKERRQ(ierr);
   ierr = VecSet(ctx->M_inv,0.);CHKERRQ(ierr);
-  
+
   ierr = DMCreateGlobalVector(ctx->daScalCell,&ctx->K_dr);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) ctx->K_dr,"Drained modulus");CHKERRQ(ierr);
   ierr = VecSet(ctx->K_dr,0.);CHKERRQ(ierr);
-  
+
   ierr = DMCreateGlobalVector(ctx->daVFperm,&ctx->Perm);CHKERRQ(ierr);
   ierr = VecSet(ctx->Perm,1.0);CHKERRQ(ierr);
-  
+
   /*
    Create optional penny-shaped and rectangular cracks
    */
@@ -823,11 +828,11 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
   ierr = VecSet(fields->VIrrev,1.0);CHKERRQ(ierr);
   for (c = 0; c < ctx->numPennyCracks; c++) {
     if (ctx->vfprop.atnum == 1) {
-        ierr = VFPennyCrackBuildVAT1(fields->V,&(ctx->pennycrack[c]),ctx);CHKERRQ(ierr);
+      ierr = VFPennyCrackBuildVAT1(fields->V,&(ctx->pennycrack[c]),ctx);CHKERRQ(ierr);
     } else {
-        ierr = VFPennyCrackBuildVAT2(fields->V,&(ctx->pennycrack[c]),ctx);CHKERRQ(ierr);
+      ierr = VFPennyCrackBuildVAT2(fields->V,&(ctx->pennycrack[c]),ctx);CHKERRQ(ierr);
     }
-   ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
+    ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
   }
   for (c = 0; c < ctx->numRectangularCracks; c++) {
     if (ctx->vfprop.atnum == 1) {
@@ -842,121 +847,95 @@ extern PetscErrorCode VFFieldsInitialize(VFCtx *ctx,VFFields *fields)
    */
   for (c = 0; c < ctx->numWells; c++) {
     if (ctx->vfprop.atnum == 1) {
-        ierr = VFWellBuildVAT1(fields->V,&(ctx->well[c]),ctx);CHKERRQ(ierr);
+      ierr = VFWellBuildVAT1(fields->V,&(ctx->well[c]),ctx);CHKERRQ(ierr);
     } else {
-        ierr = VFWellBuildVAT2(fields->V,&(ctx->well[c]),ctx);CHKERRQ(ierr);
+      ierr = VFWellBuildVAT2(fields->V,&(ctx->well[c]),ctx);CHKERRQ(ierr);
     }
     ierr = VecPointwiseMin(fields->VIrrev,fields->V,fields->VIrrev);CHKERRQ(ierr);
   }
-  
+
   ierr        = VecCopy(fields->VIrrev,fields->V);CHKERRQ(ierr);
   ctx->fields = fields;
-  
-  
-  
-  
-  
-  
-  
-  Vec LocalWRate;
+
+
+
+
+
+
+
+  Vec       LocalWRate;
   PetscReal InjVolrate, scale = 0;
   ierr = VecDuplicate(ctx->RegFracWellFlowRate,&LocalWRate);CHKERRQ(ierr);
   ierr = VecSet(ctx->RegFracWellFlowRate,0.0);CHKERRQ(ierr);
   for (c = 0; c < ctx->numfracWells; c++) {
-    if(ctx->fracwell[c].fractype == PENNY){
-      thickness = ctx->pennycrack[ctx->fracwell[c].wellfracindex].thickness;
-    }
-    else{
-      thickness = ctx->rectangularcrack[ctx->fracwell[c].wellfracindex].thickness;
-    }
-    ierr = VecSet(LocalWRate,0.0);CHKERRQ(ierr);
-    ierr = VFRegDiracDeltaFunction(LocalWRate,&ctx->fracwell[c],fields->V,thickness,ctx);CHKERRQ(ierr);
+    if (ctx->fracwell[c].fractype == PENNY) thickness = ctx->pennycrack[ctx->fracwell[c].wellfracindex].thickness;
+    else thickness = ctx->rectangularcrack[ctx->fracwell[c].wellfracindex].thickness;
+    ierr   = VecSet(LocalWRate,0.0);CHKERRQ(ierr);
+    ierr   = VFRegDiracDeltaFunction(LocalWRate,&ctx->fracwell[c],fields->V,thickness,ctx);CHKERRQ(ierr);
     scale +=  ctx->fracwell[c].Qw;
-    ierr = VecAXPY(ctx->RegFracWellFlowRate,1.,LocalWRate);CHKERRQ(ierr);
+    ierr   = VecAXPY(ctx->RegFracWellFlowRate,1.,LocalWRate);CHKERRQ(ierr);
   }
   ierr = VFRegRateScalingFactor(&InjVolrate,ctx->RegFracWellFlowRate,fields->V,ctx);CHKERRQ(ierr);
-  if(scale == 0){
-    scale = 0.;
-  }
-  else{
-    scale =  scale/InjVolrate;
-  }
+  if (scale == 0) scale = 0.;
+  else scale =  scale/InjVolrate;
   ierr = VecScale(ctx->RegFracWellFlowRate,scale);CHKERRQ(ierr);
   ierr = VecDestroy(&LocalWRate);CHKERRQ(ierr);
-  
+
   ierr = DMDAGetBoundingBox(ctx->daScal,BBmin,BBmax);CHKERRQ(ierr);
   ierr = DMDAGetInfo(ctx->daScal,NULL,&nx,&ny,&nz,&x_nprocs,&y_nprocs,&z_nprocs,
                      NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
-  
+
   ierr = DMDAGetOwnershipRanges(ctx->daScal,&lx1,&ly1,&lz1);CHKERRQ(ierr);
   ierr = PetscMalloc(x_nprocs*sizeof(*olx),&olx);CHKERRQ(ierr);
   ierr = PetscMalloc(y_nprocs*sizeof(*oly),&oly);CHKERRQ(ierr);
   ierr = PetscMalloc(z_nprocs*sizeof(*olz),&olz);CHKERRQ(ierr);
-  
+
   ierr = PetscMemcpy(olx,lx1,x_nprocs*sizeof(*olx));CHKERRQ(ierr);
   ierr = PetscMemcpy(oly,ly1,y_nprocs*sizeof(*oly));CHKERRQ(ierr);
   ierr = PetscMemcpy(olz,lz1,z_nprocs*sizeof(*olz));CHKERRQ(ierr);
-  
+
   bx = (BBmax[0]-BBmin[0])/(nx-1);
   by = (BBmax[1]-BBmin[1])/(ny-1);
   bz = (BBmax[2]-BBmin[2])/(nz-1);
-  if(nx == 2){
-    if(by < bz){
-      res = by;
-    }
-    else{
-      res = bz;
-    }
-  }
-  else if(ny == 2){
-    if(bx < bz){
-      res = bx;
-    }
-    else{
-      res = bz;
-    }
-  }
-  else if(nz == 2){
-    if(bx < by){
-      res = bx;
-    }
-    else{
-      res = by;
-    }
-  }
-  else{
-    if(bx < by && bx < bz){
-      res = bx;
-    }
-    else if(by < bx && by < bz){
-      res = by;
-    }
-    else{
-      res = bz;
-    }
+  if (nx == 2) {
+    if (by < bz) res = by;
+    else res = bz;
+  }else if (ny == 2) {
+    if (bx < bz) res = bx;
+    else res = bz;
+  }else if (nz == 2) {
+    if (bx < by) res = bx;
+    else res = by;
+  }else {
+    if (bx < by && bx < bz) res = bx;
+    else if (by < bx && by < bz) res = by;
+    else res = bz;
   }
   ctx->WidthIntLenght = (3*res+4*ctx->vfprop.epsilon);
-  
-  st = ctx->WidthIntLenght/(res);
-  if(ctx->FractureFlowCoupling == PETSC_TRUE){
-  ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
-                      DMDA_STENCIL_BOX,nx,ny,nz,x_nprocs,y_nprocs,z_nprocs,1,st+1,
-                      olx,oly,olz,&ctx->daWScal);CHKERRQ(ierr);
-  ierr = DMSetUp(ctx->daWScal);CHKERRQ(ierr);
 
-  ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
-                      DMDA_STENCIL_BOX,nx,ny,nz,x_nprocs,y_nprocs,z_nprocs,3,st+1,
-                      olx,oly,olz,&ctx->daWVect);CHKERRQ(ierr);
-  ierr = DMSetUp(ctx->daWVect);CHKERRQ(ierr);
-  
-  olx[x_nprocs-1]--;
-  oly[y_nprocs-1]--;
-  olz[z_nprocs-1]--;
-  ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
-                      DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,st,
-                      olx,oly,olz,&ctx->daWScalCell);CHKERRQ(ierr);
-  ierr = DMSetUp(ctx->daWScalCell);CHKERRQ(ierr);
-    
+  st = ctx->WidthIntLenght/(res);
+  if (ctx->FractureFlowCoupling == PETSC_TRUE) {
+    ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
+                        DMDA_STENCIL_BOX,nx,ny,nz,x_nprocs,y_nprocs,z_nprocs,1,st+1,
+                        olx,oly,olz,&ctx->daWScal);CHKERRQ(ierr);
+    ierr = DMSetFromOptions(ctx->daWScal);CHKERRQ(ierr);
+    ierr = DMSetUp(ctx->daWScal);CHKERRQ(ierr);
+
+    ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
+                        DMDA_STENCIL_BOX,nx,ny,nz,x_nprocs,y_nprocs,z_nprocs,3,st+1,
+                        olx,oly,olz,&ctx->daWVect);CHKERRQ(ierr);
+    ierr = DMSetFromOptions(ctx->daWVect);CHKERRQ(ierr);
+    ierr = DMSetUp(ctx->daWVect);CHKERRQ(ierr);
+
+    olx[x_nprocs-1]--;
+    oly[y_nprocs-1]--;
+    olz[z_nprocs-1]--;
+    ierr = DMDACreate3d(PETSC_COMM_WORLD,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,
+                        DMDA_STENCIL_BOX,nx-1,ny-1,nz-1,x_nprocs,y_nprocs,z_nprocs,1,st,
+                        olx,oly,olz,&ctx->daWScalCell);CHKERRQ(ierr);
+    ierr = DMSetFromOptions(ctx->daWScalCell);CHKERRQ(ierr);
+    ierr = DMSetUp(ctx->daWScalCell);CHKERRQ(ierr);
+
   }
   PetscFunctionReturn(0);
 }
@@ -1032,12 +1011,12 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   Mat            JacV,JacU,JacPCU;
   Vec            residualV,residualU;
   SNESLineSearch lsU;
-  
+
   PetscFunctionBegin;
   /*
    U solver initialization
    */
-   
+
   ierr = SNESCreate(PETSC_COMM_WORLD,&ctx->snesU);CHKERRQ(ierr);
   ierr = SNESSetDM(ctx->snesU,ctx->daVect);CHKERRQ(ierr);
   ierr = SNESSetOptionsPrefix(ctx->snesU,"U_");CHKERRQ(ierr);
@@ -1084,7 +1063,7 @@ extern PetscErrorCode VFSolversInitialize(VFCtx *ctx)
   ierr = DMCreateGlobalVector(ctx->daScal,&ubV);CHKERRQ(ierr);
   ierr = VecSet(ubV,1.0);CHKERRQ(ierr);
   ierr = SNESVISetVariableBounds(ctx->snesV,lbV,ubV);CHKERRQ(ierr);
-  
+
   /*
     Setting SNES default tolerance to something a bit more reasonable than the default.
     This may allow us to relax the KSP tol a bit. Will need to investigate in the future
@@ -1281,7 +1260,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = DMDestroy(&ctx->daFlow);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daScalCell);CHKERRQ(ierr);
   ierr = DMDestroy(&ctx->daVectCell);CHKERRQ(ierr);
-  if(ctx->flowsolver != FLOWSOLVER_NONE){
+  if (ctx->flowsolver != FLOWSOLVER_NONE) {
     ierr = DMDestroy(&ctx->daWScalCell);CHKERRQ(ierr);
     ierr = DMDestroy(&ctx->daWScal);CHKERRQ(ierr);
     ierr = DMDestroy(&ctx->daWVect);CHKERRQ(ierr);
@@ -1290,7 +1269,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = SNESDestroy(&ctx->snesV);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->pressure_old);CHKERRQ(ierr);
 
-  
+
   ierr = VecDestroy(&fields->VelnPress);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->vfperm);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->VolCrackOpening);CHKERRQ(ierr);
@@ -1324,7 +1303,7 @@ extern PetscErrorCode VFFinalize(VFCtx *ctx,VFFields *fields)
   ierr = VecDestroy(&ctx->PreFlowFields);CHKERRQ(ierr);
   ierr = VecDestroy(&ctx->RegFracWellFlowRate);CHKERRQ(ierr);
 
-  
+
   ierr = VecDestroy(&fields->U_old);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->V_old);CHKERRQ(ierr);
   ierr = VecDestroy(&fields->VelnPress_old);CHKERRQ(ierr);
@@ -1398,7 +1377,7 @@ extern PetscErrorCode FieldsBinaryWrite(VFCtx *ctx,VFFields *fields)
 #define __FUNCT__ "VecViewVTKDof"
 /*
  VecViewVTKDof: Export all nodal fields in PETSc VTK format.
- 
+
  (c) 2013 Blaise Bourdin bourdin@lsu.edu
  */
 extern PetscErrorCode VecViewVTKDof(DM da,Vec X,PetscViewer viewer)
@@ -1435,9 +1414,9 @@ extern PetscErrorCode VecViewVTKDof(DM da,Vec X,PetscViewer viewer)
  */
 extern PetscErrorCode FieldsVTKWrite(VFCtx *ctx,VFFields *fields,const char nodalName[], const char cellName[])
 {
-  PetscErrorCode  ierr;
-  char            filename[FILENAME_MAX];
-  PetscViewer     viewer;
+  PetscErrorCode ierr;
+  char           filename[FILENAME_MAX];
+  PetscViewer    viewer;
 
   PetscFunctionBegin;
 
@@ -1507,14 +1486,10 @@ extern PetscErrorCode PermUpdate(Vec V,Vec Pmult,VFProp *vfprop,VFCtx *ctx)
     for (j = ys; j < ys + ym; j++)
       for (i = xs; i < xs + xm; i++) {
         v = v_array[k][j][i];
-        if (v <= 0) {
-          pmult = vfprop->permmax;
-        } else {
-          if (v <= 1.) {
-            pmult = vfprop->permmax - (vfprop->permmax - 1.0) * v;
-          } else {
-            pmult = 1.;
-          }
+        if (v <= 0) pmult = vfprop->permmax;
+        else {
+          if (v <= 1.) pmult = vfprop->permmax - (vfprop->permmax - 1.0) * v;
+          else pmult = 1.;
         }
         pmult_array[k][j][i] = pmult;
       }

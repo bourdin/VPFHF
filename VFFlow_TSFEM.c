@@ -73,14 +73,16 @@ extern PetscErrorCode FlowFEMTSSolve(VFCtx *ctx,VFFields *fields)
 	ierr = TSSetRHSFunction(ctx->tsP,NULL,FormFunction_P,ctx);CHKERRQ(ierr);
   
 	ierr = TSSetSolution(ctx->tsP,fields->pressure);CHKERRQ(ierr);
-	ierr = TSSetInitialTimeStep(ctx->tsP,ctx->current_time,ctx->timevalue);CHKERRQ(ierr);
-    ierr = TSSetDuration(ctx->tsP,ctx->maxtimestep,ctx->timevalue);CHKERRQ(ierr);
+	ierr = TSSetTime(ctx->tsP,ctx->current_time);CHKERRQ(ierr);
+	ierr = TSSetTimeStep(ctx->tsP,ctx->timevalue);CHKERRQ(ierr);
+    ierr = TSSetMaxSteps(ctx->tsP,ctx->maxtimestep);CHKERRQ(ierr);
+    ierr = TSSetMaxTime(ctx->tsP,ctx->timevalue);CHKERRQ(ierr);
    
 	ierr = TSMonitorSet(ctx->tsP,FEMTSMonitor,NULL,NULL);CHKERRQ(ierr);
 	ierr = TSSetFromOptions(ctx->tsP);CHKERRQ(ierr);	
 
     ierr = TSSolve(ctx->tsP,fields->pressure);CHKERRQ(ierr);
-    ierr = TSGetTimeStepNumber(ctx->tsP,&temp_step);CHKERRQ(ierr);
+    ierr = TSGetStepNumber(ctx->tsP,&temp_step);CHKERRQ(ierr);
 	
 	ierr = VecDestroy(&ctx->Perm);CHKERRQ(ierr);
 	ierr = TSDestroy(&ctx->tsP);CHKERRQ(ierr);

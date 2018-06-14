@@ -4,13 +4,27 @@
  VFCommon.h
  (c) 2010-2013 Blaise Bourdin bourdin@lsu.edu
  */
-static const char banner[] = "\n\nVF:\nNumerical implementation of the variational approach to fracture.\n(c) 2010-2018 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu\n\n";
+static const char banner[] = "\n\nVPFHF: A Variational Phase-Field based Hydro-Fracking simulator.\n"
+  "(c) 2010-2018 Blaise Bourdin, Louisiana State University. bourdin@lsu.edu\n\n"
+  "# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\n"
+  "# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\n"
+  "# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\n"
+  "# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR\n"
+  "# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n"
+  "# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\n"
+  "# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\n"
+  "# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n"
+  "# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\n"
+  "# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n"
+  "# This software is released under the 2-clause BSD license (aka \"Simplified BSD\" \n"
+  "# or \"FreeBSD\") license. See the LICENSE file in the root of the software distribution\n\n"
+  "# See the CONTRIBUTORS.txt file for a list of contributors to this software.\n\n";
 
 typedef struct {
 	PetscReal   mu;             /* Fluid viscosity              */
 	PetscReal   rho;            /* Fluid density                */
 	PetscReal   g[3];
-	PetscReal   Cp;			        /* Specific heat capacity       */
+	PetscReal   Cp;		    /* Specific heat capacity       */
 	PetscReal   Kf;             /* Modulus of liquid            */
 } VFFlowProp;
 
