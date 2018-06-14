@@ -1,4 +1,4 @@
-all: VF_Chevron
+all: VPFHF
 
 include makefile.include	
 
@@ -11,8 +11,8 @@ include ${PETSC_DIR}/lib/petsc/conf/rules
 dirs:
 	@mkdir -p bin/${PETSC_ARCH}
 
-VF_Chevron: dirs ${VFOBJ} VF_Chevron.o chkopts
-	${CLINKER} -o bin/${PETSC_ARCH}/VF_Chevron VF_Chevron.o ${VFOBJ} ${PETSC_TAO_LIB}
+VPFHF: dirs ${VFOBJ} VPFHF.o chkopts
+	${CLINKER} -o bin/${PETSC_ARCH}/VPFHF VPFHF.o ${VFOBJ} ${PETSC_LIB}
 
 Utils: dirs
 	@echo Making all in ${VFDIR}/Utils
