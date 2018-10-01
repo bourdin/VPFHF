@@ -39,8 +39,8 @@ int main(int argc,char **argv)
 	PetscReal		ux = 1.,condctvty = 0.1, src = 1.;
 	
 	ierr = PetscInitialize(&argc,&argv,(char*)0,banner);CHKERRQ(ierr);
-	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
-	ctx.flowsolver = HEATSOLVER_SNESFEM;
+//	ctx.flowsolver = FLOWSOLVER_SNESMIXEDFEM;
+//	ctx.flowsolver = HEATSOLVER_SNESFEM;
 	ierr = VFInitialize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = DMDAGetInfo(ctx.daScal,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
 					   NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
@@ -61,10 +61,10 @@ int main(int argc,char **argv)
 	ierr = DMDAGetCorners(ctx.daVFperm,&xs1,&ys1,&zs1,&xm1,&ym1,&zm1);CHKERRQ(ierr);
 	ierr = DMDAVecGetArrayDOF(ctx.daVect,fields.velocity,&vel_array);CHKERRQ(ierr); 
 	
-	ierr = PetscOptionsGetReal(NULL,"-cond",&condctvty,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,NULL,"-cond",&condctvty,NULL);CHKERRQ(ierr);
 	ctx.hasHeatSources = PETSC_TRUE;
-	ctx.flowprop.theta = 1.;
-	ctx.flowprop.timestepsize = 1.;
+//	ctx.flowprop.theta = 1.;
+//	ctx.flowprop.timestepsize = 1.;
 	lz = BBmax[2]-BBmin[2];
 	ly = BBmax[1]-BBmin[1];
 	lx = BBmax[0]-BBmin[0];
@@ -143,11 +143,11 @@ int main(int argc,char **argv)
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.HeatFluxBCArray,&heatfluxbc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArray(ctx.daScal,ctx.HeatSource,&heatsrc_array);CHKERRQ(ierr);
 	ierr = DMDAVecRestoreArrayDOF(ctx.daVect,ctx.coordinates,&coords_array);CHKERRQ(ierr);
-	ierr = PetscOptionsGetReal(NULL,"-theta",&ctx.flowprop.theta,NULL);CHKERRQ(ierr);
+//	ierr = PetscOptionsGetReal(NULL,"-theta",&ctx.flowprop.theta,NULL);CHKERRQ(ierr);
 
-	ierr = PetscOptionsGetReal(NULL,"-timestepsize",&ctx.flowprop.timestepsize,NULL);CHKERRQ(ierr);
-	ctx.maxtimestep = 1;
-	ierr = PetscOptionsGetInt(NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
+//	ierr = PetscOptionsGetReal(NULL,"-timestepsize",&ctx.flowprop.timestepsize,NULL);CHKERRQ(ierr);
+//	ctx.maxtimestep = 1;
+//	ierr = PetscOptionsGetInt(NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
 	for (ctx.timestep = 0; ctx.timestep < ctx.maxtimestep; ctx.timestep++){
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\nProcessing step %i.\n",ctx.timestep);CHKERRQ(ierr);
 		ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
@@ -155,7 +155,7 @@ int main(int argc,char **argv)
 		ierr = VF_HeatTimeStep(&ctx,&fields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHST,ctx.RHSTpre);CHKERRQ(ierr);
     ierr = VecCopy(fields.theta,ctx.prevT);CHKERRQ(ierr);
-		ierr = FieldsH5Write(&ctx,&fields);		
+        ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 		ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
 		ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
 		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
@@ -172,7 +172,7 @@ int main(int argc,char **argv)
 		}
 	}
 	ierr = DMDAVecRestoreArray(ctx.daScal,fields.theta,&Tbc_array);CHKERRQ(ierr);
-	ierr = FieldsH5Write(&ctx,&fields);		
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);
