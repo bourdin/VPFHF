@@ -43,7 +43,7 @@ int main(int argc,char **argv)
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
   ini_pressure = 0.0;
-	ierr = PetscOptionsGetReal(NULL,"-ini_pressure",&ini_pressure,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,NULL,"-ini_pressure",&ini_pressure,NULL);CHKERRQ(ierr);
   ierr = VecSet(ctx.PresBCArray,ini_pressure);CHKERRQ(ierr);
   ierr = VecSet(ctx.pressure_old,ini_pressure);CHKERRQ(ierr);
   

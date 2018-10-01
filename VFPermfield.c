@@ -304,7 +304,6 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
   PetscReal       value = 0;
   PetscReal       vlim = 1.0;
   PetscReal       length_atzero = 0;
-  PetscReal       thickness = 0;
   PetscReal       u_cc[3] = {0,0,0};
   PetscReal       ref_cc[3] = {0,0,0};
   PetscReal       gradx[2] = {0,0};
@@ -314,12 +313,6 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
 
   
   PetscFunctionBegin;
-  if(ctx->pennycrack[0].thickness > ctx->rectangularcrack[0].thickness){
-    thickness = ctx->pennycrack[0].thickness;
-  }
-  else{
-    thickness = ctx->rectangularcrack[0].thickness;
-  }
   ierr = DMDAGetInfo(ctx->daWScalCell,NULL,&nx,&ny,&nz,NULL,NULL,NULL,
                      NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
   ierr = DMDAGetCorners(ctx->daWScalCell,&xs,&ys,&zs,&xm,&ym,&zm);CHKERRQ(ierr);
@@ -352,6 +345,7 @@ extern PetscErrorCode UpdateFractureWidth(VFCtx *ctx, VFFields *fields)
   ierr = DMGlobalToLocalBegin(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
   ierr = DMGlobalToLocalEnd(ctx->daScalCell,fields->pmult,INSERT_VALUES,pmult_local);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(ctx->daScalCell,pmult_local,&pmult_array);CHKERRQ(ierr);
+    
   
   for (ek = zs; ek < zs+zm; ek++) {
     for (ej = ys; ej < ys+ym; ej++) {

@@ -179,7 +179,7 @@ int main(int argc,char **argv)
 		ierr = VF_HeatTimeStep(&ctx,&fields);CHKERRQ(ierr);
     ierr = VecCopy(ctx.RHST,ctx.RHSTpre);CHKERRQ(ierr);
     ierr = VecCopy(fields.theta,ctx.prevT);CHKERRQ(ierr);
-		ierr = FieldsH5Write(&ctx,&fields);		
+        ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 		ierr = PetscSNPrintf(filename,FILENAME_MAX,"%s.log",ctx.prefix);CHKERRQ(ierr);
 		ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,filename,&logviewer);CHKERRQ(ierr);
 		ierr = PetscLogView(logviewer);CHKERRQ(ierr);
@@ -196,7 +196,7 @@ int main(int argc,char **argv)
 		}
 	}
 	ierr = DMDAVecRestoreArray(ctx.daScal,fields.theta,&Tbc_array);CHKERRQ(ierr);
-	ierr = FieldsH5Write(&ctx,&fields);		
+    ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
 	ierr = VFFinalize(&ctx,&fields);CHKERRQ(ierr);
 	ierr = PetscFinalize();
 	return(0);

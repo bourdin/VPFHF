@@ -43,7 +43,7 @@ int main(int argc,char **argv)
 	ly = BBmax[1]-BBmin[1];
 	lx = BBmax[0]-BBmin[0];
   F = -2.5;
-	ierr = PetscOptionsGetReal(NULL,"-F",&F,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,NULL,"-F",&F,NULL);CHKERRQ(ierr);
   ierr = VFTimeStepPrepare(&ctx,&fields);CHKERRQ(ierr);
   ierr = PetscViewerCreate(PETSC_COMM_WORLD,&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetType(viewer,PETSCVIEWERASCII);CHKERRQ(ierr);

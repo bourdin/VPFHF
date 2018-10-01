@@ -16,7 +16,7 @@
 -timevalue 0.5  
 -shut_in_time 40.
 -widthremoval_tol 0.1
--removeTipEffect
+#-removeTipEffect
 -eta 1e-8 
 -Gc 5e-4
 -theta 1.
@@ -33,7 +33,7 @@
 -fracw0_coords 25,0.5,25 
 -fracw0_constraint Rate 
 -fracw0_type injector 
--fracw0_Qw 5e-1 
+-fracw0_Qw 5e-3 
 -fracw0_wellfracindex 0
 -fracw0_wellinfrac penny
 -pressurize

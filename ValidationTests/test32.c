@@ -105,9 +105,9 @@ int main(int argc,char **argv)
 	ctx.bcQ[2].face[Z1] = FIXED;
   ierr = VecSet(ctx.VelBCArray,0);CHKERRQ(ierr);
   ierr = VecSet(ctx.PresBCArray,0);CHKERRQ(ierr);
- ctx.flowprop.alphabiot = 	ctx.matprop[0].beta = 1;									//biot's constant
- ctx.flowprop.theta = 1.;
-  ctx.flowprop.M_inv = 0.;
+ ctx.matprop[0].beta = 1;									//biot's constant
+// ctx.flowprop.theta = 1.;
+//  ctx.flowprop.M_inv = 0.;
  ctx.matprop[0].nu = 0.2;										//Poisson's ratio's modulus
  ctx.flowprop.rho = 1;									 //density in lb/ft^3
   ctx.flowprop.mu = 0.2;                    //viscosity in cp
@@ -179,7 +179,7 @@ int main(int argc,char **argv)
   ierr = VecSet(ctx.U_old,0.);CHKERRQ(ierr);
  /*End of mechanical part of code*/
 
-  ierr = PetscOptionsGetReal(NULL,"-theta",&ctx.flowprop.theta,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,NULL,"-theta",&ctx.flowprop.theta,NULL);CHKERRQ(ierr);
   ctx.flowprop.timestepsize = 0.;
 
   PetscReal displ_p_tol = 1e-6;
@@ -245,16 +245,16 @@ int main(int argc,char **argv)
   ierr = VecSet(ctx.PresBCArray,0);CHKERRQ(ierr);
   ierr = VecSet(ctx.VelBCArray,0);CHKERRQ(ierr);
 
-  ierr = PetscOptionsGetReal(NULL,"-m_inv",&ctx.flowprop.M_inv,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,NULL,"-m_inv",&ctx.flowprop.M_inv,NULL);CHKERRQ(ierr);
   ctx.flowprop.M_inv = 1.0;
 
   
   ierr = VecCopy(fields.VelnPress,ctx.PreFlowFields);CHKERRQ(ierr);
   ierr = VecSet(ctx.RHSVelPpre,0.);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(NULL,"-m_inv",&ctx.flowprop.M_inv,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(NULL,"-theta",&ctx.flowprop.theta,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,NULL,"-m_inv",&ctx.flowprop.M_inv,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,NULL,"-theta",&ctx.flowprop.theta,NULL);CHKERRQ(ierr);
   ctx.flowprop.timestepsize = 1.;
-	ierr = PetscOptionsGetReal(NULL,"-timestepsize",&ctx.flowprop.timestepsize,NULL);CHKERRQ(ierr);
+	ierr = PetscOptionsGetReal(NULL,NULL,"-timestepsize",&ctx.flowprop.timestepsize,NULL);CHKERRQ(ierr);
   ctx.maxtimestep = 10;
   ierr = PetscOptionsGetInt(NULL,"-maxtimestep",&ctx.maxtimestep,NULL);CHKERRQ(ierr);
   for (ctx.timestep = 1; ctx.timestep < ctx.maxtimestep; ctx.timestep++){

@@ -45,7 +45,7 @@ int main(int argc,char **argv)
 		ctx.timevalue = ctx.timestep * ctx.maxtimevalue / (ctx.maxtimestep-1.);
 		ierr = PetscPrintf(PETSC_COMM_WORLD,"\n\ntime value %f \n",ctx.timevalue);CHKERRQ(ierr);
     ierr = VF_StepP(&fields,&ctx);
-    ierr = VF_FastFourierTransforms(&ctx,&fields);
+/*    ierr = VF_FastFourierTransforms(&ctx,&fields);    */
     ierr = FieldsVTKWrite(&ctx,&fields,NULL,NULL);CHKERRQ(ierr);
     /*This will have to be called "an update function"*/
     ierr = VFCheckVolumeBalance(&vol,&vol1,&vol2,&vol3,&vol4,&vol5,&ctx,&fields);CHKERRQ(ierr);
