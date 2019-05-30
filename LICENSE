@@ -1,4 +1,4 @@
-Copyright (c) 1998-2018, Blaise Bourdin <bourdin@lsu.edu> and contributors
+Copyright (c) 1998-2019, Blaise Bourdin <bourdin@lsu.edu> and contributors
 All rights reserved.
 
 See the CONTRIBUTORS.txt for a list of contributors
@@ -56,15 +56,6 @@ from this code, or utilizing it references the following published works:
 	Volume = {SPE 159154},
 	Year = {2012}}
 
-@inproceedings{Chukwudozie-Bourdin-EtAl-2013a,
-	Address = {San Francisco, California},
-	Author = {Chukwudozie, C. and Bourdin, B. and Yoshioka, K. and Buchmann, T. and Connolly, P.},
-	Booktitle = {47th U.S. Rock Mechanics/Geomechanics Symposium},
-	Pages = {ARMA-2013-100},
-	Publisher = {American Rock Mechanics Association},
-	Title = {A New Modeling Approach to Natural Fracturing Process},
-	Year = {2013}}
-
 @article{Yoshioka-Bourdin-2016a,
 	Author = {Yoshioka, K. and Bourdin, B.},
 	Journal = {Int. J. Rock Mech. Min.},
@@ -73,3 +64,17 @@ from this code, or utilizing it references the following published works:
 	Volume = {88},
 	Year = {2016}}
 
+@phdthesis{Chukwudozie-2016a,
+	Address = {Craft \& Hawkins Department of Petroleum Engineering},
+	Author = {Chukwudozie, C.},
+	School = {Louisiana State University},
+	Title = {Application of the Variational Fracture Model to Hydraulic Fracturing in Poroelastic Media},
+	Year = {2016}}
+
+@article{Chukwudozie-Bourdin-EtAl-2019a,
+	Author = {Chukwudozie, C. and Bourdin, B. and Yoshioka, K.},
+	Journal = {Comp. Meth. Appl. Mech. Engng.},
+	Pages = {957--982},
+	Title = {A variational phase-field model for hydraulic fracturing in porous media},
+	Volume = {347},
+	Year = {2019}}
